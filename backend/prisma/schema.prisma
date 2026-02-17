@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String    @id @default(cuid())
+  email                String    @unique
+  password             String
+  name                 String
+  phone                String?
+  createdAt            DateTime  @default(now())
+  profiles             Profile[]
+  professionalBookings Booking[] @relation("ProfessionalBookings")
+}
+
+model Profile {
+  id            String    @id @default(cuid())
+  userId        String
+  slug          String    @unique
+  title         String
+  bio           String?
+  profession    String
+  phone         String?
+  template      Template  @default(MINIMALIST)
+  avatar        String?
+  coverImage    String?
+  videoUrl      String?
+  customization Json?
+  socialLinks   Json      @default("{}")
+  availability  Json      @default("{}")
+  published     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt @default(now())
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services          Service[]
+  bookings          Booking[]
+  availabilitySlots AvailabilitySlot[]
+
+  @@index([userId])
+}
+
+enum Template {
+  MINIMALIST
+  BOLD
+  ELEGANT
+  CREATIVE
+}
+
+model Service {
+  id              String   @id @default(uuid())
+  profileId       String
+  name            String
+  description     String?
+  image           String?
+  price           Decimal
+  currency        String   @default("EUR")
+  durationMinutes Int
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  profile  Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@index([profileId])
+  @@index([isActive])
+}
+
+model Booking {
+  id                 String        @id @default(uuid())
+  profileId          String
+  serviceId          String
+  professionalId     String
+  clientName         String
+  clientEmail        String
+  clientPhone        String        // "+34612345678"
+  clientNotes        String?
+  date               DateTime
+  startTime          String        // "09:00"
+  endTime            String        // "10:00"
+  status             BookingStatus @default(PENDING)
+  whatsappNotified   Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  cancelledAt        DateTime?
+  cancelledBy        String?       // "client" | "professional"
+  cancellationReason String?
+
+  profile       Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  service       Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  professional  User           @relation("ProfessionalBookings", fields: [professionalId], references: [id])
+  notifications Notification[]
+
+  @@index([profileId])
+  @@index([professionalId])
+  @@index([serviceId])
+  @@index([status])
+  @@index([date])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Notification {
+  id        String             @id @default(uuid())
+  bookingId String
+  type      NotificationType
+  recipient String             // "+34612345678"
+  message   String
+  status    NotificationStatus @default(PENDING)
+  sentAt    DateTime?
+  error     String?
+  messageId String?
+  createdAt DateTime           @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([type])
+  @@index([status])
+}
+
+enum NotificationType {
+  NEW_BOOKING
+  CONFIRMATION
+  REMINDER_24H
+  CANCELLATION
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model AvailabilitySlot {
+  id        String   @id @default(uuid())
+  profileId String
+  dayOfWeek Int      // 0=Sunday, 1=Monday, ..., 6=Saturday
+  startTime String   // "09:00"
+  endTime   String   // "17:00"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([profileId, dayOfWeek])
+}
