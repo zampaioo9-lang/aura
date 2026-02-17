@@ -56,7 +56,7 @@ export default function ServiceForm({ onSubmit, initialData, mode, loading = fal
     watch,
     formState: { errors, isSubmitting },
   } = useForm<ServiceFormValues>({
-    resolver: zodResolver(serviceFormSchema),
+    resolver: zodResolver(serviceFormSchema) as any,
     defaultValues: {
       name: '',
       description: '',

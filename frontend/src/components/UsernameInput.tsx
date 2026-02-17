@@ -11,7 +11,7 @@ interface UsernameInputProps {
 
 export default function UsernameInput({ value, onChange, currentSlug, error }: UsernameInputProps) {
   const { available, checking, check } = useCheckUsername();
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);

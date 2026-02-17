@@ -10,7 +10,7 @@ import api from '../api/client';
 type Tab = 'active' | 'inactive' | 'all';
 
 export default function ServicesDashboard() {
-  const { services, stats, loading, error, setError, createService, updateService, deleteService, toggleService, refetch } = useServices();
+  const { services, stats, loading, error, setError, createService, updateService, deleteService, toggleService } = useServices();
   const { toast } = useToast();
 
   const [tab, setTab] = useState<Tab>('active');
