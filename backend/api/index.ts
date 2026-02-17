@@ -1,0 +1,48 @@
+import '../src/config/env';
+import express from 'express';
+import cors from 'cors';
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Health check first - no dependencies
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Lazy load routes to catch import errors
+try {
+  const { errorHandler } = require('../src/middleware/errorHandler');
+  const authRoutes = require('../src/routes/auth').default;
+  const profileRoutes = require('../src/routes/profiles').default;
+  const serviceRoutes = require('../src/routes/services').default;
+  const bookingRoutes = require('../src/routes/bookings').default;
+  const templateRoutes = require('../src/routes/templates').default;
+  const uploadRoutes = require('../src/routes/upload').default;
+  const availabilityRoutes = require('../src/routes/availability').default;
+  const { sendWhatsApp } = require('../src/services/whatsappService');
+
+  app.use('/api/auth', authRoutes);
+  app.use('/api/profiles', profileRoutes);
+  app.use('/api/services', serviceRoutes);
+  app.use('/api/bookings', bookingRoutes);
+  app.use('/api/templates', templateRoutes);
+  app.use('/api/upload', uploadRoutes);
+  app.use('/api/availability', availabilityRoutes);
+
+  app.get('/api/test/whatsapp', async (req, res) => {
+    const to = req.query.to as string;
+    if (!to) return res.status(400).json({ error: 'Se requiere parametro ?to=+34...' });
+    const result = await sendWhatsApp(to, 'Test de WhatsApp desde Aura!');
+    res.json(result);
+  });
+
+  app.use(errorHandler);
+} catch (err: any) {
+  app.use('/api/*', (_req, res) => {
+    res.status(500).json({ error: 'Failed to load routes', message: err.message, stack: err.stack });
+  });
+}
+
+export default app;
