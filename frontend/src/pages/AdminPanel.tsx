@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, CalendarCheck, LayoutGrid, Bell, Search, ChevronLeft, ChevronRight, UserCheck } from 'lucide-react';
 import api from '../api/client';
@@ -211,8 +211,8 @@ export default function AdminPanel() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {users.map(u => (
+                    <React.Fragment key={u.id}>
                     <tr
-                      key={u.id}
                       className="hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() => setExpandedUser(expandedUser === u.id ? null : u.id)}
                     >
@@ -272,6 +272,7 @@ export default function AdminPanel() {
                         </td>
                       </tr>
                     )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
