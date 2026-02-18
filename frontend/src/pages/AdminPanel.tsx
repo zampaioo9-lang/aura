@@ -248,27 +248,51 @@ export default function AdminPanel() {
                         )}
                       </td>
                     </tr>
-                    {expandedUser === u.id && u.profiles.length > 0 && (
+                    {expandedUser === u.id && (
                       <tr className="bg-indigo-50/40">
-                        <td colSpan={5} className="px-5 py-3">
-                          <p className="text-xs font-semibold text-gray-500 mb-2">Perfiles</p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {u.profiles.map(p => (
-                              <div key={p.id} className="bg-white rounded-lg border border-gray-200 px-4 py-2 flex items-center justify-between">
-                                <div>
-                                  <p className="text-sm font-medium text-gray-800">{p.title}</p>
-                                  <p className="text-xs text-gray-400">/{p.slug}</p>
-                                </div>
-                                <div className="flex items-center gap-3 text-xs text-gray-500">
-                                  <span>{p._count.services} servicios</span>
-                                  <span>{p._count.bookings} reservas</span>
-                                  <span className={p.published ? 'text-green-600 font-medium' : 'text-gray-400'}>
-                                    {p.published ? 'Publicado' : 'Borrador'}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
+                        <td colSpan={5} className="px-5 py-4">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                            <div className="bg-white rounded-lg border border-gray-200 px-3 py-2">
+                              <p className="text-xs text-gray-400">Nombre</p>
+                              <p className="text-sm font-medium text-gray-800">{u.name}</p>
+                            </div>
+                            <div className="bg-white rounded-lg border border-gray-200 px-3 py-2">
+                              <p className="text-xs text-gray-400">Email</p>
+                              <p className="text-sm text-gray-800 truncate">{u.email}</p>
+                            </div>
+                            <div className="bg-white rounded-lg border border-gray-200 px-3 py-2">
+                              <p className="text-xs text-gray-400">Teléfono</p>
+                              <p className="text-sm text-gray-800">{u.phone || '—'}</p>
+                            </div>
+                            <div className="bg-white rounded-lg border border-gray-200 px-3 py-2">
+                              <p className="text-xs text-gray-400">Miembro desde</p>
+                              <p className="text-sm text-gray-800">{new Date(u.createdAt).toLocaleDateString('es-ES')}</p>
+                            </div>
                           </div>
+                          {u.profiles.length > 0 ? (
+                            <>
+                              <p className="text-xs font-semibold text-gray-500 mb-2">Perfiles</p>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {u.profiles.map(p => (
+                                  <div key={p.id} className="bg-white rounded-lg border border-gray-200 px-4 py-2 flex items-center justify-between">
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-800">{p.title}</p>
+                                      <p className="text-xs text-gray-400">/{p.slug}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                                      <span>{p._count.services} servicios</span>
+                                      <span>{p._count.bookings} reservas</span>
+                                      <span className={p.published ? 'text-green-600 font-medium' : 'text-gray-400'}>
+                                        {p.published ? 'Publicado' : 'Borrador'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          ) : (
+                            <p className="text-xs text-gray-400 italic">Este usuario aún no creó ningún perfil.</p>
+                          )}
                         </td>
                       </tr>
                     )}
