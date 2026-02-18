@@ -50,7 +50,7 @@ router.post('/login', async (req, res, next) => {
     const token = signToken(user.id);
     res.json({
       token,
-      user: { id: user.id, email: user.email, name: user.name },
+      user: { id: user.id, email: user.email, name: user.name, isAdmin: user.isAdmin },
     });
   } catch (err) {
     next(err);
