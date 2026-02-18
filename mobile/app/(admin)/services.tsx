@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
-import { colors, fontSize, spacing, borderRadius } from '../../lib/theme';
+import { fontSize, spacing, borderRadius } from '../../lib/theme';
+import { useThemeColors } from '../../lib/ThemeContext';
 import { useAuth } from '../../lib/auth';
 import api from '../../lib/api';
 import { Service } from '../../lib/types';
@@ -21,6 +22,7 @@ import Input from '../../components/ui/Input';
 
 export default function ServicesScreen() {
   const { profileId } = useAuth();
+  const colors = useThemeColors();
   const [services, setServices] = useState<Service[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -34,6 +36,53 @@ export default function ServicesScreen() {
   const [price, setPrice] = useState('');
   const [currency, setCurrency] = useState('ARS');
   const [saving, setSaving] = useState(false);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.md,
+    },
+    title: {
+      fontSize: fontSize.xxl,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    list: {
+      padding: spacing.xl,
+      paddingTop: spacing.md,
+    },
+    empty: {
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: spacing.xxl,
+      fontSize: fontSize.md,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      justifyContent: 'flex-end',
+    },
+    modalContent: {
+      backgroundColor: colors.background,
+      borderTopLeftRadius: borderRadius.xl,
+      borderTopRightRadius: borderRadius.xl,
+      padding: spacing.xl,
+      maxHeight: '90%',
+    },
+    modalTitle: {
+      fontSize: fontSize.xl,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: spacing.lg,
+    },
+  }), [colors]);
 
   useFocusEffect(
     useCallback(() => {
@@ -215,50 +264,3 @@ export default function ServicesScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-  },
-  title: {
-    fontSize: fontSize.xxl,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  list: {
-    padding: spacing.xl,
-    paddingTop: spacing.md,
-  },
-  empty: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: spacing.xxl,
-    fontSize: fontSize.md,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    padding: spacing.xl,
-    maxHeight: '90%',
-  },
-  modalTitle: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.lg,
-  },
-});

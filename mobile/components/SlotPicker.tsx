@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,8 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { colors, borderRadius, fontSize, spacing } from '../lib/theme';
+import { borderRadius, fontSize, spacing } from '../lib/theme';
+import { useThemeColors } from '../lib/ThemeContext';
 import api from '../lib/api';
 
 interface SlotPickerProps {
@@ -17,6 +18,7 @@ interface SlotPickerProps {
 }
 
 export default function SlotPicker({ profileId, serviceId, onSelect }: SlotPickerProps) {
+  const colors = useThemeColors();
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [slots, setSlots] = useState<string[]>([]);
@@ -33,6 +35,72 @@ export default function SlotPicker({ profileId, serviceId, onSelect }: SlotPicke
     }
     return d;
   });
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      marginTop: spacing.md,
+    },
+    title: {
+      color: colors.text,
+      fontSize: fontSize.md,
+      fontWeight: '600',
+      marginBottom: spacing.sm,
+    },
+    dateScroll: {
+      flexGrow: 0,
+    },
+    dateChip: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: borderRadius.sm,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginRight: spacing.sm,
+    },
+    dateChipActive: {
+      backgroundColor: colors.amberSubtle,
+      borderColor: colors.amber,
+    },
+    dateText: {
+      color: colors.textSecondary,
+      fontSize: fontSize.sm,
+    },
+    dateTextActive: {
+      color: colors.amber,
+      fontWeight: '600',
+    },
+    noSlots: {
+      color: colors.textMuted,
+      fontSize: fontSize.sm,
+      marginTop: spacing.sm,
+    },
+    slotsGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+    },
+    slotChip: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: borderRadius.sm,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    slotChipActive: {
+      backgroundColor: colors.amber,
+      borderColor: colors.amber,
+    },
+    slotText: {
+      color: colors.textSecondary,
+      fontSize: fontSize.sm,
+    },
+    slotTextActive: {
+      color: colors.background,
+      fontWeight: '600',
+    },
+  }), [colors]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -104,69 +172,3 @@ export default function SlotPicker({ profileId, serviceId, onSelect }: SlotPicke
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginTop: spacing.md,
-  },
-  title: {
-    color: colors.text,
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    marginBottom: spacing.sm,
-  },
-  dateScroll: {
-    flexGrow: 0,
-  },
-  dateChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginRight: spacing.sm,
-  },
-  dateChipActive: {
-    backgroundColor: colors.amberSubtle,
-    borderColor: colors.amber,
-  },
-  dateText: {
-    color: colors.textSecondary,
-    fontSize: fontSize.sm,
-  },
-  dateTextActive: {
-    color: colors.amber,
-    fontWeight: '600',
-  },
-  noSlots: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-    marginTop: spacing.sm,
-  },
-  slotsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  slotChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  slotChipActive: {
-    backgroundColor: colors.amber,
-    borderColor: colors.amber,
-  },
-  slotText: {
-    color: colors.textSecondary,
-    fontSize: fontSize.sm,
-  },
-  slotTextActive: {
-    color: colors.background,
-    fontWeight: '600',
-  },
-});

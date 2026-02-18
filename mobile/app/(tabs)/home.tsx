@@ -10,10 +10,12 @@ import {
   ScrollView,
   RefreshControl,
   TextInput,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
-import { colors, fontSize, spacing, borderRadius } from '../../lib/theme';
+import { fontSize, spacing, borderRadius } from '../../lib/theme';
+import { useThemeColors } from '../../lib/ThemeContext';
 import { useAuth } from '../../lib/auth';
 import api from '../../lib/api';
 import { Profile, Service } from '../../lib/types';
@@ -33,6 +35,7 @@ type ScreenState = 'directory' | 'professionals' | 'profile';
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const colors = useThemeColors();
   const [profiles, setProfiles] = useState<ProfileWithServices[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -53,6 +56,236 @@ export default function HomeScreen() {
   const [clientPhone, setClientPhone] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
 
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.md,
+    },
+    title: {
+      fontSize: fontSize.xxl,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    subtitle: {
+      fontSize: fontSize.xs,
+      color: colors.amber,
+      marginTop: spacing.sm,
+      textTransform: 'uppercase',
+      letterSpacing: 1.5,
+      opacity: 0.7,
+    },
+    backBtn: {
+      color: colors.amber,
+      fontSize: fontSize.md,
+      fontWeight: '600',
+      paddingVertical: spacing.sm,
+    },
+    searchContainer: {
+      paddingHorizontal: spacing.xl,
+      marginTop: spacing.md,
+    },
+    searchInput: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md - 2,
+      fontSize: fontSize.md,
+      color: colors.text,
+    },
+    directoryList: {
+      paddingTop: spacing.md,
+      paddingBottom: spacing.xxl,
+    },
+    categoryHeader: {
+      backgroundColor: colors.amberWash,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.sm + 2,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.glassBorder,
+    },
+    categoryText: {
+      color: colors.amber,
+      fontSize: fontSize.xs,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: 1.5,
+    },
+    professionRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.glassBorder,
+    },
+    professionText: {
+      color: colors.text,
+      fontSize: fontSize.md,
+      flex: 1,
+    },
+    professionRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    countBadge: {
+      backgroundColor: colors.amberSubtle,
+      paddingHorizontal: spacing.sm + 2,
+      paddingVertical: 2,
+      borderRadius: 10,
+      minWidth: 24,
+      alignItems: 'center',
+    },
+    countText: {
+      color: colors.amber,
+      fontSize: fontSize.xs,
+      fontWeight: '700',
+    },
+    list: {
+      padding: spacing.xl,
+      paddingTop: spacing.md,
+    },
+    proCard: {
+      marginBottom: spacing.md,
+    },
+    proRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    proAvatar: {
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      backgroundColor: colors.amberSubtle,
+      borderWidth: 1.5,
+      borderColor: colors.amber,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    proAvatarImage: {
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      borderWidth: 1.5,
+      borderColor: colors.amber,
+    },
+    proAvatarText: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: colors.amber,
+    },
+    proInfo: {
+      flex: 1,
+      marginLeft: spacing.md,
+    },
+    proName: {
+      fontSize: fontSize.md,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    proBio: {
+      fontSize: fontSize.sm,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    proServices: {
+      fontSize: fontSize.xs,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    proArrow: {
+      fontSize: 24,
+      color: colors.textMuted,
+      marginLeft: spacing.sm,
+    },
+    profileDetail: {
+      alignItems: 'center',
+      marginBottom: spacing.lg,
+      paddingVertical: spacing.xl,
+    },
+    profileAvatar: {
+      width: 70,
+      height: 70,
+      borderRadius: 35,
+      backgroundColor: colors.amberSubtle,
+      borderWidth: 2,
+      borderColor: colors.amber,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: spacing.md,
+    },
+    profileAvatarImage: {
+      width: 70,
+      height: 70,
+      borderRadius: 35,
+      borderWidth: 2,
+      borderColor: colors.amber,
+      marginBottom: spacing.md,
+    },
+    profileAvatarText: {
+      fontSize: 28,
+      fontWeight: '700',
+      color: colors.amber,
+    },
+    profileDetailName: {
+      fontSize: fontSize.xl,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    profileDetailProfession: {
+      fontSize: fontSize.md,
+      color: colors.amber,
+      marginTop: spacing.xs,
+    },
+    profileDetailBio: {
+      fontSize: fontSize.sm,
+      color: colors.textSecondary,
+      marginTop: spacing.sm,
+      textAlign: 'center',
+    },
+    servicesCount: {
+      fontSize: fontSize.sm,
+      color: colors.textMuted,
+      fontWeight: '600',
+      marginTop: spacing.md,
+    },
+    empty: {
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: spacing.xxl,
+      fontSize: fontSize.md,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      justifyContent: 'flex-end',
+    },
+    modalContent: {
+      backgroundColor: colors.background,
+      borderTopLeftRadius: borderRadius.xl,
+      borderTopRightRadius: borderRadius.xl,
+      padding: spacing.xl,
+      maxHeight: '90%',
+    },
+    modalTitle: {
+      fontSize: fontSize.xl,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: spacing.lg,
+    },
+    modalActions: {
+      marginTop: spacing.xl,
+      marginBottom: spacing.lg,
+    },
+  }), [colors]);
+
   useFocusEffect(
     useCallback(() => {
       fetchProfiles();
@@ -62,7 +295,7 @@ export default function HomeScreen() {
   async function fetchProfiles() {
     setLoading(true);
     try {
-      const { data } = await api.get('/api/profiles');
+      const { data } = await api.get('/api/profiles/directory');
       const list: ProfileWithServices[] = Array.isArray(data) ? data : data.profiles || [];
       setProfiles(list);
     } catch {
@@ -72,13 +305,11 @@ export default function HomeScreen() {
     }
   }
 
-  // Get professions that actually have registered professionals
   const existingProfessions = useMemo(() => {
     const profSet = new Set(profiles.map((p) => p.profession).filter((p): p is string => !!p));
     return profSet;
   }, [profiles]);
 
-  // Group into categories, only show categories that have at least one registered professional
   const availableCategories = useMemo(() => {
     return PROFESSION_CATEGORIES
       .map((cat) => ({
@@ -88,13 +319,11 @@ export default function HomeScreen() {
       .filter((cat) => cat.professions.length > 0);
   }, [existingProfessions]);
 
-  // Also include professions not in our predefined list (custom ones from backend)
   const uncategorizedProfessions = useMemo(() => {
     const allPredefined = new Set(PROFESSION_CATEGORIES.flatMap((c) => c.professions));
     return [...existingProfessions].filter((p): p is string => !allPredefined.has(p));
   }, [existingProfessions]);
 
-  // Filter categories by search
   const filteredCategories = useMemo(() => {
     if (!search.trim()) return availableCategories;
     const q = search.toLowerCase();
@@ -114,7 +343,6 @@ export default function HomeScreen() {
     return uncategorizedProfessions.filter((p) => p.toLowerCase().includes(q));
   }, [uncategorizedProfessions, search]);
 
-  // Professionals for selected profession
   const professionalsForProfession = useMemo(() => {
     return profiles.filter((p) => p.profession === selectedProfession);
   }, [profiles, selectedProfession]);
@@ -174,7 +402,7 @@ export default function HomeScreen() {
     }
   }
 
-  // ─── SCREEN: Profile detail ───
+  // Profile detail screen
   if (screen === 'profile' && selectedProfile) {
     const activeServices = (selectedProfile.services || []).filter((s) => s.isActive);
     return (
@@ -190,11 +418,15 @@ export default function HomeScreen() {
           keyExtractor={(item) => item.id}
           ListHeaderComponent={
             <Card style={styles.profileDetail}>
-              <View style={styles.profileAvatar}>
-                <Text style={styles.profileAvatarText}>
-                  {(selectedProfile.title || selectedProfile.slug).charAt(0).toUpperCase()}
-                </Text>
-              </View>
+              {selectedProfile.avatar ? (
+                <Image source={{ uri: selectedProfile.avatar }} style={styles.profileAvatarImage} />
+              ) : (
+                <View style={styles.profileAvatar}>
+                  <Text style={styles.profileAvatarText}>
+                    {(selectedProfile.title || selectedProfile.slug).charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
               <Text style={styles.profileDetailName}>{selectedProfile.title || selectedProfile.slug}</Text>
               {selectedProfile.profession && (
                 <Text style={styles.profileDetailProfession}>{selectedProfile.profession}</Text>
@@ -269,7 +501,7 @@ export default function HomeScreen() {
     );
   }
 
-  // ─── SCREEN: Professionals list for a profession ───
+  // Professionals list screen
   if (screen === 'professionals') {
     return (
       <SafeAreaView style={styles.container}>
@@ -292,11 +524,15 @@ export default function HomeScreen() {
               <TouchableOpacity onPress={() => selectProfile(item)} activeOpacity={0.7}>
                 <Card style={styles.proCard}>
                   <View style={styles.proRow}>
-                    <View style={styles.proAvatar}>
-                      <Text style={styles.proAvatarText}>
-                        {(item.title || item.slug).charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
+                    {item.avatar ? (
+                      <Image source={{ uri: item.avatar }} style={styles.proAvatarImage} />
+                    ) : (
+                      <View style={styles.proAvatar}>
+                        <Text style={styles.proAvatarText}>
+                          {(item.title || item.slug).charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
                     <View style={styles.proInfo}>
                       <Text style={styles.proName}>{item.title || item.slug}</Text>
                       {item.bio ? (
@@ -321,7 +557,7 @@ export default function HomeScreen() {
     );
   }
 
-  // ─── SCREEN: Directory (categories & professions) ───
+  // Directory screen
   const directoryData: { type: 'category' | 'profession' | 'uncategorized'; label: string; count?: number }[] = [];
   filteredCategories.forEach((cat) => {
     directoryData.push({ type: 'category', label: cat.category });
@@ -401,224 +637,3 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-  },
-  title: {
-    fontSize: fontSize.xxl,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  subtitle: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
-  backBtn: {
-    color: colors.amber,
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    paddingVertical: spacing.sm,
-  },
-
-  // Search
-  searchContainer: {
-    paddingHorizontal: spacing.xl,
-    marginTop: spacing.md,
-  },
-  searchInput: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md - 2,
-    fontSize: fontSize.md,
-    color: colors.text,
-  },
-
-  // Directory
-  directoryList: {
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xxl,
-  },
-  categoryHeader: {
-    backgroundColor: colors.surfaceLight,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.sm + 2,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  categoryText: {
-    color: colors.amber,
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  professionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  professionText: {
-    color: colors.text,
-    fontSize: fontSize.md,
-    flex: 1,
-  },
-  professionRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  countBadge: {
-    backgroundColor: colors.amberSubtle,
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: 2,
-    borderRadius: 10,
-    minWidth: 24,
-    alignItems: 'center',
-  },
-  countText: {
-    color: colors.amber,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-
-  // Professionals list
-  list: {
-    padding: spacing.xl,
-    paddingTop: spacing.md,
-  },
-  proCard: {
-    marginBottom: spacing.md,
-  },
-  proRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  proAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: colors.amberSubtle,
-    borderWidth: 1.5,
-    borderColor: colors.amber,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  proAvatarText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.amber,
-  },
-  proInfo: {
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  proName: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  proBio: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  proServices: {
-    fontSize: fontSize.xs,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  proArrow: {
-    fontSize: 24,
-    color: colors.textMuted,
-    marginLeft: spacing.sm,
-  },
-
-  // Profile detail
-  profileDetail: {
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-    paddingVertical: spacing.xl,
-  },
-  profileAvatar: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: colors.amberSubtle,
-    borderWidth: 2,
-    borderColor: colors.amber,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  profileAvatarText: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.amber,
-  },
-  profileDetailName: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  profileDetailProfession: {
-    fontSize: fontSize.md,
-    color: colors.amber,
-    marginTop: spacing.xs,
-  },
-  profileDetailBio: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    marginTop: spacing.sm,
-    textAlign: 'center',
-  },
-  servicesCount: {
-    fontSize: fontSize.sm,
-    color: colors.textMuted,
-    fontWeight: '600',
-    marginTop: spacing.md,
-  },
-
-  empty: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: spacing.xxl,
-    fontSize: fontSize.md,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    padding: spacing.xl,
-    maxHeight: '90%',
-  },
-  modalTitle: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.lg,
-  },
-  modalActions: {
-    marginTop: spacing.xl,
-    marginBottom: spacing.lg,
-  },
-});

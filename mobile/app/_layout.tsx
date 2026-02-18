@@ -1,26 +1,31 @@
 import { Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '../lib/auth';
-import { colors } from '../lib/theme';
+import { ThemeProvider, useTheme } from '../lib/ThemeContext';
+import FloatingParticles from '../components/FloatingParticles';
+
+function InnerLayout() {
+  const { isDark, colors } = useTheme();
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <Slot />
+      <FloatingParticles />
+    </View>
+  );
+}
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <View style={styles.container}>
-          <StatusBar style="light" />
-          <Slot />
-        </View>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <InnerLayout />
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-});

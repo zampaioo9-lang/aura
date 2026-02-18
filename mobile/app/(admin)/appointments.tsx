@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
-import { colors, fontSize, spacing } from '../../lib/theme';
+import { fontSize, spacing } from '../../lib/theme';
+import { useThemeColors } from '../../lib/ThemeContext';
 import api from '../../lib/api';
 import { Booking } from '../../lib/types';
 import BookingCard from '../../components/BookingCard';
@@ -19,10 +20,44 @@ const FILTER_LABELS: Record<string, string> = {
 };
 
 export default function AppointmentsScreen() {
+  const colors = useThemeColors();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('TODAS');
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.md,
+    },
+    title: {
+      fontSize: fontSize.xxl,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    filters: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+      paddingHorizontal: spacing.xl,
+      marginTop: spacing.md,
+    },
+    list: {
+      padding: spacing.xl,
+      paddingTop: spacing.md,
+    },
+    empty: {
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: spacing.xxl,
+      fontSize: fontSize.md,
+    },
+  }), [colors]);
 
   useFocusEffect(
     useCallback(() => {
@@ -109,36 +144,3 @@ export default function AppointmentsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-  },
-  title: {
-    fontSize: fontSize.xxl,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  filters: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.xl,
-    marginTop: spacing.md,
-  },
-  list: {
-    padding: spacing.xl,
-    paddingTop: spacing.md,
-  },
-  empty: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: spacing.xxl,
-    fontSize: fontSize.md,
-  },
-});

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Card from './ui/Card';
 import Button from './ui/Button';
-import { colors, fontSize, spacing } from '../lib/theme';
+import { fontSize, spacing } from '../lib/theme';
+import { useThemeColors } from '../lib/ThemeContext';
 import { Service } from '../lib/types';
 
 interface ServiceCardProps {
@@ -14,6 +15,48 @@ interface ServiceCardProps {
 }
 
 export default function ServiceCard({ service, onBook, onEdit, onDelete, isAdmin = false }: ServiceCardProps) {
+  const colors = useThemeColors();
+
+  const styles = useMemo(() => StyleSheet.create({
+    card: {
+      marginBottom: spacing.md,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing.xs,
+    },
+    name: {
+      color: colors.text,
+      fontSize: fontSize.md,
+      fontWeight: '600',
+      flex: 1,
+    },
+    price: {
+      color: colors.amber,
+      fontSize: fontSize.md,
+      fontWeight: '700',
+    },
+    description: {
+      color: colors.textSecondary,
+      fontSize: fontSize.sm,
+      marginBottom: spacing.xs,
+    },
+    duration: {
+      color: colors.textMuted,
+      fontSize: fontSize.xs,
+    },
+    actions: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginTop: spacing.sm,
+    },
+    actionBtn: {
+      flex: 1,
+    },
+  }), [colors]);
+
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
@@ -42,43 +85,3 @@ export default function ServiceCard({ service, onBook, onEdit, onDelete, isAdmin
     </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    marginBottom: spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  name: {
-    color: colors.text,
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    flex: 1,
-  },
-  price: {
-    color: colors.amber,
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
-  description: {
-    color: colors.textSecondary,
-    fontSize: fontSize.sm,
-    marginBottom: spacing.xs,
-  },
-  duration: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  actionBtn: {
-    flex: 1,
-  },
-});

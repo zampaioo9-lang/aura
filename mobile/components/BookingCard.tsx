@@ -1,17 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Card from './ui/Card';
 import Button from './ui/Button';
-import { colors, fontSize, spacing } from '../lib/theme';
+import { fontSize, spacing } from '../lib/theme';
+import { useThemeColors } from '../lib/ThemeContext';
 import { Booking } from '../lib/types';
-
-const statusColors: Record<string, string> = {
-  PENDING: colors.warning,
-  CONFIRMED: colors.info,
-  CANCELLED: colors.textMuted,
-  COMPLETED: colors.success,
-  NO_SHOW: colors.error,
-};
 
 const statusLabels: Record<string, string> = {
   PENDING: 'Pendiente',
@@ -38,6 +31,76 @@ export default function BookingCard({
   onNoShow,
   showActions = false,
 }: BookingCardProps) {
+  const colors = useThemeColors();
+
+  const statusColors: Record<string, string> = useMemo(() => ({
+    PENDING: colors.warning,
+    CONFIRMED: colors.info,
+    CANCELLED: colors.textMuted,
+    COMPLETED: colors.success,
+    NO_SHOW: colors.error,
+  }), [colors]);
+
+  const styles = useMemo(() => StyleSheet.create({
+    card: {
+      marginBottom: spacing.md,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: spacing.sm,
+    },
+    headerLeft: {
+      flex: 1,
+    },
+    serviceName: {
+      color: colors.text,
+      fontSize: fontSize.md,
+      fontWeight: '600',
+    },
+    clientName: {
+      color: colors.textSecondary,
+      fontSize: fontSize.sm,
+      marginTop: 2,
+    },
+    badge: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 2,
+      borderRadius: 6,
+    },
+    badgeText: {
+      fontSize: fontSize.xs,
+      fontWeight: '600',
+    },
+    details: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: spacing.xs,
+    },
+    detailText: {
+      color: colors.textSecondary,
+      fontSize: fontSize.sm,
+    },
+    detailDot: {
+      color: colors.textMuted,
+      marginHorizontal: spacing.sm,
+    },
+    email: {
+      color: colors.textMuted,
+      fontSize: fontSize.xs,
+      marginBottom: spacing.sm,
+    },
+    actions: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginTop: spacing.sm,
+    },
+    actionBtn: {
+      flex: 1,
+    },
+  }), [colors]);
+
   const date = new Date(booking.date).toLocaleDateString('es-ES', {
     weekday: 'short',
     day: 'numeric',
@@ -91,63 +154,3 @@ export default function BookingCard({
     </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    marginBottom: spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  serviceName: {
-    color: colors.text,
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  clientName: {
-    color: colors.textSecondary,
-    fontSize: fontSize.sm,
-    marginTop: 2,
-  },
-  badge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  badgeText: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  details: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  detailText: {
-    color: colors.textSecondary,
-    fontSize: fontSize.sm,
-  },
-  detailDot: {
-    color: colors.textMuted,
-    marginHorizontal: spacing.sm,
-  },
-  email: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    marginBottom: spacing.sm,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  actionBtn: {
-    flex: 1,
-  },
-});

@@ -1,21 +1,55 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
-import { colors, fontSize, spacing } from '../../lib/theme';
+import { fontSize, spacing } from '../../lib/theme';
+import { useThemeColors } from '../../lib/ThemeContext';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 
 export default function RegisterScreen() {
   const { register } = useAuth();
   const router = useRouter();
+  const colors = useThemeColors();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scroll: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      paddingHorizontal: spacing.xl,
+    },
+    title: {
+      fontSize: fontSize.xxl,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: spacing.xs,
+    },
+    subtitle: {
+      fontSize: fontSize.sm,
+      color: colors.amber,
+      marginBottom: spacing.xl,
+      textTransform: 'uppercase',
+      letterSpacing: 1.5,
+      opacity: 0.7,
+    },
+    error: {
+      color: colors.error,
+      fontSize: fontSize.sm,
+      marginBottom: spacing.md,
+      textAlign: 'center',
+    },
+  }), [colors]);
 
   async function handleRegister() {
     if (!name || !email || !password) {
@@ -99,32 +133,3 @@ export default function RegisterScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  title: {
-    fontSize: fontSize.xxl,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-    marginBottom: spacing.xl,
-  },
-  error: {
-    color: colors.error,
-    fontSize: fontSize.sm,
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  },
-});

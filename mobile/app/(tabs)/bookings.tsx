@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
-import { colors, fontSize, spacing } from '../../lib/theme';
+import { fontSize, spacing } from '../../lib/theme';
+import { useThemeColors } from '../../lib/ThemeContext';
 import { useAuth } from '../../lib/auth';
 import api from '../../lib/api';
 import { Booking } from '../../lib/types';
@@ -20,10 +21,53 @@ const FILTER_LABELS: Record<string, string> = {
 
 export default function BookingsScreen() {
   const { user } = useAuth();
+  const colors = useThemeColors();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('TODAS');
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.md,
+    },
+    title: {
+      fontSize: fontSize.xxl,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    subtitle: {
+      fontSize: fontSize.xs,
+      color: colors.amber,
+      marginTop: spacing.sm,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: 1.5,
+      opacity: 0.7,
+    },
+    filters: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+      paddingHorizontal: spacing.xl,
+      marginTop: spacing.md,
+    },
+    list: {
+      padding: spacing.xl,
+      paddingTop: spacing.md,
+    },
+    empty: {
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: spacing.xxl,
+      fontSize: fontSize.md,
+    },
+  }), [colors]);
 
   useFocusEffect(
     useCallback(() => {
@@ -68,6 +112,7 @@ export default function BookingsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Mis Reservas</Text>
+        <Text style={styles.subtitle}>TUS CITAS AGENDADAS</Text>
       </View>
 
       <View style={styles.filters}>
@@ -112,36 +157,3 @@ export default function BookingsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-  },
-  title: {
-    fontSize: fontSize.xxl,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  filters: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.xl,
-    marginTop: spacing.md,
-  },
-  list: {
-    padding: spacing.xl,
-    paddingTop: spacing.md,
-  },
-  empty: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: spacing.xxl,
-    fontSize: fontSize.md,
-  },
-});

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
-import { colors, fontSize, spacing, borderRadius } from '../../lib/theme';
+import { fontSize, spacing, borderRadius } from '../../lib/theme';
+import { useThemeColors } from '../../lib/ThemeContext';
 import { useAuth } from '../../lib/auth';
 import api from '../../lib/api';
 import { AvailabilitySlot } from '../../lib/types';
@@ -22,6 +23,7 @@ const DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', '
 
 export default function AvailabilityScreen() {
   const { profileId } = useAuth();
+  const colors = useThemeColors();
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -30,6 +32,117 @@ export default function AvailabilityScreen() {
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('18:00');
   const [saving, setSaving] = useState(false);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.md,
+      marginBottom: spacing.md,
+    },
+    title: {
+      fontSize: fontSize.xxl,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    subtitle: {
+      fontSize: fontSize.sm,
+      color: colors.textSecondary,
+      marginTop: spacing.xs,
+    },
+    formCard: {
+      marginHorizontal: spacing.xl,
+      marginBottom: spacing.lg,
+    },
+    formTitle: {
+      fontSize: fontSize.lg,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: spacing.md,
+    },
+    label: {
+      color: colors.textSecondary,
+      fontSize: fontSize.sm,
+      marginBottom: spacing.sm,
+      fontWeight: '500',
+    },
+    daysGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+      marginBottom: spacing.md,
+    },
+    dayChip: {
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: borderRadius.sm,
+      backgroundColor: colors.surfaceLight,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    dayChipActive: {
+      backgroundColor: colors.amberSubtle,
+      borderColor: colors.amber,
+    },
+    dayText: {
+      color: colors.textSecondary,
+      fontSize: fontSize.sm,
+    },
+    dayTextActive: {
+      color: colors.amber,
+      fontWeight: '600',
+    },
+    timeRow: {
+      flexDirection: 'row',
+      gap: spacing.md,
+    },
+    timeCol: {
+      flex: 1,
+    },
+    slotsSection: {
+      paddingHorizontal: spacing.xl,
+      paddingBottom: spacing.xxl,
+    },
+    sectionTitle: {
+      fontSize: fontSize.lg,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: spacing.md,
+    },
+    dayCard: {
+      marginBottom: spacing.md,
+    },
+    dayTitle: {
+      fontSize: fontSize.md,
+      fontWeight: '600',
+      color: colors.amber,
+      marginBottom: spacing.sm,
+    },
+    slotRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: spacing.xs,
+    },
+    slotTime: {
+      color: colors.text,
+      fontSize: fontSize.md,
+    },
+    deleteText: {
+      color: colors.error,
+      fontSize: fontSize.sm,
+      fontWeight: '600',
+    },
+    empty: {
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: spacing.lg,
+      fontSize: fontSize.md,
+    },
+  }), [colors]);
 
   useFocusEffect(
     useCallback(() => {
@@ -112,7 +225,6 @@ export default function AvailabilityScreen() {
           <Text style={styles.subtitle}>Configura tus horarios semanales</Text>
         </View>
 
-        {/* Add slot form */}
         <Card style={styles.formCard}>
           <Text style={styles.formTitle}>Agregar horario</Text>
 
@@ -153,7 +265,6 @@ export default function AvailabilityScreen() {
           <Button title="Agregar" onPress={handleSave} loading={saving} />
         </Card>
 
-        {/* Current slots by day */}
         <View style={styles.slotsSection}>
           <Text style={styles.sectionTitle}>Horarios actuales</Text>
           {DAYS.map((day, i) => {
@@ -183,114 +294,3 @@ export default function AvailabilityScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    marginBottom: spacing.md,
-  },
-  title: {
-    fontSize: fontSize.xxl,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  subtitle: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
-  formCard: {
-    marginHorizontal: spacing.xl,
-    marginBottom: spacing.lg,
-  },
-  formTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  label: {
-    color: colors.textSecondary,
-    fontSize: fontSize.sm,
-    marginBottom: spacing.sm,
-    fontWeight: '500',
-  },
-  daysGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  dayChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.surfaceLight,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  dayChipActive: {
-    backgroundColor: colors.amberSubtle,
-    borderColor: colors.amber,
-  },
-  dayText: {
-    color: colors.textSecondary,
-    fontSize: fontSize.sm,
-  },
-  dayTextActive: {
-    color: colors.amber,
-    fontWeight: '600',
-  },
-  timeRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  timeCol: {
-    flex: 1,
-  },
-  slotsSection: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xxl,
-  },
-  sectionTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  dayCard: {
-    marginBottom: spacing.md,
-  },
-  dayTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    color: colors.amber,
-    marginBottom: spacing.sm,
-  },
-  slotRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-  },
-  slotTime: {
-    color: colors.text,
-    fontSize: fontSize.md,
-  },
-  deleteText: {
-    color: colors.error,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  empty: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: spacing.lg,
-    fontSize: fontSize.md,
-  },
-});

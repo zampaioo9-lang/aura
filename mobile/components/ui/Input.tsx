@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, TextInputProps } from 'react-native';
-import { colors, borderRadius, fontSize, spacing } from '../../lib/theme';
+import React, { useState, useMemo } from 'react';
+import { View, TextInput, Text, StyleSheet, TextInputProps, Platform } from 'react-native';
+import { borderRadius, fontSize, spacing } from '../../lib/theme';
+import { useThemeColors } from '../../lib/ThemeContext';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -9,6 +10,51 @@ interface InputProps extends TextInputProps {
 
 export default function Input({ label, error, style, ...props }: InputProps) {
   const [focused, setFocused] = useState(false);
+  const colors = useThemeColors();
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      marginBottom: spacing.md,
+    },
+    label: {
+      color: colors.textSecondary,
+      fontSize: fontSize.sm,
+      marginBottom: spacing.xs,
+      fontWeight: '500',
+    },
+    input: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: borderRadius.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md - 2,
+      fontSize: fontSize.md,
+      color: colors.text,
+    },
+    inputFocused: {
+      borderColor: colors.amber,
+      ...Platform.select({
+        ios: {
+          shadowColor: colors.amber,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.2,
+          shadowRadius: 8,
+        },
+        android: {
+          elevation: 4,
+        },
+      }),
+    },
+    inputError: {
+      borderColor: colors.error,
+    },
+    error: {
+      color: colors.error,
+      fontSize: fontSize.xs,
+      marginTop: spacing.xs,
+    },
+  }), [colors]);
 
   return (
     <View style={styles.container}>
@@ -29,36 +75,3 @@ export default function Input({ label, error, style, ...props }: InputProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.md,
-  },
-  label: {
-    color: colors.textSecondary,
-    fontSize: fontSize.sm,
-    marginBottom: spacing.xs,
-    fontWeight: '500',
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md - 2,
-    fontSize: fontSize.md,
-    color: colors.text,
-  },
-  inputFocused: {
-    borderColor: colors.amber,
-  },
-  inputError: {
-    borderColor: colors.error,
-  },
-  error: {
-    color: colors.error,
-    fontSize: fontSize.xs,
-    marginTop: spacing.xs,
-  },
-});
