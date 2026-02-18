@@ -6,6 +6,7 @@ import { User } from './types';
 interface AuthState {
   user: User | null;
   profileId: string | null;
+  avatar: string | null;
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthState>({} as AuthState);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -37,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const p = profileRes.data;
       if (p?.id) {
         setProfileId(p.id);
+        setAvatar(p.avatar || null);
       }
     } catch {}
   }
@@ -76,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null);
     setUser(null);
     setProfileId(null);
+    setAvatar(null);
   }
 
   async function refreshUser() {
@@ -85,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profileId, token, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, profileId, avatar, token, loading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
