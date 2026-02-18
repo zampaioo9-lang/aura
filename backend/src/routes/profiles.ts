@@ -83,6 +83,23 @@ router.get('/check-username/:username', async (req, res, next) => {
   }
 });
 
+// GET /api/profiles/directory - list all published profiles (public)
+router.get('/directory', async (_req, res, next) => {
+  try {
+    const profiles = await prisma.profile.findMany({
+      where: { published: true },
+      include: {
+        services: { where: { isActive: true } },
+        user: { select: { name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(profiles);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/profiles - create profile (protected)
 router.post('/', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
