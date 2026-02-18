@@ -20,6 +20,7 @@ router.get('/stats', async (_req, res, next) => {
       bookingsByStatus,
       newUsersThisMonth,
       totalNotifications,
+      uniqueClients,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.profile.count(),
@@ -33,6 +34,10 @@ router.get('/stats', async (_req, res, next) => {
         },
       }),
       prisma.notification.count({ where: { status: 'SENT' } }),
+      prisma.booking.findMany({
+        distinct: ['clientEmail'],
+        select: { clientEmail: true },
+      }),
     ]);
 
     const statusMap = Object.fromEntries(
@@ -42,6 +47,7 @@ router.get('/stats', async (_req, res, next) => {
     res.json({
       users: { total: totalUsers, newThisMonth: newUsersThisMonth },
       profiles: { total: totalProfiles },
+      clients: { total: uniqueClients.length },
       bookings: {
         total: totalBookings,
         pending: statusMap['PENDING'] || 0,

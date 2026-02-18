@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, CalendarCheck, LayoutGrid, Bell, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, CalendarCheck, LayoutGrid, Bell, Search, ChevronLeft, ChevronRight, UserCheck } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 interface Stats {
   users: { total: number; newThisMonth: number };
   profiles: { total: number };
+  clients: { total: number };
   bookings: {
     total: number;
     pending: number;
@@ -107,17 +108,25 @@ export default function AdminPanel() {
             ))}
           </div>
         ) : stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <StatCard
               icon={<Users className="w-5 h-5 text-indigo-600" />}
-              label="Usuarios"
-              value={stats.users.total}
+              label="Profesionales"
               sub={`+${stats.users.newThisMonth} este mes`}
+              value={stats.users.total}
               color="bg-indigo-50"
+              tooltip="Usuarios registrados con cuenta en Aura"
+            />
+            <StatCard
+              icon={<UserCheck className="w-5 h-5 text-sky-600" />}
+              label="Clientes únicos"
+              value={stats.clients.total}
+              color="bg-sky-50"
+              tooltip="Personas que hicieron al menos una reserva"
             />
             <StatCard
               icon={<LayoutGrid className="w-5 h-5 text-purple-600" />}
-              label="Perfiles"
+              label="Perfiles publicados"
               value={stats.profiles.total}
               color="bg-purple-50"
             />
@@ -207,11 +216,17 @@ export default function AdminPanel() {
                         <p className="font-medium text-gray-900">{u.name}</p>
                         <p className="text-gray-400 text-xs">{u.email}</p>
                       </td>
-                      <td className="px-5 py-3 text-gray-500">{u.phone || '—'}</td>
+                      <td className="px-5 py-3 text-gray-500 text-xs">{u.phone || '—'}</td>
                       <td className="px-5 py-3 text-center">
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-50 text-indigo-700 font-semibold text-xs">
-                          {u._count.profiles}
-                        </span>
+                        {u._count.profiles > 0 ? (
+                          <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
+                            Profesional ({u._count.profiles})
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 bg-gray-100 text-gray-400 text-xs rounded-full">
+                            Sin perfil
+                          </span>
+                        )}
                       </td>
                       <td className="px-5 py-3 text-center">
                         <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-50 text-emerald-700 font-semibold text-xs">
@@ -264,16 +279,17 @@ export default function AdminPanel() {
 }
 
 function StatCard({
-  icon, label, value, sub, color,
+  icon, label, value, sub, color, tooltip,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
   sub?: string;
   color: string;
+  tooltip?: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
+    <div className="bg-white rounded-xl border border-gray-200 p-5" title={tooltip}>
       <div className={`inline-flex p-2 rounded-lg ${color} mb-3`}>{icon}</div>
       <p className="text-2xl font-bold text-gray-900">{value}</p>
       <p className="text-sm text-gray-500 mt-0.5">{label}</p>
