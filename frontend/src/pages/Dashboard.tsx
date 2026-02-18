@@ -111,11 +111,9 @@ export default function Dashboard() {
                   <Link to="/dashboard/availability" className="text-sm px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors inline-flex items-center gap-1">
                     <Clock className="h-3 w-3" /> Horarios
                   </Link>
-                  {p.published && (
-                    <Link to={`/${p.slug}`} className="text-sm px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors inline-flex items-center gap-1">
-                      Ver <ExternalLink className="h-3 w-3" />
-                    </Link>
-                  )}
+                  <Link to={`/${p.slug}`} className="text-sm px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors inline-flex items-center gap-1">
+                    Ver <ExternalLink className="h-3 w-3" />
+                  </Link>
                 </div>
               </div>
             ))}

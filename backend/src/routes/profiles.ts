@@ -105,9 +105,18 @@ router.post('/', authMiddleware, async (req: AuthRequest, res, next) => {
   }
 });
 
-// GET /api/profiles/:slug (public)
-router.get('/:slug', async (req, res, next) => {
+// GET /api/profiles/:slug (public, owner can view unpublished)
+router.get('/:slug', async (req: AuthRequest, res, next) => {
   try {
+    // Optional auth: try to identify the user but don't require it
+    let userId: string | undefined;
+    const header = req.headers.authorization;
+    if (header?.startsWith('Bearer ')) {
+      const { verifyToken } = require('../services/authService');
+      const payload = verifyToken(header.slice(7));
+      if (payload) userId = payload.userId;
+    }
+
     const profile = await prisma.profile.findUnique({
       where: { slug: req.params.slug },
       include: {
@@ -119,7 +128,9 @@ router.get('/:slug', async (req, res, next) => {
         },
       },
     });
-    if (!profile || !profile.published) throw new AppError(404, 'Profile not found');
+
+    const isOwner = profile && userId && profile.userId === userId;
+    if (!profile || (!profile.published && !isOwner)) throw new AppError(404, 'Profile not found');
     res.json(profile);
   } catch (err) {
     next(err);
