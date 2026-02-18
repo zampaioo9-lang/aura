@@ -18,8 +18,12 @@ export async function sendWhatsApp(to: string, message: string): Promise<WhatsAp
   }
 
   try {
+    const from = env.TWILIO_WHATSAPP_NUMBER.startsWith('whatsapp:')
+      ? env.TWILIO_WHATSAPP_NUMBER
+      : `whatsapp:${env.TWILIO_WHATSAPP_NUMBER}`;
+
     const result = await client.messages.create({
-      from: env.TWILIO_WHATSAPP_NUMBER,
+      from,
       to: `whatsapp:${to}`,
       body: message,
     });
