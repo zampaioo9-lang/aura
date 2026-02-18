@@ -10,6 +10,7 @@ import bookingRoutes from './routes/bookings';
 import templateRoutes from './routes/templates';
 import uploadRoutes from './routes/upload';
 import availabilityRoutes from './routes/availability';
+import adminRoutes from './routes/admin';
 import { startReminderJob } from './jobs/reminderJob';
 import { sendWhatsApp } from './services/whatsappService';
 
@@ -29,6 +30,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/availability', availabilityRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
