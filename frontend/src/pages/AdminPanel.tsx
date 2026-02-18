@@ -47,6 +47,7 @@ export default function AdminPanel() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(true);
 
@@ -202,21 +203,27 @@ export default function AdminPanel() {
                 <thead>
                   <tr className="text-xs text-gray-500 border-b border-gray-100">
                     <th className="text-left px-5 py-3 font-medium">Usuario</th>
-                    <th className="text-left px-5 py-3 font-medium">Teléfono</th>
-                    <th className="text-center px-5 py-3 font-medium">Perfiles</th>
-                    <th className="text-center px-5 py-3 font-medium">Reservas</th>
                     <th className="text-left px-5 py-3 font-medium">Registro</th>
+                    <th className="text-center px-5 py-3 font-medium">Tipo</th>
+                    <th className="text-center px-5 py-3 font-medium">Reservas</th>
                     <th className="text-center px-5 py-3 font-medium">Rol</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {users.map(u => (
-                    <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={u.id}
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => setExpandedUser(expandedUser === u.id ? null : u.id)}
+                    >
                       <td className="px-5 py-3">
                         <p className="font-medium text-gray-900">{u.name}</p>
                         <p className="text-gray-400 text-xs">{u.email}</p>
+                        {u.phone && <p className="text-gray-400 text-xs">{u.phone}</p>}
                       </td>
-                      <td className="px-5 py-3 text-gray-500 text-xs">{u.phone || '—'}</td>
+                      <td className="px-5 py-3 text-gray-400 text-xs">
+                        {new Date(u.createdAt).toLocaleDateString('es-ES')}
+                      </td>
                       <td className="px-5 py-3 text-center">
                         {u._count.profiles > 0 ? (
                           <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
@@ -233,9 +240,6 @@ export default function AdminPanel() {
                           {u._count.professionalBookings}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-gray-400 text-xs">
-                        {new Date(u.createdAt).toLocaleDateString('es-ES')}
-                      </td>
                       <td className="px-5 py-3 text-center">
                         {u.isAdmin ? (
                           <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium">Admin</span>
@@ -244,6 +248,30 @@ export default function AdminPanel() {
                         )}
                       </td>
                     </tr>
+                    {expandedUser === u.id && u.profiles.length > 0 && (
+                      <tr className="bg-indigo-50/40">
+                        <td colSpan={5} className="px-5 py-3">
+                          <p className="text-xs font-semibold text-gray-500 mb-2">Perfiles</p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {u.profiles.map(p => (
+                              <div key={p.id} className="bg-white rounded-lg border border-gray-200 px-4 py-2 flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">{p.title}</p>
+                                  <p className="text-xs text-gray-400">/{p.slug}</p>
+                                </div>
+                                <div className="flex items-center gap-3 text-xs text-gray-500">
+                                  <span>{p._count.services} servicios</span>
+                                  <span>{p._count.bookings} reservas</span>
+                                  <span className={p.published ? 'text-green-600 font-medium' : 'text-gray-400'}>
+                                    {p.published ? 'Publicado' : 'Borrador'}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   ))}
                 </tbody>
               </table>
