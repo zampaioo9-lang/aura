@@ -76,18 +76,8 @@ export default function Landing() {
           Plataforma profesional todo-en-uno
         </div>
 
-        <h1 className="animate-fade-up-delay-2 font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight mb-8">
-          <span className="text-white">Tu presencia</span>
-          <br />
-          <span className="relative inline-block">
-            <span className="bg-gradient-to-r from-amber-glow via-amber-soft to-amber-glow bg-clip-text text-transparent">
-              profesional
-            </span>
-            {/* Underline glow */}
-            <span className="absolute -bottom-2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-glow/50 to-transparent" />
-          </span>
-          <br />
-          <span className="text-white/40 italic font-display">empieza aqui.</span>
+        <h1 className="animate-fade-up-delay-2 font-body text-base text-[#a0a0b0] font-normal text-center mb-8">
+          Tu presencia profesional empieza aqui
         </h1>
 
         <p className="animate-fade-up-delay-3 text-lg md:text-xl text-white/40 max-w-2xl mx-auto mb-12 font-light leading-relaxed">
