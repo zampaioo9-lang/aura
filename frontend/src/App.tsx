@@ -11,6 +11,7 @@ import PublicProfile from './pages/PublicProfile';
 import BookingPage from './pages/BookingPage';
 import ServicesDashboard from './pages/ServicesDashboard';
 import AvailabilityDashboard from './pages/AvailabilityDashboard';
+import AdminPanel from './pages/AdminPanel';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -34,6 +35,7 @@ function App() {
             <Route path="/profile/edit/:id" element={<ProtectedRoute><ProfileEditor /></ProtectedRoute>} />
             <Route path="/profile/new" element={<ProtectedRoute><ProfileEditor /></ProtectedRoute>} />
             <Route path="/profile/create" element={<ProtectedRoute><ProfileCreate /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
             <Route path="/book/:slug" element={<BookingPage />} />
             <Route path="/:slug" element={<PublicProfile />} />
           </Routes>
