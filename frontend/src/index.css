@@ -1,19 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: 'DM Serif Display', serif;
-  --font-body: 'Outfit', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-hero: 'Space Grotesk', sans-serif;
 
-  --color-aura-950: #0a0b14;
+  --color-aura-950: #131217;
   --color-aura-900: #0f1120;
   --color-aura-800: #161833;
   --color-aura-700: #1e2146;
   --color-aura-600: #2a2d5a;
 
-  --color-amber-glow: #f0a830;
-  --color-amber-soft: #f5c96a;
-  --color-amber-wash: rgba(240, 168, 48, 0.08);
-  --color-amber-wash-strong: rgba(240, 168, 48, 0.15);
+  --color-amber-glow: rgb(78, 56, 245);
+  --color-amber-soft: rgb(148, 133, 249);
+  --color-amber-wash: rgba(78, 56, 245, 0.08);
+  --color-amber-wash-strong: rgba(78, 56, 245, 0.15);
 
   --animate-fade-up: fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-fade-up-delay-1: fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
@@ -88,7 +89,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   background-color: var(--color-aura-950);
 }
 

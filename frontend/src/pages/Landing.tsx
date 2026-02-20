@@ -30,18 +30,31 @@ export default function Landing() {
       {/* ─── Ambient Background ─── */}
       <div className="fixed inset-0 pointer-events-none" aria-hidden>
         {/* Central radial glow */}
-        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] rounded-full bg-amber-glow/[0.04] blur-[120px] animate-pulse-glow" />
+        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[1200px] h-[1200px] rounded-full bg-amber-glow/[0.07] blur-[140px] animate-pulse-glow" />
         {/* Secondary glow */}
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-aura-600/30 blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] rounded-full bg-aura-600/40 blur-[120px]" />
+        {/* Tertiary glow top-left */}
+        <div className="absolute top-[10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-amber-glow/[0.05] blur-[100px]" />
         {/* Orbiting particles */}
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2">
           <div className="animate-orbit">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-glow/60" />
+            <div className="w-5 h-5 rounded-full bg-amber-glow/70 blur-[3px]" />
           </div>
         </div>
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2">
           <div className="animate-orbit-reverse">
-            <div className="w-1 h-1 rounded-full bg-white/30" />
+            <div className="w-3.5 h-3.5 rounded-full bg-white/40 blur-[2px]" />
+          </div>
+        </div>
+        {/* Extra floating dots */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="animate-float-slow">
+            <div className="w-4 h-4 rounded-full bg-amber-glow/50 blur-[2px]" style={{ transform: 'translate(220px, -80px)' }} />
+          </div>
+        </div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="animate-float-slower">
+            <div className="w-3 h-3 rounded-full bg-white/25 blur-[1px]" style={{ transform: 'translate(-200px, 60px)' }} />
           </div>
         </div>
       </div>
@@ -50,7 +63,7 @@ export default function Landing() {
       <nav className="relative z-10 flex items-center justify-between px-6 lg:px-12 py-5 max-w-7xl mx-auto animate-fade-up">
         <Link to="/" className="flex items-center gap-2.5 group">
           <AuraLogo className="h-8 w-8 text-amber-glow transition-transform duration-500 group-hover:rotate-90" />
-          <span className="text-xl font-display text-white tracking-wide">Aura</span>
+          <span className="text-xl font-display text-white tracking-wide">Aliax.io</span>
         </Link>
         <div className="flex items-center gap-2">
           <Link
@@ -76,11 +89,11 @@ export default function Landing() {
           Plataforma profesional todo-en-uno
         </div>
 
-        <h1 className="animate-fade-up-delay-2 font-body text-base text-[#a0a0b0] font-normal text-center mb-8">
-          Tu presencia profesional empieza aqui
+        <h1 className="animate-fade-up-delay-2 font-hero text-4xl md:text-6xl lg:text-7xl font-bold text-white text-center mb-8 leading-[1.05] tracking-tight">
+          Tu presencia profesional<br className="hidden sm:block" /> <span className="text-amber-glow">comienza aqui</span>
         </h1>
 
-        <p className="animate-fade-up-delay-3 text-lg md:text-xl text-white/40 max-w-2xl mx-auto mb-12 font-light leading-relaxed">
+        <p className="animate-fade-up-delay-3 text-lg md:text-xl text-white max-w-2xl mx-auto mb-12 font-light leading-relaxed">
           Crea un perfil unico, publica tus servicios y deja que tus clientes
           reserven citas al instante. Con notificaciones automaticas por WhatsApp.
         </p>
@@ -88,7 +101,7 @@ export default function Landing() {
         <div className="animate-fade-up-delay-4 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             to="/register"
-            className="group relative inline-flex items-center gap-2 px-8 py-3.5 bg-amber-glow text-aura-950 font-semibold rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(240,168,48,0.3)] hover:scale-105"
+            className="group relative inline-flex items-center gap-2 px-8 py-3.5 bg-amber-glow text-white font-semibold rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(78,56,245,0.4)] hover:scale-105"
           >
             Comenzar gratis
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -124,11 +137,11 @@ export default function Landing() {
       {/* ─── Features ─── */}
       <section className="relative z-10 max-w-6xl mx-auto px-6 py-28">
         <div className="text-center mb-16">
-          <p className="animate-fade-up text-xs uppercase tracking-[0.25em] text-amber-glow/60 font-medium mb-4">Caracteristicas</p>
+          <p className="animate-fade-up text-sm uppercase tracking-[0.25em] text-amber-glow/60 font-semibold mb-4">Caracteristicas</p>
           <h2 className="animate-fade-up-delay-1 font-display text-3xl md:text-5xl text-white mb-4">
             Todo lo que necesitas
           </h2>
-          <p className="animate-fade-up-delay-2 text-white/30 max-w-lg mx-auto">
+          <p className="animate-fade-up-delay-2 text-white max-w-lg mx-auto">
             Herramientas pensadas para profesionales independientes que quieren destacar.
           </p>
         </div>
@@ -147,9 +160,9 @@ export default function Landing() {
               icon: Calendar,
               title: 'Reservas inteligentes',
               desc: 'Configura tu disponibilidad por dia y hora. El sistema previene conflictos automaticamente.',
-              accent: 'from-amber-500/20 to-orange-500/20',
-              border: 'border-amber-500/10 hover:border-amber-500/30',
-              iconColor: 'text-amber-400',
+              accent: 'from-[#4e38f5]/20 to-indigo-400/20',
+              border: 'border-[#4e38f5]/10 hover:border-[#4e38f5]/30',
+              iconColor: 'text-[#9485f9]',
             },
             {
               icon: Bell,
@@ -174,7 +187,7 @@ export default function Landing() {
                   <Icon className="h-6 w-6" />
                 </div>
                 <h3 className="font-display text-xl text-white mb-3">{title}</h3>
-                <p className="text-white/35 text-sm leading-relaxed">{desc}</p>
+                <p className="text-white text-sm leading-relaxed">{desc}</p>
               </div>
             </div>
           ))}
@@ -209,11 +222,11 @@ export default function Landing() {
 
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <p className="text-xs uppercase tracking-[0.25em] text-amber-glow/60 font-medium mb-4">Proceso</p>
+            <p className="text-sm uppercase tracking-[0.25em] text-amber-glow/60 font-semibold mb-4">Proceso</p>
             <h2 className="font-display text-3xl md:text-5xl text-white mb-4">
               Tres pasos. Listo.
             </h2>
-            <p className="text-white/30 max-w-lg mx-auto">
+            <p className="text-white max-w-lg mx-auto">
               De cero a recibir reservas en minutos.
             </p>
           </div>
@@ -257,7 +270,7 @@ export default function Landing() {
                 </div>
 
                 <h3 className="font-display text-xl text-white mb-3">{title}</h3>
-                <p className="text-white/30 text-sm leading-relaxed max-w-xs mx-auto md:mx-0">{desc}</p>
+                <p className="text-white text-sm leading-relaxed max-w-xs mx-auto md:mx-0">{desc}</p>
               </div>
             ))}
           </div>
@@ -269,11 +282,11 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto px-6 mb-16">
           <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-20" />
           <div className="text-center">
-            <p className="text-xs uppercase tracking-[0.25em] text-amber-glow/60 font-medium mb-4">Diseno</p>
+            <p className="text-sm uppercase tracking-[0.25em] text-amber-glow/60 font-semibold mb-4">Diseno</p>
             <h2 className="font-display text-3xl md:text-5xl text-white mb-4">
               Cuatro estilos. Tu esencia.
             </h2>
-            <p className="text-white/30 max-w-lg mx-auto">
+            <p className="text-white max-w-lg mx-auto">
               Cada template esta disenado para transmitir una personalidad unica.
             </p>
           </div>
@@ -351,14 +364,14 @@ export default function Landing() {
 
             <h2 className="relative font-display text-4xl md:text-6xl text-white mb-6">
               Tu proximo cliente<br />
-              <span className="text-amber-glow italic">esta buscandote</span>
+              <span className="text-amber-glow">esta buscandote</span>
             </h2>
-            <p className="relative text-white/35 max-w-md mx-auto mb-10 text-lg font-light">
+            <p className="relative text-white max-w-md mx-auto mb-10 text-lg font-light">
               Crea tu perfil profesional hoy y empieza a recibir reservas manana.
             </p>
             <Link
               to="/register"
-              className="relative group inline-flex items-center gap-2 px-10 py-4 bg-amber-glow text-aura-950 font-semibold text-lg rounded-full transition-all duration-300 hover:shadow-[0_0_60px_rgba(240,168,48,0.35)] hover:scale-105"
+              className="relative group inline-flex items-center gap-2 px-10 py-4 bg-amber-glow text-white font-semibold text-lg rounded-full transition-all duration-300 hover:shadow-[0_0_60px_rgba(78,56,245,0.45)] hover:scale-105"
             >
               Crear mi perfil gratis
               <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
@@ -372,14 +385,14 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
             <AuraLogo className="h-6 w-6 text-amber-glow/50" />
-            <span className="text-sm text-white/20 font-display">Aura</span>
+            <span className="text-sm text-white/20 font-display">Aliax.io</span>
           </div>
           <div className="flex gap-8 text-xs text-white/20">
             <Link to="/login" className="hover:text-white/50 transition-colors">Iniciar sesion</Link>
             <Link to="/register" className="hover:text-white/50 transition-colors">Registrarse</Link>
           </div>
           <p className="text-xs text-white/15">
-            &copy; {new Date().getFullYear()} Aura. Todos los derechos reservados.
+            &copy; {new Date().getFullYear()} Aliax.io. Todos los derechos reservados.
           </p>
         </div>
       </footer>
