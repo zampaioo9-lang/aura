@@ -6,6 +6,7 @@ import { profileFormSchema, type ProfileFormData, PROFESSIONS } from '../schemas
 import UsernameInput from '../components/UsernameInput';
 import ImageUpload from '../components/ImageUpload';
 import VideoUpload from '../components/VideoUpload';
+import PhoneInput from '../components/PhoneInput';
 import api from '../api/client';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
@@ -168,12 +169,10 @@ export default function ProfileCreate() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Telefono WhatsApp</label>
-                <input
-                  {...register('phone')}
-                  type="tel"
-                  placeholder="+54 11 1234-5678"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                <PhoneInput
+                  label="Teléfono WhatsApp"
+                  value={watch('phone') || ''}
+                  onChange={v => setValue('phone', v)}
                 />
               </div>
             </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Clock, Loader2 } from 'lucide-react';
 import api from '../api/client';
+import PhoneInput from './PhoneInput';
 
 interface BookingFormProps {
   profileId: string;
@@ -56,15 +57,11 @@ export default function BookingForm({ profileId, serviceId, serviceName, onClose
       .finally(() => setSlotsLoading(false));
   }, [form.date, serviceId, profileId]);
 
-  const validatePhone = (phone: string): boolean => {
-    if (!phone) return true; // optional
-    return /^\+[1-9]\d{1,14}$/.test(phone);
-  };
-
   const handlePhoneChange = (value: string) => {
     setForm(f => ({ ...f, clientPhone: value }));
-    if (value && !validatePhone(value)) {
-      setPhoneError('Formato: +34612345678 (sin espacios)');
+    // Valid if empty (just dial code ≤4 chars) or has enough digits
+    if (value.length > 4 && !/^\+[1-9]\d{5,14}$/.test(value)) {
+      setPhoneError('Número inválido');
     } else {
       setPhoneError('');
     }
@@ -73,8 +70,8 @@ export default function BookingForm({ profileId, serviceId, serviceName, onClose
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (form.clientPhone && !validatePhone(form.clientPhone)) {
-      setPhoneError('Formato: +34612345678 (sin espacios)');
+    if (form.clientPhone.length > 4 && !/^\+[1-9]\d{5,14}$/.test(form.clientPhone)) {
+      setPhoneError('Número inválido');
       return;
     }
 
@@ -119,13 +116,13 @@ export default function BookingForm({ profileId, serviceId, serviceName, onClose
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Telefono WhatsApp (opcional)</label>
-            <input type="tel" value={form.clientPhone} onChange={e => handlePhoneChange(e.target.value)}
-              placeholder="+34612345678"
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none ${
-                phoneError ? 'border-red-300 bg-red-50' : 'border-slate-300'
-              }`} />
-            {phoneError && <p className="text-xs text-red-500 mt-1">{phoneError}</p>}
+            <PhoneInput
+              label="Teléfono WhatsApp"
+              optional
+              value={form.clientPhone}
+              onChange={handlePhoneChange}
+              error={phoneError}
+            />
           </div>
 
           {/* Date picker */}

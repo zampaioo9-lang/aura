@@ -1,10 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
-import { Save, ArrowLeft } from 'lucide-react';
+import { Save, ArrowLeft, Facebook, Instagram, Linkedin, MessageCircle } from 'lucide-react';
 import UsernameInput from '../components/UsernameInput';
 import ImageUpload from '../components/ImageUpload';
 import VideoUpload from '../components/VideoUpload';
+import PhoneInput from '../components/PhoneInput';
+
+const SOCIAL_NETWORKS = [
+  { key: 'facebook',  label: 'Facebook',  Icon: Facebook,      color: '#1877F2', placeholder: 'facebook.com/tu-página' },
+  { key: 'instagram', label: 'Instagram', Icon: Instagram,      color: '#E1306C', placeholder: '@tu-usuario' },
+  { key: 'linkedin',  label: 'LinkedIn',  Icon: Linkedin,       color: '#0A66C2', placeholder: 'linkedin.com/in/tu-perfil' },
+  { key: 'whatsapp',  label: 'WhatsApp',  Icon: MessageCircle,  color: '#25D366', placeholder: '+54 11 1234-5678' },
+] as const;
 
 const TEMPLATES = ['MINIMALIST', 'BOLD', 'ELEGANT', 'CREATIVE'] as const;
 
@@ -125,10 +133,11 @@ export default function ProfileEditor() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Telefono WhatsApp</label>
-              <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} type="tel"
-                placeholder="+54 11 1234-5678"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              <PhoneInput
+                label="Teléfono WhatsApp"
+                value={form.phone}
+                onChange={v => setForm(f => ({ ...f, phone: v }))}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -158,6 +167,37 @@ export default function ProfileEditor() {
                 }`}>
                 {t.charAt(0) + t.slice(1).toLowerCase()}
               </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Social Links */}
+        <section className="bg-white rounded-xl border border-slate-200 p-6">
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">Redes Sociales</h3>
+          <div className="space-y-4">
+            {SOCIAL_NETWORKS.map(({ key, label, Icon, color, placeholder }) => (
+              <div key={key}>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  <span className="inline-flex items-center gap-2">
+                    <Icon className="h-4 w-4" style={{ color }} />
+                    {label}
+                  </span>
+                </label>
+                {key === 'whatsapp' ? (
+                  <PhoneInput
+                    value={(form.socialLinks as Record<string, string>)['whatsapp'] || ''}
+                    onChange={v => setForm(f => ({ ...f, socialLinks: { ...f.socialLinks, whatsapp: v } }))}
+                  />
+                ) : (
+                  <input
+                    value={(form.socialLinks as Record<string, string>)[key] || ''}
+                    onChange={e => setForm(f => ({ ...f, socialLinks: { ...f.socialLinks, [key]: e.target.value } }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                    placeholder={placeholder}
+                    type="url"
+                  />
+                )}
+              </div>
             ))}
           </div>
         </section>
