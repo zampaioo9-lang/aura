@@ -17,20 +17,20 @@ function AuraLogo({ className = '' }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} fill="none">
       {/* Ondas expansivas */}
-      <circle cx="16" cy="16" r="4" stroke="currentColor" fill="none" strokeWidth="1">
-        <animate attributeName="r" from="4" to="19" dur="2.1s" begin="0s" repeatCount="indefinite" />
-        <animate attributeName="opacity" from="0.6" to="0" dur="2.1s" begin="0s" repeatCount="indefinite" />
-        <animate attributeName="stroke-width" from="1.2" to="0" dur="2.1s" begin="0s" repeatCount="indefinite" />
+      <circle cx="16" cy="16" r="4" stroke="currentColor" fill="none">
+        <animate attributeName="r" from="4" to="32" dur="2.8s" begin="0s" repeatCount="indefinite" />
+        <animate attributeName="opacity" from="0.9" to="0" dur="2.8s" begin="0s" repeatCount="indefinite" />
+        <animate attributeName="stroke-width" from="2" to="0" dur="2.8s" begin="0s" repeatCount="indefinite" />
       </circle>
-      <circle cx="16" cy="16" r="4" stroke="currentColor" fill="none" strokeWidth="1">
-        <animate attributeName="r" from="4" to="19" dur="2.1s" begin="0.7s" repeatCount="indefinite" />
-        <animate attributeName="opacity" from="0.6" to="0" dur="2.1s" begin="0.7s" repeatCount="indefinite" />
-        <animate attributeName="stroke-width" from="1.2" to="0" dur="2.1s" begin="0.7s" repeatCount="indefinite" />
+      <circle cx="16" cy="16" r="4" stroke="currentColor" fill="none">
+        <animate attributeName="r" from="4" to="32" dur="2.8s" begin="0.9s" repeatCount="indefinite" />
+        <animate attributeName="opacity" from="0.9" to="0" dur="2.8s" begin="0.9s" repeatCount="indefinite" />
+        <animate attributeName="stroke-width" from="2" to="0" dur="2.8s" begin="0.9s" repeatCount="indefinite" />
       </circle>
-      <circle cx="16" cy="16" r="4" stroke="currentColor" fill="none" strokeWidth="1">
-        <animate attributeName="r" from="4" to="19" dur="2.1s" begin="1.4s" repeatCount="indefinite" />
-        <animate attributeName="opacity" from="0.6" to="0" dur="2.1s" begin="1.4s" repeatCount="indefinite" />
-        <animate attributeName="stroke-width" from="1.2" to="0" dur="2.1s" begin="1.4s" repeatCount="indefinite" />
+      <circle cx="16" cy="16" r="4" stroke="currentColor" fill="none">
+        <animate attributeName="r" from="4" to="32" dur="2.8s" begin="1.8s" repeatCount="indefinite" />
+        <animate attributeName="opacity" from="0.9" to="0" dur="2.8s" begin="1.8s" repeatCount="indefinite" />
+        <animate attributeName="stroke-width" from="2" to="0" dur="2.8s" begin="1.8s" repeatCount="indefinite" />
       </circle>
       {/* Anillos estáticos */}
       <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
