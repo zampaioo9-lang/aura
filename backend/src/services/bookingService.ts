@@ -49,6 +49,46 @@ export async function checkAvailability(
   const bookingDate = new Date(date);
   const dayOfWeek = bookingDate.getDay();
 
+  // ── Verificar anticipación mínima ──────────────────────────────
+  const settings = await prisma.bookingSettings.findUnique({ where: { profileId } });
+  if (settings) {
+    const bookingDateTime = new Date(`${date}T${startTime}:00`);
+    const hoursAhead = (bookingDateTime.getTime() - Date.now()) / 3_600_000;
+    if (hoursAhead < settings.minAdvanceHours) {
+      return { available: false, reason: `Se requiere al menos ${settings.minAdvanceHours}h de anticipación` };
+    }
+    const daysAhead = (bookingDateTime.getTime() - Date.now()) / 86_400_000;
+    if (daysAhead > settings.advanceBookingDays) {
+      return { available: false, reason: `Solo se puede reservar hasta ${settings.advanceBookingDays} días en el futuro` };
+    }
+  }
+
+  // ── Verificar bloqueos de fechas ───────────────────────────────
+  const startMins = timeToMinutes(startTime);
+  const endMins   = startMins + durationMinutes;
+
+  const blocks = await prisma.scheduleBlock.findMany({
+    where: {
+      profileId,
+      startDate: { lte: bookingDate },
+      endDate:   { gte: bookingDate },
+    },
+  });
+
+  for (const block of blocks) {
+    if (block.isAllDay) {
+      return { available: false, reason: block.reason || 'El profesional no está disponible ese día' };
+    }
+    if (block.startTime && block.endTime) {
+      const bs = timeToMinutes(block.startTime);
+      const be = timeToMinutes(block.endTime);
+      if (startMins < be && endMins > bs) {
+        return { available: false, reason: block.reason || 'Horario bloqueado' };
+      }
+    }
+  }
+
+  // ── Verificar disponibilidad semanal ───────────────────────────
   const daySlots = await prisma.availabilitySlot.findMany({
     where: { profileId, dayOfWeek, isActive: true },
     orderBy: { startTime: 'asc' },
@@ -58,18 +98,18 @@ export async function checkAvailability(
     return { available: false, reason: 'El profesional no atiende este dia' };
   }
 
-  const startMins = timeToMinutes(startTime);
-  const endMins = startMins + durationMinutes;
-
   const fitsInSlot = daySlots.some(slot => {
     const slotStart = timeToMinutes(slot.startTime);
-    const slotEnd = timeToMinutes(slot.endTime);
+    const slotEnd   = timeToMinutes(slot.endTime);
     return startMins >= slotStart && endMins <= slotEnd;
   });
 
   if (!fitsInSlot) {
     return { available: false, reason: 'El horario no esta dentro de las horas disponibles' };
   }
+
+  // ── Verificar conflictos con otras reservas (incluyendo buffer) ─
+  const bufferMins = settings?.bufferMinutes ?? 0;
 
   const existingBookings = await prisma.booking.findMany({
     where: {
@@ -80,13 +120,13 @@ export async function checkAvailability(
   });
 
   const hasConflict = existingBookings.some(b => {
-    const bStart = timeToMinutes(b.startTime);
-    const bEnd = timeToMinutes(b.endTime);
+    const bStart = timeToMinutes(b.startTime) - bufferMins;
+    const bEnd   = timeToMinutes(b.endTime)   + bufferMins;
     return startMins < bEnd && endMins > bStart;
   });
 
   if (hasConflict) {
-    return { available: false, reason: 'El horario ya esta reservado' };
+    return { available: false, reason: bufferMins > 0 ? `Se requieren ${bufferMins} min entre reservas` : 'El horario ya esta reservado' };
   }
 
   return { available: true };
@@ -102,37 +142,74 @@ export async function getAvailableSlots(
   if (!service || !service.isActive) throw new AppError(404, 'Servicio no encontrado');
   if (service.profileId !== profileId) throw new AppError(400, 'El servicio no pertenece a este perfil');
 
-  const duration = service.durationMinutes;
+  const duration    = service.durationMinutes;
   const bookingDate = new Date(date);
-  const dayOfWeek = bookingDate.getDay();
+  const dayOfWeek   = bookingDate.getDay();
 
-  const availSlots = await prisma.availabilitySlot.findMany({
-    where: { profileId, dayOfWeek, isActive: true },
+  // Settings del perfil (buffer, anticipación)
+  const settings = await prisma.bookingSettings.findUnique({ where: { profileId } });
+  const bufferMins = settings?.bufferMinutes ?? 0;
+
+  // Verificar si el día está bloqueado
+  const blocks = await prisma.scheduleBlock.findMany({
+    where: { profileId, startDate: { lte: bookingDate }, endDate: { gte: bookingDate } },
+  });
+  const fullDayBlock = blocks.find(b => b.isAllDay);
+  if (fullDayBlock) return [];
+
+  // Slots de disponibilidad: primero buscar slots específicos del servicio
+  const serviceSlots = await prisma.serviceAvailability.findMany({
+    where: { serviceId, dayOfWeek, isActive: true },
     orderBy: { startTime: 'asc' },
   });
 
-  if (availSlots.length === 0) return [];
+  // Si el servicio tiene slots propios, usarlos; si no, usar los del perfil
+  let windows: { startTime: string; endTime: string }[];
+  if (serviceSlots.length > 0) {
+    windows = serviceSlots;
+  } else {
+    const profileSlots = await prisma.availabilitySlot.findMany({
+      where: { profileId, dayOfWeek, isActive: true },
+      orderBy: { startTime: 'asc' },
+    });
+    windows = profileSlots;
+  }
+
+  if (windows.length === 0) return [];
 
   const existingBookings = await prisma.booking.findMany({
-    where: {
-      profileId,
-      date: bookingDate,
-      status: { in: ['PENDING', 'CONFIRMED'] },
-    },
+    where: { profileId, date: bookingDate, status: { in: ['PENDING', 'CONFIRMED'] } },
   });
+
+  const now = Date.now();
+  const minAdvanceMs = (settings?.minAdvanceHours ?? 1) * 3_600_000;
 
   const available: string[] = [];
 
-  for (const slot of availSlots) {
-    const windowStart = timeToMinutes(slot.startTime);
-    const windowEnd = timeToMinutes(slot.endTime);
+  for (const window of windows) {
+    const windowStart = timeToMinutes(window.startTime);
+    const windowEnd   = timeToMinutes(window.endTime);
 
     for (let start = windowStart; start + duration <= windowEnd; start += 15) {
       const end = start + duration;
 
+      // Verificar anticipación mínima
+      const slotDateTime = new Date(`${date}T${minutesToTime(start)}:00`).getTime();
+      if (slotDateTime - now < minAdvanceMs) continue;
+
+      // Verificar bloqueos parciales del día
+      const blockedByPartial = blocks.some(b => {
+        if (b.isAllDay || !b.startTime || !b.endTime) return false;
+        const bs = timeToMinutes(b.startTime);
+        const be = timeToMinutes(b.endTime);
+        return start < be && end > bs;
+      });
+      if (blockedByPartial) continue;
+
+      // Verificar conflictos con reservas existentes (con buffer)
       const hasConflict = existingBookings.some(b => {
-        const bStart = timeToMinutes(b.startTime);
-        const bEnd = timeToMinutes(b.endTime);
+        const bStart = timeToMinutes(b.startTime) - bufferMins;
+        const bEnd   = timeToMinutes(b.endTime)   + bufferMins;
         return start < bEnd && end > bStart;
       });
 
@@ -199,6 +276,7 @@ export async function createBooking(data: {
 
   // Send WhatsApp to professional (non-blocking)
   const professionalPhone = profile.user.phone || profile.phone;
+  console.log(`[Booking] Created ${booking.id} | professionalPhone: ${professionalPhone || 'NONE'} | user.phone: ${profile.user.phone || 'null'} | profile.phone: ${profile.phone || 'null'}`);
   if (professionalPhone) {
     const message = templates.newBooking({
       professionalName: profile.user.name,
