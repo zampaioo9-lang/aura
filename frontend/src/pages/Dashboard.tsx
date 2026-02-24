@@ -66,7 +66,7 @@ interface ClientBooking {
 }
 
 type Tab = 'inicio' | 'citas' | 'explorar' | 'profesional';
-type MobileSection = 'perfil' | Tab;
+type MobileSection = 'perfil' | 'citas' | 'explorar' | 'profesional';
 
 interface Colors {
   sideBg: string;
@@ -390,9 +390,6 @@ export default function Dashboard() {
           }}
         >
           <div className="p-4 pb-8">
-            {mobileSection === 'inicio' && (
-              <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} />
-            )}
             {mobileSection === 'citas' && (
               <TabCitas
                 pendingBookings={pendingBookings}
@@ -405,7 +402,7 @@ export default function Dashboard() {
             )}
             {mobileSection === 'explorar' && <TabExplorar C={C} />}
             {mobileSection === 'profesional' && (
-              <TabProfesional profiles={profiles} totalServices={totalServices} C={C} />
+              <TabProfesional profiles={profiles} totalServices={totalServices} bookings={bookings} C={C} />
             )}
           </div>
         </div>
@@ -459,7 +456,6 @@ export default function Dashboard() {
 
           {/* Other tabs */}
           {([
-            { section: 'inicio'      as const, label: 'Dashboard', icon: <Home className="h-6 w-6" /> },
             { section: 'citas'       as const, label: 'Citas',     icon: <Calendar className="h-6 w-6" /> },
             { section: 'explorar'    as const, label: 'Explorar',  icon: <Compass className="h-6 w-6" /> },
             { section: 'profesional' as const, label: 'Pro',       icon: <Briefcase className="h-6 w-6" /> },
@@ -1172,7 +1168,7 @@ function TabExplorar({ C }: { C: Colors }) {
 }
 
 /* ────────────────── Tab: Perfil Profesional ────────────────── */
-function TabProfesional({ profiles, totalServices, C }: { profiles: Profile[]; totalServices: number; C: Colors }) {
+function TabProfesional({ profiles, totalServices, bookings = [], C }: { profiles: Profile[]; totalServices: number; bookings?: Booking[]; C: Colors }) {
   const btnBg     = C.isDark ? '#2e2e3d' : '#f1f5f9';
   const btnBorder = `1px solid ${C.border}`;
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -1236,6 +1232,14 @@ function TabProfesional({ profiles, totalServices, C }: { profiles: Profile[]; t
           </div>
         )}
       </div>
+      {/* Stats resumen */}
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <StatCard label="Reservas"    value={bookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED').length} sub="pendientes y confirmadas" color="indigo"  isDark={C.isDark} shadow={C.cardShadow} />
+        <StatCard label="Completadas" value={bookings.filter(b => b.status === 'COMPLETED').length}                           sub="reservas completadas"      color="emerald" isDark={C.isDark} shadow={C.cardShadow} />
+        <StatCard label="Servicios"   value={totalServices}                                                                   sub="en todos tus perfiles"     color="amber"   isDark={C.isDark} shadow={C.cardShadow} />
+        <StatCard label="Perfiles"    value={profiles.length}                                                                 sub="perfiles profesionales"    color="violet"  isDark={C.isDark} shadow={C.cardShadow} />
+      </div>
+
       <div className="grid sm:grid-cols-2 gap-4">
         {profiles.map(p => (
           <div key={p.id} className="rounded-xl p-5" style={{ background: C.cardBg, border: `1px solid ${C.border}`, boxShadow: C.cardShadow }}>

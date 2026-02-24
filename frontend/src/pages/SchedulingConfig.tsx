@@ -950,8 +950,9 @@ export default function SchedulingConfig() {
           .sc-aside {
             width: 100% !important;
             flex-direction: row !important;
-            overflow-x: auto !important;
-            padding: 10px 12px !important;
+            flex-wrap: wrap !important;
+            overflow-x: visible !important;
+            padding: 10px 12px 6px !important;
             border-right: none !important;
             border-bottom: 1px solid var(--sc-border) !important;
             gap: 6px !important;
@@ -972,11 +973,14 @@ export default function SchedulingConfig() {
             flex-shrink: 0 !important;
           }
           .sc-aside-tab {
-            padding: 7px 14px !important;
+            padding: 7px 10px !important;
             border-radius: 20px !important;
             white-space: nowrap !important;
-            font-size: 13px !important;
+            font-size: 12px !important;
             width: auto !important;
+            flex: 1 !important;
+            min-width: calc(33% - 6px) !important;
+            justify-content: center !important;
           }
           .sc-main { padding: 16px !important; }
           .sc-stats { grid-template-columns: 1fr 1fr !important; }
