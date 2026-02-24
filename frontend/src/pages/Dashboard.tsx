@@ -198,7 +198,7 @@ export default function Dashboard() {
     : 'linear-gradient(160deg, #6c63ff 0%, #8b5cf6 100%)';
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: C.mainBg }}>
+    <div className="h-dvh flex flex-col overflow-hidden" style={{ background: C.mainBg }}>
 
       {/* ── Navbar ── */}
       <nav
