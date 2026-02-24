@@ -328,7 +328,7 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
       {/* Zona horaria */}
       <Card>
         <CardHeader dot="#f6c90e" title="Zona horaria y región" />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <FormSelect
             label="Zona horaria"
             value={settings.timezone ?? 'America/Mexico_City'}
@@ -527,7 +527,7 @@ function TabServicios({ profileId }: { profileId: string }) {
 
       <Card>
         <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, marginBottom: 16, color: 'var(--sc-text)' }}>Intervalos y slots</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <FormSelect label="Intervalo de slots (min)" value="15" onChange={() => {}} options={[
             { value: '10', label: '10 min' }, { value: '15', label: '15 min' },
             { value: '20', label: '20 min' }, { value: '30', label: '30 min' },
@@ -614,7 +614,7 @@ function TabBloqueos({ profileId }: { profileId: string }) {
       {showForm && (
         <div style={{ background: 'rgba(108,99,255,0.06)', border: '1px dashed rgba(108,99,255,0.4)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
           <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, color: 'var(--sc-text)', marginBottom: 16 }}>Nuevo bloqueo</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+          <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             <div style={{ gridColumn: '1/-1', display: 'flex', flexDirection: 'column', gap: 6 }}>
               <label style={{ fontSize: 12, color: 'var(--sc-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 500 }}>Motivo del bloqueo</label>
               <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="ej. Vacaciones de verano"
@@ -741,7 +741,7 @@ function TabReglas({ profileId }: { profileId: string }) {
       {/* Ventanas de tiempo */}
       <Card>
         <CardHeader dot="#6c63ff" title="Ventanas de tiempo" />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <FormSelect label="Antelación mínima para reservar" value={String(settings.minAdvanceHours)} onChange={v => upd('minAdvanceHours', Number(v))} options={[
             { value: '0', label: 'Inmediatamente' }, { value: '1', label: '1 hora antes' },
             { value: '2', label: '2 horas antes' }, { value: '4', label: '4 horas antes' },
@@ -782,7 +782,7 @@ function TabReglas({ profileId }: { profileId: string }) {
       {/* Límites por cliente */}
       <Card>
         <CardHeader dot="#ff6584" title="Límites por cliente" />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <FormSelect label="Máx. reservas activas por cliente" value="3" onChange={() => {}} options={[
             { value: '1', label: '1 reserva' }, { value: '2', label: '2 reservas' },
             { value: '3', label: '3 reservas' }, { value: '5', label: '5 reservas' },
@@ -936,32 +936,73 @@ export default function SchedulingConfig() {
   }
 
   return (
-    <div style={{
+    <div className="sc-root" style={{
       display: 'flex', minHeight: '100vh', background: T.main, color: T.text, fontFamily: 'DM Sans, sans-serif',
       '--sc-main': T.main, '--sc-side': T.side, '--sc-inner': T.inner,
       '--sc-border': T.border, '--sc-text': T.text, '--sc-muted': T.muted, '--sc-muted2': T.muted2,
     } as React.CSSProperties}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } } * { box-sizing: border-box; } select option { background: ${T.inner}; }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        * { box-sizing: border-box; }
+        select option { background: ${T.inner}; }
+        @media (max-width: 767px) {
+          .sc-root { flex-direction: column !important; }
+          .sc-aside {
+            width: 100% !important;
+            flex-direction: row !important;
+            overflow-x: auto !important;
+            padding: 10px 12px !important;
+            border-right: none !important;
+            border-bottom: 1px solid var(--sc-border) !important;
+            gap: 6px !important;
+            align-items: center !important;
+          }
+          .sc-aside-logo { display: none !important; }
+          .sc-aside-section-label { display: none !important; }
+          .sc-aside-spacer { display: none !important; }
+          .sc-aside-back {
+            font-size: 12px !important;
+            padding: 6px 10px !important;
+            margin: 0 4px 0 0 !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+          }
+          .sc-aside-profile-select {
+            padding: 0 0 0 4px !important;
+            flex-shrink: 0 !important;
+          }
+          .sc-aside-tab {
+            padding: 7px 14px !important;
+            border-radius: 20px !important;
+            white-space: nowrap !important;
+            font-size: 13px !important;
+            width: auto !important;
+          }
+          .sc-main { padding: 16px !important; }
+          .sc-stats { grid-template-columns: 1fr 1fr !important; }
+          .sc-grid-2 { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
       {/* ── Sidebar ─────────────────────────────────────────── */}
-      <aside style={{ width: 240, background: T.side, borderRight: `1px solid ${T.border}`, padding: '28px 16px', display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+      <aside className="sc-aside" style={{ width: 240, background: T.side, borderRight: `1px solid ${T.border}`, padding: '28px 16px', display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
         {/* Logo */}
-        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#6c63ff', padding: '0 12px 8px', letterSpacing: -0.5 }}>
+        <div className="sc-aside-logo" style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#6c63ff', padding: '0 12px 8px', letterSpacing: -0.5 }}>
           Aliax.io<span style={{ color: T.text }}> Pro</span>
         </div>
 
-        {/* Botón volver — visible en el top */}
-        <Link to="/dashboard?tab=profesional" style={{
+        {/* Botón volver */}
+        <Link to="/dashboard?tab=profesional" className="sc-aside-back" style={{
           display: 'flex', alignItems: 'center', gap: 6, margin: '0 4px 16px',
           padding: '8px 12px', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 500,
           background: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(108,99,255,0.08)',
-          color: '#6c63ff', border: `1px solid ${T.border}`, transition: 'all .15s',
+          color: '#6c63ff', border: `1px solid ${T.border}`, transition: 'all .15s', flexShrink: 0,
         }}>
-          <ArrowLeft size={14} /> Volver al Dashboard
+          <ArrowLeft size={14} /> Volver
         </Link>
 
         {profiles.length > 1 && (
-          <div style={{ padding: '0 4px 16px' }}>
+          <div className="sc-aside-profile-select" style={{ padding: '0 4px 16px' }}>
             <select value={selectedProfileId} onChange={e => setSelectedProfileId(e.target.value)}
               style={{ width: '100%', background: T.inner, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 10px', color: T.text, fontFamily: 'DM Sans', fontSize: 12, outline: 'none' }}>
               {profiles.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
@@ -969,10 +1010,10 @@ export default function SchedulingConfig() {
           </div>
         )}
 
-        <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1.5px', color: T.muted, padding: '8px 12px 6px', fontWeight: 600 }}>Configuración</div>
+        <div className="sc-aside-section-label" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1.5px', color: T.muted, padding: '8px 12px 6px', fontWeight: 600 }}>Configuración</div>
 
         {PAGES.map(p => (
-          <button key={p.id} onClick={() => setTab(p.id)} style={{
+          <button key={p.id} onClick={() => setTab(p.id)} className="sc-aside-tab" style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8,
             cursor: 'pointer', fontSize: 14, color: tab === p.id ? '#6c63ff' : T.muted,
             background: tab === p.id ? 'rgba(108,99,255,0.15)' : 'transparent',
@@ -984,11 +1025,11 @@ export default function SchedulingConfig() {
           </button>
         ))}
 
-        <div style={{ flex: 1 }} />
+        <div className="sc-aside-spacer" style={{ flex: 1 }} />
       </aside>
 
       {/* ── Main ───────────────────────────────────────────── */}
-      <main style={{ flex: 1, padding: 32, overflowY: 'auto' }}>
+      <main className="sc-main" style={{ flex: 1, padding: 32, overflowY: 'auto' }}>
         {/* Header con título dinámico */}
         {tab === 'availability' && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
@@ -1000,7 +1041,7 @@ export default function SchedulingConfig() {
         )}
 
         {/* Stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+        <div className="sc-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
           {[
             [stats.bookings, 'Reservas este mes'],
             [`${stats.avgHours}h`, 'Promedio por cita'],

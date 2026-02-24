@@ -1297,15 +1297,8 @@ function TabProfesional({ profiles, totalServices, C }: { profiles: Profile[]; t
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Link to={`/profile/edit/${p.id}`} className="text-sm px-3 py-1.5 rounded-lg" style={{ background: btnBg, color: C.text, border: btnBorder }}>Editar</Link>
-              <Link to="/dashboard/services" className="text-sm px-3 py-1.5 rounded-lg inline-flex items-center gap-1" style={{ background: btnBg, color: C.text, border: btnBorder }}>
-                <Settings className="h-3 w-3" /> Servicios
-              </Link>
-              <Link to="/dashboard/availability" className="text-sm px-3 py-1.5 rounded-lg inline-flex items-center gap-1" style={{ background: btnBg, color: C.text, border: btnBorder }}>
-                <Clock className="h-3 w-3" /> Horarios
-              </Link>
-              <Link to="/dashboard/scheduling" className="text-sm px-3 py-1.5 rounded-lg inline-flex items-center gap-1" style={{ background: C.accentLight, color: C.accent, border: `1px solid ${C.accent}22` }}>
-                <CalendarDays className="h-3 w-3" /> Agenda
+              <Link to="/dashboard/scheduling" className="flex-1 text-sm px-3 py-2 rounded-lg inline-flex items-center justify-center gap-1.5 font-medium" style={{ background: C.accentLight, color: C.accent, border: `1px solid ${C.accent}33` }}>
+                <CalendarDays className="h-3.5 w-3.5" /> Agenda
               </Link>
             </div>
           </div>
