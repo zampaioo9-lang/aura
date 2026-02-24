@@ -37,7 +37,7 @@ const COUNTRIES = [
 ];
 
 function parsePhone(value: string): { dialCode: string; number: string } {
-  if (!value) return { dialCode: '+54', number: '' };
+  if (!value) return { dialCode: '+52', number: '' };
   const clean = value.replace(/\s/g, '');
   const sorted = [...COUNTRIES].sort((a, b) => b.code.length - a.code.length);
   for (const c of sorted) {
@@ -45,7 +45,7 @@ function parsePhone(value: string): { dialCode: string; number: string } {
       return { dialCode: c.code, number: clean.slice(c.code.length) };
     }
   }
-  return { dialCode: '+54', number: value };
+  return { dialCode: '+52', number: value };
 }
 
 interface PhoneInputProps {
@@ -65,7 +65,7 @@ export default function PhoneInput({
   error,
   placeholder = '11 1234-5678',
 }: PhoneInputProps) {
-  const [dialCode, setDialCode] = useState('+54');
+  const [dialCode, setDialCode] = useState('+52');
   const [number, setNumber] = useState('');
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -100,7 +100,7 @@ export default function PhoneInput({
     onChange(dialCode + n);
   };
 
-  const selectedCountry = COUNTRIES.find(c => c.code === dialCode) ?? COUNTRIES.find(c => c.name === 'Argentina')!;
+  const selectedCountry = COUNTRIES.find(c => c.code === dialCode) ?? COUNTRIES.find(c => c.name === 'México')!;
   const filtered = search
     ? COUNTRIES.filter(c =>
         c.name.toLowerCase().includes(search.toLowerCase()) ||

@@ -13,7 +13,7 @@ export default function BoldTemplate({ profile, onBook }: TemplateProps) {
   const hasMore = activeServices.length > 6;
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div className="min-h-screen bg-aura-950 text-white">
       {/* Hero */}
       <div className="relative overflow-hidden">
         {profile.coverImage && (

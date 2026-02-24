@@ -87,7 +87,64 @@ export const cancelBookingSchema = z.object({
   clientEmail: z.string().email().optional(),
 });
 
-// Availability slot schemas
+// ── BookingSettings schemas ────────────────────────────────────────
+export const upsertBookingSettingsSchema = z.object({
+  bufferMinutes:      z.number().int().min(0).max(120).default(0),
+  advanceBookingDays: z.number().int().min(1).max(365).default(60),
+  minAdvanceHours:    z.number().int().min(0).max(72).default(1),
+  cancellationHours:  z.number().int().min(0).max(168).default(24),
+  autoConfirm:        z.boolean().default(false),
+  timezone:           z.string().max(60).default('America/Mexico_City'),
+  language:           z.string().max(10).default('es'),
+});
+
+// ── ScheduleBlock schemas ──────────────────────────────────────────
+export const createScheduleBlockSchema = z.object({
+  profileId: z.string(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD'),
+  endDate:   z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD'),
+  isAllDay:  z.boolean().default(true),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  endTime:   z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  reason:    z.string().max(200).optional(),
+}).refine(data => data.endDate >= data.startDate, {
+  message: 'La fecha de fin debe ser igual o posterior al inicio',
+}).refine(data => {
+  if (!data.isAllDay) return data.startTime && data.endTime;
+  return true;
+}, { message: 'Se requieren startTime y endTime cuando no es todo el día' });
+
+export const updateScheduleBlockSchema = z.object({
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  endDate:   z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  isAllDay:  z.boolean().optional(),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  endTime:   z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  reason:    z.string().max(200).optional(),
+});
+
+// ── ServiceAvailability schemas ────────────────────────────────────
+export const createServiceAvailabilitySchema = z.object({
+  serviceId: z.string(),
+  dayOfWeek: z.number().int().min(0).max(6),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:mm requerido'),
+  endTime:   z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:mm requerido'),
+}).refine(data => {
+  const [sh, sm] = data.startTime.split(':').map(Number);
+  const [eh, em] = data.endTime.split(':').map(Number);
+  return (sh * 60 + sm) < (eh * 60 + em);
+}, { message: 'La hora de inicio debe ser anterior a la hora de fin' });
+
+export const bulkServiceAvailabilitySchema = z.object({
+  serviceId: z.string(),
+  slots: z.array(z.object({
+    dayOfWeek: z.number().int().min(0).max(6),
+    startTime: z.string().regex(/^\d{2}:\d{2}$/),
+    endTime:   z.string().regex(/^\d{2}:\d{2}$/),
+  })).max(50),
+});
+
+// ── Availability slot schemas ──────────────────────────────────────
 export const createAvailabilitySlotSchema = z.object({
   profileId: z.string(),
   dayOfWeek: z.number().int().min(0).max(6),

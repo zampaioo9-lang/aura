@@ -90,7 +90,7 @@ export default function AdminPanel() {
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Panel de Administración</h1>
-          <p className="text-sm text-gray-500">Vista general de Aura</p>
+          <p className="text-sm text-gray-500">Vista general de Aliax.io</p>
         </div>
         <button
           onClick={() => navigate('/dashboard')}

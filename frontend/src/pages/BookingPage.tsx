@@ -15,12 +15,17 @@ export default function BookingPage() {
   useEffect(() => {
     api.get(`/profiles/${slug}`)
       .then(res => setProfile(res.data))
-      .catch(() => navigate('/'))
+      .catch(() => setProfile(null))
       .finally(() => setLoading(false));
-  }, [slug, navigate]);
+  }, [slug]);
 
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full" /></div>;
-  if (!profile) return null;
+  if (!profile) return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 gap-3">
+      <p className="text-slate-600 text-lg">No se encontró el perfil solicitado.</p>
+      <button onClick={() => navigate(-1)} className="text-indigo-600 hover:underline text-sm">Volver</button>
+    </div>
+  );
 
   if (success) {
     return (

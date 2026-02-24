@@ -11,7 +11,10 @@ import PublicProfile from './pages/PublicProfile';
 import BookingPage from './pages/BookingPage';
 import ServicesDashboard from './pages/ServicesDashboard';
 import AvailabilityDashboard from './pages/AvailabilityDashboard';
+import SchedulingConfig from './pages/SchedulingConfig';
 import AdminPanel from './pages/AdminPanel';
+import AccountSettings from './pages/AccountSettings';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -32,10 +35,13 @@ function App() {
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/dashboard/services" element={<ProtectedRoute><ServicesDashboard /></ProtectedRoute>} />
             <Route path="/dashboard/availability" element={<ProtectedRoute><AvailabilityDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/scheduling" element={<ProtectedRoute><SchedulingConfig /></ProtectedRoute>} />
             <Route path="/profile/edit/:id" element={<ProtectedRoute><ProfileEditor /></ProtectedRoute>} />
             <Route path="/profile/new" element={<ProtectedRoute><ProfileEditor /></ProtectedRoute>} />
             <Route path="/profile/create" element={<ProtectedRoute><ProfileCreate /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+            <Route path="/account" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
+            <Route path="/privacidad" element={<PrivacyPolicy />} />
             <Route path="/book/:slug" element={<BookingPage />} />
             <Route path="/:slug" element={<PublicProfile />} />
           </Routes>

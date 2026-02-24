@@ -87,9 +87,11 @@ router.get('/check-username/:username', async (req, res, next) => {
 router.get('/directory', async (_req, res, next) => {
   try {
     const profiles = await prisma.profile.findMany({
+      where: { published: true },
       include: {
         services: { where: { isActive: true } },
-        user: { select: { name: true } },
+        user: { select: { name: true, socialLinks: true } },
+        availabilitySlots: { where: { isActive: true }, orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }] },
       },
       orderBy: { createdAt: 'desc' },
     });

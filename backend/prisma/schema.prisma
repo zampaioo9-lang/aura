@@ -13,6 +13,8 @@ model User {
   password             String
   name                 String
   phone                String?
+  bio                  String?
+  socialLinks          Json      @default("{}")
   isAdmin              Boolean   @default(false)
   createdAt            DateTime  @default(now())
   profiles             Profile[]
@@ -42,6 +44,8 @@ model Profile {
   services          Service[]
   bookings          Booking[]
   availabilitySlots AvailabilitySlot[]
+  scheduleBlocks    ScheduleBlock[]
+  bookingSettings   BookingSettings?
 
   @@index([userId])
 }
@@ -66,8 +70,9 @@ model Service {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  profile  Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  bookings Booking[]
+  profile               Profile               @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  bookings              Booking[]
+  serviceAvailabilities ServiceAvailability[]
 
   @@index([profileId])
   @@index([isActive])
@@ -159,4 +164,57 @@ model AvailabilitySlot {
 
   @@index([profileId])
   @@index([profileId, dayOfWeek])
+}
+
+// Configuración general de reservas por perfil
+model BookingSettings {
+  id                 String   @id @default(uuid())
+  profileId          String   @unique
+  bufferMinutes      Int      @default(0)
+  advanceBookingDays Int      @default(60)
+  minAdvanceHours    Int      @default(1)
+  cancellationHours  Int      @default(24)
+  autoConfirm        Boolean  @default(false)
+  timezone           String   @default("America/Mexico_City")
+  language           String   @default("es")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+// Bloqueos de fechas/horas específicas (vacaciones, ausencias, etc.)
+model ScheduleBlock {
+  id        String   @id @default(uuid())
+  profileId String
+  startDate DateTime // fecha de inicio del bloqueo
+  endDate   DateTime // fecha de fin (igual a startDate si es 1 día)
+  startTime String?  // HH:mm — null significa todo el día
+  endTime   String?  // HH:mm — null significa todo el día
+  isAllDay  Boolean  @default(true)
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([profileId, startDate, endDate])
+}
+
+// Disponibilidad específica por servicio (sobreescribe la disponibilidad general)
+model ServiceAvailability {
+  id        String   @id @default(uuid())
+  serviceId String
+  dayOfWeek Int      // 0=Domingo, 1=Lunes, ..., 6=Sábado
+  startTime String   // "09:00"
+  endTime   String   // "17:00"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@index([serviceId, dayOfWeek])
 }

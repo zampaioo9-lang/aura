@@ -30,12 +30,13 @@ export default function PublicProfile() {
   if (error) return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
       <p className="text-slate-500 text-lg mb-4">{error}</p>
-      <button onClick={() => navigate('/')} className="text-indigo-600 hover:underline">Volver al inicio</button>
+      <button onClick={() => navigate(-1)} className="text-indigo-600 hover:underline">Volver</button>
     </div>
   );
 
   const handleBook = (serviceId: string) => {
-    const service = profile.services.find((s: any) => s.id === serviceId);
+    const services: any[] = profile.services || [];
+    const service = services.find((s: any) => s.id === serviceId);
     if (service) setBookingService({ id: service.id, name: service.name });
   };
 

@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { PrismaClient } from '@prisma/client';
-import { sendWhatsApp, templates } from '../services/whatsappService';
+import { sendWhatsApp, sendWhatsAppTemplate, templates, templateComponents } from '../services/whatsappService';
 
 const prisma = new PrismaClient();
 
@@ -45,7 +45,7 @@ export function startReminderJob() {
 
         if (alreadySent) continue;
 
-        const message = templates.reminder24h({
+        const components = templateComponents.reminder24h({
           clientName: booking.clientName,
           professionalName: booking.profile.user.name,
           serviceName: booking.service.name,
@@ -53,7 +53,19 @@ export function startReminderJob() {
           startTime: booking.startTime,
         });
 
-        const result = await sendWhatsApp(booking.clientPhone, message);
+        let result = await sendWhatsAppTemplate(booking.clientPhone, 'recordatorio_cita', 'es_MX', components);
+        let message = `[template:recordatorio_cita]`;
+
+        if (!result.success) {
+          message = templates.reminder24h({
+            clientName: booking.clientName,
+            professionalName: booking.profile.user.name,
+            serviceName: booking.service.name,
+            date: booking.date,
+            startTime: booking.startTime,
+          });
+          result = await sendWhatsApp(booking.clientPhone, message);
+        }
 
         await prisma.notification.create({
           data: {

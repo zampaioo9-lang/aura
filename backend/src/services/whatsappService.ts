@@ -1,9 +1,4 @@
-import twilio from 'twilio';
 import { env } from '../config/env';
-
-const client = env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN
-  ? twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN)
-  : null;
 
 export interface WhatsAppResult {
   success: boolean;
@@ -11,28 +6,95 @@ export interface WhatsAppResult {
   error?: string;
 }
 
+// ── Send free-form text (works within 24h session window) ──────────
 export async function sendWhatsApp(to: string, message: string): Promise<WhatsAppResult> {
-  if (!client || !env.TWILIO_WHATSAPP_NUMBER) {
-    console.log(`[WhatsApp] Twilio not configured. To: ${to}\nMessage: ${message}`);
+  if (!env.META_WA_TOKEN || !env.META_WA_PHONE_NUMBER_ID) {
+    console.log(`[WhatsApp] Meta no configurado. To: ${to}\nMessage: ${message}`);
     return { success: true, sid: 'dev-no-whatsapp' };
   }
 
   try {
-    const from = env.TWILIO_WHATSAPP_NUMBER.startsWith('whatsapp:')
-      ? env.TWILIO_WHATSAPP_NUMBER
-      : `whatsapp:${env.TWILIO_WHATSAPP_NUMBER}`;
+    const url = `https://graph.facebook.com/v21.0/${env.META_WA_PHONE_NUMBER_ID}/messages`;
 
-    const result = await client.messages.create({
-      from,
-      to: `whatsapp:${to}`,
-      body: message,
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.META_WA_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to,
+        type: 'text',
+        text: { body: message },
+      }),
     });
 
-    console.log(`[WhatsApp] Sent to ${to}: ${result.sid}`);
-    return { success: true, sid: result.sid };
+    const data = await response.json() as any;
+
+    if (!response.ok) {
+      const errorMsg = data?.error?.message || `HTTP ${response.status}`;
+      console.error(`[WhatsApp] Failed to ${to}:`, errorMsg);
+      return { success: false, error: errorMsg };
+    }
+
+    const msgId = data?.messages?.[0]?.id || 'unknown';
+    console.log(`[WhatsApp] Sent to ${to}: ${msgId}`);
+    return { success: true, sid: msgId };
   } catch (err: any) {
     const errorMsg = err.message || 'Unknown error';
     console.error(`[WhatsApp] Failed to ${to}:`, errorMsg);
+    return { success: false, error: errorMsg };
+  }
+}
+
+// ── Send template message (for outbound notifications) ─────────────
+export async function sendWhatsAppTemplate(
+  to: string,
+  templateName: string,
+  languageCode: string,
+  components: any[]
+): Promise<WhatsAppResult> {
+  if (!env.META_WA_TOKEN || !env.META_WA_PHONE_NUMBER_ID) {
+    console.log(`[WhatsApp] Meta no configurado. Template: ${templateName} To: ${to}`);
+    return { success: true, sid: 'dev-no-whatsapp' };
+  }
+
+  try {
+    const url = `https://graph.facebook.com/v21.0/${env.META_WA_PHONE_NUMBER_ID}/messages`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.META_WA_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: languageCode },
+          components,
+        },
+      }),
+    });
+
+    const data = await response.json() as any;
+
+    if (!response.ok) {
+      const errorMsg = data?.error?.message || `HTTP ${response.status}`;
+      console.error(`[WhatsApp] Template failed to ${to}:`, errorMsg);
+      return { success: false, error: errorMsg };
+    }
+
+    const msgId = data?.messages?.[0]?.id || 'unknown';
+    console.log(`[WhatsApp] Template "${templateName}" sent to ${to}: ${msgId}`);
+    return { success: true, sid: msgId };
+  } catch (err: any) {
+    const errorMsg = err.message || 'Unknown error';
+    console.error(`[WhatsApp] Template failed to ${to}:`, errorMsg);
     return { success: false, error: errorMsg };
   }
 }
@@ -49,6 +111,86 @@ function formatDateES(date: Date | string): string {
   });
 }
 
+// Template components para Meta (una vez aprobadas las plantillas)
+export const templateComponents = {
+  newBooking: (data: {
+    professionalName: string;
+    clientName: string;
+    serviceName: string;
+    date: Date | string;
+    startTime: string;
+  }) => ([
+    {
+      type: 'body',
+      parameters: [
+        { type: 'text', text: data.professionalName },
+        { type: 'text', text: data.clientName },
+        { type: 'text', text: data.serviceName },
+        { type: 'text', text: formatDateES(data.date) },
+        { type: 'text', text: data.startTime },
+      ],
+    },
+  ]),
+
+  confirmation: (data: {
+    clientName: string;
+    professionalName: string;
+    serviceName: string;
+    date: Date | string;
+    startTime: string;
+  }) => ([
+    {
+      type: 'body',
+      parameters: [
+        { type: 'text', text: data.clientName },
+        { type: 'text', text: data.professionalName },
+        { type: 'text', text: data.serviceName },
+        { type: 'text', text: formatDateES(data.date) },
+        { type: 'text', text: data.startTime },
+      ],
+    },
+  ]),
+
+  reminder24h: (data: {
+    clientName: string;
+    professionalName: string;
+    serviceName: string;
+    date: Date | string;
+    startTime: string;
+  }) => ([
+    {
+      type: 'body',
+      parameters: [
+        { type: 'text', text: data.clientName },
+        { type: 'text', text: data.professionalName },
+        { type: 'text', text: data.serviceName },
+        { type: 'text', text: formatDateES(data.date) },
+        { type: 'text', text: data.startTime },
+      ],
+    },
+  ]),
+
+  cancellation: (data: {
+    recipientName: string;
+    professionalName: string;
+    serviceName: string;
+    date: Date | string;
+    startTime: string;
+  }) => ([
+    {
+      type: 'body',
+      parameters: [
+        { type: 'text', text: data.recipientName },
+        { type: 'text', text: data.professionalName },
+        { type: 'text', text: data.serviceName },
+        { type: 'text', text: formatDateES(data.date) },
+        { type: 'text', text: data.startTime },
+      ],
+    },
+  ]),
+};
+
+// Mensajes de texto libre (para cuando el cliente inicia conversación)
 export const templates = {
   newBooking: (data: {
     professionalName: string;
@@ -62,7 +204,7 @@ export const templates = {
     dashboardUrl: string;
   }) =>
     [
-      `Nueva reserva en Aura!`,
+      `Nueva reserva en Aliax!`,
       ``,
       `Hola ${data.professionalName}, tienes una nueva reserva:`,
       ``,

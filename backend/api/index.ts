@@ -11,6 +11,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+
 // Lazy load routes to catch import errors
 try {
   const { errorHandler } = require('../src/middleware/errorHandler');
@@ -21,6 +22,10 @@ try {
   const templateRoutes = require('../src/routes/templates').default;
   const uploadRoutes = require('../src/routes/upload').default;
   const availabilityRoutes = require('../src/routes/availability').default;
+  const bookingSettingsRoutes = require('../src/routes/booking-settings').default;
+  const scheduleBlocksRoutes = require('../src/routes/schedule-blocks').default;
+  const serviceAvailabilityRoutes = require('../src/routes/service-availability').default;
+  const adminRoutes = require('../src/routes/admin').default;
   const { sendWhatsApp } = require('../src/services/whatsappService');
 
   app.use('/api/auth', authRoutes);
@@ -30,6 +35,10 @@ try {
   app.use('/api/templates', templateRoutes);
   app.use('/api/upload', uploadRoutes);
   app.use('/api/availability', availabilityRoutes);
+  app.use('/api/booking-settings', bookingSettingsRoutes);
+  app.use('/api/schedule-blocks', scheduleBlocksRoutes);
+  app.use('/api/service-availability', serviceAvailabilityRoutes);
+  app.use('/api/admin', adminRoutes);
 
   app.get('/api/test/whatsapp', async (req, res) => {
     const to = req.query.to as string;
@@ -40,8 +49,9 @@ try {
 
   app.use(errorHandler);
 } catch (err: any) {
+  console.error('ROUTE LOAD ERROR:', err.message, err.stack);
   app.use('/api/*', (_req, res) => {
-    res.status(500).json({ error: 'Failed to load routes', message: err.message, stack: err.stack });
+    res.status(500).json({ error: 'Failed to load routes', message: err.message });
   });
 }
 

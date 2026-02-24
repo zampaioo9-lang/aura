@@ -1,16 +1,17 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import {
   Plus, LogOut, Calendar, Clock, Settings,
   CalendarDays, Facebook, Instagram, Linkedin, MessageCircle,
   Home, Compass, Briefcase, Pencil, Search, ChevronRight, Camera,
-  Sun, Moon,
+  Sun, Moon, Lock, Copy, ExternalLink,
 } from 'lucide-react';
 import { useUpload } from '../hooks/useUpload';
 import { formatCurrency } from '../lib/utils';
 import { PROFESSION_CATEGORIES } from '../lib/professions';
+import BookingForm from '../components/BookingForm';
 
 const SOCIAL_ICONS = [
   { key: 'facebook',  Icon: Facebook,      color: '#1877F2' },
@@ -120,9 +121,16 @@ export default function Dashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [clientBookings, setClientBookings] = useState<ClientBooking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<Tab>('inicio');
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<Tab>(
+    () => (searchParams.get('tab') as Tab) || 'inicio'
+  );
+  const [theme, setTheme] = useState<'dark' | 'light'>(
+    () => (localStorage.getItem('aliax_theme') as 'dark' | 'light') || 'dark'
+  );
   const C = theme === 'dark' ? DARK : LIGHT;
+
+  useEffect(() => { localStorage.setItem('aliax_theme', theme); }, [theme]);
 
   useEffect(() => {
     const email = user?.email ?? '';
@@ -187,7 +195,7 @@ export default function Dashboard() {
         className="px-6 py-3 flex items-center justify-between shrink-0"
         style={{ background: C.navBg, borderBottom: `1px solid ${C.border}` }}
       >
-        <Link to="/" className="font-bold text-lg" style={{ color: C.text }}>Aura</Link>
+        <Link to="/" className="font-bold text-lg" style={{ color: C.text }}>Aliax.io</Link>
         <button
           onClick={() => { logout(); navigate('/'); }}
           className="flex items-center gap-1.5 text-sm transition-colors"
@@ -200,10 +208,52 @@ export default function Dashboard() {
         </button>
       </nav>
 
+      {/* ── Mobile profile card (visible solo en mobile) ── */}
+      <div
+        className="md:hidden flex flex-col items-center text-center gap-3 px-6 py-6 shrink-0"
+        style={{ background: C.sideBg, borderBottom: `1px solid ${C.border}` }}
+      >
+        {/* Avatar grande */}
+        <div
+          className="rounded-full overflow-hidden flex items-center justify-center text-3xl font-bold"
+          style={{ width: 96, height: 96, background: 'rgba(108,99,255,0.15)', color: '#6c63ff', border: '2px solid rgba(108,99,255,0.35)', flexShrink: 0 }}
+        >
+          {sidebarAvatar
+            ? <img src={sidebarAvatar} alt={user?.name} className="w-full h-full object-cover" />
+            : initials}
+        </div>
+        {/* Nombre */}
+        <div>
+          <p className="font-bold text-xl leading-tight" style={{ color: C.text }}>{user?.name}</p>
+          {profiles[0]?.profession && (
+            <p className="text-sm mt-0.5" style={{ color: C.accent }}>{profiles[0].profession}</p>
+          )}
+        </div>
+        {/* Botones */}
+        <div className="flex items-center gap-3 mt-1">
+          <Link
+            to="/account"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium"
+            style={{ background: C.accent, color: 'white' }}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Editar perfil
+          </Link>
+          <button
+            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium"
+            style={{ background: C.accentLight, color: C.muted, border: `1px solid ${C.border}` }}
+          >
+            {theme === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+            {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+          </button>
+        </div>
+      </div>
+
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
+        {/* Sidebar — oculto en mobile */}
         <aside
-          className="shrink-0 flex flex-col p-6 gap-5 overflow-y-auto"
+          className="hidden md:flex shrink-0 flex-col p-6 gap-5 overflow-y-auto"
           style={{ width: '400px', background: C.sideBg, borderRight: `1px solid ${C.border}` }}
         >
           {/* Avatar */}
@@ -303,24 +353,24 @@ export default function Dashboard() {
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Tabs */}
           <div
-            className="px-6 flex gap-1 shrink-0"
+            className="flex shrink-0 md:px-6 justify-center md:justify-start"
             style={{ background: C.tabsBg, borderBottom: `1px solid ${C.border}` }}
           >
             {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex items-center gap-1.5 px-4 py-3.5 text-sm font-medium border-b-2 transition-colors"
+                className="flex flex-col md:flex-row items-center gap-1 md:gap-1.5 px-5 md:px-4 py-3 md:py-3.5 text-xs md:text-sm font-medium border-b-2 transition-colors whitespace-nowrap"
                 style={activeTab === tab.id
                   ? { borderBottomColor: C.accent, color: C.accent }
                   : { borderBottomColor: 'transparent', color: C.muted }}
                 onMouseEnter={e => { if (activeTab !== tab.id) e.currentTarget.style.color = C.text; }}
                 onMouseLeave={e => { if (activeTab !== tab.id) e.currentTarget.style.color = C.muted; }}
               >
-                {tab.icon}
-                {tab.label}
+                <span className="[&>svg]:h-5 [&>svg]:w-5 md:[&>svg]:h-4 md:[&>svg]:w-4">{tab.icon}</span>
+                <span>{tab.label}</span>
                 {tab.id === 'profesional' && (
-                  <span className="ml-1 text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-semibold">Pro</span>
+                  <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-semibold leading-none">Pro</span>
                 )}
               </button>
             ))}
@@ -568,6 +618,8 @@ function TabExplorar({ C }: { C: Colors }) {
   const [screen, setScreen] = useState<ExploreScreen>('directory');
   const [selectedProfession, setSelectedProfession] = useState('');
   const [selectedProfile, setSelectedProfile] = useState<DirectoryProfile | null>(null);
+  const [bookingState, setBookingState] = useState<{ profileId: string; serviceId: string; serviceName: string } | null>(null);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
 
   useEffect(() => {
     api.get('/profiles/directory')
@@ -652,7 +704,7 @@ function TabExplorar({ C }: { C: Colors }) {
           {p.profession && <p className="text-sm mt-1" style={{ color: C.accent }}>{p.profession}</p>}
           {memberYear && (
             <p className="text-xs mt-1 flex items-center gap-1 justify-center" style={{ color: C.muted }}>
-              <Clock className="h-3 w-3" /> En Aura desde {memberYear}
+              <Clock className="h-3 w-3" /> En Aliax.io desde {memberYear}
             </p>
           )}
           {p.bio && <p className="text-xs mt-2 leading-relaxed" style={{ color: C.muted }}>{p.bio}</p>}
@@ -711,14 +763,42 @@ function TabExplorar({ C }: { C: Colors }) {
                       <p className="font-medium" style={{ color: C.text }}>{s.name}</p>
                       <p className="text-sm" style={{ color: C.muted }}>{formatCurrency(s.price, s.currency)} · {s.durationMinutes} min</p>
                     </div>
-                    <Link to={`/book/${p.slug}`} className="text-sm px-3 py-1.5 text-white rounded-lg" style={{ background: C.accent }}>
+                    <button
+                      onClick={() => setBookingState({ profileId: p.id, serviceId: s.id, serviceName: s.name })}
+                      className="text-sm px-3 py-1.5 text-white rounded-lg"
+                      style={{ background: C.accent }}
+                    >
                       Reservar
-                    </Link>
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
           )}
+
+      {bookingState && !bookingSuccess && (
+        <BookingForm
+          profileId={bookingState.profileId}
+          serviceId={bookingState.serviceId}
+          serviceName={bookingState.serviceName}
+          onClose={() => setBookingState(null)}
+          onSuccess={() => { setBookingSuccess(true); setBookingState(null); }}
+        />
+      )}
+
+      {bookingSuccess && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-8 text-center">
+            <div className="text-4xl mb-4">&#10003;</div>
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">¡Reserva registrada!</h3>
+            <p className="text-slate-500 mb-6">Recibirás una confirmación pronto.</p>
+            <button onClick={() => setBookingSuccess(false)}
+              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors">
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
       </div>
     );
   }
@@ -852,7 +932,17 @@ function TabExplorar({ C }: { C: Colors }) {
 
 /* ────────────────── Tab: Perfil Profesional ────────────────── */
 function TabProfesional({ profiles, totalServices, C }: { profiles: Profile[]; totalServices: number; C: Colors }) {
-  const btnBg = C.isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9';
+  const btnBg     = C.isDark ? '#2e2e3d' : '#f1f5f9';
+  const btnBorder = `1px solid ${C.border}`;
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const copyUrl = (slug: string, id: string) => {
+    const url = `${window.location.origin}/${slug}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
 
   if (profiles.length === 0) {
     return (
@@ -881,6 +971,29 @@ function TabProfesional({ profiles, totalServices, C }: { profiles: Profile[]; t
             {profiles.length} {profiles.length === 1 ? 'perfil' : 'perfiles'} &middot; {totalServices} servicios en total
           </p>
         </div>
+        {profiles.length < 2 ? (
+          <Link
+            to="/profile/new"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors"
+            style={{ background: C.accent }}
+          >
+            <Plus className="h-4 w-4" />
+            Añadir Perfil
+          </Link>
+        ) : (
+          <div className="flex flex-col items-end gap-1">
+            <button
+              disabled
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg opacity-50 cursor-not-allowed"
+              style={{ background: btnBg, color: C.muted, border: btnBorder }}
+            >
+              <Lock className="h-4 w-4" />
+              Añadir Perfil
+              <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">Premium</span>
+            </button>
+            <p className="text-xs" style={{ color: C.muted }}>Límite del plan Pro. Actualizá a Premium para más perfiles.</p>
+          </div>
+        )}
       </div>
       <div className="grid sm:grid-cols-2 gap-4">
         {profiles.map(p => (
@@ -890,7 +1003,14 @@ function TabProfesional({ profiles, totalServices, C }: { profiles: Profile[]; t
                 <h3 className="font-semibold" style={{ color: C.text }}>{p.title}</h3>
                 <p className="text-sm" style={{ color: C.muted }}>{p.profession}</p>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${p.published ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{
+                background: p.published
+                  ? (C.isDark ? 'rgba(34,197,94,0.15)' : '#dcfce7')
+                  : (C.isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9'),
+                color: p.published
+                  ? (C.isDark ? '#4ade80' : '#15803d')
+                  : C.muted,
+              }}>
                 {p.published ? 'Publicado' : 'Borrador'}
               </span>
             </div>
@@ -901,15 +1021,49 @@ function TabProfesional({ profiles, totalServices, C }: { profiles: Profile[]; t
               <span>&middot;</span>
               <span className="capitalize">{p.template.toLowerCase()}</span>
             </div>
+
+            {/* URL pública */}
+            <div className="mb-3">
+              <p className="text-xs mb-1.5 font-medium" style={{ color: C.muted }}>Comparte este link con tus clientes</p>
+              <div
+                className="flex items-center gap-2 rounded-lg px-3 py-2"
+                style={{ background: C.isDark ? 'rgba(108,99,255,0.08)' : 'rgba(108,99,255,0.06)', border: `1px solid ${C.isDark ? 'rgba(108,99,255,0.2)' : 'rgba(108,99,255,0.15)'}` }}
+              >
+                <span className="text-xs flex-1 truncate font-mono" style={{ color: C.accent }}>
+                  aliax.io/{p.slug}
+                </span>
+              <button
+                onClick={() => copyUrl(p.slug, p.id)}
+                className="shrink-0 p-1 rounded transition-opacity hover:opacity-70"
+                style={{ color: C.accent }}
+                title="Copiar enlace"
+              >
+                {copiedId === p.id
+                  ? <span className="text-xs font-medium text-green-500">✓ Copiado</span>
+                  : <Copy className="h-3.5 w-3.5" />}
+              </button>
+              <a
+                href={`/${p.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 p-1 rounded transition-opacity hover:opacity-70"
+                style={{ color: C.accent }}
+                title="Ver perfil público"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+              </div>
+            </div>
+
             <div className="flex flex-wrap gap-2">
-              <Link to={`/profile/edit/${p.id}`} className="text-sm px-3 py-1.5 rounded-lg" style={{ background: btnBg, color: C.text }}>Editar</Link>
-              <Link to="/dashboard/services" className="text-sm px-3 py-1.5 rounded-lg inline-flex items-center gap-1" style={{ background: btnBg, color: C.text }}>
+              <Link to={`/profile/edit/${p.id}`} className="text-sm px-3 py-1.5 rounded-lg" style={{ background: btnBg, color: C.text, border: btnBorder }}>Editar</Link>
+              <Link to="/dashboard/services" className="text-sm px-3 py-1.5 rounded-lg inline-flex items-center gap-1" style={{ background: btnBg, color: C.text, border: btnBorder }}>
                 <Settings className="h-3 w-3" /> Servicios
               </Link>
-              <Link to="/dashboard/availability" className="text-sm px-3 py-1.5 rounded-lg inline-flex items-center gap-1" style={{ background: btnBg, color: C.text }}>
+              <Link to="/dashboard/availability" className="text-sm px-3 py-1.5 rounded-lg inline-flex items-center gap-1" style={{ background: btnBg, color: C.text, border: btnBorder }}>
                 <Clock className="h-3 w-3" /> Horarios
               </Link>
-              <Link to="/dashboard/scheduling" className="text-sm px-3 py-1.5 rounded-lg inline-flex items-center gap-1" style={{ background: C.accentLight, color: C.accent }}>
+              <Link to="/dashboard/scheduling" className="text-sm px-3 py-1.5 rounded-lg inline-flex items-center gap-1" style={{ background: C.accentLight, color: C.accent, border: `1px solid ${C.accent}22` }}>
                 <CalendarDays className="h-3 w-3" /> Agenda
               </Link>
             </div>

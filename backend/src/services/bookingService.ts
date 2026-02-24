@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
-import { sendWhatsApp, templates } from './whatsappService';
+import { sendWhatsApp, sendWhatsAppTemplate, templates, templateComponents } from './whatsappService';
 import { env } from '../config/env';
 
 const prisma = new PrismaClient();
@@ -274,24 +274,40 @@ export async function createBooking(data: {
     },
   });
 
-  // Send WhatsApp to professional (non-blocking)
-  const professionalPhone = profile.user.phone || profile.phone;
-  console.log(`[Booking] Created ${booking.id} | professionalPhone: ${professionalPhone || 'NONE'} | user.phone: ${profile.user.phone || 'null'} | profile.phone: ${profile.phone || 'null'}`);
+  // Send WhatsApp to professional (prefer profile.phone as it has full country code)
+  const professionalPhone = profile.phone || profile.user.phone;
+  console.log(`[Booking] Created ${booking.id} | professionalPhone: ${professionalPhone || 'NONE'} | profile.phone: ${profile.phone || 'null'} | user.phone: ${profile.user.phone || 'null'}`);
   if (professionalPhone) {
-    const message = templates.newBooking({
+    // Intentar con plantilla aprobada, si falla usar texto libre
+    const components = templateComponents.newBooking({
       professionalName: profile.user.name,
       clientName: data.clientName,
-      clientEmail: data.clientEmail,
-      clientPhone: data.clientPhone,
-      clientNotes: data.clientNotes,
       serviceName: service.name,
       date: data.date,
       startTime: data.startTime,
-      dashboardUrl: `${env.FRONTEND_URL}/dashboard`,
     });
 
-    const result = await sendWhatsApp(professionalPhone, message);
-    await saveNotification(booking.id, 'NEW_BOOKING', professionalPhone, message, result);
+    let result = await sendWhatsAppTemplate(professionalPhone, 'nueva_reserva', 'es_MX', components);
+
+    // Fallback a texto libre si la plantilla falla
+    if (!result.success) {
+      console.log(`[WhatsApp] Template falló (${result.error}), usando texto libre`);
+      const message = templates.newBooking({
+        professionalName: profile.user.name,
+        clientName: data.clientName,
+        clientEmail: data.clientEmail,
+        clientPhone: data.clientPhone,
+        clientNotes: data.clientNotes,
+        serviceName: service.name,
+        date: data.date,
+        startTime: data.startTime,
+        dashboardUrl: `${env.FRONTEND_URL}/dashboard`,
+      });
+      result = await sendWhatsApp(professionalPhone, message);
+      await saveNotification(booking.id, 'NEW_BOOKING', professionalPhone, message, result);
+    } else {
+      await saveNotification(booking.id, 'NEW_BOOKING', professionalPhone, `[template:nueva_reserva]`, result);
+    }
 
     if (result.success) {
       await prisma.booking.update({
@@ -325,7 +341,7 @@ export async function confirmBooking(bookingId: string, professionalId: string) 
 
   // Send WhatsApp confirmation to client
   if (booking.clientPhone) {
-    const message = templates.confirmation({
+    const components = templateComponents.confirmation({
       clientName: booking.clientName,
       professionalName: booking.profile.user.name,
       serviceName: booking.service.name,
@@ -333,8 +349,21 @@ export async function confirmBooking(bookingId: string, professionalId: string) 
       startTime: booking.startTime,
     });
 
-    const result = await sendWhatsApp(booking.clientPhone, message);
-    await saveNotification(bookingId, 'CONFIRMATION', booking.clientPhone, message, result);
+    let result = await sendWhatsAppTemplate(booking.clientPhone, 'reserva_confirmada', 'es_MX', components);
+
+    if (!result.success) {
+      const message = templates.confirmation({
+        clientName: booking.clientName,
+        professionalName: booking.profile.user.name,
+        serviceName: booking.service.name,
+        date: booking.date,
+        startTime: booking.startTime,
+      });
+      result = await sendWhatsApp(booking.clientPhone, message);
+      await saveNotification(bookingId, 'CONFIRMATION', booking.clientPhone, message, result);
+    } else {
+      await saveNotification(bookingId, 'CONFIRMATION', booking.clientPhone, `[template:reserva_confirmada]`, result);
+    }
   }
 
   return updated;
@@ -384,23 +413,41 @@ export async function cancelBooking(
 
   // Notify client
   if (booking.clientPhone) {
-    const clientMsg = templates.cancellation({
+    const components = templateComponents.cancellation({
       recipientName: booking.clientName,
-      ...cancelData,
+      professionalName: booking.profile.user.name,
+      serviceName: booking.service.name,
+      date: booking.date,
+      startTime: booking.startTime,
     });
-    const clientResult = await sendWhatsApp(booking.clientPhone, clientMsg);
-    await saveNotification(bookingId, 'CANCELLATION', booking.clientPhone, clientMsg, clientResult);
+    let clientResult = await sendWhatsAppTemplate(booking.clientPhone, 'cita_cancelada', 'es_MX', components);
+    if (!clientResult.success) {
+      const clientMsg = templates.cancellation({ recipientName: booking.clientName, ...cancelData });
+      clientResult = await sendWhatsApp(booking.clientPhone, clientMsg);
+      await saveNotification(bookingId, 'CANCELLATION', booking.clientPhone, clientMsg, clientResult);
+    } else {
+      await saveNotification(bookingId, 'CANCELLATION', booking.clientPhone, `[template:cita_cancelada]`, clientResult);
+    }
   }
 
   // Notify professional
-  const professionalPhone = booking.profile.user.phone || booking.profile.phone;
+  const professionalPhone = booking.profile.phone || booking.profile.user.phone;
   if (professionalPhone) {
-    const profMsg = templates.cancellation({
+    const components = templateComponents.cancellation({
       recipientName: booking.profile.user.name,
-      ...cancelData,
+      professionalName: booking.profile.user.name,
+      serviceName: booking.service.name,
+      date: booking.date,
+      startTime: booking.startTime,
     });
-    const profResult = await sendWhatsApp(professionalPhone, profMsg);
-    await saveNotification(bookingId, 'CANCELLATION', professionalPhone, profMsg, profResult);
+    let profResult = await sendWhatsAppTemplate(professionalPhone, 'cita_cancelada', 'es_MX', components);
+    if (!profResult.success) {
+      const profMsg = templates.cancellation({ recipientName: booking.profile.user.name, ...cancelData });
+      profResult = await sendWhatsApp(professionalPhone, profMsg);
+      await saveNotification(bookingId, 'CANCELLATION', professionalPhone, profMsg, profResult);
+    } else {
+      await saveNotification(bookingId, 'CANCELLATION', professionalPhone, `[template:cita_cancelada]`, profResult);
+    }
   }
 
   return updated;

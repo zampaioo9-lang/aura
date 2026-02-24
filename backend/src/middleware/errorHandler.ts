@@ -26,6 +26,6 @@ export function errorHandler(
     return res.status(400).json({ error: 'Datos invalidos', details: messages });
   }
 
-  console.error('Unhandled error:', err.message);
+  console.error('Unhandled error:', err.message, err.stack);
   return res.status(500).json({ error: 'Internal server error' });
 }
