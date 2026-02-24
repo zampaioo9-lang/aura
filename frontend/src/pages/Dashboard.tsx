@@ -652,10 +652,11 @@ function TabInicio({ profiles, bookings, userName, C }: {
         Hola, {userName?.split(' ')[0] ?? 'bienvenido'} 👋
       </h2>
       <p className="mb-6" style={{ color: C.muted }}>Aquí tienes un resumen de tu actividad.</p>
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard label="Reservas"  value={bookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED').length} sub="pendientes y confirmadas" color="indigo"  isDark={C.isDark} shadow={C.cardShadow} />
-        <StatCard label="Servicios" value={totalServices}  sub="en todos tus perfiles"    color="emerald" isDark={C.isDark} shadow={C.cardShadow} />
-        <StatCard label="Perfiles"  value={profiles.length} sub="perfiles profesionales"  color="amber"   isDark={C.isDark} shadow={C.cardShadow} />
+      <div className="grid grid-cols-2 gap-4">
+        <StatCard label="Reservas"    value={bookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED').length} sub="pendientes y confirmadas" color="indigo"  isDark={C.isDark} shadow={C.cardShadow} />
+        <StatCard label="Completadas" value={bookings.filter(b => b.status === 'COMPLETED').length}                           sub="reservas completadas"      color="emerald" isDark={C.isDark} shadow={C.cardShadow} />
+        <StatCard label="Servicios"   value={totalServices}                                                                   sub="en todos tus perfiles"     color="amber"   isDark={C.isDark} shadow={C.cardShadow} />
+        <StatCard label="Perfiles"    value={profiles.length}                                                                 sub="perfiles profesionales"    color="violet"  isDark={C.isDark} shadow={C.cardShadow} />
       </div>
     </div>
   );
@@ -663,10 +664,10 @@ function TabInicio({ profiles, bookings, userName, C }: {
 
 function StatCard({ label, value, sub, color, isDark, shadow }: {
   label: string; value: number; sub: string;
-  color: 'indigo' | 'emerald' | 'amber'; isDark: boolean; shadow: string;
+  color: 'indigo' | 'emerald' | 'amber' | 'violet'; isDark: boolean; shadow: string;
 }) {
-  const light = { indigo: { bg: '#eef2ff', text: '#4338ca' }, emerald: { bg: '#ecfdf5', text: '#047857' }, amber: { bg: '#fffbeb', text: '#b45309' } };
-  const dark  = { indigo: { bg: 'rgba(99,102,241,0.18)', text: '#a5b4fc' }, emerald: { bg: 'rgba(16,185,129,0.18)', text: '#6ee7b7' }, amber: { bg: 'rgba(245,158,11,0.18)', text: '#fcd34d' } };
+  const light = { indigo: { bg: '#eef2ff', text: '#4338ca' }, emerald: { bg: '#ecfdf5', text: '#047857' }, amber: { bg: '#fffbeb', text: '#b45309' }, violet: { bg: '#f5f3ff', text: '#6d28d9' } };
+  const dark  = { indigo: { bg: 'rgba(99,102,241,0.18)', text: '#a5b4fc' }, emerald: { bg: 'rgba(16,185,129,0.18)', text: '#6ee7b7' }, amber: { bg: 'rgba(245,158,11,0.18)', text: '#fcd34d' }, violet: { bg: 'rgba(139,92,246,0.18)', text: '#c4b5fd' } };
   const p = isDark ? dark[color] : light[color];
   return (
     <div className="rounded-xl p-5" style={{ background: p.bg, color: p.text, boxShadow: shadow }}>
