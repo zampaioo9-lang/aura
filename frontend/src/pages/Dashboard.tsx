@@ -459,10 +459,10 @@ export default function Dashboard() {
 
           {/* Other tabs */}
           {([
-            { section: 'inicio'      as const, label: 'Dashboard', icon: <Home className="h-5 w-5" /> },
-            { section: 'citas'       as const, label: 'Citas',     icon: <Calendar className="h-5 w-5" /> },
-            { section: 'explorar'    as const, label: 'Explorar',  icon: <Compass className="h-5 w-5" /> },
-            { section: 'profesional' as const, label: 'Pro',       icon: <Briefcase className="h-5 w-5" /> },
+            { section: 'inicio'      as const, label: 'Dashboard', icon: <Home className="h-6 w-6" /> },
+            { section: 'citas'       as const, label: 'Citas',     icon: <Calendar className="h-6 w-6" /> },
+            { section: 'explorar'    as const, label: 'Explorar',  icon: <Compass className="h-6 w-6" /> },
+            { section: 'profesional' as const, label: 'Pro',       icon: <Briefcase className="h-6 w-6" /> },
           ]).map(({ section, label, icon }) => {
             const isActive = mobileSection === section;
             return (
