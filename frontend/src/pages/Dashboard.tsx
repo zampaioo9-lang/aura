@@ -352,7 +352,7 @@ export default function Dashboard() {
           </div>
 
           {/* Edit + logout — centered, fixed bottom strip */}
-          <div className="flex flex-col items-center gap-3 px-6 pt-4 pb-20" style={{ background: C.sideBg, flexShrink: 0 }}>
+          <div className="flex flex-col items-center gap-3 px-6 pt-4 pb-24" style={{ background: C.sideBg, flexShrink: 0 }}>
             <div className="flex justify-center w-full">
               <Link
                 to="/account"
@@ -415,7 +415,7 @@ export default function Dashboard() {
           style={{
             position: 'absolute',
             left: 0, right: 0,
-            height: 60,
+            height: 72,
             zIndex: 20,
             display: 'flex',
             background: C.isDark
@@ -425,7 +425,7 @@ export default function Dashboard() {
             WebkitBackdropFilter: 'blur(18px)',
             borderTop: `1px solid ${C.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
             transition: 'top 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
-            top: mobileSection === 'perfil' ? 'calc(100% - 60px)' : '0px',
+            top: mobileSection === 'perfil' ? 'calc(100% - 72px)' : '0px',
           }}
         >
           {/* Perfil tab */}
