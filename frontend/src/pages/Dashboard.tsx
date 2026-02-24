@@ -66,6 +66,7 @@ interface ClientBooking {
 }
 
 type Tab = 'inicio' | 'citas' | 'explorar' | 'profesional';
+type MobileSection = 'perfil' | Tab;
 
 interface Colors {
   sideBg: string;
@@ -125,6 +126,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<Tab>(
     () => (searchParams.get('tab') as Tab) || 'inicio'
   );
+  const [mobileSection, setMobileSection] = useState<MobileSection>('perfil');
   const [theme, setTheme] = useState<'dark' | 'light'>(
     () => (localStorage.getItem('aliax_theme') as 'dark' | 'light') || 'dark'
   );
@@ -180,6 +182,16 @@ export default function Dashboard() {
 
   const sidebarAvatar = profiles.find(p => p.avatar)?.avatar ?? user?.avatar ?? null;
   const socialLinks   = (user?.socialLinks || {}) as Record<string, string>;
+  const hasSocial     = SOCIAL_ICONS.some(({ key }) => !!socialLinks[key]);
+  const isProfessional = profiles.length > 0;
+  const activeBookingsCount = bookings.filter(b => b.status === 'CONFIRMED' || b.status === 'PENDING').length;
+
+  const mobileSectionLabel: Record<string, string> = {
+    inicio: 'Dashboard',
+    citas: 'Mis Citas',
+    explorar: 'Explorar',
+    profesional: 'Perfil Profesional',
+  };
 
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'inicio',      label: 'Inicio',             icon: <Home className="h-4 w-4" /> },
@@ -188,72 +200,308 @@ export default function Dashboard() {
     { id: 'profesional', label: 'Perfil Profesional', icon: <Briefcase className="h-4 w-4" /> },
   ];
 
+  /* gradient for mobile profile card */
+  const profileGradient = C.isDark
+    ? 'linear-gradient(160deg, #3b3580 0%, #5b21b6 100%)'
+    : 'linear-gradient(160deg, #6c63ff 0%, #8b5cf6 100%)';
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: C.mainBg }}>
-      {/* Navbar */}
+
+      {/* ── Navbar ── */}
       <nav
-        className="px-6 py-3 flex items-center justify-between shrink-0"
-        style={{ background: C.navBg, borderBottom: `1px solid ${C.border}` }}
+        className="px-5 py-3 flex items-center justify-between shrink-0"
+        style={{
+          background: C.isDark ? 'rgba(24, 24, 31, 0.65)' : 'rgba(255, 255, 255, 0.65)',
+          backdropFilter: 'blur(18px)',
+          WebkitBackdropFilter: 'blur(18px)',
+          borderBottom: `1px solid ${C.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+        }}
       >
         <Link to="/" className="font-bold text-lg" style={{ color: C.text }}>Aliax.io</Link>
-        <button
-          onClick={() => { logout(); navigate('/'); }}
-          className="flex items-center gap-1.5 text-sm transition-colors"
-          style={{ color: C.muted }}
-          onMouseEnter={e => (e.currentTarget.style.color = C.text)}
-          onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
-        >
-          <LogOut className="h-4 w-4" />
-          Salir
-        </button>
+        <div className="flex items-center gap-1">
+          {/* theme toggle — only on mobile in navbar */}
+          <button
+            className="md:hidden p-2 rounded-lg transition-colors"
+            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+            style={{ color: C.muted }}
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={() => { logout(); navigate('/'); }}
+            className="flex items-center gap-1.5 text-sm transition-colors px-2 py-1.5"
+            style={{ color: C.muted }}
+            onMouseEnter={e => (e.currentTarget.style.color = C.text)}
+            onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden md:inline">Salir</span>
+          </button>
+        </div>
       </nav>
 
-      {/* ── Mobile profile card (visible solo en mobile) ── */}
+      {/* ════════════════════════════════════════
+          MOBILE LAYOUT
+          Profile card always fills background.
+          Tab bar animates from bottom → top when
+          any non-Perfil tab is selected, and back
+          to bottom when Perfil is selected.
+          ════════════════════════════════════════ */}
       <div
-        className="md:hidden flex flex-col items-center text-center gap-3 px-6 py-6 shrink-0"
-        style={{ background: C.sideBg, borderBottom: `1px solid ${C.border}` }}
+        className="md:hidden flex-1 relative overflow-hidden"
+        style={{ minHeight: 0 }}
       >
-        {/* Avatar grande */}
+
+        {/* ── LAYER 1: Profile card (always behind, fills full screen, no scroll) ── */}
         <div
-          className="rounded-full overflow-hidden flex items-center justify-center text-3xl font-bold"
-          style={{ width: 96, height: 96, background: 'rgba(108,99,255,0.15)', color: '#6c63ff', border: '2px solid rgba(108,99,255,0.35)', flexShrink: 0 }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            background: C.sideBg,
+            overflow: 'hidden',
+          }}
         >
-          {sidebarAvatar
-            ? <img src={sidebarAvatar} alt={user?.name} className="w-full h-full object-cover" />
-            : initials}
-        </div>
-        {/* Nombre */}
-        <div>
-          <p className="font-bold text-xl leading-tight" style={{ color: C.text }}>{user?.name}</p>
-          {profiles[0]?.profession && (
-            <p className="text-sm mt-0.5" style={{ color: C.accent }}>{profiles[0].profession}</p>
-          )}
-        </div>
-        {/* Botones */}
-        <div className="flex items-center gap-3 mt-1">
-          <Link
-            to="/account"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium"
-            style={{ background: C.accent, color: 'white' }}
+          {/* Gradient section — flex:1 to fill remaining height, content centered */}
+          <div
+            style={{
+              background: profileGradient,
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              padding: '28px 32px 24px',
+            }}
           >
-            <Pencil className="h-3.5 w-3.5" />
-            Editar perfil
-          </Link>
+            {/* Avatar */}
+            <div className="relative mb-5" style={{ flexShrink: 0 }}>
+              <button
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                className="rounded-full overflow-hidden flex items-center justify-center text-3xl font-bold focus:outline-none"
+                style={{
+                  width: 128, height: 128,
+                  background: 'rgba(255,255,255,0.18)',
+                  color: 'white',
+                  border: '3px solid rgba(255,255,255,0.45)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                }}
+              >
+                {sidebarAvatar
+                  ? <img src={sidebarAvatar} alt={user?.name} className="w-full h-full object-cover" />
+                  : initials}
+              </button>
+              <button
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                className="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: C.accent, border: '2px solid rgba(255,255,255,0.3)' }}
+              >
+                {uploadingAvatar
+                  ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : <Camera className="h-3.5 w-3.5 text-white" />}
+              </button>
+            </div>
+
+            {/* Name */}
+            <p className="font-bold text-2xl leading-tight" style={{ color: 'white' }}>
+              {user?.name}
+            </p>
+
+            {/* Social links */}
+            {hasSocial && (
+              <div className="flex justify-center gap-3 mt-4">
+                {SOCIAL_ICONS.map(({ key, Icon }) => {
+                  const url = buildSocialUrl(key, socialLinks[key] || '');
+                  if (!url) return null;
+                  return (
+                    <a key={key} href={url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center justify-center rounded-full transition-opacity hover:opacity-80"
+                      style={{ width: 40, height: 40, background: 'rgba(0,0,0,0.38)', color: 'white' }}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Divider */}
+            <div style={{ width: '70%', margin: '20px auto 0', height: 1, background: 'rgba(255,255,255,0.35)' }} />
+
+            {/* Info list */}
+            <div className="flex flex-col gap-3" style={{ width: 'fit-content', marginLeft: 'auto', marginRight: 'auto', marginTop: 40 }}>
+
+              {/* Bio */}
+              {user?.bio && (
+                <div className="flex items-center gap-2">
+                  <Pencil className="h-4 w-4 shrink-0" style={{ color: 'rgba(255,255,255,0.65)' }} />
+                  <span className="text-sm" style={{ color: 'rgba(255,255,255,0.9)' }}>{user.bio}</span>
+                </div>
+              )}
+
+              {/* Professional fields (paid plan = has profile) */}
+              {isProfessional && (
+                <>
+                  {profiles[0]?.profession && (
+                    <div className="flex items-center gap-2">
+                      <Briefcase className="h-4 w-4 shrink-0" style={{ color: 'rgba(255,255,255,0.65)' }} />
+                      <span className="text-sm" style={{ color: 'rgba(255,255,255,0.9)' }}>{profiles[0].profession}</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Edit + logout — centered, fixed bottom strip */}
+          <div className="flex flex-col items-center gap-3 px-6 pt-4 pb-20" style={{ background: C.sideBg, flexShrink: 0 }}>
+            <div className="flex justify-center w-full">
+              <Link
+                to="/account"
+                className="flex items-center justify-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium"
+                style={{ background: C.accent, color: 'white' }}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Editar perfil
+              </Link>
+            </div>
+            <button
+              onClick={() => { logout(); navigate('/'); }}
+              className="flex items-center justify-center gap-2 text-sm py-2 transition-colors"
+              style={{ color: C.muted }}
+              onMouseEnter={e => (e.currentTarget.style.color = C.text)}
+              onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Cerrar sesión
+            </button>
+          </div>
+        </div>
+
+        {/* ── LAYER 2: Content (revealed when tab bar moves up) ── */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 60, left: 0, right: 0, bottom: 0,
+            zIndex: 2,
+            overflowY: 'auto',
+            background: C.mainBg,
+            transition: 'opacity 0.35s ease, transform 0.35s ease',
+            opacity: mobileSection === 'perfil' ? 0 : 1,
+            pointerEvents: mobileSection === 'perfil' ? 'none' : 'auto',
+          }}
+        >
+          <div className="p-4 pb-8">
+            {mobileSection === 'inicio' && (
+              <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} />
+            )}
+            {mobileSection === 'citas' && (
+              <TabCitas
+                pendingBookings={pendingBookings}
+                confirmedBookings={confirmedBookings}
+                totalBookings={bookings.length}
+                updateBookingStatus={updateBookingStatus}
+                clientBookings={clientBookings}
+                C={C}
+              />
+            )}
+            {mobileSection === 'explorar' && <TabExplorar C={C} />}
+            {mobileSection === 'profesional' && (
+              <TabProfesional profiles={profiles} totalServices={totalServices} C={C} />
+            )}
+          </div>
+        </div>
+
+        {/* ── LAYER 3: Tab bar — slides from bottom → top on navigation ── */}
+        <div
+          style={{
+            position: 'absolute',
+            left: 0, right: 0,
+            height: 60,
+            zIndex: 20,
+            display: 'flex',
+            background: C.isDark
+              ? 'rgba(24, 24, 31, 0.6)'
+              : 'rgba(255, 255, 255, 0.55)',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
+            borderTop: `1px solid ${C.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+            transition: 'top 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
+            top: mobileSection === 'perfil' ? 'calc(100% - 60px)' : '0px',
+          }}
+        >
+          {/* Perfil tab */}
           <button
-            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium"
-            style={{ background: C.accentLight, color: C.muted, border: `1px solid ${C.border}` }}
+            onClick={() => setMobileSection('perfil')}
+            className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors"
+            style={{ color: mobileSection === 'perfil' ? C.accent : C.muted }}
           >
-            {theme === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-            {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+            <div style={{
+              position: 'absolute', top: 0, left: '20%', right: '20%',
+              height: 2, borderRadius: '0 0 3px 3px',
+              background: mobileSection === 'perfil' ? C.accent : 'transparent',
+              transition: 'background 0.25s',
+            }} />
+            <div
+              className="rounded-full overflow-hidden flex items-center justify-center font-bold"
+              style={{
+                width: 22, height: 22, fontSize: 8,
+                background: mobileSection === 'perfil' ? C.accent : C.accentLight,
+                color: mobileSection === 'perfil' ? 'white' : C.accent,
+                border: mobileSection === 'perfil' ? 'none' : `1.5px solid ${C.accent}55`,
+                transition: 'background 0.25s',
+              }}
+            >
+              {sidebarAvatar
+                ? <img src={sidebarAvatar} className="w-full h-full object-cover" alt="" />
+                : <span>{initials}</span>}
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 500, lineHeight: 1 }}>Perfil</span>
           </button>
+
+          {/* Other tabs */}
+          {([
+            { section: 'inicio'      as const, label: 'Dashboard', icon: <Home className="h-5 w-5" /> },
+            { section: 'citas'       as const, label: 'Citas',     icon: <Calendar className="h-5 w-5" /> },
+            { section: 'explorar'    as const, label: 'Explorar',  icon: <Compass className="h-5 w-5" /> },
+            { section: 'profesional' as const, label: 'Pro',       icon: <Briefcase className="h-5 w-5" /> },
+          ]).map(({ section, label, icon }) => {
+            const isActive = mobileSection === section;
+            return (
+              <button
+                key={section}
+                onClick={() => setMobileSection(section)}
+                className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors"
+                style={{ color: isActive ? C.accent : C.muted }}
+              >
+                <div style={{
+                  position: 'absolute', top: 0, left: '20%', right: '20%',
+                  height: 2, borderRadius: '0 0 3px 3px',
+                  background: isActive ? C.accent : 'transparent',
+                  transition: 'background 0.25s',
+                }} />
+                {icon}
+                <span style={{ fontSize: 10, fontWeight: 500, lineHeight: 1 }}>{label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar — oculto en mobile */}
+      {/* ════════════════════════════════════════
+          DESKTOP LAYOUT (sidebar + tabs) — unchanged
+          ════════════════════════════════════════ */}
+      <div className="hidden md:flex flex-1 overflow-hidden">
+
+        {/* Sidebar */}
         <aside
-          className="hidden md:flex shrink-0 flex-col p-6 gap-5 overflow-y-auto"
+          className="shrink-0 flex flex-col p-6 gap-5 overflow-y-auto"
           style={{ width: '400px', background: C.sideBg, borderRight: `1px solid ${C.border}` }}
         >
           {/* Avatar */}
@@ -353,21 +601,21 @@ export default function Dashboard() {
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Tabs */}
           <div
-            className="flex shrink-0 md:px-6 justify-center md:justify-start"
+            className="flex shrink-0 px-6 justify-start"
             style={{ background: C.tabsBg, borderBottom: `1px solid ${C.border}` }}
           >
             {TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex flex-col md:flex-row items-center gap-1 md:gap-1.5 px-5 md:px-4 py-3 md:py-3.5 text-xs md:text-sm font-medium border-b-2 transition-colors whitespace-nowrap"
+                className="flex flex-row items-center gap-1.5 px-4 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap"
                 style={activeTab === tab.id
                   ? { borderBottomColor: C.accent, color: C.accent }
                   : { borderBottomColor: 'transparent', color: C.muted }}
                 onMouseEnter={e => { if (activeTab !== tab.id) e.currentTarget.style.color = C.text; }}
                 onMouseLeave={e => { if (activeTab !== tab.id) e.currentTarget.style.color = C.muted; }}
               >
-                <span className="[&>svg]:h-5 [&>svg]:w-5 md:[&>svg]:h-4 md:[&>svg]:w-4">{tab.icon}</span>
+                {tab.icon}
                 <span>{tab.label}</span>
                 {tab.id === 'profesional' && (
                   <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-semibold leading-none">Pro</span>
