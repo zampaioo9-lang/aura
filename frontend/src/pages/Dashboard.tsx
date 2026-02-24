@@ -184,14 +184,6 @@ export default function Dashboard() {
   const socialLinks   = (user?.socialLinks || {}) as Record<string, string>;
   const hasSocial     = SOCIAL_ICONS.some(({ key }) => !!socialLinks[key]);
   const isProfessional = profiles.length > 0;
-  const activeBookingsCount = bookings.filter(b => b.status === 'CONFIRMED' || b.status === 'PENDING').length;
-
-  const mobileSectionLabel: Record<string, string> = {
-    inicio: 'Dashboard',
-    citas: 'Mis Citas',
-    explorar: 'Explorar',
-    profesional: 'Perfil Profesional',
-  };
 
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'inicio',      label: 'Inicio',             icon: <Home className="h-4 w-4" /> },
