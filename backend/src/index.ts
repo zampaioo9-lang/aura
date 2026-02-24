@@ -15,7 +15,7 @@ import scheduleBlocksRoutes from './routes/schedule-blocks';
 import serviceAvailabilityRoutes from './routes/service-availability';
 import adminRoutes from './routes/admin';
 import { startReminderJob } from './jobs/reminderJob';
-import { sendWhatsApp } from './services/whatsappService';
+import { sendWhatsAppTemplate, templateComponents } from './services/whatsappService';
 
 const app = express();
 
@@ -43,11 +43,18 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// WhatsApp test endpoint
+// WhatsApp test endpoint (uses approved template)
 app.get('/api/test/whatsapp', async (req, res) => {
   const to = req.query.to as string;
   if (!to) return res.status(400).json({ error: 'Se requiere parametro ?to=+52...' });
-  const result = await sendWhatsApp(to, 'Test de WhatsApp desde Aliax!\n\nSi recibes esto, la integracion con Meta funciona correctamente.');
+  const components = templateComponents.newBooking({
+    professionalName: 'Test Aliax',
+    clientName: 'Cliente Test',
+    serviceName: 'Servicio Test',
+    date: new Date(),
+    startTime: '10:00',
+  });
+  const result = await sendWhatsAppTemplate(to, 'nueva_reserva', 'es_MX', components);
   res.json(result);
 });
 

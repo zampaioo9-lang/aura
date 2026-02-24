@@ -6,8 +6,23 @@ export interface WhatsAppResult {
   error?: string;
 }
 
+// ── Normalize phone number for WhatsApp Cloud API ──────────────────
+// Mexican mobile numbers need "1" after country code: +52XXXXXXXXXX → +521XXXXXXXXXX
+function normalizePhone(phone: string): string {
+  // Remove spaces and dashes
+  let p = phone.replace(/[\s\-]/g, '');
+  // Ensure it starts with +
+  if (!p.startsWith('+')) p = '+' + p;
+  // Mexican mobile: +52 followed by exactly 10 digits (no "1" yet)
+  if (/^\+52[^1]\d{9}$/.test(p)) {
+    p = '+521' + p.slice(3);
+  }
+  return p;
+}
+
 // ── Send free-form text (works within 24h session window) ──────────
 export async function sendWhatsApp(to: string, message: string): Promise<WhatsAppResult> {
+  to = normalizePhone(to);
   if (!env.META_WA_TOKEN || !env.META_WA_PHONE_NUMBER_ID) {
     console.log(`[WhatsApp] Meta no configurado. To: ${to}\nMessage: ${message}`);
     return { success: true, sid: 'dev-no-whatsapp' };
@@ -55,6 +70,7 @@ export async function sendWhatsAppTemplate(
   languageCode: string,
   components: any[]
 ): Promise<WhatsAppResult> {
+  to = normalizePhone(to);
   if (!env.META_WA_TOKEN || !env.META_WA_PHONE_NUMBER_ID) {
     console.log(`[WhatsApp] Meta no configurado. Template: ${templateName} To: ${to}`);
     return { success: true, sid: 'dev-no-whatsapp' };
