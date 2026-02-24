@@ -659,7 +659,7 @@ function TabInicio({ profiles, bookings, userName, C }: {
 }
 
 function StatCard({ label, value, sub, color, isDark, shadow }: {
-  label: string; value: number; sub: string;
+  label: string; value: number | string; sub: string;
   color: 'indigo' | 'emerald' | 'amber' | 'violet'; isDark: boolean; shadow: string;
 }) {
   const light = { indigo: { bg: '#eef2ff', text: '#4338ca' }, emerald: { bg: '#ecfdf5', text: '#047857' }, amber: { bg: '#fffbeb', text: '#b45309' }, violet: { bg: '#f5f3ff', text: '#6d28d9' } };
@@ -1232,13 +1232,30 @@ function TabProfesional({ profiles, totalServices, bookings = [], C }: { profile
           </div>
         )}
       </div>
-      {/* Stats resumen */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
-        <StatCard label="Reservas"    value={bookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED').length} sub="pendientes y confirmadas" color="indigo"  isDark={C.isDark} shadow={C.cardShadow} />
-        <StatCard label="Completadas" value={bookings.filter(b => b.status === 'COMPLETED').length}                           sub="reservas completadas"      color="emerald" isDark={C.isDark} shadow={C.cardShadow} />
-        <StatCard label="Servicios"   value={totalServices}                                                                   sub="en todos tus perfiles"     color="amber"   isDark={C.isDark} shadow={C.cardShadow} />
-        <StatCard label="Perfiles"    value={profiles.length}                                                                 sub="perfiles profesionales"    color="violet"  isDark={C.isDark} shadow={C.cardShadow} />
-      </div>
+      {/* Stats resumen profesional */}
+      {(() => {
+        const now = new Date();
+        const thisMonth = bookings.filter(b => {
+          const d = new Date(b.date);
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && b.status !== 'CANCELLED';
+        });
+        const totalMins = thisMonth.reduce((acc, b) => {
+          const [sh, sm] = b.startTime.split(':').map(Number);
+          const [eh, em] = b.endTime.split(':').map(Number);
+          return acc + ((eh * 60 + em) - (sh * 60 + sm));
+        }, 0);
+        const confirmed = thisMonth.filter(b => b.status === 'CONFIRMED' || b.status === 'COMPLETED').length;
+        const avgHours = thisMonth.length > 0 ? Math.round((totalMins / thisMonth.length) / 6) / 10 : 0;
+        const occupancy = thisMonth.length > 0 ? Math.round((confirmed / thisMonth.length) * 100) : 0;
+        return (
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <StatCard label="Reservas este mes" value={thisMonth.length}       sub="del mes actual"        color="indigo"  isDark={C.isDark} shadow={C.cardShadow} />
+            <StatCard label="Promedio por cita" value={`${avgHours}h`}         sub="duración promedio"     color="emerald" isDark={C.isDark} shadow={C.cardShadow} />
+            <StatCard label="Servicios activos" value={totalServices}          sub="en todos tus perfiles" color="amber"   isDark={C.isDark} shadow={C.cardShadow} />
+            <StatCard label="Ocupación"         value={`${occupancy}%`}        sub="citas confirmadas"     color="violet"  isDark={C.isDark} shadow={C.cardShadow} />
+          </div>
+        );
+      })()}
 
       <div className="grid sm:grid-cols-2 gap-4">
         {profiles.map(p => (

@@ -983,7 +983,6 @@ export default function SchedulingConfig() {
             justify-content: center !important;
           }
           .sc-main { padding: 16px !important; }
-          .sc-stats { grid-template-columns: 1fr 1fr !important; }
           .sc-grid-2 { grid-template-columns: 1fr !important; }
         }
       `}</style>
@@ -1043,21 +1042,6 @@ export default function SchedulingConfig() {
             </div>
           </div>
         )}
-
-        {/* Stats row */}
-        <div className="sc-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-          {[
-            [stats.bookings, 'Reservas este mes'],
-            [`${stats.avgHours}h`, 'Promedio por cita'],
-            [stats.services, 'Servicios activos'],
-            [`${stats.occupancy}%`, 'Ocupación'],
-          ].map(([v, l]) => (
-            <div key={String(l)} style={{ background: 'var(--sc-side)', border: '1px solid var(--sc-border)', borderRadius: 12, padding: 20 }}>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 28, fontWeight: 700, letterSpacing: -1 }}>{v}</div>
-              <div style={{ fontSize: 12, color: 'var(--sc-muted)', marginTop: 4 }}>{l}</div>
-            </div>
-          ))}
-        </div>
 
         {/* Tab content */}
         {selectedProfileId && (
