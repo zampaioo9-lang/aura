@@ -890,40 +890,14 @@ export default function SchedulingConfig() {
   const [tab, setTab]                 = useState<Tab>('availability');
   const [profiles, setProfiles]       = useState<Profile[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState('');
-  const [stats, setStats]             = useState({ bookings: 0, avgHours: 0, services: 0, occupancy: 0 });
   const [loading, setLoading]         = useState(true);
   const [theme]                       = useState<'dark'|'light'>(() => (localStorage.getItem('aliax_theme') as any) || 'dark');
   const T = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
 
   useEffect(() => {
-    Promise.allSettled([
-      api.get('/profiles'),
-      api.get('/bookings/professional'),
-      api.get('/services/me'),
-    ]).then(([pRes, bRes, sRes]) => {
-      if (pRes.status === 'fulfilled') {
-        setProfiles(pRes.value.data);
-        if (pRes.value.data.length > 0) setSelectedProfileId(pRes.value.data[0].id);
-      }
-      const bookings: any[] = bRes.status === 'fulfilled' ? bRes.value.data : [];
-      const now = new Date();
-      const thisMonth = bookings.filter((b: any) => {
-        const d = new Date(b.date);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && b.status !== 'CANCELLED';
-      });
-      const totalMins = thisMonth.reduce((acc: number, b: any) => {
-        const [sh, sm] = b.startTime.split(':').map(Number);
-        const [eh, em] = b.endTime.split(':').map(Number);
-        return acc + ((eh * 60 + em) - (sh * 60 + sm));
-      }, 0);
-      const rawSvcs = sRes.status === 'fulfilled' ? (sRes.value.data.services ?? sRes.value.data) : [];
-      const confirmed = thisMonth.filter((b: any) => b.status === 'CONFIRMED' || b.status === 'COMPLETED').length;
-      setStats({
-        bookings: thisMonth.length,
-        avgHours: thisMonth.length > 0 ? Math.round((totalMins / thisMonth.length) / 6) / 10 : 0,
-        services: rawSvcs.filter((s: any) => s.isActive).length,
-        occupancy: thisMonth.length > 0 ? Math.round((confirmed / thisMonth.length) * 100) : 0,
-      });
+    api.get('/profiles').then(res => {
+      setProfiles(res.data);
+      if (res.data.length > 0) setSelectedProfileId(res.data[0].id);
     }).finally(() => setLoading(false));
   }, []);
 
