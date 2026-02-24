@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import {
-  Plus, LogOut, Calendar, Clock, Settings,
+  Plus, LogOut, Calendar, Clock,
   CalendarDays, Facebook, Instagram, Linkedin, MessageCircle,
   Home, Compass, Briefcase, Pencil, Search, ChevronRight, Camera,
   Sun, Moon, Lock, Copy, ExternalLink,
