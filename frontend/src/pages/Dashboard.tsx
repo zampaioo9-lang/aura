@@ -126,7 +126,10 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<Tab>(
     () => (searchParams.get('tab') as Tab) || 'inicio'
   );
-  const [mobileSection, setMobileSection] = useState<MobileSection>('perfil');
+  const [mobileSection, setMobileSection] = useState<MobileSection>(() => {
+    const tab = searchParams.get('tab') as Tab;
+    return (tab && ['inicio', 'citas', 'explorar', 'profesional'].includes(tab)) ? tab : 'perfil';
+  });
   const [theme, setTheme] = useState<'dark' | 'light'>(
     () => (localStorage.getItem('aliax_theme') as 'dark' | 'light') || 'dark'
   );
