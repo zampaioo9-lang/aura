@@ -266,26 +266,23 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
       {/* Horario de atención */}
       <Card>
         <CardHeader dot="#43d9ad" title="Horario de atención" action={
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {activeDays.length > 0 && (
-              <div style={{ display: 'flex', gap: 4 }}>
-                {DAY_ORDER.filter(d => activeDays.includes(d)).map(d => (
-                  <button key={d} onClick={() => setSelectedDay(d)} style={{
-                    padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans',
-                    background: selectedDay === d ? '#6c63ff' : 'var(--sc-inner)', color: selectedDay === d ? 'white' : 'var(--sc-muted)',
-                  }}>{DAY_NAMES_SHORT[d]}</button>
-                ))}
-              </div>
-            )}
-            <BtnGhost small onClick={addFranja}>+ Añadir franja</BtnGhost>
-          </div>
+          activeDays.length > 0 ? (
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {DAY_ORDER.filter(d => activeDays.includes(d)).map(d => (
+                <button key={d} onClick={() => setSelectedDay(d)} style={{
+                  padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans',
+                  background: selectedDay === d ? '#6c63ff' : 'var(--sc-inner)', color: selectedDay === d ? 'white' : 'var(--sc-muted)',
+                }}>{DAY_NAMES_SHORT[d]}</button>
+              ))}
+            </div>
+          ) : undefined
         } />
 
         {selectedDay === null ? (
           <p style={{ color: 'var(--sc-muted)', fontSize: 14 }}>Selecciona días laborables primero</p>
         ) : (
           <>
-            {franjas.length === 0 && <p style={{ color: 'var(--sc-muted)', fontSize: 14, marginBottom: 16 }}>Sin franjas — pulsa "Añadir franja"</p>}
+            {franjas.length === 0 && <p style={{ color: 'var(--sc-muted)', fontSize: 14, marginBottom: 16 }}>Sin franjas — pulsa "+ Añadir franja"</p>}
             {franjas.map((f, idx) => {
               const labels = ['MAÑANA', 'TARDE', 'NOCHE'];
               return (
@@ -293,17 +290,24 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
                   <label style={{ display: 'block', marginBottom: 8, fontSize: 12, color: 'var(--sc-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
                     {labels[idx] ?? `FRANJA ${idx + 1}`}
                   </label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <TimeSelect value={f.startTime} onChange={v => setFranjas(prev => prev.map((x, i) => i === idx ? { ...x, startTime: v } : x))} />
-                    <span style={{ color: 'var(--sc-muted)', fontSize: 13 }}>hasta</span>
+                    <span style={{ color: 'var(--sc-muted)', fontSize: 13 }}>–</span>
                     <TimeSelect value={f.endTime} onChange={v => setFranjas(prev => prev.map((x, i) => i === idx ? { ...x, endTime: v } : x))} />
-                    <BtnDanger onClick={() => setFranjas(prev => prev.filter((_, i) => i !== idx))}>Eliminar</BtnDanger>
+                    <button
+                      onClick={() => setFranjas(prev => prev.filter((_, i) => i !== idx))}
+                      title="Eliminar franja"
+                      style={{ background: 'rgba(255,101,132,0.15)', border: '1px solid rgba(255,101,132,0.3)', borderRadius: 8, cursor: 'pointer', padding: '6px 10px', color: '#ff6584', display: 'flex', alignItems: 'center' }}
+                    >
+                      <X size={15} />
+                    </button>
                   </div>
                 </div>
               );
             })}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 16, borderTop: '1px solid var(--sc-border)' }}>
-              <BtnPrimary onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</BtnPrimary>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 16, borderTop: '1px solid var(--sc-border)', gap: 8, flexWrap: 'wrap' }}>
+              <BtnGhost small onClick={addFranja}>+ Añadir franja</BtnGhost>
+              <BtnPrimary onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</BtnPrimary>
             </div>
           </>
         )}
