@@ -66,7 +66,7 @@ interface ClientBooking {
 }
 
 type Tab = 'inicio' | 'citas' | 'explorar' | 'profesional';
-type MobileSection = 'perfil' | 'citas' | 'explorar' | 'profesional';
+type MobileSection = 'perfil' | Tab;
 
 interface Colors {
   sideBg: string;
@@ -390,6 +390,9 @@ export default function Dashboard() {
           }}
         >
           <div className="p-4 pb-8">
+            {mobileSection === 'inicio' && (
+              <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} />
+            )}
             {mobileSection === 'citas' && (
               <TabCitas
                 pendingBookings={pendingBookings}
@@ -456,6 +459,7 @@ export default function Dashboard() {
 
           {/* Other tabs */}
           {([
+            { section: 'inicio'      as const, label: 'Inicio',    icon: <Home className="h-6 w-6" /> },
             { section: 'citas'       as const, label: 'Citas',     icon: <Calendar className="h-6 w-6" /> },
             { section: 'explorar'    as const, label: 'Explorar',  icon: <Compass className="h-6 w-6" /> },
             { section: 'profesional' as const, label: 'Pro',       icon: <Briefcase className="h-6 w-6" /> },
