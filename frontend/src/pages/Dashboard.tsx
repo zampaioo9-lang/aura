@@ -83,6 +83,45 @@ interface Colors {
   isDark: boolean;
 }
 
+const ACCENT_THEMES = [
+  {
+    id: 'purple',
+    label: 'Índigo',
+    accent: '#6c63ff',
+    accentDark:  'rgba(108,99,255,0.15)',
+    accentLight: 'rgba(108,99,255,0.08)',
+    darkGradient:  'linear-gradient(160deg, #3b3580 0%, #5b21b6 100%)',
+    lightGradient: 'linear-gradient(160deg, #6c63ff 0%, #8b5cf6 100%)',
+  },
+  {
+    id: 'azure',
+    label: 'Azure',
+    accent: '#0ea5e9',
+    accentDark:  'rgba(14,165,233,0.15)',
+    accentLight: 'rgba(14,165,233,0.08)',
+    darkGradient:  'linear-gradient(160deg, #0c4a6e 0%, #0284c7 100%)',
+    lightGradient: 'linear-gradient(160deg, #0ea5e9 0%, #38bdf8 100%)',
+  },
+  {
+    id: 'emerald',
+    label: 'Esmeralda',
+    accent: '#10b981',
+    accentDark:  'rgba(16,185,129,0.15)',
+    accentLight: 'rgba(16,185,129,0.08)',
+    darkGradient:  'linear-gradient(160deg, #064e3b 0%, #059669 100%)',
+    lightGradient: 'linear-gradient(160deg, #10b981 0%, #34d399 100%)',
+  },
+  {
+    id: 'rose',
+    label: 'Rosa',
+    accent: '#f43f5e',
+    accentDark:  'rgba(244,63,94,0.15)',
+    accentLight: 'rgba(244,63,94,0.08)',
+    darkGradient:  'linear-gradient(160deg, #881337 0%, #e11d48 100%)',
+    lightGradient: 'linear-gradient(160deg, #f43f5e 0%, #fb923c 100%)',
+  },
+];
+
 const DARK: Colors = {
   sideBg: '#18181f',
   navBg: '#18181f',
@@ -133,9 +172,19 @@ export default function Dashboard() {
   const [theme, setTheme] = useState<'dark' | 'light'>(
     () => (localStorage.getItem('aliax_theme') as 'dark' | 'light') || 'dark'
   );
-  const C = theme === 'dark' ? DARK : LIGHT;
+  const [accentId, setAccentId] = useState<string>(
+    () => localStorage.getItem('aliax_accent') || 'purple'
+  );
 
   useEffect(() => { localStorage.setItem('aliax_theme', theme); }, [theme]);
+  useEffect(() => { localStorage.setItem('aliax_accent', accentId); }, [accentId]);
+
+  const accentTheme = ACCENT_THEMES.find(t => t.id === accentId) ?? ACCENT_THEMES[0];
+  const C = {
+    ...(theme === 'dark' ? DARK : LIGHT),
+    accent:      accentTheme.accent,
+    accentLight: theme === 'dark' ? accentTheme.accentDark : accentTheme.accentLight,
+  };
 
   useEffect(() => {
     const email = user?.email ?? '';
@@ -196,9 +245,9 @@ export default function Dashboard() {
   ];
 
   /* gradient for mobile profile card */
-  const profileGradient = C.isDark
-    ? 'linear-gradient(160deg, #3b3580 0%, #5b21b6 100%)'
-    : 'linear-gradient(160deg, #6c63ff 0%, #8b5cf6 100%)';
+  const profileGradient = theme === 'dark'
+    ? accentTheme.darkGradient
+    : accentTheme.lightGradient;
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden" style={{ background: C.mainBg }}>
@@ -256,7 +305,7 @@ export default function Dashboard() {
             zIndex: 1,
             display: 'flex',
             flexDirection: 'column',
-            background: C.sideBg,
+            background: profileGradient,
             overflow: 'hidden',
           }}
         >
@@ -355,12 +404,12 @@ export default function Dashboard() {
           </div>
 
           {/* Edit + logout — centered, fixed bottom strip */}
-          <div className="flex flex-col items-center gap-3 px-6 pt-4 pb-24" style={{ background: C.sideBg, flexShrink: 0 }}>
+          <div className="flex flex-col items-center gap-3 px-6 pt-4 pb-24" style={{ flexShrink: 0 }}>
             <div className="flex justify-center w-full">
               <Link
                 to="/account"
                 className="flex items-center justify-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium"
-                style={{ background: C.accent, color: 'white' }}
+                style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.35)', color: 'white' }}
               >
                 <Pencil className="h-3.5 w-3.5" />
                 Editar perfil
@@ -369,9 +418,9 @@ export default function Dashboard() {
             <button
               onClick={() => { logout(); navigate('/'); }}
               className="flex items-center justify-center gap-2 text-sm py-2 transition-colors"
-              style={{ color: C.muted }}
-              onMouseEnter={e => (e.currentTarget.style.color = C.text)}
-              onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+              style={{ color: 'rgba(255,255,255,0.6)' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'white')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
             >
               <LogOut className="h-3.5 w-3.5" />
               Cerrar sesión
@@ -408,7 +457,32 @@ export default function Dashboard() {
             )}
             {mobileSection === 'explorar' && <TabExplorar C={C} />}
             {mobileSection === 'profesional' && (
-              <TabProfesional profiles={profiles} totalServices={totalServices} bookings={bookings} C={C} />
+              <>
+                <div style={{ padding: '0 0 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ color: C.muted, fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+                    Apariencia
+                  </span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {ACCENT_THEMES.map(t => (
+                      <button
+                        key={t.id}
+                        title={t.label}
+                        onClick={() => setAccentId(t.id)}
+                        style={{
+                          width: 22, height: 22,
+                          borderRadius: '50%',
+                          background: t.accent,
+                          border: `3px solid ${accentId === t.id ? C.text : 'transparent'}`,
+                          outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
+                          outlineOffset: '2px',
+                          cursor: 'pointer',
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <TabProfesional profiles={profiles} totalServices={totalServices} bookings={bookings} C={C} />
+              </>
             )}
           </div>
         </div>
@@ -492,12 +566,12 @@ export default function Dashboard() {
       {/* ════════════════════════════════════════
           DESKTOP LAYOUT (sidebar + tabs) — unchanged
           ════════════════════════════════════════ */}
-      <div className="hidden md:flex flex-1 overflow-hidden">
+      <div className="hidden md:flex flex-1 overflow-hidden" style={{ gap: 12, padding: '12px 12px 12px 12px' }}>
 
         {/* Sidebar */}
         <aside
           className="shrink-0 flex flex-col p-6 gap-5 overflow-y-auto"
-          style={{ width: '400px', background: C.sideBg, borderRight: `1px solid ${C.border}` }}
+          style={{ width: '400px', background: profileGradient, borderRight: `1px solid ${C.border}`, borderRadius: '16px' }}
         >
           {/* Avatar */}
           <div className="flex flex-col items-center text-center gap-3 pt-2">
@@ -506,7 +580,13 @@ export default function Dashboard() {
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={uploadingAvatar}
                 className="rounded-full overflow-hidden flex items-center justify-center text-4xl font-bold select-none focus:outline-none"
-                style={{ width: '140px', height: '140px', background: 'rgba(108,99,255,0.15)', color: '#6c63ff', border: '2px solid rgba(108,99,255,0.35)' }}
+                style={{
+                  width: '140px', height: '140px',
+                  background: 'rgba(255,255,255,0.18)',
+                  color: 'white',
+                  border: '3px solid rgba(255,255,255,0.45)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                }}
               >
                 {sidebarAvatar
                   ? <img src={sidebarAvatar} alt={user?.name} className="w-full h-full object-cover" />
@@ -516,7 +596,7 @@ export default function Dashboard() {
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={uploadingAvatar}
                 className="absolute bottom-0 right-0 w-7 h-7 rounded-full flex items-center justify-center"
-                style={{ background: C.accent, border: `2px solid ${C.sideBg}` }}
+                style={{ background: 'rgba(255,255,255,0.25)', border: '2px solid rgba(255,255,255,0.4)' }}
               >
                 {uploadingAvatar
                   ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -525,67 +605,94 @@ export default function Dashboard() {
               <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} />
             </div>
             <div>
-              <p className="font-bold text-2xl leading-tight" style={{ color: C.text }}>{user?.name}</p>
-              {user?.bio && <p className="text-sm mt-1 leading-snug" style={{ color: C.muted }}>{user.bio}</p>}
+              <p className="font-bold text-2xl leading-tight" style={{ color: 'white' }}>{user?.name}</p>
+              {user?.bio && <p className="text-sm mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.8)' }}>{user.bio}</p>}
             </div>
           </div>
 
           {/* Social icons */}
           <div className="flex justify-center gap-2">
-            {SOCIAL_ICONS.map(({ key, Icon, color }) => {
+            {SOCIAL_ICONS.map(({ key, Icon }) => {
               const url = buildSocialUrl(key, socialLinks[key] || '');
               if (!url) return (
-                <span key={key} className="p-2 rounded-lg" style={{ color: C.isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)' }}>
+                <span key={key} className="p-2 rounded-lg" style={{ color: 'rgba(255,255,255,0.25)' }}>
                   <Icon className="h-4 w-4" />
                 </span>
               );
               return (
                 <a key={key} href={url} target="_blank" rel="noopener noreferrer"
-                  className="p-2 rounded-lg transition-opacity hover:opacity-75"
-                  style={{ color, backgroundColor: color + '22' }}>
+                  className="flex items-center justify-center rounded-full transition-opacity hover:opacity-75"
+                  style={{ width: 36, height: 36, background: 'rgba(0,0,0,0.25)', color: 'white' }}>
                   <Icon className="h-4 w-4" />
                 </a>
               );
             })}
           </div>
 
-          <div className="h-px" style={{ background: C.border }} />
+          <div className="h-px" style={{ background: 'rgba(255,255,255,0.2)' }} />
 
           {/* Editar perfil */}
-          <Link
-            to="/account"
-            className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-full"
-            style={C.isDark
-              ? { background: C.cardBg, border: `1px solid ${C.border}`, color: C.text }
-              : { background: 'rgb(107, 99, 255)', border: 'none', color: 'white' }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-          >
-            <Pencil className="h-4 w-4" />
-            Editar perfil
-          </Link>
-
           <div className="flex-1" />
 
-          {/* Theme toggle */}
-          <button
-            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
-            style={{ background: C.accentLight, color: C.muted, border: `1px solid ${C.border}` }}
-            onMouseEnter={e => (e.currentTarget.style.color = C.text)}
-            onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
-          >
-            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-          </button>
+          {/* Grouped: Editar perfil + Modo oscuro + Apariencia */}
+          <div className="flex flex-col gap-3">
+            <Link
+              to="/account"
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-full"
+              style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.35)', color: 'white' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.3)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.2)')}
+            >
+              <Pencil className="h-4 w-4" />
+              Editar perfil
+            </Link>
+
+            <button
+              onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
+              style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.25)' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'white')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.8)')}
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+            </button>
+
+            {activeTab === 'profesional' && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%' }}>
+                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+                  Apariencia
+                </span>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {ACCENT_THEMES.map(t => (
+                    <button
+                      key={t.id}
+                      title={t.label}
+                      onClick={() => setAccentId(t.id)}
+                      style={{
+                        width: 26, height: 26,
+                        borderRadius: '50%',
+                        background: t.accent,
+                        border: `3px solid ${accentId === t.id ? 'white' : 'transparent'}`,
+                        outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
+                        outlineOffset: '2px',
+                        cursor: 'pointer',
+                        transition: 'transform 0.15s, outline 0.15s',
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Logout */}
           <button
             onClick={() => { logout(); navigate('/'); }}
             className="flex items-center justify-center gap-2 text-sm transition-colors py-1"
-            style={{ color: C.muted }}
-            onMouseEnter={e => (e.currentTarget.style.color = C.text)}
-            onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+            style={{ color: 'rgba(255,255,255,0.6)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'white')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
           >
             <LogOut className="h-3.5 w-3.5" />
             Cerrar sesión
@@ -597,7 +704,7 @@ export default function Dashboard() {
           {/* Tabs */}
           <div
             className="flex shrink-0 px-6 justify-start"
-            style={{ background: C.tabsBg, borderBottom: `1px solid ${C.border}` }}
+            style={{ background: C.tabsBg, borderBottom: `1px solid ${C.border}`, borderRadius: '16px 16px 0 0' }}
           >
             {TABS.map(tab => (
               <button
@@ -620,7 +727,7 @@ export default function Dashboard() {
           </div>
 
           {/* Tab content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6" style={{ background: C.tabsBg, borderRadius: '0 0 16px 16px' }}>
             {activeTab === 'inicio'      && <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} />}
             {activeTab === 'citas'       && (
               <TabCitas
