@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X, Plus, Power } from 'lucide-react';
 import api from '../api/client';
 import { useToast } from '../components/Toast';
 import {
@@ -8,7 +8,8 @@ import {
   type AvailabilitySlot, type BookingSettings,
   type ScheduleBlock, type ServiceAvailabilitySlot,
 } from '../types/availability';
-import type { Service } from '../hooks/useServices';
+import { useServices, type Service } from '../hooks/useServices';
+import ServiceFormModal from '../components/ServiceFormModal';
 
 // ── Google Fonts ─────────────────────────────────────────────────────
 const FONT_LINK = document.createElement('link');
@@ -357,34 +358,40 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
 // ════════════════════════════════════════════════════════════════════
 // TAB: SERVICIOS
 // ════════════════════════════════════════════════════════════════════
+type SvcFilter = 'active' | 'inactive' | 'all';
+
 function TabServicios({ profileId }: { profileId: string }) {
   const { toast } = useToast();
-  const [services, setServices] = useState<Service[]>([]);
+  const { services, stats, loading, createService, updateService, toggleService } = useServices();
+  const [filter, setFilter] = useState<SvcFilter>('active');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
+
+  // Horarios por servicio
   const [selectedSvc, setSelectedSvc] = useState<Service | null>(null);
-  const [slots, setSlots] = useState<ServiceAvailabilitySlot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [_showForm, _setShowForm] = useState(false);
-  const [_selectedColor, _setSelectedColor] = useState('#6c63ff');
   const [activeDays, setActiveDays] = useState<number[]>([]);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [franjasByDay, setFranjasByDay] = useState<Record<number, { startTime: string; endTime: string }[]>>({});
   const [saving, setSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    api.get('/services/me')
-      .then(r => {
-        const all: Service[] = r.data.services ?? r.data;
-        setServices(all.filter(s => s.isActive && s.profileId === profileId));
-      })
-      .finally(() => setLoading(false));
-  }, [profileId]);
+  const filtered = useMemo(() => {
+    const byProfile = services.filter(s => s.profileId === profileId);
+    if (filter === 'active') return byProfile.filter(s => s.isActive);
+    if (filter === 'inactive') return byProfile.filter(s => !s.isActive);
+    return byProfile;
+  }, [services, profileId, filter]);
+
+  const colorMap: Record<string, string> = {};
+  services.forEach((s, i) => { colorMap[s.id] = SERVICE_COLORS[i % SERVICE_COLORS.length]; });
 
   const loadSlots = async (svc: Service) => {
     setSelectedSvc(svc);
     try {
       const res = await api.get(`/service-availability/${svc.id}`);
       const data: ServiceAvailabilitySlot[] = res.data;
-      setSlots(data);
       const byDay: Record<number, { startTime: string; endTime: string }[]> = {};
       const days: number[] = [];
       data.forEach(s => {
@@ -394,14 +401,11 @@ function TabServicios({ profileId }: { profileId: string }) {
       setFranjasByDay(byDay);
       setActiveDays([...new Set(days)]);
       setSelectedDay(days[0] ?? null);
-    } catch { setSlots([]); }
+    } catch { setFranjasByDay({}); setActiveDays([]); setSelectedDay(null); }
   };
 
   const toggleDay = (day: number) => {
-    setActiveDays(prev => {
-      const next = prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day];
-      return next;
-    });
+    setActiveDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
     setSelectedDay(day);
     if (!franjasByDay[day]) setFranjasByDay(prev => ({ ...prev, [day]: [{ startTime: '09:00', endTime: '17:00' }] }));
   };
@@ -411,11 +415,10 @@ function TabServicios({ profileId }: { profileId: string }) {
     const existing = franjasByDay[selectedDay] ?? [];
     const last = existing[existing.length - 1];
     const startM = last ? t2m(last.endTime) : t2m('09:00');
-    const endM = Math.min(startM + 60, 1410);
-    setFranjasByDay(prev => ({ ...prev, [selectedDay]: [...existing, { startTime: m2t(startM), endTime: m2t(endM) }] }));
+    setFranjasByDay(prev => ({ ...prev, [selectedDay]: [...existing, { startTime: m2t(startM), endTime: m2t(Math.min(startM + 60, 1410)) }] }));
   };
 
-  const handleSave = async () => {
+  const handleSaveSlots = async () => {
     if (!selectedSvc) return;
     setSaving(true);
     try {
@@ -428,52 +431,117 @@ function TabServicios({ profileId }: { profileId: string }) {
     finally { setSaving(false); }
   };
 
+  const handleToggle = async (id: string) => {
+    setTogglingId(id);
+    try {
+      await toggleService(id);
+    } catch { toast('Error al cambiar estado', 'error'); }
+    finally { setTogglingId(null); }
+  };
+
+  const handleModalSubmit = async (data: any) => {
+    setModalLoading(true);
+    try {
+      if (modalMode === 'create') {
+        await createService({ ...data, profileId });
+        toast('Servicio creado');
+      } else if (editingService) {
+        await updateService(editingService.id, data);
+        toast('Servicio actualizado');
+      }
+      setModalOpen(false);
+    } catch (err: any) { toast(err.message || 'Error', 'error'); }
+    finally { setModalLoading(false); }
+  };
+
+  const openCreate = () => {
+    if (stats && stats.active >= stats.limit) {
+      toast(`Límite de ${stats.limit} servicios activos alcanzado`, 'error');
+      return;
+    }
+    setEditingService(null);
+    setModalMode('create');
+    setModalOpen(true);
+  };
+
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '4px solid #6c63ff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
-  const colorMap: Record<string, string> = {};
-  services.forEach((s, i) => { colorMap[s.id] = SERVICE_COLORS[i % SERVICE_COLORS.length]; });
-
   const currentFranjas = selectedDay !== null ? (franjasByDay[selectedDay] ?? []) : [];
+  const byProfile = services.filter(s => s.profileId === profileId);
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 26, letterSpacing: -0.5, color: 'var(--sc-text)' }}>
-            Servicios y Calendarios
-          </h2>
-          <p style={{ fontSize: 13, color: 'var(--sc-muted)', marginTop: 2 }}>Cada servicio puede tener su propio horario</p>
+          <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 22, letterSpacing: -0.5, color: 'var(--sc-text)' }}>Servicios</h2>
+          <p style={{ fontSize: 13, color: 'var(--sc-muted)', marginTop: 2 }}>
+            {byProfile.filter(s => s.isActive).length} activos · {byProfile.filter(s => !s.isActive).length} inactivos
+          </p>
         </div>
+        <BtnPrimary onClick={openCreate}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Plus size={15} /> Agregar servicio</span>
+        </BtnPrimary>
       </div>
 
-      {/* Lista de servicios */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
-        {services.length === 0 && <p style={{ color: 'var(--sc-muted)', fontSize: 14 }}>No tienes servicios activos.</p>}
-        {services.map(s => (
-          <div
-            key={s.id}
-            onClick={() => loadSlots(s)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 16,
-              background: selectedSvc?.id === s.id ? 'rgba(108,99,255,0.08)' : 'var(--sc-inner)',
-              border: `1px solid ${selectedSvc?.id === s.id ? '#6c63ff' : 'var(--sc-border)'}`,
-              borderRadius: 10, padding: '14px 16px', cursor: 'pointer', transition: 'all .15s',
-            }}
-          >
-            <div style={{ width: 12, height: 40, borderRadius: 6, background: colorMap[s.id], flexShrink: 0 }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--sc-text)' }}>{s.name}</div>
+      {/* Filtros */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+        {(['active', 'inactive', 'all'] as SvcFilter[]).map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{
+            padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === f ? '#6c63ff' : 'var(--sc-border)'}`,
+            background: filter === f ? 'rgba(108,99,255,0.15)' : 'var(--sc-inner)',
+            color: filter === f ? '#6c63ff' : 'var(--sc-muted)',
+            cursor: 'pointer', fontSize: 13, fontFamily: 'DM Sans', fontWeight: filter === f ? 500 : 400,
+          }}>
+            {f === 'active' ? 'Activos' : f === 'inactive' ? 'Inactivos' : 'Todos'}
+          </button>
+        ))}
+      </div>
+
+      {/* Lista */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+        {filtered.length === 0 && (
+          <p style={{ color: 'var(--sc-muted)', fontSize: 14, textAlign: 'center', padding: '32px 0' }}>
+            {filter === 'active' ? 'No tienes servicios activos.' : filter === 'inactive' ? 'No tienes servicios inactivos.' : 'No tienes servicios.'}
+          </p>
+        )}
+        {filtered.map(s => (
+          <div key={s.id} style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            background: selectedSvc?.id === s.id ? 'rgba(108,99,255,0.08)' : 'var(--sc-inner)',
+            border: `1px solid ${selectedSvc?.id === s.id ? '#6c63ff' : 'var(--sc-border)'}`,
+            borderRadius: 10, padding: '12px 14px', transition: 'all .15s',
+            opacity: s.isActive ? 1 : 0.6,
+          }}>
+            <div style={{ width: 10, height: 36, borderRadius: 5, background: colorMap[s.id], flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => loadSlots(s)}>
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--sc-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                {s.name}
+                <span style={{
+                  fontSize: 10, padding: '2px 6px', borderRadius: 4, fontWeight: 600,
+                  background: s.isActive ? 'rgba(67,217,173,0.15)' : 'rgba(255,255,255,0.06)',
+                  color: s.isActive ? '#43d9ad' : 'var(--sc-muted)',
+                }}>{s.isActive ? 'Activo' : 'Inactivo'}</span>
+              </div>
               <div style={{ fontSize: 12, color: 'var(--sc-muted)', marginTop: 2 }}>
                 {s.durationMinutes} min · ${Number(s.price).toLocaleString()} {s.currency}
-                {slots.length > 0 && selectedSvc?.id === s.id ? ' · Horario personalizado' : ''}
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <span style={{ padding: '3px 8px', borderRadius: 4, fontSize: 11, fontWeight: 500, background: 'rgba(108,99,255,0.2)', color: '#6c63ff' }}>
-                {s.durationMinutes} min
-              </span>
-            </div>
-            <BtnGhost small>Editar horario</BtnGhost>
+            <button
+              onClick={() => handleToggle(s.id)}
+              disabled={togglingId === s.id}
+              title={s.isActive ? 'Desactivar' : 'Activar'}
+              style={{
+                flexShrink: 0, background: s.isActive ? 'rgba(255,101,132,0.12)' : 'rgba(67,217,173,0.12)',
+                border: `1px solid ${s.isActive ? 'rgba(255,101,132,0.3)' : 'rgba(67,217,173,0.3)'}`,
+                borderRadius: 8, cursor: 'pointer', padding: '6px 10px', color: s.isActive ? '#ff6584' : '#43d9ad',
+                display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontFamily: 'DM Sans',
+                opacity: togglingId === s.id ? 0.5 : 1,
+              }}
+            >
+              <Power size={13} />
+              <span style={{ display: 'none' }}>{s.isActive ? 'Desactivar' : 'Activar'}</span>
+            </button>
           </div>
         ))}
       </div>
@@ -481,67 +549,55 @@ function TabServicios({ profileId }: { profileId: string }) {
       {/* Editor de horarios del servicio seleccionado */}
       {selectedSvc && (
         <Card>
-          <CardHeader dot={colorMap[selectedSvc.id]} title={`Horario: ${selectedSvc.name}`} action={
-            <BtnGhost small onClick={addFranja}>+ Añadir franja</BtnGhost>
-          } />
-
-          <div style={{ marginBottom: 16 }}>
-            <p style={{ fontSize: 12, color: 'var(--sc-muted)', marginBottom: 10 }}>Días disponibles para este servicio</p>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-              {DAY_ORDER.map(d => (
-                <DayChip key={d} label={DAY_NAMES_SHORT[d]} active={activeDays.includes(d)} onClick={() => toggleDay(d)} />
+          <CardHeader dot={colorMap[selectedSvc.id]} title={`Horario: ${selectedSvc.name}`} />
+          <p style={{ fontSize: 12, color: 'var(--sc-muted)', marginBottom: 12 }}>Días disponibles para este servicio</p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+            {DAY_ORDER.map(d => (
+              <DayChip key={d} label={DAY_NAMES_SHORT[d]} active={activeDays.includes(d)} onClick={() => toggleDay(d)} />
+            ))}
+          </div>
+          {activeDays.length > 0 && (
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 16 }}>
+              {DAY_ORDER.filter(d => activeDays.includes(d)).map(d => (
+                <button key={d} onClick={() => setSelectedDay(d)} style={{
+                  padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12,
+                  background: selectedDay === d ? '#6c63ff' : 'var(--sc-inner)', color: selectedDay === d ? 'white' : 'var(--sc-muted)',
+                }}>{DAY_NAMES_SHORT[d]}</button>
               ))}
             </div>
-
-            {activeDays.length > 0 && (
-              <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
-                {DAY_ORDER.filter(d => activeDays.includes(d)).map(d => (
-                  <button key={d} onClick={() => setSelectedDay(d)} style={{
-                    padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12,
-                    background: selectedDay === d ? '#6c63ff' : 'var(--sc-inner)', color: selectedDay === d ? 'white' : 'var(--sc-muted)',
-                  }}>{DAY_NAMES_SHORT[d]}</button>
-                ))}
-              </div>
-            )}
-
-            {selectedDay !== null && (
-              <>
-                {currentFranjas.length === 0 && <p style={{ color: 'var(--sc-muted)', fontSize: 13, marginBottom: 12 }}>Sin franjas — añade una</p>}
-                {currentFranjas.map((f, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                    <TimeSelect value={f.startTime} onChange={v => setFranjasByDay(prev => ({ ...prev, [selectedDay]: prev[selectedDay].map((x, i) => i === idx ? { ...x, startTime: v } : x) }))} />
-                    <span style={{ color: 'var(--sc-muted)', fontSize: 13 }}>hasta</span>
-                    <TimeSelect value={f.endTime} onChange={v => setFranjasByDay(prev => ({ ...prev, [selectedDay]: prev[selectedDay].map((x, i) => i === idx ? { ...x, endTime: v } : x) }))} />
-                    <button onClick={() => setFranjasByDay(prev => ({ ...prev, [selectedDay]: prev[selectedDay].filter((_, i) => i !== idx) }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ff6584' }}>
-                      <X size={16} />
-                    </button>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 16, borderTop: '1px solid var(--sc-border)' }}>
-            <BtnPrimary onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar horario del servicio'}</BtnPrimary>
+          )}
+          {selectedDay !== null && (
+            <>
+              {currentFranjas.length === 0 && <p style={{ color: 'var(--sc-muted)', fontSize: 13, marginBottom: 12 }}>Sin franjas — añade una</p>}
+              {currentFranjas.map((f, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                  <TimeSelect value={f.startTime} onChange={v => setFranjasByDay(prev => ({ ...prev, [selectedDay]: prev[selectedDay].map((x, i) => i === idx ? { ...x, startTime: v } : x) }))} />
+                  <span style={{ color: 'var(--sc-muted)', fontSize: 13 }}>–</span>
+                  <TimeSelect value={f.endTime} onChange={v => setFranjasByDay(prev => ({ ...prev, [selectedDay]: prev[selectedDay].map((x, i) => i === idx ? { ...x, endTime: v } : x) }))} />
+                  <button onClick={() => setFranjasByDay(prev => ({ ...prev, [selectedDay]: prev[selectedDay].filter((_, i) => i !== idx) }))}
+                    style={{ background: 'rgba(255,101,132,0.15)', border: '1px solid rgba(255,101,132,0.3)', borderRadius: 8, cursor: 'pointer', padding: '6px 10px', color: '#ff6584', display: 'flex', alignItems: 'center' }}>
+                    <X size={15} />
+                  </button>
+                </div>
+              ))}
+            </>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 16, borderTop: '1px solid var(--sc-border)', gap: 8, flexWrap: 'wrap' }}>
+            <BtnGhost small onClick={addFranja}>+ Añadir franja</BtnGhost>
+            <BtnPrimary onClick={handleSaveSlots} disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</BtnPrimary>
           </div>
         </Card>
       )}
 
-      <SectionDivider label="Configuración global de servicios" />
-
-      <Card>
-        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, marginBottom: 16, color: 'var(--sc-text)' }}>Intervalos y slots</div>
-        <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <FormSelect label="Intervalo de slots (min)" value="15" onChange={() => {}} options={[
-            { value: '10', label: '10 min' }, { value: '15', label: '15 min' },
-            { value: '20', label: '20 min' }, { value: '30', label: '30 min' },
-          ]} />
-          <FormSelect label="Unidad mínima de agenda" value="15" onChange={() => {}} options={[
-            { value: '5', label: '5 min' }, { value: '10', label: '10 min' },
-            { value: '15', label: '15 min' }, { value: '30', label: '30 min' },
-          ]} />
-        </div>
-      </Card>
+      {/* Modal crear/editar servicio */}
+      <ServiceFormModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        mode={modalMode}
+        service={editingService}
+        onSubmit={handleModalSubmit}
+        loading={modalLoading}
+      />
     </>
   );
 }
