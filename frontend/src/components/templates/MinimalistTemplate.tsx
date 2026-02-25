@@ -57,96 +57,130 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
     <div style={{ minHeight: '100vh', background: C.main, color: C.text, fontFamily: "'Plus Jakarta Sans', 'DM Sans', sans-serif" }}>
 
       {/* ── Hero ─────────────────────────────────────────── */}
-      <div style={{ background: C.side, borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ maxWidth: 640, margin: '0 auto', padding: '56px 24px 48px', textAlign: 'center' }}>
+      <div style={{ padding: '20px 16px 0', background: C.main }}>
+        <div style={{
+          maxWidth: 640, margin: '0 auto',
+          background: 'linear-gradient(160deg, #3b3580 0%, #5b21b6 100%)',
+          borderRadius: 24,
+        }}>
+          <div style={{ padding: '52px 28px 44px', textAlign: 'center' }}>
 
-          {/* Avatar */}
-          {profile.avatar ? (
-            <img
-              src={profile.avatar}
-              alt={profile.title}
-              style={{
-                width: 128, height: 128, borderRadius: '50%', objectFit: 'cover',
-                margin: '0 auto 24px',
-                border: `3px solid ${C.accent}`,
-                boxShadow: `0 0 0 6px ${C.accentSoft}`,
-              }}
-            />
-          ) : (
-            <div style={{
-              width: 128, height: 128, borderRadius: '50%', margin: '0 auto 24px',
-              background: C.accentSoft, border: `3px solid ${C.accent}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 40, fontWeight: 700, color: C.accent,
-              fontFamily: "'Space Grotesk', sans-serif",
-            }}>
-              {(profile.title || '?').charAt(0).toUpperCase()}
-            </div>
-          )}
-
-          {/* Name */}
-          <h1 style={{
-            fontFamily: "'Space Grotesk', sans-serif",
-            fontSize: 32, fontWeight: 700, letterSpacing: -0.5,
-            color: C.text, margin: '0 0 6px',
-          }}>
-            {profile.title}
-          </h1>
-
-          {/* Profession */}
-          {profile.profession && (
-            <p style={{ fontSize: 15, fontWeight: 500, color: C.accent, margin: '0 0 16px' }}>
-              {profile.profession}
-            </p>
-          )}
-
-          {/* Bio */}
-          {profile.bio && (
-            <p style={{
-              fontSize: 14, color: C.muted, lineHeight: 1.7,
-              maxWidth: 480, margin: '0 auto 20px',
-            }}>
-              {profile.bio}
-            </p>
-          )}
-
-          {/* Social links */}
-          {activeSocials.length > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
-              {activeSocials.map(({ key, Icon, color }) => {
-                const url = buildSocialUrl(key, socialLinks[key]);
-                if (!url) return null;
-                return (
-                  <a
-                    key={key}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      width: 40, height: 40, borderRadius: 12,
-                      background: color + '18',
-                      border: `1px solid ${color}40`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color, transition: 'opacity .15s', textDecoration: 'none',
-                    }}
-                  >
-                    <Icon size={18} />
-                  </a>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Video */}
-          {profile.videoUrl && (
-            <div style={{ marginTop: 28, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
-              <video
-                src={profile.videoUrl}
-                controls
-                style={{ width: '100%', borderRadius: 16, border: `1px solid ${C.border}` }}
+            {/* Avatar */}
+            {profile.avatar ? (
+              <img
+                src={profile.avatar}
+                alt={profile.title}
+                style={{
+                  width: 128, height: 128, borderRadius: '50%', objectFit: 'cover',
+                  margin: '0 auto 24px',
+                  border: '3px solid rgba(255,255,255,0.45)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                }}
               />
-            </div>
-          )}
+            ) : (
+              <div style={{
+                width: 128, height: 128, borderRadius: '50%', margin: '0 auto 24px',
+                background: 'rgba(255,255,255,0.15)', border: '3px solid rgba(255,255,255,0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 40, fontWeight: 700, color: 'white',
+                fontFamily: "'Space Grotesk', sans-serif",
+              }}>
+                {(profile.title || '?').charAt(0).toUpperCase()}
+              </div>
+            )}
+
+            {/* Name */}
+            <h1 style={{
+              fontFamily: "'Space Grotesk', sans-serif",
+              fontSize: 32, fontWeight: 700, letterSpacing: -0.5,
+              color: 'white', margin: '0 0 6px',
+            }}>
+              {profile.title}
+            </h1>
+
+            {/* Profession */}
+            {profile.profession && (
+              <p style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.85)', margin: '0 0 8px' }}>
+                {profile.profession}
+              </p>
+            )}
+
+            {/* Specialty + Years of experience */}
+            {(profile.specialty || profile.yearsExperience) && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+                {profile.specialty && (
+                  <span style={{
+                    fontSize: 13, fontWeight: 500,
+                    background: 'rgba(255,255,255,0.15)',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    color: 'rgba(255,255,255,0.9)',
+                    borderRadius: 20, padding: '4px 14px',
+                  }}>
+                    {profile.specialty}
+                  </span>
+                )}
+                {profile.yearsExperience != null && profile.yearsExperience !== '' && (
+                  <span style={{
+                    fontSize: 13, fontWeight: 500,
+                    background: 'rgba(255,255,255,0.15)',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    color: 'rgba(255,255,255,0.9)',
+                    borderRadius: 20, padding: '4px 14px',
+                  }}>
+                    {profile.yearsExperience} años de experiencia
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Bio */}
+            {profile.bio && (
+              <p style={{
+                fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7,
+                maxWidth: 480, margin: '0 auto 20px',
+              }}>
+                {profile.bio}
+              </p>
+            )}
+
+            {/* Social links */}
+            {activeSocials.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
+                {activeSocials.map(({ key, Icon }) => {
+                  const url = buildSocialUrl(key, socialLinks[key]);
+                  if (!url) return null;
+                  return (
+                    <a
+                      key={key}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        width: 40, height: 40, borderRadius: 12,
+                        background: 'rgba(0,0,0,0.25)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'white', transition: 'opacity .15s', textDecoration: 'none',
+                      }}
+                    >
+                      <Icon size={18} />
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Video */}
+            {profile.videoUrl && (
+              <div style={{ marginTop: 28, maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
+                <video
+                  src={profile.videoUrl}
+                  controls
+                  style={{ width: '100%', borderRadius: 16, border: '1px solid rgba(255,255,255,0.2)' }}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -27,6 +27,8 @@ export default function ProfileEditor() {
     title: '',
     bio: '',
     profession: '',
+    specialty: '',
+    yearsExperience: '' as string | number,
     phone: '',
     template: 'MINIMALIST' as string,
     avatar: '',
@@ -50,6 +52,8 @@ export default function ProfileEditor() {
             title: profile.title,
             bio: profile.bio || '',
             profession: profile.profession,
+            specialty: profile.specialty || '',
+            yearsExperience: profile.yearsExperience ?? '',
             phone: profile.phone || '',
             template: profile.template,
             avatar: profile.avatar || '',
@@ -129,6 +133,23 @@ export default function ProfileEditor() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Profesion</label>
                 <input value={form.profession} onChange={e => setForm(f => ({ ...f, profession: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Especialidad</label>
+                <input value={form.specialty} onChange={e => setForm(f => ({ ...f, specialty: e.target.value }))}
+                  placeholder="Ej: Dermatología clínica"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Años de experiencia</label>
+                <input
+                  type="number" min={0} max={70}
+                  value={form.yearsExperience}
+                  onChange={e => setForm(f => ({ ...f, yearsExperience: e.target.value === '' ? '' : parseInt(e.target.value) }))}
+                  placeholder="Ej: 8"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
               </div>
             </div>

@@ -32,6 +32,8 @@ export const profileSchema = z.object({
     start: z.string().regex(/^\d{2}:\d{2}$/),
     end: z.string().regex(/^\d{2}:\d{2}$/),
   }))).optional(),
+  specialty: z.string().max(100).optional().or(z.literal('')),
+  yearsExperience: z.number().int().min(0).max(100).optional().nullable(),
   published: z.boolean().optional(),
 });
 
