@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Save, Facebook, Instagram, Linkedin, MessageCircle, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Save, Facebook, Instagram, Linkedin, MessageCircle, ExternalLink, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import api from '../api/client';
 import PhoneInput from '../components/PhoneInput';
 
 const SOCIAL_NETWORKS = [
@@ -30,9 +31,15 @@ export default function AccountSettings() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  const [primaryProfile, setPrimaryProfile] = useState<any>(null);
+  const [specialty, setSpecialty] = useState('');
+  const [yearsExperience, setYearsExperience] = useState<string | number>('');
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const isProfessional = primaryProfile !== null;
 
   useEffect(() => {
     if (!user) return;
@@ -49,6 +56,15 @@ export default function AccountSettings() {
       linkedin:  links.linkedin  || '',
       whatsapp:  stored,
     });
+
+    api.get('/profiles').then(res => {
+      const profile = res.data[0] || null;
+      setPrimaryProfile(profile);
+      if (profile) {
+        setSpecialty(profile.specialty || '');
+        setYearsExperience(profile.yearsExperience ?? '');
+      }
+    }).catch(() => {});
   }, [user]);
 
   const handleSave = async () => {
@@ -74,6 +90,14 @@ export default function AccountSettings() {
         payload.newPassword     = newPassword;
       }
       await updateAccount(payload);
+
+      if (isProfessional && primaryProfile) {
+        await api.put(`/profiles/${primaryProfile.id}`, {
+          specialty: specialty.trim() || undefined,
+          yearsExperience: typeof yearsExperience === 'number' ? yearsExperience : undefined,
+        });
+      }
+
       setSuccess('Cambios guardados correctamente.');
       setShowPassword(false);
       setCurrentPassword('');
@@ -167,6 +191,46 @@ export default function AccountSettings() {
               </div>
             )}
           </div>
+        </section>
+
+        {/* ── Perfil Profesional ── */}
+        <section className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-slate-900">Perfil Profesional</h2>
+            {!isProfessional && (
+              <span className="inline-flex items-center gap-1 text-xs text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full">
+                <Lock className="h-3 w-3" /> Requiere plan Pro
+              </span>
+            )}
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Especialidad</label>
+              <input
+                value={specialty}
+                onChange={e => setSpecialty(e.target.value)}
+                disabled={!isProfessional}
+                placeholder="Ej: Dermatología clínica"
+                className={`${inputClass} ${!isProfessional ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Años de experiencia</label>
+              <input
+                type="number" min={0} max={70}
+                value={yearsExperience}
+                onChange={e => setYearsExperience(e.target.value === '' ? '' : parseInt(e.target.value))}
+                disabled={!isProfessional}
+                placeholder="Ej: 8"
+                className={`${inputClass} ${!isProfessional ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`}
+              />
+            </div>
+          </div>
+          {!isProfessional && (
+            <p className="text-xs text-slate-400">
+              Activa tu perfil profesional para completar estos campos.
+            </p>
+          )}
         </section>
 
         {/* ── Redes sociales ── */}
