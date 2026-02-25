@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, X, Plus, Power } from 'lucide-react';
+import { ArrowLeft, X, Plus, Power, Sparkles } from 'lucide-react';
 import api from '../api/client';
 import { useToast } from '../components/Toast';
 import {
@@ -10,6 +10,7 @@ import {
 } from '../types/availability';
 import { useServices, type Service } from '../hooks/useServices';
 import ServiceFormModal from '../components/ServiceFormModal';
+import QuickTemplates from '../components/availability/QuickTemplates';
 
 // ── Google Fonts ─────────────────────────────────────────────────────
 const FONT_LINK = document.createElement('link');
@@ -183,6 +184,7 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
   const [franjas, setFranjas] = useState<{ id?: string; startTime: string; endTime: string }[]>([]);
   const [settings, setSettings] = useState<Partial<BookingSettings>>({});
   const [savingSettings, setSavingSettings] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   const fetchSlots = useCallback(async () => {
     setLoading(true);
@@ -248,6 +250,13 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
     finally { setSavingSettings(false); }
   };
 
+  const handleApplyTemplate = async (templateSlots: { dayOfWeek: number; startTime: string; endTime: string }[]) => {
+    await Promise.all(slots.map(s => api.delete(`/availability/${s.id}`)));
+    await api.post('/availability/bulk', { profileId, slots: templateSlots });
+    toast('Plantilla aplicada');
+    await fetchSlots();
+  };
+
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '4px solid #6c63ff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   const dayHours = (day: number) => slots.filter(s => s.dayOfWeek === day && s.isActive).reduce((acc, s) => acc + (t2m(s.endTime) - t2m(s.startTime)) / 60, 0);
@@ -256,7 +265,11 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
     <>
       {/* Días laborables */}
       <Card>
-        <CardHeader dot="#6c63ff" title="Días laborables" />
+        <CardHeader dot="#6c63ff" title="Días laborables" action={
+          <button onClick={() => setShowTemplates(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500, background: 'rgba(108,99,255,0.12)', color: '#6c63ff' }}>
+            <Sparkles size={13} /> Aplicar plantilla
+          </button>
+        } />
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {DAY_ORDER.map(d => (
             <DayChip key={d} label={DAY_NAMES_SHORT[d]} active={activeDays.includes(d)} onClick={() => toggleDay(d)} />
@@ -351,6 +364,12 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
           <BtnPrimary onClick={handleSaveZone} disabled={savingSettings}>{savingSettings ? 'Guardando...' : 'Guardar zona'}</BtnPrimary>
         </div>
       </Card>
+
+      <QuickTemplates
+        isOpen={showTemplates}
+        onClose={() => setShowTemplates(false)}
+        onApply={handleApplyTemplate}
+      />
     </>
   );
 }
