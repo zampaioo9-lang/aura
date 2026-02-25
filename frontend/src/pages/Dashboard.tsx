@@ -403,7 +403,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Edit + logout — centered, fixed bottom strip */}
+          {/* Edit + apariencia + logout — centered, fixed bottom strip */}
           <div className="flex flex-col items-center gap-3 px-6 pt-4 pb-24" style={{ flexShrink: 0 }}>
             <div className="flex justify-center w-full">
               <Link
@@ -414,6 +414,29 @@ export default function Dashboard() {
                 <Pencil className="h-3.5 w-3.5" />
                 Editar perfil
               </Link>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+                Apariencia
+              </span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {ACCENT_THEMES.map(t => (
+                  <button
+                    key={t.id}
+                    title={t.label}
+                    onClick={() => setAccentId(t.id)}
+                    style={{
+                      width: 22, height: 22,
+                      borderRadius: '50%',
+                      background: t.accent,
+                      border: `3px solid ${accentId === t.id ? 'white' : 'transparent'}`,
+                      outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
+                      outlineOffset: '2px',
+                      cursor: 'pointer',
+                    }}
+                  />
+                ))}
+              </div>
             </div>
             <button
               onClick={() => { logout(); navigate('/'); }}
@@ -457,32 +480,7 @@ export default function Dashboard() {
             )}
             {mobileSection === 'explorar' && <TabExplorar C={C} />}
             {mobileSection === 'profesional' && (
-              <>
-                <div style={{ padding: '0 0 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ color: C.muted, fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
-                    Apariencia
-                  </span>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {ACCENT_THEMES.map(t => (
-                      <button
-                        key={t.id}
-                        title={t.label}
-                        onClick={() => setAccentId(t.id)}
-                        style={{
-                          width: 22, height: 22,
-                          borderRadius: '50%',
-                          background: t.accent,
-                          border: `3px solid ${accentId === t.id ? C.text : 'transparent'}`,
-                          outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
-                          outlineOffset: '2px',
-                          cursor: 'pointer',
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <TabProfesional profiles={profiles} totalServices={totalServices} bookings={bookings} C={C} />
-              </>
+              <TabProfesional profiles={profiles} totalServices={totalServices} bookings={bookings} C={C} />
             )}
           </div>
         </div>
@@ -658,32 +656,30 @@ export default function Dashboard() {
               {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
             </button>
 
-            {activeTab === 'profesional' && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%' }}>
-                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
-                  Apariencia
-                </span>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  {ACCENT_THEMES.map(t => (
-                    <button
-                      key={t.id}
-                      title={t.label}
-                      onClick={() => setAccentId(t.id)}
-                      style={{
-                        width: 26, height: 26,
-                        borderRadius: '50%',
-                        background: t.accent,
-                        border: `3px solid ${accentId === t.id ? 'white' : 'transparent'}`,
-                        outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
-                        outlineOffset: '2px',
-                        cursor: 'pointer',
-                        transition: 'transform 0.15s, outline 0.15s',
-                      }}
-                    />
-                  ))}
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%' }}>
+              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+                Apariencia
+              </span>
+              <div style={{ display: 'flex', gap: 10 }}>
+                {ACCENT_THEMES.map(t => (
+                  <button
+                    key={t.id}
+                    title={t.label}
+                    onClick={() => setAccentId(t.id)}
+                    style={{
+                      width: 26, height: 26,
+                      borderRadius: '50%',
+                      background: t.accent,
+                      border: `3px solid ${accentId === t.id ? 'white' : 'transparent'}`,
+                      outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
+                      outlineOffset: '2px',
+                      cursor: 'pointer',
+                      transition: 'transform 0.15s, outline 0.15s',
+                    }}
+                  />
+                ))}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Logout */}
