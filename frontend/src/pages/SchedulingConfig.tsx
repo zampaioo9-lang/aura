@@ -1026,10 +1026,10 @@ export default function SchedulingConfig() {
             flex-shrink: 0 !important;
           }
           .sc-aside-tab {
-            padding: 7px 10px !important;
+            padding: 9px 12px !important;
             border-radius: 20px !important;
             white-space: nowrap !important;
-            font-size: 12px !important;
+            font-size: 13px !important;
             width: auto !important;
             flex: 1 !important;
             min-width: calc(33% - 6px) !important;
