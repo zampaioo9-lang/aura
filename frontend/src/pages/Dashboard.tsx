@@ -1326,7 +1326,7 @@ function TabProfesional({ profiles, totalServices, bookings = [], C }: { profile
 
             <div className="flex flex-wrap gap-2">
               <Link to="/dashboard/scheduling" className="flex-1 text-sm px-3 py-2 rounded-lg inline-flex items-center justify-center gap-1.5 font-medium" style={{ background: C.accentLight, color: C.accent, border: `1px solid ${C.accent}33` }}>
-                <CalendarDays className="h-3.5 w-3.5" /> Agenda
+                <CalendarDays className="h-3.5 w-3.5" /> Configurar Agenda
               </Link>
             </div>
           </div>
