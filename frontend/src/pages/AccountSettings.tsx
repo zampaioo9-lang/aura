@@ -57,6 +57,9 @@ export default function AccountSettings() {
       whatsapp:  stored,
     });
 
+  }, [user]);
+
+  useEffect(() => {
     api.get('/profiles').then(res => {
       const profile = res.data[0] || null;
       setPrimaryProfile(profile);
@@ -65,7 +68,7 @@ export default function AccountSettings() {
         setYearsExperience(profile.yearsExperience ?? '');
       }
     }).catch(() => {});
-  }, [user]);
+  }, []);
 
   const handleSave = async () => {
     if (showPassword) {
