@@ -299,6 +299,10 @@ export default function Dashboard() {
       {/* ── Trial banner ── */}
       {(() => {
         if (!user?.trialEndsAt) return null;
+        // No mostrar si tiene plan PRO activo
+        if (user?.plan === 'PRO' && user?.planInterval === 'LIFETIME') return null;
+        if (user?.plan === 'PRO' && user?.planExpiresAt && new Date(user.planExpiresAt).getTime() > Date.now()) return null;
+
         const endsAt = new Date(user.trialEndsAt);
         const daysLeft = Math.ceil((endsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 
