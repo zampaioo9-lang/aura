@@ -87,6 +87,12 @@ export default function Landing() {
         </Link>
         <div className="flex items-center gap-2">
           <Link
+            to="/pricing"
+            className="hidden sm:inline text-sm font-medium text-white/50 hover:text-white transition-colors duration-300 px-3 py-2"
+          >
+            Precios
+          </Link>
+          <Link
             to="/login"
             title="Iniciar sesión"
             className="flex items-center justify-center gap-1.5 p-2 sm:px-5 sm:py-2 text-sm font-medium text-white/60 hover:text-white transition-colors duration-300 rounded-full sm:rounded-none"
