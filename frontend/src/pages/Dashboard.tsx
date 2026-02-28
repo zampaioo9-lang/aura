@@ -6,7 +6,7 @@ import {
   Plus, LogOut, Calendar, Clock,
   CalendarDays, Facebook, Instagram, Linkedin, MessageCircle,
   Home, Compass, Briefcase, Pencil, Search, ChevronRight, Camera,
-  Sun, Moon, Lock, Copy, ExternalLink,
+  Sun, Moon, Lock, Copy, ExternalLink, Zap,
 } from 'lucide-react';
 import { useUpload } from '../hooks/useUpload';
 import { formatCurrency } from '../lib/utils';
@@ -85,40 +85,40 @@ interface Colors {
 
 const ACCENT_THEMES = [
   {
-    id: 'purple',
-    label: 'Índigo',
-    accent: '#6c63ff',
-    accentDark:  'rgba(108,99,255,0.15)',
-    accentLight: 'rgba(108,99,255,0.08)',
-    darkGradient:  'linear-gradient(160deg, #3b3580 0%, #5b21b6 100%)',
-    lightGradient: 'linear-gradient(160deg, #6c63ff 0%, #8b5cf6 100%)',
+    id: 'profesional',
+    label: 'Profesional',
+    accent: 'rgb(107,99,255)',
+    accentDark:  'rgba(107,99,255,0.15)',
+    accentLight: 'rgba(107,99,255,0.08)',
+    darkGradient:  'linear-gradient(160deg, #2d2b6e 0%, #4c46a8 100%)',
+    lightGradient: 'linear-gradient(160deg, #6b63ff 0%, #8b7cf8 100%)',
   },
   {
-    id: 'azure',
-    label: 'Azure',
-    accent: '#0ea5e9',
-    accentDark:  'rgba(14,165,233,0.15)',
-    accentLight: 'rgba(14,165,233,0.08)',
-    darkGradient:  'linear-gradient(160deg, #0c4a6e 0%, #0284c7 100%)',
-    lightGradient: 'linear-gradient(160deg, #0ea5e9 0%, #38bdf8 100%)',
+    id: 'bold',
+    label: 'Bold',
+    accent: 'rgb(222,182,7)',
+    accentDark:  'rgba(222,182,7,0.15)',
+    accentLight: 'rgba(222,182,7,0.08)',
+    darkGradient:  'linear-gradient(160deg, #3d2f00 0%, #7a5f00 100%)',
+    lightGradient: 'linear-gradient(160deg, #deb607 0%, #f59e0b 100%)',
   },
   {
-    id: 'emerald',
-    label: 'Esmeralda',
-    accent: '#10b981',
-    accentDark:  'rgba(16,185,129,0.15)',
-    accentLight: 'rgba(16,185,129,0.08)',
-    darkGradient:  'linear-gradient(160deg, #064e3b 0%, #059669 100%)',
-    lightGradient: 'linear-gradient(160deg, #10b981 0%, #34d399 100%)',
+    id: 'elegante',
+    label: 'Elegante',
+    accent: 'rgb(62,153,201)',
+    accentDark:  'rgba(62,153,201,0.15)',
+    accentLight: 'rgba(62,153,201,0.08)',
+    darkGradient:  'linear-gradient(160deg, #0c3d5e 0%, #1b6fa8 100%)',
+    lightGradient: 'linear-gradient(160deg, #3e99c9 0%, #60c4f0 100%)',
   },
   {
-    id: 'rose',
-    label: 'Rosa',
-    accent: '#f43f5e',
-    accentDark:  'rgba(244,63,94,0.15)',
-    accentLight: 'rgba(244,63,94,0.08)',
-    darkGradient:  'linear-gradient(160deg, #881337 0%, #e11d48 100%)',
-    lightGradient: 'linear-gradient(160deg, #f43f5e 0%, #fb923c 100%)',
+    id: 'creative',
+    label: 'Creative',
+    accent: 'rgb(217,72,240)',
+    accentDark:  'rgba(217,72,240,0.15)',
+    accentLight: 'rgba(217,72,240,0.08)',
+    darkGradient:  'linear-gradient(160deg, #500650 0%, #9d1fa8 100%)',
+    lightGradient: 'linear-gradient(160deg, #d948f0 0%, #f472b6 100%)',
   },
 ];
 
@@ -173,7 +173,7 @@ export default function Dashboard() {
     () => (localStorage.getItem('aliax_theme') as 'dark' | 'light') || 'dark'
   );
   const [accentId, setAccentId] = useState<string>(
-    () => localStorage.getItem('aliax_accent') || 'purple'
+    () => localStorage.getItem('aliax_accent') || 'profesional'
   );
 
   useEffect(() => { localStorage.setItem('aliax_theme', theme); }, [theme]);
@@ -237,6 +237,17 @@ export default function Dashboard() {
   const hasSocial     = SOCIAL_ICONS.some(({ key }) => !!socialLinks[key]);
   const isProfessional = profiles.length > 0;
 
+  const trialExpired = (() => {
+    // Lifetime plan nunca expira
+    if (user?.plan === 'PRO' && user?.planInterval === 'LIFETIME') return false;
+    // Plan activo con fecha futura
+    if (user?.plan === 'PRO' && user?.planExpiresAt) {
+      if (new Date(user.planExpiresAt).getTime() > Date.now()) return false;
+    }
+    if (!user?.trialEndsAt) return false;
+    return new Date(user.trialEndsAt).getTime() < Date.now();
+  })();
+
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'inicio',      label: 'Inicio',             icon: <Home className="h-4 w-4" /> },
     { id: 'citas',       label: 'Mis Citas',          icon: <Calendar className="h-4 w-4" /> },
@@ -284,6 +295,43 @@ export default function Dashboard() {
           </button>
         </div>
       </nav>
+
+      {/* ── Trial banner ── */}
+      {(() => {
+        if (!user?.trialEndsAt) return null;
+        const endsAt = new Date(user.trialEndsAt);
+        const daysLeft = Math.ceil((endsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+
+        if (daysLeft > 7) return null;
+
+        const expired = daysLeft <= 0;
+        const urgent  = !expired && daysLeft <= 3;
+
+        const bg      = expired ? '#7f1d1d' : urgent ? '#78350f' : C.isDark ? '#1e293b' : '#eff6ff';
+        const border  = expired ? '#991b1b' : urgent ? '#92400e' : C.isDark ? '#334155' : '#bfdbfe';
+        const color   = expired || urgent ? '#fef2f2' : C.isDark ? '#cbd5e1' : '#1e40af';
+        const label   = expired
+          ? 'Tu período de prueba ha finalizado.'
+          : daysLeft === 0
+          ? 'Tu prueba vence hoy.'
+          : `Tu prueba gratuita vence en ${daysLeft} día${daysLeft === 1 ? '' : 's'}.`;
+
+        return (
+          <div
+            className="shrink-0 flex items-center justify-between gap-3 px-5 py-2 text-sm"
+            style={{ background: bg, borderBottom: `1px solid ${border}`, color }}
+          >
+            <span>{label}</span>
+            <Link
+              to={expired ? '/pricing' : '/dashboard?tab=profesional'}
+              className="shrink-0 font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity"
+              style={{ color }}
+            >
+              {expired ? 'Activar plan' : 'Ver detalles'}
+            </Link>
+          </div>
+        );
+      })()}
 
       {/* ════════════════════════════════════════
           MOBILE LAYOUT
@@ -480,7 +528,9 @@ export default function Dashboard() {
             )}
             {mobileSection === 'explorar' && <TabExplorar C={C} />}
             {mobileSection === 'profesional' && (
-              <TabProfesional profiles={profiles} totalServices={totalServices} bookings={bookings} C={C} />
+              trialExpired
+                ? <TrialExpiredScreen C={C} />
+                : <TabProfesional profiles={profiles} totalServices={totalServices} bookings={bookings} C={C} />
             )}
           </div>
         </div>
@@ -736,7 +786,11 @@ export default function Dashboard() {
               />
             )}
             {activeTab === 'explorar'    && <TabExplorar C={C} />}
-            {activeTab === 'profesional' && <TabProfesional profiles={profiles} totalServices={totalServices} C={C} />}
+            {activeTab === 'profesional' && (
+              trialExpired
+                ? <TrialExpiredScreen C={C} />
+                : <TabProfesional profiles={profiles} totalServices={totalServices} C={C} />
+            )}
           </div>
         </main>
       </div>
@@ -1293,18 +1347,64 @@ function TabProfesional({ profiles, totalServices, bookings = [], C }: { profile
 
   if (profiles.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <Briefcase className="h-14 w-14 opacity-30" style={{ color: C.muted }} />
-        <div className="text-center">
-          <p className="text-lg font-semibold" style={{ color: C.text }}>Aún no tienes un perfil profesional</p>
-          <p className="text-sm mt-1" style={{ color: C.muted }}>Crea tu perfil para ofrecer servicios y recibir reservas.</p>
+      <div className="max-w-lg mx-auto py-16 px-4">
+        {/* Trial banner */}
+        <div
+          className="rounded-2xl p-8 text-center"
+          style={{
+            background: C.isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+            border: `1px solid ${C.border}`,
+          }}
+        >
+          {/* Badge */}
+          <span
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-6"
+            style={{ background: C.accentLight, color: C.accent }}
+          >
+            <Zap className="h-3 w-3" />
+            Prueba gratuita · 14 días
+          </span>
+
+          <h2 className="text-xl font-bold mb-2" style={{ color: C.text }}>
+            Activa tu perfil profesional
+          </h2>
+          <p className="text-sm mb-8" style={{ color: C.muted }}>
+            Crea tu perfil, publicá tus servicios y empezá a recibir reservas.<br />
+            Sin tarjeta de crédito. Cancela cuando quieras.
+          </p>
+
+          {/* Included features */}
+          <ul className="text-left space-y-2.5 mb-8">
+            {[
+              'Perfil público con URL personalizada',
+              'Gestión de servicios y precios',
+              'Reservas online + notificaciones por WhatsApp',
+              'Selector de apariencia y colores',
+            ].map(item => (
+              <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: C.muted }}>
+                <span
+                  className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                  style={{ background: C.accent }}
+                >
+                  ✓
+                </span>
+                {item}
+              </li>
+            ))}
+          </ul>
+
+          <Link
+            to="/profile/new"
+            className="inline-flex items-center gap-2 px-6 py-3 text-white text-sm font-semibold rounded-xl w-full justify-center transition-opacity hover:opacity-90"
+            style={{ background: C.accent }}
+          >
+            <Plus className="h-4 w-4" />
+            Crear mi perfil gratis
+          </Link>
+          <p className="mt-3 text-xs" style={{ color: C.isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' }}>
+            Sin tarjeta de crédito · Cancela cuando quieras
+          </p>
         </div>
-        <Link to="/profile/new" className="inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-medium rounded-lg"
-          style={{ background: C.accent }}>
-          <Plus className="h-4 w-4" />
-          Crear perfil
-          <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)' }}>Disponible</span>
-        </Link>
       </div>
     );
   }
@@ -1434,6 +1534,40 @@ function TabProfesional({ profiles, totalServices, bookings = [], C }: { profile
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function TrialExpiredScreen({ C }: { C: Colors }) {
+  return (
+    <div className="max-w-lg mx-auto py-16 px-4">
+      <div
+        className="rounded-2xl p-8 text-center"
+        style={{ background: C.isDark ? 'rgba(255,255,255,0.04)' : '#fef2f2', border: `1px solid ${C.isDark ? '#7f1d1d' : '#fecaca'}` }}
+      >
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5 text-2xl"
+          style={{ background: C.isDark ? 'rgba(127,29,29,0.4)' : '#fee2e2' }}
+        >
+          🔒
+        </div>
+        <h2 className="text-xl font-bold mb-2" style={{ color: C.text }}>
+          Tu período de prueba finalizó
+        </h2>
+        <p className="text-sm mb-8" style={{ color: C.muted }}>
+          Para seguir recibiendo reservas y gestionar tu perfil profesional, activá tu plan.
+        </p>
+        <Link
+          to="/pricing"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 text-white text-sm font-semibold rounded-xl w-full transition-opacity hover:opacity-90"
+          style={{ background: '#6b63ff' }}
+        >
+          Activar plan profesional
+        </Link>
+        <p className="mt-3 text-xs" style={{ color: C.isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' }}>
+          Soporte en soporte@aliax.io
+        </p>
       </div>
     </div>
   );

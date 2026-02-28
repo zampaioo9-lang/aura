@@ -104,6 +104,9 @@ router.get('/directory', async (_req, res, next) => {
 // POST /api/profiles - create profile (protected)
 router.post('/', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
+    const count = await prisma.profile.count({ where: { userId: req.userId! } });
+    if (count >= 1) throw new AppError(400, 'Solo puedes tener 1 perfil por cuenta');
+
     const data = profileSchema.parse(req.body);
 
     const slugExists = await prisma.profile.findUnique({ where: { slug: data.slug } });
