@@ -5,16 +5,17 @@
   --font-body: 'Plus Jakarta Sans', sans-serif;
   --font-hero: 'Space Grotesk', sans-serif;
 
-  --color-aura-950: #131217;
-  --color-aura-900: #0f1120;
-  --color-aura-800: #161833;
-  --color-aura-700: #1e2146;
-  --color-aura-600: #2a2d5a;
+  --color-aura-950: #080414;
+  --color-aura-900: #0e0920;
+  --color-aura-800: #160d30;
+  --color-aura-700: #1e1240;
+  --color-aura-600: #2a1858;
 
-  --color-amber-glow: rgb(78, 56, 245);
-  --color-amber-soft: rgb(148, 133, 249);
-  --color-amber-wash: rgba(78, 56, 245, 0.08);
-  --color-amber-wash-strong: rgba(78, 56, 245, 0.15);
+  --color-amber-glow: rgb(147, 51, 234);
+  --color-amber-soft: rgb(196, 151, 255);
+  --color-amber-wash: rgba(147, 51, 234, 0.08);
+  --color-amber-wash-strong: rgba(147, 51, 234, 0.15);
+  --color-body-text: rgb(205, 192, 224);
 
   --animate-fade-up: fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-fade-up-delay-1: fade-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;

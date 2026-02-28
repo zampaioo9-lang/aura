@@ -117,7 +117,7 @@ export default function Landing() {
           Tu presencia profesional<br className="hidden sm:block" /> <span className="text-amber-glow">comienza aqui</span>
         </h1>
 
-        <p className="animate-fade-up-delay-3 text-lg md:text-xl text-white max-w-2xl mx-auto mb-12 font-light leading-relaxed">
+        <p className="animate-fade-up-delay-3 text-lg md:text-xl max-w-2xl mx-auto mb-12 font-light leading-relaxed" style={{ color: 'var(--color-body-text)' }}>
           Crea un perfil unico, publica tus servicios y deja que tus clientes
           reserven citas al instante. Con notificaciones automaticas por WhatsApp.
         </p>
@@ -126,7 +126,7 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/register"
-              className="group relative inline-flex items-center gap-2 px-8 py-3.5 bg-amber-glow text-white font-semibold rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(78,56,245,0.4)] hover:scale-105"
+              className="group relative inline-flex items-center gap-2 px-8 py-3.5 bg-amber-glow text-white font-semibold rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(147,51,234,0.4)] hover:scale-105"
             >
               Probar gratis 14 días
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -168,7 +168,7 @@ export default function Landing() {
           <h2 className="animate-fade-up-delay-1 font-display text-3xl md:text-5xl text-white mb-4">
             Todo lo que necesitas
           </h2>
-          <p className="animate-fade-up-delay-2 text-white max-w-lg mx-auto">
+          <p className="animate-fade-up-delay-2 max-w-lg mx-auto" style={{ color: 'var(--color-body-text)' }}>
             Herramientas pensadas para profesionales independientes que quieren destacar.
           </p>
         </div>
@@ -187,9 +187,9 @@ export default function Landing() {
               icon: Calendar,
               title: 'Reservas inteligentes',
               desc: 'Configura tu disponibilidad por dia y hora. El sistema previene conflictos automaticamente.',
-              accent: 'from-[#4e38f5]/20 to-indigo-400/20',
-              border: 'border-[#4e38f5]/10 hover:border-[#4e38f5]/30',
-              iconColor: 'text-[#9485f9]',
+              accent: 'from-[#9333ea]/20 to-purple-400/20',
+              border: 'border-[#9333ea]/10 hover:border-[#9333ea]/30',
+              iconColor: 'text-[#c084fc]',
             },
             {
               icon: Bell,
@@ -214,7 +214,7 @@ export default function Landing() {
                   <Icon className="h-6 w-6" />
                 </div>
                 <h3 className="font-display text-xl text-white mb-3">{title}</h3>
-                <p className="text-white text-sm leading-relaxed">{desc}</p>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--color-body-text)' }}>{desc}</p>
               </div>
             </div>
           ))}
@@ -253,7 +253,7 @@ export default function Landing() {
             <h2 className="font-display text-3xl md:text-5xl text-white mb-4">
               Tres pasos. Listo.
             </h2>
-            <p className="text-white max-w-lg mx-auto">
+            <p className="max-w-lg mx-auto" style={{ color: 'var(--color-body-text)' }}>
               De cero a recibir reservas en minutos.
             </p>
           </div>
@@ -297,7 +297,7 @@ export default function Landing() {
                 </div>
 
                 <h3 className="font-display text-xl text-white mb-3">{title}</h3>
-                <p className="text-white text-sm leading-relaxed max-w-xs mx-auto md:mx-0">{desc}</p>
+                <p className="text-sm leading-relaxed max-w-xs mx-auto md:mx-0" style={{ color: 'var(--color-body-text)' }}>{desc}</p>
               </div>
             ))}
           </div>
@@ -313,7 +313,7 @@ export default function Landing() {
             <h2 className="font-display text-3xl md:text-5xl text-white mb-4">
               Tu color. Tu identidad.
             </h2>
-            <p className="text-white max-w-lg mx-auto">
+            <p className="max-w-lg mx-auto" style={{ color: 'var(--color-body-text)' }}>
               Elige el color de tu perfil con un clic. Cuatro paletas diseñadas para destacar.
             </p>
           </div>
@@ -390,12 +390,12 @@ export default function Landing() {
               Tu proximo cliente<br />
               <span className="text-amber-glow">esta buscandote</span>
             </h2>
-            <p className="relative text-white max-w-md mx-auto mb-10 text-lg font-light">
+            <p className="relative max-w-md mx-auto mb-10 text-lg font-light" style={{ color: 'var(--color-body-text)' }}>
               Crea tu perfil profesional hoy y empieza a recibir reservas manana.
             </p>
             <Link
               to="/register"
-              className="relative group inline-flex items-center gap-2 px-10 py-4 bg-amber-glow text-white font-semibold text-lg rounded-full transition-all duration-300 hover:shadow-[0_0_60px_rgba(78,56,245,0.45)] hover:scale-105"
+              className="relative group inline-flex items-center gap-2 px-10 py-4 bg-amber-glow text-white font-semibold text-lg rounded-full transition-all duration-300 hover:shadow-[0_0_60px_rgba(147,51,234,0.45)] hover:scale-105"
             >
               Empezar prueba gratis · 14 días
               <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
