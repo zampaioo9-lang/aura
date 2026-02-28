@@ -49,7 +49,11 @@ export function resolveInterval(planId: string): 'MONTHLY' | 'YEARLY' {
   return 'MONTHLY';
 }
 
-export async function createPayPalOrder(amount: string): Promise<string> {
+export async function createPayPalOrder(
+  amount: string,
+  returnUrl: string,
+  cancelUrl: string,
+): Promise<{ orderId: string; approvalUrl: string }> {
   const token = await getAccessToken();
   const res = await fetch(`${env.PAYPAL_BASE_URL}/v2/checkout/orders`, {
     method: 'POST',
@@ -59,6 +63,11 @@ export async function createPayPalOrder(amount: string): Promise<string> {
     },
     body: JSON.stringify({
       intent: 'CAPTURE',
+      application_context: {
+        return_url: returnUrl,
+        cancel_url: cancelUrl,
+        user_action: 'PAY_NOW',
+      },
       purchase_units: [
         {
           amount: {
@@ -75,8 +84,9 @@ export async function createPayPalOrder(amount: string): Promise<string> {
     throw new Error(`PayPal create order failed: ${res.status}`);
   }
 
-  const data = await res.json() as { id: string };
-  return data.id;
+  const data = await res.json() as { id: string; links: Array<{ rel: string; href: string }> };
+  const approvalLink = data.links.find(l => l.rel === 'payer-action') ?? data.links.find(l => l.rel === 'approve');
+  return { orderId: data.id, approvalUrl: approvalLink?.href ?? '' };
 }
 
 export async function capturePayPalOrder(orderId: string): Promise<{ status: string }> {

@@ -240,7 +240,7 @@ function LifetimeCard({
   remaining,
   stripeLoading,
   onStripe,
-  onPayPalOrderApprove,
+  onPayPalLifetime,
   onGuestPayPal,
   isLoggedIn,
 }: {
@@ -248,7 +248,7 @@ function LifetimeCard({
   remaining: number;
   stripeLoading: Interval | null;
   onStripe: (i: Interval) => void;
-  onPayPalOrderApprove: (orderId: string) => Promise<void>;
+  onPayPalLifetime: () => void;
   onGuestPayPal: () => void;
   isLoggedIn: boolean;
 }) {
@@ -333,19 +333,7 @@ function LifetimeCard({
         <StripeButton loading={isLoading} onClick={() => onStripe('LIFETIME')} />
 
         {isLoggedIn ? (
-          <div style={{ borderRadius: 12, overflow: 'hidden' }}>
-            <PayPalButtons
-              style={{ layout: 'horizontal', height: 48, tagline: false, shape: 'rect', color: 'gold' }}
-              createOrder={async () => {
-                const res = await api.post('/subscriptions/paypal/order/create');
-                return res.data.orderId as string;
-              }}
-              onApprove={async (data: any) => {
-                await onPayPalOrderApprove(data.orderID);
-              }}
-              onError={(err: unknown) => console.error('PayPal lifetime error:', err)}
-            />
-          </div>
+          <GuestPayPalButton onClick={onPayPalLifetime} />
         ) : (
           <GuestPayPalButton onClick={onGuestPayPal} />
         )}
@@ -401,17 +389,17 @@ export default function Pricing() {
     }
   };
 
-  const handlePayPalLifetimeApprove = async (orderId: string) => {
+  const handlePayPalLifetime = async () => {
     if (!user) {
       sessionStorage.setItem('pending_plan', 'LIFETIME');
       navigate('/register');
       return;
     }
     try {
-      await api.post('/subscriptions/paypal/order/capture', { orderId });
-      navigate('/payment/success');
+      const res = await api.post('/subscriptions/paypal/order/create');
+      window.location.href = res.data.approvalUrl;
     } catch (err) {
-      console.error('PayPal lifetime capture error:', err);
+      console.error('PayPal lifetime error:', err);
     }
   };
 
@@ -507,7 +495,7 @@ export default function Pricing() {
               remaining={remaining}
               stripeLoading={stripeLoading}
               onStripe={handleStripe}
-              onPayPalOrderApprove={handlePayPalLifetimeApprove}
+              onPayPalLifetime={handlePayPalLifetime}
               onGuestPayPal={() => handleGuestPayPal('LIFETIME')}
               isLoggedIn={!!user}
             />

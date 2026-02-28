@@ -17,6 +17,7 @@ import AccountSettings from './pages/AccountSettings';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Pricing from './pages/Pricing';
 import PaymentSuccess from './pages/PaymentSuccess';
+import PayPalReturn from './pages/PayPalReturn';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -45,6 +46,7 @@ function App() {
             <Route path="/account" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/payment/success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+            <Route path="/payment/paypal-return" element={<ProtectedRoute><PayPalReturn /></ProtectedRoute>} />
             <Route path="/payment/cancel" element={<Pricing />} />
             <Route path="/privacidad" element={<PrivacyPolicy />} />
             <Route path="/book/:slug" element={<BookingPage />} />

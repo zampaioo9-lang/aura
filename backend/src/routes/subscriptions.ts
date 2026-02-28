@@ -4,6 +4,7 @@ import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { createCheckoutSession, handleWebhookEvent } from '../services/stripeService';
 import { verifySubscription, resolveInterval, createPayPalOrder, capturePayPalOrder } from '../services/paypalService';
+import { env } from '../config/env';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -81,8 +82,12 @@ router.post('/paypal/order/create', authMiddleware, async (req: AuthRequest, res
   try {
     const isLaunch = Date.now() < LAUNCH_END.getTime();
     const amount = isLaunch ? '79.00' : '149.00';
-    const orderId = await createPayPalOrder(amount);
-    res.json({ orderId });
+    const { orderId, approvalUrl } = await createPayPalOrder(
+      amount,
+      `${env.FRONTEND_URL}/payment/paypal-return`,
+      `${env.FRONTEND_URL}/pricing`,
+    );
+    res.json({ orderId, approvalUrl });
   } catch (err) {
     next(err);
   }
