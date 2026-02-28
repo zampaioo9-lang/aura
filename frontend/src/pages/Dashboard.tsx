@@ -1422,29 +1422,17 @@ function TabProfesional({ profiles, totalServices, bookings = [], C }: { profile
             {profiles.length} {profiles.length === 1 ? 'perfil' : 'perfiles'} &middot; {totalServices} servicios en total
           </p>
         </div>
-        {profiles.length < 2 ? (
-          <Link
-            to="/profile/new"
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors"
-            style={{ background: C.accent }}
+        <div className="flex flex-col items-end gap-1">
+          <button
+            disabled
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg opacity-50 cursor-not-allowed"
+            style={{ background: btnBg, color: C.muted, border: btnBorder }}
           >
             <Plus className="h-4 w-4" />
             Añadir Perfil
-          </Link>
-        ) : (
-          <div className="flex flex-col items-end gap-1">
-            <button
-              disabled
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg opacity-50 cursor-not-allowed"
-              style={{ background: btnBg, color: C.muted, border: btnBorder }}
-            >
-              <Lock className="h-4 w-4" />
-              Añadir Perfil
-              <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">Premium</span>
-            </button>
-            <p className="text-xs" style={{ color: C.muted }}>Límite del plan Pro. Actualizá a Premium para más perfiles.</p>
-          </div>
-        )}
+          </button>
+          <p className="text-xs" style={{ color: C.muted }}>Próximamente</p>
+        </div>
       </div>
       {/* Stats resumen profesional */}
       {(() => {
