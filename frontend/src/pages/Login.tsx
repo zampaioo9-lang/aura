@@ -31,7 +31,7 @@ export default function Login() {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-slate-900">
             <Sparkles className="h-7 w-7 text-indigo-600" />
-            Aura
+            Aliax.io
           </Link>
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">

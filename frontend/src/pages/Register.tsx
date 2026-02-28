@@ -34,11 +34,17 @@ export default function Register() {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold text-slate-900">
             <Sparkles className="h-7 w-7 text-indigo-600" />
-            Aura
+            Aliax.io
           </Link>
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-          <h2 className="text-xl font-semibold text-slate-900 mb-6">Crear Cuenta</h2>
+          <div className="mb-6">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-semibold mb-3">
+              <Sparkles className="h-3 w-3" /> 14 días gratis · Sin tarjeta de crédito
+            </span>
+            <h2 className="text-xl font-semibold text-slate-900">Empieza tu prueba gratuita</h2>
+            <p className="text-sm text-slate-400 mt-1">Acceso completo durante 14 días, sin compromisos.</p>
+          </div>
           {error && <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg">{error}</div>}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -66,7 +72,7 @@ export default function Register() {
             </div>
             <button type="submit" disabled={loading}
               className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors disabled:opacity-50">
-              {loading ? 'Creando...' : 'Crear Cuenta'}
+              {loading ? 'Creando cuenta...' : 'Comenzar prueba gratis'}
             </button>
           </form>
           <p className="mt-4 text-center text-sm text-slate-500">
