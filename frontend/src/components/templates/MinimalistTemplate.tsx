@@ -22,27 +22,27 @@ function buildSocialUrl(key: string, value: string): string {
 }
 
 const DARK_C = {
-  main:        '#0f0f12',
-  side:        '#18181f',
-  card:        '#1e1e28',
-  border:      '#2e2e3d',
+  main:        '#080414',
+  side:        '#0e0920',
+  card:        '#160d30',
+  border:      'rgba(147,51,234,0.18)',
   text:        '#e8e8f0',
-  muted:       '#6b6b80',
-  accent:      'rgb(107,99,255)',
-  accentSoft:  'rgba(107,99,255,0.18)',
-  accentBorder:'rgba(107,99,255,0.35)',
+  muted:       'rgb(156,140,180)',
+  accent:      'rgb(147,51,234)',
+  accentSoft:  'rgba(147,51,234,0.12)',
+  accentBorder:'rgba(147,51,234,0.3)',
 };
 
 const LIGHT_C = {
-  main:        '#f0f0ff',
-  side:        '#e8e8fc',
+  main:        '#faf5ff',
+  side:        '#f3e8ff',
   card:        '#ffffff',
-  border:      '#dcdcf0',
-  text:        '#18182e',
-  muted:       '#7070a0',
-  accent:      'rgb(107,99,255)',
-  accentSoft:  'rgba(107,99,255,0.10)',
-  accentBorder:'rgba(107,99,255,0.25)',
+  border:      '#e9d5ff',
+  text:        '#3b0764',
+  muted:       '#7e22ce',
+  accent:      'rgb(147,51,234)',
+  accentSoft:  'rgba(147,51,234,0.08)',
+  accentBorder:'rgba(147,51,234,0.25)',
 };
 
 const DAY_SHORT: Record<number, string> = {
@@ -61,8 +61,8 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
     return () => window.removeEventListener('resize', handler);
   }, []);
   const heroGradient = darkMode
-    ? 'linear-gradient(160deg, #3b3580 0%, #5b21b6 100%)'
-    : 'linear-gradient(160deg, #6c63ff 0%, #8b5cf6 100%)';
+    ? 'linear-gradient(160deg, #1e1240 0%, #6b21a8 100%)'
+    : 'linear-gradient(160deg, #9333ea 0%, #c084fc 100%)';
 
   const activeServices = (profile.services || []).filter((s: any) => s.isActive !== false);
   const visibleServices = activeServices.slice(0, 6);
