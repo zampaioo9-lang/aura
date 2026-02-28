@@ -215,24 +215,16 @@ function MonthlyCard({
         <StripeButton loading={isLoading} onClick={() => onStripe('MONTHLY')} />
 
         {isLoggedIn ? (
-          <PayPalScriptProvider
-            options={{
-              clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test',
-              vault: true,
-              intent: 'subscription',
-            }}
-          >
-            <div style={{ borderRadius: 12, overflow: 'hidden' }}>
-              <PayPalButtons
-                style={{ layout: 'horizontal', height: 48, tagline: false, shape: 'rect', color: 'gold' }}
-                createSubscription={(_data, actions) =>
-                  actions.subscription.create({ plan_id: import.meta.env.VITE_PAYPAL_PLAN_MONTHLY })
-                }
-                onApprove={(data) => onPayPalApprove(data.subscriptionID!)}
-                onError={(err) => console.error('PayPal monthly error:', err)}
-              />
-            </div>
-          </PayPalScriptProvider>
+          <div style={{ borderRadius: 12, overflow: 'hidden' }}>
+            <PayPalButtons
+              style={{ layout: 'horizontal', height: 48, tagline: false, shape: 'rect', color: 'gold' }}
+              createSubscription={(_data: Record<string, unknown>, actions: any) =>
+                actions.subscription.create({ plan_id: import.meta.env.VITE_PAYPAL_PLAN_MONTHLY })
+              }
+              onApprove={(data: any) => onPayPalApprove(data.subscriptionID!)}
+              onError={(err: unknown) => console.error('PayPal monthly error:', err)}
+            />
+          </div>
         ) : (
           <GuestPayPalButton onClick={onGuestPayPal} />
         )}
@@ -341,26 +333,19 @@ function LifetimeCard({
         <StripeButton loading={isLoading} onClick={() => onStripe('LIFETIME')} />
 
         {isLoggedIn ? (
-          <PayPalScriptProvider
-            options={{
-              clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test',
-              intent: 'capture',
-            }}
-          >
-            <div style={{ borderRadius: 12, overflow: 'hidden' }}>
-              <PayPalButtons
-                style={{ layout: 'horizontal', height: 48, tagline: false, shape: 'rect', color: 'gold' }}
-                createOrder={async () => {
-                  const res = await api.post('/subscriptions/paypal/order/create');
-                  return res.data.orderId as string;
-                }}
-                onApprove={async (data) => {
-                  await onPayPalOrderApprove(data.orderID);
-                }}
-                onError={(err) => console.error('PayPal lifetime error:', err)}
-              />
-            </div>
-          </PayPalScriptProvider>
+          <div style={{ borderRadius: 12, overflow: 'hidden' }}>
+            <PayPalButtons
+              style={{ layout: 'horizontal', height: 48, tagline: false, shape: 'rect', color: 'gold' }}
+              createOrder={async () => {
+                const res = await api.post('/subscriptions/paypal/order/create');
+                return res.data.orderId as string;
+              }}
+              onApprove={async (data: any) => {
+                await onPayPalOrderApprove(data.orderID);
+              }}
+              onError={(err: unknown) => console.error('PayPal lifetime error:', err)}
+            />
+          </div>
         ) : (
           <GuestPayPalButton onClick={onGuestPayPal} />
         )}
@@ -436,7 +421,13 @@ export default function Pricing() {
   };
 
   return (
-    <>
+    <PayPalScriptProvider
+      options={{
+        clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test',
+        vault: true,
+        intent: 'capture',
+      }}
+    >
       <style>{`
         @keyframes pp-spin { to { transform: rotate(360deg); } }
       `}</style>
@@ -528,6 +519,6 @@ export default function Pricing() {
           </p>
         </div>
       </div>
-    </>
+    </PayPalScriptProvider>
   );
 }
