@@ -536,6 +536,9 @@ export default function Dashboard() {
                 ? <TrialExpiredScreen C={C} />
                 : <TabProfesional profiles={profiles} totalServices={totalServices} bookings={bookings} C={C} />
             )}
+            <div className="mt-10 text-center">
+              <Link to="/pricing" className="text-xs" style={{ color: C.muted }}>Ver planes</Link>
+            </div>
           </div>
         </div>
 
@@ -747,6 +750,16 @@ export default function Dashboard() {
             <LogOut className="h-3.5 w-3.5" />
             Cerrar sesión
           </button>
+
+          <Link
+            to="/pricing"
+            className="text-center text-xs transition-colors"
+            style={{ color: 'rgba(255,255,255,0.35)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
+          >
+            Ver planes
+          </Link>
         </aside>
 
         {/* Main area */}
