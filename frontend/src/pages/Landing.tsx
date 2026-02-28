@@ -375,6 +375,19 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ─── Coming Soon: Addon ─── */}
+      <section className="relative z-10 max-w-3xl mx-auto px-6 pb-16">
+        <div className="flex items-center gap-4 rounded-2xl border border-amber-glow/10 bg-amber-wash px-6 py-5">
+          <div className="shrink-0 px-2.5 py-1 rounded-full bg-amber-glow/15 border border-amber-glow/20 text-amber-soft text-[10px] font-bold tracking-widest uppercase">
+            Próximamente
+          </div>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-body-text)' }}>
+            <span className="text-white font-semibold">Perfiles adicionales</span>
+            {' '}— Pronto podrás añadir más perfiles profesionales a tu misma cuenta.
+          </p>
+        </div>
+      </section>
+
       {/* ─── CTA ─── */}
       <section className="relative z-10 py-28">
         <div className="max-w-5xl mx-auto px-6">
