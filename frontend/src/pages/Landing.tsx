@@ -395,7 +395,7 @@ export default function Landing() {
             </p>
             <Link
               to="/register"
-              className="relative group inline-flex items-center gap-2 px-10 py-4 bg-amber-glow text-white font-semibold text-lg rounded-full transition-all duration-300 hover:shadow-[0_0_60px_rgba(147,51,234,0.45)] hover:scale-105"
+              className="relative group inline-flex items-center gap-2 px-6 py-3.5 sm:px-10 sm:py-4 bg-amber-glow text-white font-semibold text-sm sm:text-lg rounded-full whitespace-nowrap transition-all duration-300 hover:shadow-[0_0_60px_rgba(147,51,234,0.45)] hover:scale-105"
             >
               Empezar prueba gratis · 14 días
               <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />

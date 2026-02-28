@@ -106,3 +106,14 @@ body {
   animation: grain 8s steps(10) infinite;
   opacity: 0.3;
 }
+
+/* Mobile: desactivar grain y efectos pesados para mejor scroll */
+@media (max-width: 640px) {
+  .grain-overlay::before {
+    animation: none;
+    opacity: 0.15;
+  }
+  .grain-overlay {
+    -webkit-overflow-scrolling: touch;
+  }
+}

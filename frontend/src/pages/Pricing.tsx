@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
-import { ArrowLeft, Check, CreditCard, Infinity } from 'lucide-react';
+import { ArrowLeft, Check, CreditCard, Infinity, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 
@@ -377,6 +377,101 @@ function LifetimeCard({
   );
 }
 
+// ─── Addon card ──────────────────────────────────────────────────────────────
+
+function AddonCard({ onStripe }: { onStripe: () => Promise<void> }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleClick = async () => {
+    setLoading(true);
+    try {
+      await onStripe();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        background: '#1a1a22',
+        border: '1px solid #2e2e3d',
+        borderRadius: 16,
+        padding: '28px 32px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 24,
+        flexWrap: 'wrap',
+      }}
+    >
+      {/* Icon */}
+      <div
+        style={{
+          width: 48,
+          height: 48,
+          borderRadius: 12,
+          background: 'rgba(107,99,255,0.12)',
+          border: '1px solid rgba(107,99,255,0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Plus style={{ width: 22, height: 22, color: '#6b63ff' }} />
+      </div>
+
+      {/* Text */}
+      <div style={{ flex: 1, minWidth: 200 }}>
+        <p style={{ margin: 0, fontWeight: 700, fontSize: 16, color: '#e8e8f0' }}>
+          Perfil adicional
+        </p>
+        <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6b6b80', lineHeight: 1.5 }}>
+          Añade un segundo perfil profesional a tu cuenta.
+        </p>
+      </div>
+
+      {/* Price + button */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexShrink: 0, flexWrap: 'wrap' }}>
+        <div>
+          <span style={{ fontSize: 28, fontWeight: 800, color: '#e8e8f0' }}>$9</span>
+          <span style={{ fontSize: 14, color: '#6b6b80' }}>/mes</span>
+        </div>
+        <button
+          onClick={handleClick}
+          disabled={loading}
+          style={{
+            padding: '11px 24px',
+            borderRadius: 10,
+            border: '1px solid #6b63ff',
+            background: 'transparent',
+            color: '#a5b4fc',
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.6 : 1,
+            transition: 'background 0.15s, color 0.15s',
+            whiteSpace: 'nowrap',
+          }}
+          onMouseEnter={e => {
+            if (!loading) {
+              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(107,99,255,0.15)';
+              (e.currentTarget as HTMLButtonElement).style.color = '#e8e8f0';
+            }
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+            (e.currentTarget as HTMLButtonElement).style.color = '#a5b4fc';
+          }}
+        >
+          {loading ? 'Redirigiendo...' : 'Agregar'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main page ───────────────────────────────────────────────────────────────
 
 export default function Pricing() {
@@ -441,6 +536,19 @@ export default function Pricing() {
   const handleGuestPayPal = (interval: Interval) => {
     sessionStorage.setItem('pending_plan', interval);
     navigate('/register');
+  };
+
+  const handleAddon = async () => {
+    if (!user) {
+      navigate('/register');
+      return;
+    }
+    try {
+      const res = await api.post('/subscriptions/stripe/checkout', { interval: 'ADDON_PROFILE' });
+      window.location.href = res.data.url;
+    } catch (err) {
+      console.error('Addon checkout error:', err);
+    }
   };
 
   return (
@@ -534,6 +642,24 @@ export default function Pricing() {
               onGuestPayPal={() => handleGuestPayPal('LIFETIME')}
               isLoggedIn={!!user}
             />
+          </div>
+
+          {/* Addon section */}
+          <div style={{ marginTop: 56 }}>
+            <p
+              style={{
+                textAlign: 'center',
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: '#3d3d50',
+                margin: '0 0 16px',
+              }}
+            >
+              Add-ons
+            </p>
+            <AddonCard onStripe={handleAddon} />
           </div>
 
           {/* Footer note */}
