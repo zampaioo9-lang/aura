@@ -87,11 +87,11 @@ const ACCENT_THEMES = [
   {
     id: 'profesional',
     label: 'Profesional',
-    accent: 'rgb(107,99,255)',
-    accentDark:  'rgba(107,99,255,0.15)',
-    accentLight: 'rgba(107,99,255,0.08)',
-    darkGradient:  'linear-gradient(160deg, #2d2b6e 0%, #4c46a8 100%)',
-    lightGradient: 'linear-gradient(160deg, #6b63ff 0%, #8b7cf8 100%)',
+    accent: 'rgb(147,51,234)',
+    accentDark:  'rgba(147,51,234,0.15)',
+    accentLight: 'rgba(147,51,234,0.08)',
+    darkGradient:  'linear-gradient(160deg, #1e1240 0%, #6b21a8 100%)',
+    lightGradient: 'linear-gradient(160deg, #9333ea 0%, #c084fc 100%)',
   },
   {
     id: 'bold',
@@ -132,8 +132,8 @@ const DARK: Colors = {
   cardShadow: 'none',
   text: '#e8e8f0',
   muted: '#6b6b80',
-  accent: '#6c63ff',
-  accentLight: 'rgba(108, 99, 255, 0.15)',
+  accent: 'rgb(147,51,234)',
+  accentLight: 'rgba(147,51,234,0.15)',
   isDark: true,
 };
 
@@ -147,8 +147,8 @@ const LIGHT: Colors = {
   cardShadow: '0 2px 8px rgba(0,0,0,0.07)',
   text: '#2d2b55',
   muted: '#6b6b8f',
-  accent: '#6c63ff',
-  accentLight: 'rgba(108, 99, 255, 0.08)',
+  accent: 'rgb(147,51,234)',
+  accentLight: 'rgba(147,51,234,0.08)',
   isDark: false,
 };
 
