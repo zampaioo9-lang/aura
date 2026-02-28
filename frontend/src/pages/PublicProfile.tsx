@@ -2,9 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import MinimalistTemplate from '../components/templates/MinimalistTemplate';
-import BoldTemplate from '../components/templates/BoldTemplate';
-import ElegantTemplate from '../components/templates/ElegantTemplate';
-import CreativeTemplate from '../components/templates/CreativeTemplate';
 import BookingForm from '../components/BookingForm';
 
 export default function PublicProfile() {
@@ -40,14 +37,7 @@ export default function PublicProfile() {
     if (service) setBookingService({ id: service.id, name: service.name });
   };
 
-  const templateMap: Record<string, React.ComponentType<any>> = {
-    MINIMALIST: MinimalistTemplate,
-    BOLD: BoldTemplate,
-    ELEGANT: ElegantTemplate,
-    CREATIVE: CreativeTemplate,
-  };
-
-  const Template = templateMap[profile.template] || MinimalistTemplate;
+  const Template = MinimalistTemplate;
 
   return (
     <>

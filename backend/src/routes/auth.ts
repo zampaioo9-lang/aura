@@ -18,12 +18,14 @@ router.post('/register', async (req, res, next) => {
     if (existing) throw new AppError(409, 'Email already registered');
 
     const hashed = await hashPassword(data.password);
+    const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
     const user = await prisma.user.create({
       data: {
         email: data.email,
         password: hashed,
         name: data.name,
         phone: data.phone || null,
+        trialEndsAt,
       },
     });
 
@@ -63,7 +65,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
-      select: { id: true, email: true, name: true, phone: true, bio: true, socialLinks: true, isAdmin: true, createdAt: true },
+      select: { id: true, email: true, name: true, phone: true, bio: true, socialLinks: true, isAdmin: true, createdAt: true, trialEndsAt: true, plan: true, planInterval: true, planExpiresAt: true },
     });
     if (!user) throw new AppError(404, 'User not found');
     res.json(user);
@@ -113,7 +115,7 @@ router.patch('/me', authMiddleware, async (req: AuthRequest, res, next) => {
     const user = await prisma.user.update({
       where: { id: req.userId },
       data: updateData,
-      select: { id: true, email: true, name: true, phone: true, bio: true, socialLinks: true, isAdmin: true },
+      select: { id: true, email: true, name: true, phone: true, bio: true, socialLinks: true, isAdmin: true, trialEndsAt: true, plan: true, planInterval: true, planExpiresAt: true },
     });
     res.json(user);
   } catch (err) {

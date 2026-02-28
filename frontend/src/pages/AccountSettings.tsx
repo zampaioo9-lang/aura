@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Save, Facebook, Instagram, Linkedin, MessageCircle, ExternalLink, Lock } from 'lucide-react';
+import { ArrowLeft, Save, Facebook, Instagram, Linkedin, ExternalLink, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import PhoneInput from '../components/PhoneInput';
 
 const SOCIAL_NETWORKS = [
-  { key: 'facebook',  label: 'Facebook',   Icon: Facebook,       color: '#1877F2', placeholder: 'facebook.com/tu-página' },
-  { key: 'instagram', label: 'Instagram',  Icon: Instagram,      color: '#E1306C', placeholder: '@tu-usuario' },
-  { key: 'linkedin',  label: 'LinkedIn',   Icon: Linkedin,       color: '#0A66C2', placeholder: 'linkedin.com/in/tu-perfil' },
-  { key: 'whatsapp',  label: 'WhatsApp',   Icon: MessageCircle,  color: '#25D366', placeholder: '+54 11 1234-5678' },
+  { key: 'facebook',  label: 'Facebook',  Icon: Facebook,  color: '#1877F2', placeholder: 'facebook.com/tu-página' },
+  { key: 'instagram', label: 'Instagram', Icon: Instagram, color: '#E1306C', placeholder: '@tu-usuario' },
+  { key: 'linkedin',  label: 'LinkedIn',  Icon: Linkedin,  color: '#0A66C2', placeholder: 'linkedin.com/in/tu-perfil' },
 ] as const;
 
-type SocialKey = 'facebook' | 'instagram' | 'linkedin' | 'whatsapp';
+type SocialKey = 'facebook' | 'instagram' | 'linkedin';
 
 
 export default function AccountSettings() {
@@ -22,7 +21,7 @@ export default function AccountSettings() {
   const [bio, setBio] = useState('');
   const [email, setEmail] = useState('');
   const [socialLinks, setSocialLinks] = useState<Record<SocialKey, string>>({
-    facebook: '', instagram: '', linkedin: '', whatsapp: '',
+    facebook: '', instagram: '', linkedin: '',
   });
   const [waPhone, setWaPhone] = useState('+54');
 
@@ -54,7 +53,6 @@ export default function AccountSettings() {
       facebook:  links.facebook  || '',
       instagram: links.instagram || '',
       linkedin:  links.linkedin  || '',
-      whatsapp:  stored,
     });
 
   }, [user]);
@@ -142,7 +140,7 @@ export default function AccountSettings() {
         <section className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
           <h2 className="text-base font-semibold text-slate-900">Información personal</h2>
           <div>
-            <label className={labelClass}>Nombre</label>
+            <label className={labelClass}>Nombre <span className="text-red-500">*</span></label>
             <input value={name} onChange={e => setName(e.target.value)} className={inputClass} placeholder="Tu nombre" />
           </div>
           <div>
@@ -158,13 +156,34 @@ export default function AccountSettings() {
               placeholder="Contá algo sobre vos..."
             />
           </div>
+          <div>
+            <PhoneInput
+              label="WhatsApp"
+              required
+              value={waPhone}
+              onChange={setWaPhone}
+            />
+            <p className="mt-1.5 text-xs text-slate-400">
+              Este número recibe las notificaciones de citas por WhatsApp.
+            </p>
+            {waPhone.length > 4 && (
+              <a
+                href={`https://wa.me/${waPhone.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-1 text-xs text-indigo-500 hover:text-indigo-700"
+              >
+                Abrir enlace <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+          </div>
         </section>
 
         {/* ── Cuenta ── */}
         <section className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
           <h2 className="text-base font-semibold text-slate-900">Cuenta</h2>
           <div>
-            <label className={labelClass}>Correo electrónico</label>
+            <label className={labelClass}>Correo electrónico <span className="text-red-500">*</span></label>
             <input value={email} onChange={e => setEmail(e.target.value)} type="email" className={inputClass} placeholder="tu@correo.com" />
           </div>
 
@@ -247,28 +266,16 @@ export default function AccountSettings() {
                   {label}
                 </span>
               </label>
-              {key === 'whatsapp' ? (
-                <PhoneInput
-                  value={waPhone}
-                  onChange={setWaPhone}
-                />
-              ) : (
-                <input
-                  value={socialLinks[key]}
-                  onChange={e => setSocialLinks(prev => ({ ...prev, [key]: e.target.value }))}
-                  className={inputClass}
-                  placeholder={placeholder}
-                  type="url"
-                />
-              )}
-              {/* Preview link if value exists */}
-              {(key === 'whatsapp' ? waPhone.length > 4 : socialLinks[key]) && (
+              <input
+                value={socialLinks[key]}
+                onChange={e => setSocialLinks(prev => ({ ...prev, [key]: e.target.value }))}
+                className={inputClass}
+                placeholder={placeholder}
+                type="url"
+              />
+              {socialLinks[key] && (
                 <a
-                  href={
-                    key === 'whatsapp'
-                      ? `https://wa.me/${waPhone.replace(/\D/g, '')}`
-                      : socialLinks[key].startsWith('http') ? socialLinks[key] : `https://${socialLinks[key]}`
-                  }
+                  href={socialLinks[key].startsWith('http') ? socialLinks[key] : `https://${socialLinks[key]}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 mt-1 text-xs text-indigo-500 hover:text-indigo-700"

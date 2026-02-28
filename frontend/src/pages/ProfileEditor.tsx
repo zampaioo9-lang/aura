@@ -1,20 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
-import { Save, ArrowLeft, Facebook, Instagram, Linkedin, MessageCircle } from 'lucide-react';
+import { Save, ArrowLeft, Facebook, Instagram, Linkedin } from 'lucide-react';
 import UsernameInput from '../components/UsernameInput';
 import ImageUpload from '../components/ImageUpload';
-import VideoUpload from '../components/VideoUpload';
 import PhoneInput from '../components/PhoneInput';
 
 const SOCIAL_NETWORKS = [
   { key: 'facebook',  label: 'Facebook',  Icon: Facebook,      color: '#1877F2', placeholder: 'facebook.com/tu-página' },
   { key: 'instagram', label: 'Instagram', Icon: Instagram,      color: '#E1306C', placeholder: '@tu-usuario' },
   { key: 'linkedin',  label: 'LinkedIn',  Icon: Linkedin,       color: '#0A66C2', placeholder: 'linkedin.com/in/tu-perfil' },
-  { key: 'whatsapp',  label: 'WhatsApp',  Icon: MessageCircle,  color: '#25D366', placeholder: '+54 11 1234-5678' },
 ] as const;
 
-const TEMPLATES = ['MINIMALIST', 'BOLD', 'ELEGANT', 'CREATIVE'] as const;
 
 export default function ProfileEditor() {
   const { id } = useParams();
@@ -33,7 +30,6 @@ export default function ProfileEditor() {
     template: 'MINIMALIST' as string,
     avatar: '',
     coverImage: '',
-    videoUrl: '',
     published: false,
     socialLinks: {} as Record<string, string>,
   });
@@ -58,7 +54,6 @@ export default function ProfileEditor() {
             template: profile.template,
             avatar: profile.avatar || '',
             coverImage: profile.coverImage || '',
-            videoUrl: profile.videoUrl || '',
             published: profile.published,
             socialLinks: profile.socialLinks || {},
           });
@@ -93,7 +88,7 @@ export default function ProfileEditor() {
   return (
     <div className="min-h-screen bg-slate-50">
       <nav className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
-        <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900">
+        <Link to="/dashboard?tab=profesional" className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900">
           <ArrowLeft className="h-4 w-4" /> Dashboard
         </Link>
         <button onClick={handleSave} disabled={saving}
@@ -111,7 +106,6 @@ export default function ProfileEditor() {
           <h3 className="text-lg font-semibold text-slate-900 mb-4">Media</h3>
           <div className="flex flex-wrap gap-6">
             <ImageUpload value={form.avatar} onChange={(url) => setForm(f => ({ ...f, avatar: url }))} />
-            <VideoUpload value={form.videoUrl} onChange={(url) => setForm(f => ({ ...f, videoUrl: url }))} />
           </div>
         </section>
 
@@ -126,12 +120,12 @@ export default function ProfileEditor() {
             />
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Nombre / Titulo</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Nombre / Titulo <span className="text-red-500">*</span></label>
                 <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Profesion</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Profesion <span className="text-red-500">*</span></label>
                 <input value={form.profession} onChange={e => setForm(f => ({ ...f, profession: e.target.value }))}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
               </div>
@@ -155,7 +149,7 @@ export default function ProfileEditor() {
             </div>
             <div>
               <PhoneInput
-                label="Teléfono WhatsApp"
+                label="WhatsApp Business"
                 value={form.phone}
                 onChange={v => setForm(f => ({ ...f, phone: v }))}
               />
@@ -175,23 +169,6 @@ export default function ProfileEditor() {
           </div>
         </section>
 
-        {/* Template */}
-        <section className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Template</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {TEMPLATES.map(t => (
-              <button key={t} type="button" onClick={() => setForm(f => ({ ...f, template: t }))}
-                className={`p-4 rounded-xl border-2 text-center text-sm font-medium transition-colors ${
-                  form.template === t
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                    : 'border-slate-200 hover:border-slate-300 text-slate-600'
-                }`}>
-                {t.charAt(0) + t.slice(1).toLowerCase()}
-              </button>
-            ))}
-          </div>
-        </section>
-
         {/* Social Links */}
         <section className="bg-white rounded-xl border border-slate-200 p-6">
           <h3 className="text-lg font-semibold text-slate-900 mb-4">Redes Sociales</h3>
@@ -204,52 +181,18 @@ export default function ProfileEditor() {
                     {label}
                   </span>
                 </label>
-                {key === 'whatsapp' ? (
-                  <PhoneInput
-                    value={(form.socialLinks as Record<string, string>)['whatsapp'] || ''}
-                    onChange={v => setForm(f => ({ ...f, socialLinks: { ...f.socialLinks, whatsapp: v } }))}
-                  />
-                ) : (
-                  <input
-                    value={(form.socialLinks as Record<string, string>)[key] || ''}
-                    onChange={e => setForm(f => ({ ...f, socialLinks: { ...f.socialLinks, [key]: e.target.value } }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
-                    placeholder={placeholder}
-                    type="url"
-                  />
-                )}
+                <input
+                  value={(form.socialLinks as Record<string, string>)[key] || ''}
+                  onChange={e => setForm(f => ({ ...f, socialLinks: { ...f.socialLinks, [key]: e.target.value } }))}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                  placeholder={placeholder}
+                  type="url"
+                />
               </div>
             ))}
           </div>
         </section>
 
-        {/* Availability */}
-        <section className="bg-white rounded-xl border border-slate-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">Disponibilidad</h3>
-              <p className="text-sm text-slate-500 mt-1">Gestiona tus horarios desde el panel dedicado</p>
-            </div>
-            <Link to="/dashboard/availability"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
-              Gestionar Horarios
-            </Link>
-          </div>
-        </section>
-
-        {/* Services */}
-        <section className="bg-white rounded-xl border border-slate-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">Servicios</h3>
-              <p className="text-sm text-slate-500 mt-1">Gestiona tus servicios desde el panel dedicado</p>
-            </div>
-            <Link to="/dashboard/services"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
-              Gestionar Servicios
-            </Link>
-          </div>
-        </section>
       </div>
     </div>
   );

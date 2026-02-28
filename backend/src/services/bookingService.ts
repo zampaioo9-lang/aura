@@ -239,7 +239,7 @@ export async function createBooking(data: {
 
   const profile = await prisma.profile.findUnique({
     where: { id: data.profileId },
-    include: { user: { select: { name: true, phone: true } } },
+    include: { user: { select: { name: true, phone: true, socialLinks: true } } },
   });
   if (!profile) throw new AppError(404, 'Perfil no encontrado');
 
@@ -274,8 +274,9 @@ export async function createBooking(data: {
     },
   });
 
-  // Send WhatsApp to professional (prefer profile.phone as it has full country code)
-  const professionalPhone = profile.phone || profile.user.phone;
+  // Send WhatsApp to professional — priority: AccountSettings WhatsApp > profile.phone > user.phone
+  const userSocialLinks = profile.user.socialLinks as Record<string, string> | null;
+  const professionalPhone = userSocialLinks?.whatsapp || profile.phone || profile.user.phone;
   console.log(`[Booking] Created ${booking.id} | professionalPhone: ${professionalPhone || 'NONE'} | profile.phone: ${profile.phone || 'null'} | user.phone: ${profile.user.phone || 'null'}`);
   if (professionalPhone) {
     // Intentar con plantilla aprobada, si falla usar texto libre
@@ -379,7 +380,7 @@ export async function cancelBooking(
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
-      profile: { include: { user: { select: { name: true, phone: true } } } },
+      profile: { include: { user: { select: { name: true, phone: true, socialLinks: true } } } },
       service: true,
     },
   });
@@ -430,8 +431,9 @@ export async function cancelBooking(
     }
   }
 
-  // Notify professional
-  const professionalPhone = booking.profile.phone || booking.profile.user.phone;
+  // Notify professional — priority: AccountSettings WhatsApp > profile.phone > user.phone
+  const cancelSocialLinks = booking.profile.user.socialLinks as Record<string, string> | null;
+  const professionalPhone = cancelSocialLinks?.whatsapp || booking.profile.phone || booking.profile.user.phone;
   if (professionalPhone) {
     const components = templateComponents.cancellation({
       recipientName: booking.profile.user.name,

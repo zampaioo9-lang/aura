@@ -14,12 +14,18 @@ import bookingSettingsRoutes from './routes/booking-settings';
 import scheduleBlocksRoutes from './routes/schedule-blocks';
 import serviceAvailabilityRoutes from './routes/service-availability';
 import adminRoutes from './routes/admin';
+import subscriptionRoutes from './routes/subscriptions';
 import { startReminderJob } from './jobs/reminderJob';
+import { startTrialExpiryJob } from './jobs/trialExpiryJob';
 import { sendWhatsAppTemplate, templateComponents } from './services/whatsappService';
 
 const app = express();
 
 app.use(cors());
+
+// Raw body for Stripe webhook — must come BEFORE express.json()
+app.use('/api/subscriptions/stripe/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 
 // Serve local uploads in dev mode
@@ -37,6 +43,7 @@ app.use('/api/booking-settings', bookingSettingsRoutes);
 app.use('/api/schedule-blocks', scheduleBlocksRoutes);
 app.use('/api/service-availability', serviceAvailabilityRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
@@ -64,4 +71,5 @@ app.use(errorHandler);
 app.listen(env.PORT, () => {
   console.log(`🚀 Aura API running on http://localhost:${env.PORT}`);
   startReminderJob();
+  startTrialExpiryJob();
 });

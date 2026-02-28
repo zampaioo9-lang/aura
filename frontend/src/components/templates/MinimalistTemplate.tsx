@@ -1,4 +1,6 @@
-import { Clock, Facebook, Instagram, Linkedin, MessageCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Clock, Facebook, Instagram, Linkedin, MessageCircle, Moon, Sun, ArrowLeft } from 'lucide-react';
 import { formatPrice, formatDuration, formatTime } from '../../lib/utils';
 
 interface TemplateProps {
@@ -19,16 +21,28 @@ function buildSocialUrl(key: string, value: string): string {
   return value.startsWith('http') ? value : `https://${value}`;
 }
 
-const C = {
-  main:       '#0f0f12',
-  side:       '#18181f',
-  card:       '#1e1e28',
-  border:     '#2e2e3d',
-  text:       '#e8e8f0',
-  muted:      '#6b6b80',
-  accent:     '#6c63ff',
-  accentSoft: 'rgba(108,99,255,0.12)',
-  accentBorder:'rgba(108,99,255,0.25)',
+const DARK_C = {
+  main:        '#0f0f12',
+  side:        '#18181f',
+  card:        '#1e1e28',
+  border:      '#2e2e3d',
+  text:        '#e8e8f0',
+  muted:       '#6b6b80',
+  accent:      'rgb(107,99,255)',
+  accentSoft:  'rgba(107,99,255,0.18)',
+  accentBorder:'rgba(107,99,255,0.35)',
+};
+
+const LIGHT_C = {
+  main:        '#f0f0ff',
+  side:        '#e8e8fc',
+  card:        '#ffffff',
+  border:      '#dcdcf0',
+  text:        '#18182e',
+  muted:       '#7070a0',
+  accent:      'rgb(107,99,255)',
+  accentSoft:  'rgba(107,99,255,0.10)',
+  accentBorder:'rgba(107,99,255,0.25)',
 };
 
 const DAY_SHORT: Record<number, string> = {
@@ -36,6 +50,20 @@ const DAY_SHORT: Record<number, string> = {
 };
 
 export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
+  const [darkMode, setDarkMode] = useState(true);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const navigate = useNavigate();
+  const C = darkMode ? DARK_C : LIGHT_C;
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  const heroGradient = darkMode
+    ? 'linear-gradient(160deg, #3b3580 0%, #5b21b6 100%)'
+    : 'linear-gradient(160deg, #6c63ff 0%, #8b5cf6 100%)';
+
   const activeServices = (profile.services || []).filter((s: any) => s.isActive !== false);
   const visibleServices = activeServices.slice(0, 6);
   const hasMore = activeServices.length > 6;
@@ -56,11 +84,46 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
   return (
     <div style={{ minHeight: '100vh', background: C.main, color: C.text, fontFamily: "'Plus Jakarta Sans', 'DM Sans', sans-serif" }}>
 
+      {/* ── Mobile top bar ────────────────────────────────── */}
+      {isMobile && (
+        <div style={{
+          display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
+          gap: 8, padding: '12px 16px 0', background: C.main,
+        }}>
+          <button
+            onClick={() => navigate(-1)}
+            title="Salir"
+            style={{
+              width: 38, height: 38, borderRadius: '50%',
+              background: C.card, border: `1px solid ${C.border}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: C.muted,
+              boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
+            }}
+          >
+            <ArrowLeft size={16} />
+          </button>
+          <button
+            onClick={() => setDarkMode(d => !d)}
+            title={darkMode ? 'Modo claro' : 'Modo oscuro'}
+            style={{
+              width: 38, height: 38, borderRadius: '50%',
+              background: C.card, border: `1px solid ${C.border}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: C.muted,
+              boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
+            }}
+          >
+            {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+        </div>
+      )}
+
       {/* ── Hero ─────────────────────────────────────────── */}
-      <div style={{ padding: '20px 16px 0', background: C.main }}>
+      <div style={{ padding: '8px 16px 0', background: C.main }}>
         <div style={{
           maxWidth: 640, margin: '0 auto',
-          background: 'linear-gradient(160deg, #3b3580 0%, #5b21b6 100%)',
+          background: heroGradient,
           borderRadius: 24,
         }}>
           <div style={{ padding: '52px 28px 44px', textAlign: 'center' }}>
@@ -317,6 +380,47 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
           Powered by <span style={{ color: C.accent, fontWeight: 600 }}>Aliax.io</span>
         </span>
       </div>
+
+      {/* Floating controls — desktop only */}
+      {!isMobile && <div style={{
+        position: 'fixed', bottom: 24, right: 16,
+        display: 'flex', flexDirection: 'column', gap: 10,
+        zIndex: 100,
+      }}>
+        <button
+          onClick={() => navigate(-1)}
+          title="Salir"
+          style={{
+            width: 44, height: 44, borderRadius: '50%',
+            background: C.card, border: `1px solid ${C.border}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: C.muted,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+            transition: 'opacity .15s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
+          onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+        >
+          <ArrowLeft size={18} />
+        </button>
+        <button
+          onClick={() => setDarkMode(d => !d)}
+          title={darkMode ? 'Modo claro' : 'Modo oscuro'}
+          style={{
+            width: 44, height: 44, borderRadius: '50%',
+            background: C.card, border: `1px solid ${C.border}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: C.muted,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+            transition: 'opacity .15s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
+          onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+        >
+          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+      </div>}
+
     </div>
   );
 }

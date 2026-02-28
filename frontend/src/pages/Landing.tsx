@@ -5,6 +5,7 @@ import {
   Palette,
   ArrowRight,
   UserPlus,
+  LogIn,
   Layers,
   Send,
   Star,
@@ -42,34 +43,36 @@ function AuraLogo({ className = '' }: { className?: string }) {
 
 export default function Landing() {
   return (
-    <div className="grain-overlay bg-aura-950 text-white font-body min-h-screen overflow-hidden">
+    <div className="grain-overlay bg-aura-950 text-white font-body min-h-screen overflow-hidden" style={{ isolation: 'isolate' }}>
 
       {/* ─── Ambient Background ─── */}
-      <div className="fixed inset-0 pointer-events-none" aria-hidden>
-        {/* Central radial glow */}
-        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[1200px] h-[1200px] rounded-full bg-amber-glow/[0.07] blur-[140px] animate-pulse-glow" />
-        {/* Secondary glow */}
-        <div className="absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] rounded-full bg-aura-600/40 blur-[120px]" />
-        {/* Tertiary glow top-left */}
-        <div className="absolute top-[10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-amber-glow/[0.05] blur-[100px]" />
-        {/* Orbiting particles */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2">
+      {/* Mobile: static, no blur (performance). Desktop: fixed + animated glows */}
+      <div className="absolute sm:fixed inset-0 pointer-events-none" aria-hidden>
+        {/* Mobile-only: simple static gradient, zero GPU cost */}
+        <div className="sm:hidden absolute inset-0 bg-gradient-to-b from-aura-800/20 via-transparent to-aura-900/30" />
+
+        {/* Desktop-only: heavy blur glows */}
+        <div className="hidden sm:block absolute top-[-20%] left-1/2 -translate-x-1/2 w-[1200px] h-[1200px] rounded-full bg-amber-glow/[0.07] blur-[140px] animate-pulse-glow" />
+        <div className="hidden sm:block absolute bottom-[-10%] right-[-10%] w-[800px] h-[800px] rounded-full bg-aura-600/40 blur-[120px]" />
+        <div className="hidden sm:block absolute top-[10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-amber-glow/[0.05] blur-[100px]" />
+
+        {/* Desktop-only: animated particles */}
+        <div className="hidden sm:block absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2">
           <div className="animate-orbit">
             <div className="w-5 h-5 rounded-full bg-amber-glow/70 blur-[3px]" />
           </div>
         </div>
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="hidden sm:block absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2">
           <div className="animate-orbit-reverse">
             <div className="w-3.5 h-3.5 rounded-full bg-white/40 blur-[2px]" />
           </div>
         </div>
-        {/* Extra floating dots */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="hidden sm:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
           <div className="animate-float-slow">
             <div className="w-4 h-4 rounded-full bg-amber-glow/50 blur-[2px]" style={{ transform: 'translate(220px, -80px)' }} />
           </div>
         </div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="hidden sm:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
           <div className="animate-float-slower">
             <div className="w-3 h-3 rounded-full bg-white/25 blur-[1px]" style={{ transform: 'translate(-200px, 60px)' }} />
           </div>
@@ -85,15 +88,19 @@ export default function Landing() {
         <div className="flex items-center gap-2">
           <Link
             to="/login"
-            className="px-5 py-2 text-sm font-medium text-white/60 hover:text-white transition-colors duration-300"
+            title="Iniciar sesión"
+            className="flex items-center justify-center gap-1.5 p-2 sm:px-5 sm:py-2 text-sm font-medium text-white/60 hover:text-white transition-colors duration-300 rounded-full sm:rounded-none"
           >
-            Iniciar sesion
+            <LogIn className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:inline">Iniciar sesión</span>
           </Link>
           <Link
             to="/register"
-            className="px-5 py-2.5 text-sm font-medium bg-amber-glow/10 text-amber-glow border border-amber-glow/20 rounded-full hover:bg-amber-glow/20 hover:border-amber-glow/40 transition-all duration-300"
+            title="Crear cuenta"
+            className="flex items-center justify-center gap-1.5 p-2 sm:px-5 sm:py-2.5 text-sm font-medium bg-amber-glow/10 text-amber-glow border border-amber-glow/20 rounded-full hover:bg-amber-glow/20 hover:border-amber-glow/40 transition-all duration-300"
           >
-            Crear cuenta
+            <UserPlus className="h-5 w-5 sm:hidden" />
+            <span className="hidden sm:inline">Crear cuenta</span>
           </Link>
         </div>
       </nav>
@@ -103,7 +110,7 @@ export default function Landing() {
         {/* Badge */}
         <div className="animate-fade-up-delay-1 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-wash border border-amber-glow/10 text-amber-soft text-xs font-medium tracking-wide uppercase mb-8">
           <Zap className="h-3.5 w-3.5" />
-          Plataforma profesional todo-en-uno
+          14 días gratis · Sin tarjeta de crédito
         </div>
 
         <h1 className="animate-fade-up-delay-2 font-hero text-4xl md:text-6xl lg:text-7xl font-bold text-white text-center mb-8 leading-[1.05] tracking-tight">
@@ -115,20 +122,23 @@ export default function Landing() {
           reserven citas al instante. Con notificaciones automaticas por WhatsApp.
         </p>
 
-        <div className="animate-fade-up-delay-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            to="/register"
-            className="group relative inline-flex items-center gap-2 px-8 py-3.5 bg-amber-glow text-white font-semibold rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(78,56,245,0.4)] hover:scale-105"
-          >
-            Comenzar gratis
-            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-          </Link>
-          <a
-            href="#como-funciona"
-            className="inline-flex items-center gap-2 px-8 py-3.5 text-white/50 font-medium hover:text-white/80 transition-colors duration-300"
-          >
-            Como funciona
-          </a>
+        <div className="animate-fade-up-delay-4 flex flex-col items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              to="/register"
+              className="group relative inline-flex items-center gap-2 px-8 py-3.5 bg-amber-glow text-white font-semibold rounded-full transition-all duration-300 hover:shadow-[0_0_40px_rgba(78,56,245,0.4)] hover:scale-105"
+            >
+              Probar gratis 14 días
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+            <a
+              href="#como-funciona"
+              className="inline-flex items-center gap-2 px-8 py-3.5 text-white/50 font-medium hover:text-white/80 transition-colors duration-300"
+            >
+              Como funciona
+            </a>
+          </div>
+          <p className="text-xs text-white/30">Sin tarjeta de crédito · Cancela cuando quieras</p>
         </div>
 
         {/* Stats bar */}
@@ -192,7 +202,7 @@ export default function Landing() {
           ].map(({ icon: Icon, title, desc, accent, border, iconColor }, i) => (
             <div
               key={title}
-              className={`group relative rounded-2xl border ${border} bg-white/[0.02] backdrop-blur-sm p-8 transition-all duration-500 hover:bg-white/[0.04] hover:translate-y-[-4px] ${
+              className={`group relative rounded-2xl border ${border} bg-white/[0.02] sm:backdrop-blur-sm p-8 transition-all duration-500 hover:bg-white/[0.04] hover:translate-y-[-4px] ${
                 i === 0 ? 'animate-fade-up-delay-3' : i === 1 ? 'animate-fade-up-delay-4' : 'animate-fade-up-delay-5'
               }`}
             >
@@ -294,74 +304,71 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ─── Templates Showcase ─── */}
+      {/* ─── Appearance Showcase ─── */}
       <section className="relative z-10 py-28">
         <div className="max-w-5xl mx-auto px-6 mb-16">
           <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-20" />
           <div className="text-center">
-            <p className="text-sm uppercase tracking-[0.25em] text-amber-glow/60 font-semibold mb-4">Diseno</p>
+            <p className="text-sm uppercase tracking-[0.25em] text-amber-glow/60 font-semibold mb-4">Apariencia</p>
             <h2 className="font-display text-3xl md:text-5xl text-white mb-4">
-              Cuatro estilos. Tu esencia.
+              Tu color. Tu identidad.
             </h2>
             <p className="text-white max-w-lg mx-auto">
-              Cada template esta disenado para transmitir una personalidad unica.
+              Elige el color de tu perfil con un clic. Cuatro paletas diseñadas para destacar.
             </p>
           </div>
         </div>
 
-        <div className="max-w-5xl mx-auto px-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             {
-              name: 'Minimalist',
-              desc: 'Limpio y directo',
-              bg: 'bg-white',
-              text: 'text-slate-900',
-              accent: 'bg-slate-900',
-              accentText: 'text-white',
+              name: 'Profesional',
+              gradient: 'linear-gradient(160deg, #2d2b6e 0%, #4c46a8 100%)',
+              accent: 'rgb(107,99,255)',
+              dot: 'rgb(107,99,255)',
             },
             {
               name: 'Bold',
-              desc: 'Impacto visual',
-              bg: 'bg-slate-900',
-              text: 'text-white',
-              accent: 'bg-yellow-400',
-              accentText: 'text-slate-900',
+              gradient: 'linear-gradient(160deg, #3d2f00 0%, #7a5f00 100%)',
+              accent: 'rgb(222,182,7)',
+              dot: 'rgb(222,182,7)',
             },
             {
-              name: 'Elegant',
-              desc: 'Sofisticado y clasico',
-              bg: 'bg-stone-100',
-              text: 'text-stone-800',
-              accent: 'bg-amber-700',
-              accentText: 'text-white',
+              name: 'Elegante',
+              gradient: 'linear-gradient(160deg, #0c3d5e 0%, #1b6fa8 100%)',
+              accent: 'rgb(62,153,201)',
+              dot: 'rgb(62,153,201)',
             },
             {
               name: 'Creative',
-              desc: 'Colorido y libre',
-              bg: 'bg-gradient-to-br from-purple-100 to-pink-100',
-              text: 'text-purple-900',
-              accent: 'bg-gradient-to-r from-purple-500 to-pink-500',
-              accentText: 'text-white',
+              gradient: 'linear-gradient(160deg, #500650 0%, #9d1fa8 100%)',
+              accent: 'rgb(217,72,240)',
+              dot: 'rgb(217,72,240)',
             },
           ].map((t) => (
             <div
               key={t.name}
               className="group rounded-2xl border border-white/5 overflow-hidden hover:border-white/15 transition-all duration-500 hover:translate-y-[-4px]"
             >
-              {/* Mini preview card */}
-              <div className={`${t.bg} p-5 h-44 flex flex-col justify-between`}>
-                <div>
-                  <div className={`w-10 h-10 rounded-full ${t.accent} mb-3`} />
-                  <div className={`text-sm font-semibold ${t.text}`}>{t.name}</div>
-                  <div className={`${t.text} opacity-40 text-xs mt-1`}>Profesional</div>
+              {/* Mini profile card preview */}
+              <div style={{ background: t.gradient }} className="p-5 h-44 flex flex-col items-center justify-between">
+                <div className="flex flex-col items-center gap-2 pt-2">
+                  {/* Avatar placeholder */}
+                  <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40" />
+                  <div className="text-white text-xs font-semibold opacity-90">Profesional</div>
+                  <div className="text-white/60 text-[10px]">Especialidad</div>
                 </div>
-                <div className={`h-6 w-20 rounded-md ${t.accent} ${t.accentText} text-[9px] font-semibold flex items-center justify-center`}>
+                {/* Reservar button */}
+                <div
+                  className="h-7 w-24 rounded-lg text-white text-[10px] font-semibold flex items-center justify-center"
+                  style={{ background: t.accent }}
+                >
                   Reservar
                 </div>
               </div>
-              <div className="bg-white/[0.03] px-5 py-4">
+              <div className="bg-white/[0.03] px-5 py-4 flex items-center justify-between">
                 <div className="text-white text-sm font-medium">{t.name}</div>
-                <div className="text-white/30 text-xs">{t.desc}</div>
+                <div className="w-4 h-4 rounded-full border-2 border-white/20" style={{ background: t.dot }} />
               </div>
             </div>
           ))}
@@ -377,7 +384,7 @@ export default function Landing() {
         <div className="max-w-3xl mx-auto px-6 text-center">
           <div className="relative">
             {/* Ambient glow behind CTA */}
-            <div className="absolute inset-0 -top-20 mx-auto w-96 h-96 bg-amber-glow/[0.06] rounded-full blur-[80px] pointer-events-none" />
+            <div className="hidden sm:block absolute inset-0 -top-20 mx-auto w-96 h-96 bg-amber-glow/[0.06] rounded-full blur-[80px] pointer-events-none" />
 
             <h2 className="relative font-display text-4xl md:text-6xl text-white mb-6">
               Tu proximo cliente<br />
@@ -390,9 +397,10 @@ export default function Landing() {
               to="/register"
               className="relative group inline-flex items-center gap-2 px-10 py-4 bg-amber-glow text-white font-semibold text-lg rounded-full transition-all duration-300 hover:shadow-[0_0_60px_rgba(78,56,245,0.45)] hover:scale-105"
             >
-              Crear mi perfil gratis
+              Empezar prueba gratis · 14 días
               <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
+            <p className="relative mt-4 text-xs text-white/30">Sin tarjeta de crédito · Cancela cuando quieras</p>
           </div>
         </div>
       </section>

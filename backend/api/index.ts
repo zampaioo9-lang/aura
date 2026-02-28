@@ -4,6 +4,10 @@ import cors from 'cors';
 
 const app = express();
 app.use(cors());
+
+// Raw body for Stripe webhook — must come BEFORE express.json()
+app.use('/api/subscriptions/stripe/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 
 // Health check first - no dependencies
@@ -26,6 +30,7 @@ try {
   const scheduleBlocksRoutes = require('../src/routes/schedule-blocks').default;
   const serviceAvailabilityRoutes = require('../src/routes/service-availability').default;
   const adminRoutes = require('../src/routes/admin').default;
+  const subscriptionRoutes = require('../src/routes/subscriptions').default;
   const { sendWhatsApp } = require('../src/services/whatsappService');
 
   app.use('/api/auth', authRoutes);
@@ -39,6 +44,7 @@ try {
   app.use('/api/schedule-blocks', scheduleBlocksRoutes);
   app.use('/api/service-availability', serviceAvailabilityRoutes);
   app.use('/api/admin', adminRoutes);
+  app.use('/api/subscriptions', subscriptionRoutes);
 
   app.get('/api/test/whatsapp', async (req, res) => {
     const to = req.query.to as string;

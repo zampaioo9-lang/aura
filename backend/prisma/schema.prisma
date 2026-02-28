@@ -16,6 +16,13 @@ model User {
   bio                  String?
   socialLinks          Json      @default("{}")
   isAdmin              Boolean   @default(false)
+  trialEndsAt          DateTime?
+  plan                 String?
+  planInterval         String?
+  planExpiresAt        DateTime?
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  paypalSubscriptionId String?
   createdAt            DateTime  @default(now())
   profiles             Profile[]
   professionalBookings Booking[] @relation("ProfessionalBookings")

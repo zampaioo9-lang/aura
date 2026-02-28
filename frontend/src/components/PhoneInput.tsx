@@ -53,6 +53,7 @@ interface PhoneInputProps {
   onChange: (value: string) => void;
   label?: string;
   optional?: boolean;
+  required?: boolean;
   error?: string;
   placeholder?: string;
 }
@@ -62,6 +63,7 @@ export default function PhoneInput({
   onChange,
   label,
   optional,
+  required,
   error,
   placeholder = '11 1234-5678',
 }: PhoneInputProps) {
@@ -113,6 +115,7 @@ export default function PhoneInput({
       {label && (
         <label className="block text-sm font-medium text-slate-700 mb-1">
           {label}{' '}
+          {required && <span className="text-red-500">*</span>}
           {optional && <span className="text-slate-400 font-normal">(opcional)</span>}
         </label>
       )}
