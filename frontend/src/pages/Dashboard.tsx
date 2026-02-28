@@ -6,7 +6,7 @@ import {
   Plus, LogOut, Calendar, Clock,
   CalendarDays, Facebook, Instagram, Linkedin, MessageCircle,
   Home, Compass, Briefcase, Pencil, Search, ChevronRight, Camera,
-  Sun, Moon, Lock, Copy, ExternalLink, Zap,
+  Sun, Moon, Copy, ExternalLink, Zap,
 } from 'lucide-react';
 import { useUpload } from '../hooks/useUpload';
 import { formatCurrency } from '../lib/utils';
