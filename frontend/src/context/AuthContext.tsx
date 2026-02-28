@@ -9,6 +9,10 @@ interface User {
   avatar?: string;
   socialLinks?: Record<string, string>;
   isAdmin?: boolean;
+  trialEndsAt?: string | null;
+  plan?: string | null;
+  planInterval?: string | null;
+  planExpiresAt?: string | null;
 }
 
 interface UpdateAccountData {
@@ -27,6 +31,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
   logout: () => void;
   updateAccount: (data: UpdateAccountData) => Promise<void>;
+  refreshUser: () => Promise<void>;
   loading: boolean;
 }
 
@@ -80,8 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(prev => prev ? { ...prev, ...res.data } : prev);
   };
 
+  const refreshUser = async () => {
+    const res = await api.get('/auth/me');
+    setUser(res.data);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, updateAccount, loading }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, updateAccount, refreshUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
