@@ -182,6 +182,48 @@ router.put('/:id/no-show', authMiddleware, async (req: AuthRequest, res, next) =
   }
 });
 
+// ── POST /api/bookings/professional (AUTH - professional creates booking) ──
+router.post('/professional', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    const { profileId, serviceId, clientName, clientEmail, clientPhone, clientNotes, date, startTime } = req.body;
+
+    if (!profileId || !serviceId || !clientName || !clientEmail || !date || !startTime) {
+      throw new AppError(400, 'Faltan campos requeridos: profileId, serviceId, clientName, clientEmail, date, startTime');
+    }
+
+    // Verify the profile belongs to the authenticated user
+    const profile = await prisma.profile.findUnique({ where: { id: profileId }, select: { userId: true } });
+    if (!profile) throw new AppError(404, 'Perfil no encontrado');
+    if (profile.userId !== req.userId) throw new AppError(403, 'No tienes permiso sobre este perfil');
+
+    // createBooking validates availability and conflicts
+    const booking = await createBooking({
+      profileId,
+      serviceId,
+      clientName,
+      clientEmail,
+      clientPhone: clientPhone || '',
+      clientNotes,
+      date,
+      startTime,
+    });
+
+    // Immediately confirm the booking (professional already approved it)
+    const confirmed = await prisma.booking.update({
+      where: { id: booking.id },
+      data: { status: 'CONFIRMED' },
+      include: {
+        service: true,
+        profile: { select: { title: true, slug: true } },
+      },
+    });
+
+    res.status(201).json(confirmed);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ── BACKWARD COMPAT: GET /api/bookings (AUTH) ──────────────────────
 // Used by existing Dashboard.tsx frontend
 router.get('/', authMiddleware, async (req: AuthRequest, res, next) => {

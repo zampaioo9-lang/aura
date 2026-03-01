@@ -12,6 +12,7 @@ import { useUpload } from '../hooks/useUpload';
 import { formatCurrency } from '../lib/utils';
 import { PROFESSION_CATEGORIES } from '../lib/professions';
 import BookingForm from '../components/BookingForm';
+import ProfessionalCalendar from '../components/dashboard/ProfessionalCalendar';
 
 const SOCIAL_ICONS = [
   { key: 'facebook',  Icon: Facebook,      color: '#1877F2' },
@@ -527,6 +528,7 @@ export default function Dashboard() {
                 totalBookings={bookings.length}
                 updateBookingStatus={updateBookingStatus}
                 clientBookings={clientBookings}
+                profiles={profiles}
                 C={C}
               />
             )}
@@ -799,6 +801,7 @@ export default function Dashboard() {
                 totalBookings={bookings.length}
                 updateBookingStatus={updateBookingStatus}
                 clientBookings={clientBookings}
+                profiles={profiles}
                 C={C}
               />
             )}
@@ -864,15 +867,26 @@ const STATUS_LABEL: Record<string, { label: string; className: string }> = {
   NO_SHOW:   { label: 'No asistió', className: 'bg-orange-100 text-orange-600' },
 };
 
-function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBookingStatus, clientBookings, C }: {
+function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBookingStatus, clientBookings, profiles, C }: {
   pendingBookings: Booking[];
   confirmedBookings: Booking[];
   totalBookings: number;
   updateBookingStatus: (id: string, status: string) => void;
   clientBookings: ClientBooking[];
+  profiles: Profile[];
   C: Colors;
 }) {
   const [view, setView] = useState<'pro' | 'client'>('pro');
+  const [citasView, setCitasView] = useState<'lista' | 'calendario'>(() =>
+    (localStorage.getItem('aliax_citas_view') as 'lista' | 'calendario') || 'lista'
+  );
+
+  function handleCitasViewChange(v: 'lista' | 'calendario') {
+    setCitasView(v);
+    localStorage.setItem('aliax_citas_view', v);
+  }
+
+  const hasActiveProfile = profiles.length > 0;
 
   const cancelClientBooking = async (id: string) => {
     const ok = window.confirm('¿Cancelar esta reserva?');
@@ -926,42 +940,74 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
   }
 
   return (
-    <div className="max-w-2xl">
-      <ViewSwitcher view={view} onChange={setView} clientCount={clientBookings.length} proCount={totalBookings} C={C} />
-      {totalBookings === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16" style={{ color: C.muted }}>
-          <Calendar className="h-12 w-12 mb-3 opacity-40" />
-          <p className="text-base font-medium">Aún no tienes reservas en tu perfil</p>
-          <p className="text-sm mt-1">Cuando tus clientes agenden aparecerán aquí.</p>
-        </div>
+    <div className={citasView === 'calendario' ? 'w-full' : 'max-w-2xl'}>
+      {/* Row: pro/client switcher + lista/calendario toggle */}
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
+        <ViewSwitcher view={view} onChange={setView} clientCount={clientBookings.length} proCount={totalBookings} C={C} />
+        {hasActiveProfile && (
+          <div
+            className="flex rounded-lg p-0.5"
+            style={{ background: C.isDark ? 'rgba(255,255,255,0.08)' : 'rgb(240,237,250)' }}
+          >
+            {([
+              { id: 'lista' as const, label: 'Lista', icon: <CalendarDays className="h-3.5 w-3.5" /> },
+              { id: 'calendario' as const, label: 'Calendario', icon: <Calendar className="h-3.5 w-3.5" /> },
+            ]).map(({ id, label, icon }) => (
+              <button
+                key={id}
+                onClick={() => handleCitasViewChange(id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                style={citasView === id
+                  ? { background: C.isDark ? 'rgba(255,255,255,0.12)' : 'white', color: C.text }
+                  : { background: 'transparent', color: C.muted }}
+              >
+                {icon}{label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Calendario view */}
+      {citasView === 'calendario' && hasActiveProfile ? (
+        <ProfessionalCalendar C={C} profiles={profiles.map(p => ({ id: p.id }))} />
       ) : (
-        <div className="space-y-8">
-          {pendingBookings.length > 0 && (
-            <section>
-              <h3 className="text-sm font-semibold text-amber-500 mb-3">Pendientes ({pendingBookings.length})</h3>
-              <div className="space-y-2">
-                {pendingBookings.map(b => (
-                  <ProBookingCard key={b.id} booking={b} C={C}>
-                    <button onClick={() => updateBookingStatus(b.id, 'CONFIRMED')} className="text-sm px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors">Confirmar</button>
-                    <button onClick={() => updateBookingStatus(b.id, 'CANCELLED')} className="text-sm px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors">Cancelar</button>
-                  </ProBookingCard>
-                ))}
-              </div>
-            </section>
-          )}
-          {confirmedBookings.length > 0 && (
-            <section>
-              <h3 className="text-sm font-semibold text-green-500 mb-3">Confirmadas ({confirmedBookings.length})</h3>
-              <div className="space-y-2">
-                {confirmedBookings.map(b => (
-                  <ProBookingCard key={b.id} booking={b} C={C}>
-                    <button onClick={() => updateBookingStatus(b.id, 'COMPLETED')} className="text-sm px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition-colors">Completar</button>
-                  </ProBookingCard>
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
+        /* Lista view */
+        totalBookings === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16" style={{ color: C.muted }}>
+            <Calendar className="h-12 w-12 mb-3 opacity-40" />
+            <p className="text-base font-medium">Aún no tienes reservas en tu perfil</p>
+            <p className="text-sm mt-1">Cuando tus clientes agenden aparecerán aquí.</p>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {pendingBookings.length > 0 && (
+              <section>
+                <h3 className="text-sm font-semibold text-amber-500 mb-3">Pendientes ({pendingBookings.length})</h3>
+                <div className="space-y-2">
+                  {pendingBookings.map(b => (
+                    <ProBookingCard key={b.id} booking={b} C={C}>
+                      <button onClick={() => updateBookingStatus(b.id, 'CONFIRMED')} className="text-sm px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors">Confirmar</button>
+                      <button onClick={() => updateBookingStatus(b.id, 'CANCELLED')} className="text-sm px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors">Cancelar</button>
+                    </ProBookingCard>
+                  ))}
+                </div>
+              </section>
+            )}
+            {confirmedBookings.length > 0 && (
+              <section>
+                <h3 className="text-sm font-semibold text-green-500 mb-3">Confirmadas ({confirmedBookings.length})</h3>
+                <div className="space-y-2">
+                  {confirmedBookings.map(b => (
+                    <ProBookingCard key={b.id} booking={b} C={C}>
+                      <button onClick={() => updateBookingStatus(b.id, 'COMPLETED')} className="text-sm px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition-colors">Completar</button>
+                    </ProBookingCard>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        )
       )}
     </div>
   );
