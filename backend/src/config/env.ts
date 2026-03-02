@@ -22,4 +22,6 @@ export const env = {
   PAYPAL_PLAN_MONTHLY: process.env.PAYPAL_PLAN_MONTHLY || '',
   PAYPAL_PLAN_YEARLY: process.env.PAYPAL_PLAN_YEARLY || '',
   PAYPAL_BASE_URL: process.env.PAYPAL_BASE_URL || 'https://api-m.sandbox.paypal.com',
+  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || 'Aliax <notificaciones@aliax.io>',
 };

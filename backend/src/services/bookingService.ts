@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
 import { sendWhatsApp, sendWhatsAppTemplate, templates, templateComponents } from './whatsappService';
+import { sendEmail, emailTemplates } from './emailService';
 import { env } from '../config/env';
 
 const prisma = new PrismaClient();
@@ -318,6 +319,25 @@ export async function createBooking(data: {
     }
   }
 
+  // Email al profesional
+  const professionalEmail = booking.profile.user.email;
+  if (professionalEmail) {
+    const tpl = emailTemplates.newBooking({
+      professionalName: booking.profile.user.name,
+      professionalEmail,
+      clientName: data.clientName,
+      clientEmail: data.clientEmail,
+      clientPhone: data.clientPhone,
+      clientNotes: data.clientNotes,
+      serviceName: booking.service.name,
+      date: data.date,
+      startTime: data.startTime,
+      dashboardUrl: `${env.FRONTEND_URL}/dashboard`,
+    });
+    const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
+    await saveNotification(booking.id, 'NEW_BOOKING', professionalEmail, tpl.subject, emailResult);
+  }
+
   return booking;
 }
 
@@ -326,7 +346,7 @@ export async function confirmBooking(bookingId: string, professionalId: string) 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
-      profile: { include: { user: { select: { name: true } } } },
+      profile: { include: { user: { select: { name: true, email: true } } } },
       service: true,
     },
   });
@@ -367,6 +387,20 @@ export async function confirmBooking(bookingId: string, professionalId: string) 
     }
   }
 
+  // Email de confirmación al cliente
+  if (booking.clientEmail) {
+    const tpl = emailTemplates.confirmation({
+      clientName: booking.clientName,
+      clientEmail: booking.clientEmail,
+      professionalName: booking.profile.user.name,
+      serviceName: booking.service.name,
+      date: booking.date,
+      startTime: booking.startTime,
+    });
+    const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
+    await saveNotification(bookingId, 'CONFIRMATION', booking.clientEmail, tpl.subject, emailResult);
+  }
+
   return updated;
 }
 
@@ -380,7 +414,7 @@ export async function cancelBooking(
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
-      profile: { include: { user: { select: { name: true, phone: true, socialLinks: true } } } },
+      profile: { include: { user: { select: { name: true, email: true, phone: true, socialLinks: true } } } },
       service: true,
     },
   });
@@ -437,7 +471,7 @@ export async function cancelBooking(
   if (professionalPhone) {
     const components = templateComponents.cancellation({
       recipientName: booking.profile.user.name,
-      professionalName: booking.profile.user.name,
+      professionalName: booking.clientName,
       serviceName: booking.service.name,
       date: booking.date,
       startTime: booking.startTime,
@@ -450,6 +484,36 @@ export async function cancelBooking(
     } else {
       await saveNotification(bookingId, 'CANCELLATION', professionalPhone, `[template:cita_cancelada]`, profResult);
     }
+  }
+
+  // Emails de cancelación
+  if (booking.clientEmail) {
+    const tpl = emailTemplates.cancellationClient({
+      clientName: booking.clientName,
+      clientEmail: booking.clientEmail,
+      professionalName: booking.profile.user.name,
+      serviceName: booking.service.name,
+      date: booking.date,
+      startTime: booking.startTime,
+      reason,
+    });
+    const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
+    await saveNotification(bookingId, 'CANCELLATION', booking.clientEmail, tpl.subject, emailResult);
+  }
+
+  const professionalEmail = booking.profile.user.email;
+  if (professionalEmail && cancelledBy === 'client') {
+    const tpl = emailTemplates.cancellationProfessional({
+      professionalName: booking.profile.user.name,
+      professionalEmail,
+      clientName: booking.clientName,
+      serviceName: booking.service.name,
+      date: booking.date,
+      startTime: booking.startTime,
+      reason,
+    });
+    const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
+    await saveNotification(bookingId, 'CANCELLATION', professionalEmail, tpl.subject, emailResult);
   }
 
   return updated;
