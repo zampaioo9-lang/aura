@@ -9,12 +9,12 @@ type Interval = 'MONTHLY' | 'LIFETIME';
 
 const LAUNCH_END = new Date('2026-03-29T00:00:00Z');
 
-const FEATURES = [
-  '1 perfil profesional',
-  'Sistema de reservas',
-  'Notificaciones WhatsApp',
-  'Múltiples plantillas',
-  'Soporte prioritario',
+const FEATURES: { label: string; soon?: boolean }[] = [
+  { label: '1 perfil profesional' },
+  { label: 'Sistema de reservas' },
+  { label: 'Notificaciones WhatsApp', soon: true },
+  { label: '4 templates de distintos colores' },
+  { label: 'Soporte prioritario' },
 ];
 
 // ─── Countdown display ───────────────────────────────────────────────────────
@@ -181,7 +181,7 @@ function FeatureList({ extra }: { extra?: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 32 }}>
       {FEATURES.map(f => (
-        <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span
             style={{
               width: 20, height: 20, borderRadius: '50%',
@@ -192,7 +192,18 @@ function FeatureList({ extra }: { extra?: React.ReactNode }) {
           >
             <Check style={{ width: 11, height: 11, color: '#6b63ff' }} />
           </span>
-          <span style={{ color: '#c8c8d8', fontSize: 14 }}>{f}</span>
+          <span style={{ color: '#c8c8d8', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+            {f.label}
+            {f.soon && (
+              <span style={{
+                fontSize: 10, fontWeight: 600, color: '#f59e0b',
+                background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)',
+                borderRadius: 4, padding: '1px 5px', letterSpacing: '0.02em',
+              }}>
+                próximamente
+              </span>
+            )}
+          </span>
         </div>
       ))}
       {extra}
