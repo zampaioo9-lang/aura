@@ -46,12 +46,6 @@ try {
   app.use('/api/admin', adminRoutes);
   app.use('/api/subscriptions', subscriptionRoutes);
 
-  app.get('/api/test/email', async (req, res) => {
-    const { sendEmail } = require('../src/services/emailService');
-    const result = await sendEmail('zampaioo9@gmail.com', 'Test producción — Aliax', '<p>Email funcionando en producción.</p>');
-    res.json(result);
-  });
-
   app.get('/api/test/whatsapp', async (req, res) => {
     const to = req.query.to as string;
     if (!to) return res.status(400).json({ error: 'Se requiere parametro ?to=+34...' });
