@@ -9,12 +9,13 @@ type Interval = 'MONTHLY' | 'LIFETIME';
 
 const LAUNCH_END = new Date('2026-03-29T00:00:00Z');
 
-const FEATURES: { label: string; soon?: boolean }[] = [
+const FEATURES: { label: string; soon?: boolean; monthlyOnly?: boolean }[] = [
   { label: '1 perfil profesional' },
   { label: 'Sistema de reservas' },
+  { label: 'Enlace personalizado para compartir con tus clientes' },
   { label: 'Notificaciones WhatsApp', soon: true },
   { label: '4 templates de distintos colores' },
-  { label: 'Soporte prioritario' },
+  { label: 'Soporte prioritario', monthlyOnly: true },
 ];
 
 // ─── Countdown display ───────────────────────────────────────────────────────
@@ -177,10 +178,11 @@ function PayPalGoldButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function FeatureList({ extra }: { extra?: React.ReactNode }) {
+function FeatureList({ extra, isLifetime }: { extra?: React.ReactNode; isLifetime?: boolean }) {
+  const features = isLifetime ? FEATURES.filter(f => !f.monthlyOnly) : FEATURES;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 32 }}>
-      {FEATURES.map(f => (
+      {features.map(f => (
         <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span
             style={{
@@ -358,6 +360,7 @@ function LifetimeCard({
       {launchActive && <Countdown remaining={remaining} />}
 
       <FeatureList
+        isLifetime
         extra={
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span
