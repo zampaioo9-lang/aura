@@ -30,6 +30,8 @@ export async function sendWhatsApp(to: string, message: string): Promise<WhatsAp
 
   try {
     const url = `https://graph.facebook.com/v21.0/${env.META_WA_PHONE_NUMBER_ID}/messages`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
 
     const response = await fetch(url, {
       method: 'POST',
@@ -43,7 +45,9 @@ export async function sendWhatsApp(to: string, message: string): Promise<WhatsAp
         type: 'text',
         text: { body: message },
       }),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     const data = await response.json() as any;
 
@@ -78,6 +82,8 @@ export async function sendWhatsAppTemplate(
 
   try {
     const url = `https://graph.facebook.com/v21.0/${env.META_WA_PHONE_NUMBER_ID}/messages`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
 
     const response = await fetch(url, {
       method: 'POST',
@@ -95,7 +101,9 @@ export async function sendWhatsAppTemplate(
           components,
         },
       }),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     const data = await response.json() as any;
 
@@ -204,6 +212,25 @@ export const templateComponents = {
       ],
     },
   ]),
+
+  reminderProfessional: (data: {
+    professionalName: string;
+    clientName: string;
+    serviceName: string;
+    date: Date | string;
+    startTime: string;
+  }) => ([
+    {
+      type: 'body',
+      parameters: [
+        { type: 'text', text: data.professionalName },
+        { type: 'text', text: data.clientName },
+        { type: 'text', text: data.serviceName },
+        { type: 'text', text: formatDateES(data.date) },
+        { type: 'text', text: data.startTime },
+      ],
+    },
+  ]),
 };
 
 // Mensajes de texto libre (para cuando el cliente inicia conversación)
@@ -293,5 +320,23 @@ export const templates = {
       `Fecha: ${formatDateES(data.date)}`,
       `Hora: ${data.startTime}`,
       ...(data.reason ? [`Motivo: ${data.reason}`] : []),
+    ].join('\n'),
+
+  reminderProfessional: (data: {
+    professionalName: string;
+    clientName: string;
+    serviceName: string;
+    date: Date | string;
+    startTime: string;
+  }) =>
+    [
+      `Recordatorio de cita`,
+      ``,
+      `Hola ${data.professionalName}, tienes una cita manana:`,
+      ``,
+      `Cliente: ${data.clientName}`,
+      `Servicio: ${data.serviceName}`,
+      `Fecha: ${formatDateES(data.date)}`,
+      `Hora: ${data.startTime}`,
     ].join('\n'),
 };
