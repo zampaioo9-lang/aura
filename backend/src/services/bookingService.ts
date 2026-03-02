@@ -338,6 +338,20 @@ export async function createBooking(data: {
     await saveNotification(booking.id, 'NEW_BOOKING', professionalEmail, tpl.subject, emailResult);
   }
 
+  // Email al cliente: solicitud recibida
+  if (data.clientEmail) {
+    const tpl = emailTemplates.bookingReceived({
+      clientName: data.clientName,
+      clientEmail: data.clientEmail,
+      professionalName: booking.profile.user.name,
+      serviceName: booking.service.name,
+      date: data.date,
+      startTime: data.startTime,
+    });
+    const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
+    await saveNotification(booking.id, 'NEW_BOOKING', data.clientEmail, tpl.subject, emailResult);
+  }
+
   return booking;
 }
 

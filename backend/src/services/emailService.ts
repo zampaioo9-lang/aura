@@ -140,6 +140,30 @@ export async function sendEmail(
 
 export const emailTemplates = {
 
+  // Al cliente: solicitud recibida, pendiente de confirmación
+  bookingReceived: (data: {
+    clientName: string;
+    clientEmail: string;
+    professionalName: string;
+    serviceName: string;
+    date: Date | string;
+    startTime: string;
+  }) => ({
+    to: data.clientEmail,
+    subject: `Solicitud recibida con ${data.professionalName} — Aliax`,
+    html: baseTemplate('Solicitud recibida', `
+      ${badge('Pendiente de confirmación', '#d97706')}
+      ${heading(`Hola ${data.clientName}`)}
+      ${subtext('Recibimos tu solicitud de cita. El profesional la revisará y te confirmará pronto.')}
+      ${detailTable(
+        detailRow('Profesional', data.professionalName) +
+        detailRow('Servicio', data.serviceName) +
+        detailRow('Fecha', formatDateES(data.date)) +
+        detailRow('Hora', data.startTime)
+      )}
+    `),
+  }),
+
   // Al profesional: nueva reserva pendiente de confirmar
   newBooking: (data: {
     professionalName: string;
