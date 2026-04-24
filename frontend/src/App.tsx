@@ -18,6 +18,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import Pricing from './pages/Pricing';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PayPalReturn from './pages/PayPalReturn';
+import Explorar from './pages/Explorar';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -49,6 +50,7 @@ function App() {
             <Route path="/payment/paypal-return" element={<ProtectedRoute><PayPalReturn /></ProtectedRoute>} />
             <Route path="/payment/cancel" element={<Pricing />} />
             <Route path="/privacidad" element={<PrivacyPolicy />} />
+            <Route path="/explorar" element={<Explorar />} />
             <Route path="/book/:slug" element={<BookingPage />} />
             <Route path="/:slug" element={<PublicProfile />} />
           </Routes>
