@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { profileSchema } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
@@ -104,59 +104,94 @@ router.get('/directory', async (req, res, next) => {
     const limitNum = Math.min(50, parseInt(limit, 10) || 20);
     const skip = (pageNum - 1) * limitNum;
 
-    const where: any = { published: true };
-    if (profession) where.profession = { contains: profession, mode: 'insensitive' };
-    if (city) where.country = { contains: city, mode: 'insensitive' };
+    const baseWhere: Prisma.ProfileWhereInput = { published: true };
+    if (profession) baseWhere.profession = { contains: profession, mode: 'insensitive' };
+    if (city) (baseWhere as any).country = { contains: city, mode: 'insensitive' };
 
-    const [profiles, total] = await Promise.all([
-      prisma.profile.findMany({
-        where,
-        select: {
-          id: true,
-          slug: true,
-          title: true,
-          profession: true,
-          bio: true,
-          avatar: true,
-          country: true,
-          specialty: true,
-          user: {
-            select: { plan: true, planExpiresAt: true },
+    const now = new Date();
+
+    const proWhere: Prisma.ProfileWhereInput = {
+      ...baseWhere,
+      user: {
+        OR: [
+          { plan: 'LIFETIME' },
+          {
+            plan: 'PRO',
+            OR: [
+              { planExpiresAt: null },
+              { planExpiresAt: { gt: now } },
+            ],
           },
-          services: {
-            where: { isActive: true },
-            select: { id: true, name: true, price: true, currency: true },
-            take: 3,
-          },
-        },
-        orderBy: [
-          { createdAt: 'desc' },
         ],
+      },
+    };
+
+    const freeWhere: Prisma.ProfileWhereInput = {
+      ...baseWhere,
+      NOT: {
+        user: {
+          OR: [
+            { plan: 'LIFETIME' },
+            {
+              plan: 'PRO',
+              OR: [
+                { planExpiresAt: null },
+                { planExpiresAt: { gt: now } },
+              ],
+            },
+          ],
+        },
+      },
+    };
+
+    const selectFields = {
+      id: true,
+      slug: true,
+      title: true,
+      profession: true,
+      bio: true,
+      avatar: true,
+      country: true,
+      specialty: true,
+      user: {
+        select: { plan: true, planExpiresAt: true },
+      },
+      services: {
+        where: { isActive: true },
+        select: { id: true, name: true, price: true, currency: true },
+        take: 3,
+      },
+    } as const;
+
+    const [proProfiles, freeProfiles, total] = await Promise.all([
+      prisma.profile.findMany({
+        where: proWhere,
+        select: selectFields,
+        orderBy: { createdAt: 'desc' },
         skip,
         take: limitNum,
       }),
-      prisma.profile.count({ where }),
+      prisma.profile.findMany({
+        where: freeWhere,
+        select: selectFields,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limitNum,
+      }),
+      prisma.profile.count({ where: baseWhere }),
     ]);
 
-    // Sort: Pro first, then Free
-    const now = new Date();
-    const sorted = profiles.sort((a, b) => {
-      const aPro = a.user.plan === 'LIFETIME' ||
-        (a.user.plan === 'PRO' && (!a.user.planExpiresAt || new Date(a.user.planExpiresAt) > now));
-      const bPro = b.user.plan === 'LIFETIME' ||
-        (b.user.plan === 'PRO' && (!b.user.planExpiresAt || new Date(b.user.planExpiresAt) > now));
-      if (aPro && !bPro) return -1;
-      if (!aPro && bPro) return 1;
-      return 0;
-    });
+    // Combine: Pro first, then Free, up to limitNum
+    const combined = [...proProfiles, ...freeProfiles].slice(0, limitNum);
+
+    const formatted = combined.map(({ user, ...rest }) => ({
+      ...rest,
+      isPro: user.plan === 'LIFETIME' ||
+        (user.plan === 'PRO' && (!user.planExpiresAt || new Date(user.planExpiresAt) > now)),
+    }));
 
     res.json({
-      profiles: sorted.map(p => ({
-        ...p,
-        isPro: p.user.plan === 'LIFETIME' ||
-          (p.user.plan === 'PRO' && (!p.user.planExpiresAt || new Date(p.user.planExpiresAt) > now)),
-        user: undefined,
-      })),
+      profiles: formatted,
       total,
       page: pageNum,
       totalPages: Math.ceil(total / limitNum),

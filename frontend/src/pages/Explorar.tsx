@@ -24,7 +24,6 @@ const POPULAR_PROFESSIONS = [
 export default function Explorar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [profiles, setProfiles] = useState<DirectoryProfile[]>([]);
-  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const profession = searchParams.get('profession') || '';
@@ -32,15 +31,19 @@ export default function Explorar() {
   const [searchProfession, setSearchProfession] = useState(profession);
   const [searchCity, setSearchCity] = useState(city);
 
+  useEffect(() => {
+    setSearchProfession(profession);
+    setSearchCity(city);
+  }, [profession, city]);
+
   const fetchDirectory = useCallback(async (prof: string, cit: string) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (prof) params.set('profession', prof);
       if (cit) params.set('city', cit);
-      const res = await api.get(`/profiles/directory?${params}`);
+      const res = await api.get(`/profiles/directory?${params}&limit=50`);
       setProfiles(res.data.profiles);
-      setTotal(res.data.total);
     } catch {
       setProfiles([]);
     } finally {
@@ -85,7 +88,7 @@ export default function Explorar() {
           Encuentra un profesional
         </h1>
         <p style={{ color: '#9d95b5', fontSize: 15, margin: '0 0 28px' }}>
-          {total > 0 ? `${total} profesionales disponibles` : 'Busca por especialidad o ciudad'}
+          {profiles.length > 0 ? `${profiles.length} profesionales encontrados` : 'Busca por especialidad o ciudad'}
         </p>
 
         {/* Search form */}
@@ -194,7 +197,7 @@ export default function Explorar() {
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         color: '#a78bfa', fontSize: 18, fontWeight: 700, flexShrink: 0,
                       }}>
-                        {profile.title[0]}
+                        {profile.title?.[0] ?? '?'}
                       </div>
                     )}
                     <div style={{ flex: 1 }}>
