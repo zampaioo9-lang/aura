@@ -39,6 +39,8 @@ export default function ServiceCard({
                   />
                   <button
                     onClick={() => onRemoveImage?.(service.id, img)}
+                    aria-label="Eliminar imagen"
+                    title="Eliminar imagen"
                     style={{
                       position: 'absolute', top: -4, right: -4,
                       background: '#ef4444', border: 'none', borderRadius: '50%',
@@ -69,7 +71,7 @@ export default function ServiceCard({
               </label>
             </div>
             <p style={{ color: '#6b6b80', fontSize: 11, margin: 0 }}>
-              {(service.images || []).length}/3 fotos {isPro ? '(ilimitado con Pro)' : '— Pro para más'}
+              {(service.images || []).length}{!isPro && '/3'} fotos {isPro ? '(ilimitado)' : '— Pro para más'}
             </p>
           </div>
         )}

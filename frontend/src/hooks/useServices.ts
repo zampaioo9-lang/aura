@@ -104,9 +104,12 @@ export function useServices() {
 
   const toggleService = useCallback(async (id: string): Promise<Service | null> => {
     try {
-      const res = await api.patch(`/services/${id}/toggle`);
-      setServices(prev => prev.map(s => s.id === id ? res.data : s));
-      const wasActive = services.find(s => s.id === id)?.isActive;
+      const res = await api.patch<Service>(`/services/${id}/toggle`);
+      let wasActive: boolean | undefined;
+      setServices(prev => {
+        wasActive = prev.find(s => s.id === id)?.isActive;
+        return prev.map(s => s.id === id ? res.data : s);
+      });
       setStats(prev => {
         if (!prev) return prev;
         return wasActive
@@ -119,7 +122,7 @@ export function useServices() {
       setError(msg);
       throw new Error(msg);
     }
-  }, [services]);
+  }, []);
 
   const refetch = useCallback(() => {
     fetchServices();
