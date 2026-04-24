@@ -8,6 +8,8 @@ import { isProUser } from '../lib/planUtils';
 const router = Router();
 const prisma = new PrismaClient();
 const MAX_ACTIVE_SERVICES = 20;
+const MAX_IMAGES_FREE = 3;
+const MAX_IMAGES_PRO = 20;
 
 // Helper: verify user owns the profile that owns the service
 async function verifyServiceOwnership(serviceId: string, userId: string) {
@@ -159,16 +161,22 @@ router.post('/:id/images', authMiddleware, async (req: AuthRequest, res, next) =
 
     const { url } = req.body;
     if (!url || typeof url !== 'string') throw new AppError(400, 'Se requiere una URL de imagen');
+    try { new URL(url); } catch { throw new AppError(400, 'La URL de imagen no es válida'); }
 
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
       select: { isAdmin: true, plan: true, planExpiresAt: true },
     });
 
-    const currentImages: string[] = (service as any).images || [];
+    const currentImages = service.images;
 
-    if (!isProUser(user!) && currentImages.length >= 3) {
-      throw new AppError(403, 'El plan gratuito permite máximo 3 fotos por servicio. Activa Pro para subir más.', 'PRO_REQUIRED');
+    const imageLimit = isProUser(user!) ? MAX_IMAGES_PRO : MAX_IMAGES_FREE;
+    if (currentImages.length >= imageLimit) {
+      const msg = !isProUser(user!)
+        ? 'El plan gratuito permite máximo 3 fotos por servicio. Activa Pro para subir más.'
+        : `Has alcanzado el límite de ${MAX_IMAGES_PRO} fotos por servicio.`;
+      const code = !isProUser(user!) ? 'PRO_REQUIRED' : undefined;
+      throw new AppError(403, msg, code);
     }
 
     const updated = await prisma.service.update({
@@ -186,9 +194,9 @@ router.delete('/:id/images', authMiddleware, async (req: AuthRequest, res, next)
   try {
     const service = await verifyServiceOwnership(req.params.id, req.userId!);
     const { url } = req.body;
-    if (!url) throw new AppError(400, 'Se requiere la URL de la imagen a eliminar');
+    if (!url || typeof url !== 'string') throw new AppError(400, 'Se requiere la URL de la imagen a eliminar');
 
-    const currentImages: string[] = (service as any).images || [];
+    const currentImages = service.images;
     const updated = await prisma.service.update({
       where: { id: req.params.id },
       data: { images: currentImages.filter(img => img !== url) },
