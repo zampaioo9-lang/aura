@@ -22,10 +22,28 @@ model User {
   planExpiresAt        DateTime?
   stripeCustomerId     String?
   stripeSubscriptionId String?
+  stripeHasDiscount    Boolean   @default(false)
   paypalSubscriptionId String?
+  welcomeEmailSentAt   DateTime?
   createdAt            DateTime  @default(now())
   profiles             Profile[]
   professionalBookings Booking[] @relation("ProfessionalBookings")
+  clients              Client[]
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  email     String
+  phone     String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, email])
+  @@index([userId])
 }
 
 model Profile {
@@ -45,6 +63,7 @@ model Profile {
   availability  Json      @default("{}")
   specialty       String?
   yearsExperience Int?
+  country         String?
   published       Boolean   @default(false)
   createdAt       DateTime  @default(now())
   updatedAt     DateTime  @updatedAt @default(now())
@@ -72,6 +91,7 @@ model Service {
   name            String
   description     String?
   image           String?
+  images          String[] @default([])
   price           Decimal
   currency        String   @default("EUR")
   durationMinutes Int
@@ -184,6 +204,7 @@ model BookingSettings {
   minAdvanceHours    Int      @default(1)
   cancellationHours  Int      @default(24)
   autoConfirm        Boolean  @default(false)
+  emailEnabled       Boolean  @default(true)
   timezone           String   @default("America/Mexico_City")
   language           String   @default("es")
   createdAt          DateTime @default(now())
