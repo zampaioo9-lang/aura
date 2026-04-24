@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { profileSchema } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
+import { isProUser } from '../lib/planUtils';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -42,6 +43,17 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res, next) => {
     if (!existing) throw new AppError(404, 'No tienes perfil aun');
 
     const data = profileSchema.partial().parse(req.body);
+
+    // Guard: ELEGANT y CREATIVE solo para Pro
+    if (data.template && ['ELEGANT', 'CREATIVE'].includes(data.template)) {
+      const user = await prisma.user.findUnique({
+        where: { id: req.userId },
+        select: { isAdmin: true, plan: true, planExpiresAt: true },
+      });
+      if (user && !isProUser(user)) {
+        throw new AppError(403, 'Los templates Elegant y Creative requieren el plan Pro.', 'PRO_REQUIRED');
+      }
+    }
 
     if (data.slug && data.slug !== existing.slug) {
       const slugExists = await prisma.profile.findUnique({ where: { slug: data.slug } });
@@ -104,8 +116,18 @@ router.get('/directory', async (_req, res, next) => {
 // POST /api/profiles - create profile (protected)
 router.post('/', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
-    const count = await prisma.profile.count({ where: { userId: req.userId! } });
-    if (count >= 1) throw new AppError(400, 'Solo puedes tener 1 perfil por cuenta');
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { isAdmin: true, plan: true, planExpiresAt: true },
+    });
+    const maxProfiles = isProUser(user!) ? 3 : 1;
+    const existing = await prisma.profile.count({ where: { userId: req.userId } });
+    if (existing >= maxProfiles) {
+      const msg = maxProfiles === 1
+        ? 'El plan gratuito permite 1 perfil. Activa Pro para tener hasta 3.'
+        : 'Has alcanzado el límite de 3 perfiles del plan Pro.';
+      throw new AppError(403, msg, 'PRO_REQUIRED');
+    }
 
     const data = profileSchema.parse(req.body);
 
