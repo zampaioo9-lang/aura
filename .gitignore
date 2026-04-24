@@ -7,3 +7,5 @@ uploads/*
 !uploads/.gitkeep
 .DS_Store
 *.log
+.vercel
+.worktrees/
