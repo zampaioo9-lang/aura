@@ -27,6 +27,7 @@ interface UpdateAccountData {
 interface AuthContextType {
   user: User | null;
   token: string | null;
+  isPro: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
   logout: () => void;
@@ -90,8 +91,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.data);
   };
 
+  const isPro = (() => {
+    if (!user) return false;
+    if (user.isAdmin) return true;
+    if (!user.plan) return false;
+    if (user.plan === 'LIFETIME') return true;
+    if (user.plan === 'PRO') {
+      if (!user.planExpiresAt) return true;
+      return new Date(user.planExpiresAt) > new Date();
+    }
+    return false;
+  })();
+
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, updateAccount, refreshUser, loading }}>
+    <AuthContext.Provider value={{ user, token, isPro, login, register, logout, updateAccount, refreshUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
