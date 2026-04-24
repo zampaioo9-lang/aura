@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { createServiceSchema, updateServiceSchema } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
+import { isProUser } from '../lib/planUtils';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -146,6 +147,53 @@ router.patch('/:id/toggle', authMiddleware, async (req: AuthRequest, res, next) 
       data: { isActive: !existing.isActive },
     });
     res.json(service);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/services/:id/images — Add image URL to service images[]
+router.post('/:id/images', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    const service = await verifyServiceOwnership(req.params.id, req.userId!);
+
+    const { url } = req.body;
+    if (!url || typeof url !== 'string') throw new AppError(400, 'Se requiere una URL de imagen');
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { isAdmin: true, plan: true, planExpiresAt: true },
+    });
+
+    const currentImages: string[] = (service as any).images || [];
+
+    if (!isProUser(user!) && currentImages.length >= 3) {
+      throw new AppError(403, 'El plan gratuito permite máximo 3 fotos por servicio. Activa Pro para subir más.', 'PRO_REQUIRED');
+    }
+
+    const updated = await prisma.service.update({
+      where: { id: req.params.id },
+      data: { images: [...currentImages, url] },
+    });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/services/:id/images — Remove image URL from service images[]
+router.delete('/:id/images', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    const service = await verifyServiceOwnership(req.params.id, req.userId!);
+    const { url } = req.body;
+    if (!url) throw new AppError(400, 'Se requiere la URL de la imagen a eliminar');
+
+    const currentImages: string[] = (service as any).images || [];
+    const updated = await prisma.service.update({
+      where: { id: req.params.id },
+      data: { images: currentImages.filter(img => img !== url) },
+    });
+    res.json(updated);
   } catch (err) {
     next(err);
   }
