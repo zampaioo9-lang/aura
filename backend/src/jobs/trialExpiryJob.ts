@@ -35,13 +35,9 @@ export function startTrialExpiryJob() {
 
       console.log(`[CRON] Found ${users.length} users with trial expiring today`);
 
-      // Unpublish all profiles for expired users
+      // Freemium: profiles remain published when trial ends
       if (users.length > 0) {
-        await prisma.profile.updateMany({
-          where: { userId: { in: users.map(u => u.id) } },
-          data: { published: false },
-        });
-        console.log(`[CRON] Unpublished profiles for ${users.length} expired users`);
+        console.log(`[CRON] ${users.length} trials ended today — profiles stay published (freemium)`);
       }
 
       for (const user of users) {
