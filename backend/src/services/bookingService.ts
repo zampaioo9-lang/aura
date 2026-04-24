@@ -3,6 +3,7 @@ import { AppError } from '../middleware/errorHandler';
 import { sendWhatsApp, sendWhatsAppTemplate, templates, templateComponents } from './whatsappService';
 import { sendEmail, emailTemplates } from './emailService';
 import { env } from '../config/env';
+import { isProUser } from '../lib/planUtils';
 
 const prisma = new PrismaClient();
 
@@ -240,7 +241,19 @@ export async function createBooking(data: {
 
   const profile = await prisma.profile.findUnique({
     where: { id: data.profileId },
-    include: { user: { select: { name: true, phone: true, socialLinks: true } } },
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+          socialLinks: true,
+          plan: true,
+          planExpiresAt: true,
+          isAdmin: true,
+        },
+      },
+    },
   });
   if (!profile) throw new AppError(404, 'Perfil no encontrado');
 
@@ -279,7 +292,7 @@ export async function createBooking(data: {
   const userSocialLinks = profile.user.socialLinks as Record<string, string> | null;
   const professionalPhone = userSocialLinks?.whatsapp || profile.phone || profile.user.phone;
   console.log(`[Booking] Created ${booking.id} | professionalPhone: ${professionalPhone || 'NONE'} | profile.phone: ${profile.phone || 'null'} | user.phone: ${profile.user.phone || 'null'}`);
-  if (professionalPhone) {
+  if (professionalPhone && isProUser(profile.user)) {
     // Intentar con plantilla aprobada, si falla usar texto libre
     const components = templateComponents.newBooking({
       professionalName: profile.user.name,
@@ -317,6 +330,8 @@ export async function createBooking(data: {
         data: { whatsappNotified: true },
       });
     }
+  } else if (professionalPhone && !isProUser(profile.user)) {
+    console.log(`[WhatsApp] Skipped - user is not Pro. bookingId: ${booking.id}`);
   }
 
   // Email al profesional
