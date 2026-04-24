@@ -7,6 +7,7 @@ export interface Service {
   name: string;
   description: string | null;
   image: string | null;
+  images?: string[];
   price: number | string;
   currency: string;
   durationMinutes: number;

@@ -9,11 +9,14 @@ interface ServiceCardProps {
   onDelete?: (service: Service) => void;
   onToggle?: (service: Service) => void;
   onBook?: (serviceId: string) => void;
+  onAddImage?: (serviceId: string, file: File) => void;
+  onRemoveImage?: (serviceId: string, imageUrl: string) => void;
+  isPro?: boolean;
   variant?: 'default' | 'public';
 }
 
 export default function ServiceCard({
-  service, showActions = false, onEdit, onDelete, onToggle, onBook, variant = 'default',
+  service, showActions = false, onEdit, onDelete, onToggle, onBook, onAddImage, onRemoveImage, isPro, variant = 'default',
 }: ServiceCardProps) {
   return (
     <div className={`bg-white rounded-xl border transition-all hover:shadow-md overflow-hidden ${
@@ -23,6 +26,53 @@ export default function ServiceCard({
         <img src={service.image} alt={service.name} className="w-full h-40 object-cover" />
       )}
       <div className="p-5">
+        {/* Galería de imágenes — solo en modo dashboard */}
+        {showActions && (onAddImage || onRemoveImage) && (
+          <div style={{ marginTop: 0, marginBottom: 12 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+              {(service.images || []).map((img: string) => (
+                <div key={img} style={{ position: 'relative' }}>
+                  <img
+                    src={img}
+                    alt=""
+                    style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)' }}
+                  />
+                  <button
+                    onClick={() => onRemoveImage?.(service.id, img)}
+                    style={{
+                      position: 'absolute', top: -4, right: -4,
+                      background: '#ef4444', border: 'none', borderRadius: '50%',
+                      width: 16, height: 16, fontSize: 10, color: 'white',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >×</button>
+                </div>
+              ))}
+              {/* Add image button */}
+              <label style={{
+                width: 56, height: 56, borderRadius: 6,
+                border: '1px dashed rgba(107,99,255,0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: '#6b63ff', fontSize: 20,
+              }}>
+                +
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) onAddImage?.(service.id, file);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+            </div>
+            <p style={{ color: '#6b6b80', fontSize: 11, margin: 0 }}>
+              {(service.images || []).length}/3 fotos {isPro ? '(ilimitado con Pro)' : '— Pro para más'}
+            </p>
+          </div>
+        )}
         {/* Header */}
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">

@@ -10,6 +10,9 @@ interface ServiceListProps {
   onDelete?: (service: Service) => void;
   onToggle?: (service: Service) => void;
   onBook?: (serviceId: string) => void;
+  onAddImage?: (serviceId: string, file: File) => void;
+  onRemoveImage?: (serviceId: string, imageUrl: string) => void;
+  isPro?: boolean;
   variant?: 'default' | 'public';
 }
 
@@ -31,7 +34,7 @@ function SkeletonCard() {
 }
 
 export default function ServiceList({
-  services, loading, emptyMessage = 'No hay servicios', showActions, onEdit, onDelete, onToggle, onBook, variant = 'default',
+  services, loading, emptyMessage = 'No hay servicios', showActions, onEdit, onDelete, onToggle, onBook, onAddImage, onRemoveImage, isPro, variant = 'default',
 }: ServiceListProps) {
   if (loading) {
     return (
@@ -60,6 +63,9 @@ export default function ServiceList({
           onDelete={onDelete}
           onToggle={onToggle}
           onBook={onBook}
+          onAddImage={onAddImage}
+          onRemoveImage={onRemoveImage}
+          isPro={isPro}
           variant={variant}
         />
       ))}

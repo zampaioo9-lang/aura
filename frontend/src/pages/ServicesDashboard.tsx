@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Search, AlertTriangle } from 'lucide-react';
 import { useServices, type Service } from '../hooks/useServices';
 import { useToast } from '../components/Toast';
+import { useAuth } from '../context/AuthContext';
 import ServiceList from '../components/ServiceList';
 import ServiceFormModal from '../components/ServiceFormModal';
 import api from '../api/client';
@@ -10,8 +11,9 @@ import api from '../api/client';
 type Tab = 'active' | 'inactive' | 'all';
 
 export default function ServicesDashboard() {
-  const { services, stats, loading, error, setError, createService, updateService, deleteService, toggleService } = useServices();
+  const { services, stats, loading, error, setError, createService, updateService, deleteService, toggleService, refetch: fetchServices } = useServices();
   const { toast } = useToast();
+  const { isPro } = useAuth();
 
   const [tab, setTab] = useState<Tab>('active');
   const [search, setSearch] = useState('');
@@ -98,6 +100,37 @@ export default function ServicesDashboard() {
       setDeleteTarget(null);
     } catch (err: any) {
       toast(err.message, 'error');
+    }
+  };
+
+  const handleAddServiceImage = async (serviceId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const uploadRes = await api.post('/upload/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const imageUrl = uploadRes.data.url;
+
+      await api.post(`/services/${serviceId}/images`, { url: imageUrl });
+      await fetchServices();
+    } catch (err: any) {
+      const msg = err.response?.data?.error || 'Error al subir imagen';
+      if (err.response?.data?.code === 'PRO_REQUIRED') {
+        toast('El plan gratuito permite máximo 3 fotos. Activa Pro en /pricing para subir más.', 'error');
+      } else {
+        toast(msg, 'error');
+      }
+    }
+  };
+
+  const handleRemoveServiceImage = async (serviceId: string, imageUrl: string) => {
+    try {
+      await api.delete(`/services/${serviceId}/images`, { data: { url: imageUrl } });
+      await fetchServices();
+    } catch {
+      toast('Error al eliminar imagen', 'error');
     }
   };
 
@@ -210,6 +243,9 @@ export default function ServicesDashboard() {
           onEdit={openEdit}
           onDelete={confirmDelete}
           onToggle={handleToggle}
+          onAddImage={handleAddServiceImage}
+          onRemoveImage={handleRemoveServiceImage}
+          isPro={isPro}
         />
       </div>
 
