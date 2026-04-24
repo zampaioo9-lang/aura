@@ -95,19 +95,72 @@ router.get('/check-username/:username', async (req, res, next) => {
   }
 });
 
-// GET /api/profiles/directory - list all published profiles (public)
-router.get('/directory', async (_req, res, next) => {
+// GET /api/profiles/directory — Public directory with filters
+router.get('/directory', async (req, res, next) => {
   try {
-    const profiles = await prisma.profile.findMany({
-      where: { published: true },
-      include: {
-        services: { where: { isActive: true } },
-        user: { select: { name: true, socialLinks: true } },
-        availabilitySlots: { where: { isActive: true }, orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }] },
-      },
-      orderBy: { createdAt: 'desc' },
+    const { profession, city, page = '1', limit = '20' } = req.query as Record<string, string>;
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(50, parseInt(limit, 10) || 20);
+    const skip = (pageNum - 1) * limitNum;
+
+    const where: any = { published: true };
+    if (profession) where.profession = { contains: profession, mode: 'insensitive' };
+    if (city) where.country = { contains: city, mode: 'insensitive' };
+
+    const [profiles, total] = await Promise.all([
+      prisma.profile.findMany({
+        where,
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          profession: true,
+          bio: true,
+          avatar: true,
+          country: true,
+          specialty: true,
+          user: {
+            select: { plan: true, planExpiresAt: true },
+          },
+          services: {
+            where: { isActive: true },
+            select: { id: true, name: true, price: true, currency: true },
+            take: 3,
+          },
+        },
+        orderBy: [
+          { createdAt: 'desc' },
+        ],
+        skip,
+        take: limitNum,
+      }),
+      prisma.profile.count({ where }),
+    ]);
+
+    // Sort: Pro first, then Free
+    const now = new Date();
+    const sorted = profiles.sort((a, b) => {
+      const aPro = a.user.plan === 'LIFETIME' ||
+        (a.user.plan === 'PRO' && (!a.user.planExpiresAt || new Date(a.user.planExpiresAt) > now));
+      const bPro = b.user.plan === 'LIFETIME' ||
+        (b.user.plan === 'PRO' && (!b.user.planExpiresAt || new Date(b.user.planExpiresAt) > now));
+      if (aPro && !bPro) return -1;
+      if (!aPro && bPro) return 1;
+      return 0;
     });
-    res.json(profiles);
+
+    res.json({
+      profiles: sorted.map(p => ({
+        ...p,
+        isPro: p.user.plan === 'LIFETIME' ||
+          (p.user.plan === 'PRO' && (!p.user.planExpiresAt || new Date(p.user.planExpiresAt) > now)),
+        user: undefined,
+      })),
+      total,
+      page: pageNum,
+      totalPages: Math.ceil(total / limitNum),
+    });
   } catch (err) {
     next(err);
   }
