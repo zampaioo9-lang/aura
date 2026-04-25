@@ -154,7 +154,7 @@ const LIGHT: Colors = {
 };
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, isPro } = useAuth();
   const navigate = useNavigate();
   const { uploadImage, uploading: uploadingAvatar } = useUpload();
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -177,6 +177,8 @@ export default function Dashboard() {
     () => localStorage.getItem('aliax_accent') || 'profesional'
   );
 
+  const [analytics, setAnalytics] = useState<any>(null);
+
   useEffect(() => { localStorage.setItem('aliax_theme', theme); }, [theme]);
   useEffect(() => { localStorage.setItem('aliax_accent', accentId); }, [accentId]);
 
@@ -197,6 +199,12 @@ export default function Dashboard() {
         : Promise.resolve(),
     ]).finally(() => setLoading(false));
   }, [user?.email]);
+
+  useEffect(() => {
+    api.get('/bookings/analytics')
+      .then(res => setAnalytics(res.data))
+      .catch(() => {});
+  }, []);
 
   const updateBookingStatus = async (id: string, status: string) => {
     if (status === 'CANCELLED') {
@@ -519,7 +527,7 @@ export default function Dashboard() {
         >
           <div className="p-4 pb-8">
             {mobileSection === 'inicio' && (
-              <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} />
+              <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} isPro={isPro ?? false} />
             )}
             {mobileSection === 'citas' && (
               <TabCitas
@@ -793,7 +801,7 @@ export default function Dashboard() {
 
           {/* Tab content */}
           <div className="flex-1 overflow-y-auto p-6" style={{ background: C.tabsBg, borderRadius: '0 0 16px 16px' }}>
-            {activeTab === 'inicio'      && <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} />}
+            {activeTab === 'inicio'      && <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} isPro={isPro ?? false} />}
             {activeTab === 'citas'       && (
               <TabCitas
                 pendingBookings={pendingBookings}
@@ -819,11 +827,13 @@ export default function Dashboard() {
 }
 
 /* ────────────────── Tab: Inicio ────────────────── */
-function TabInicio({ profiles, bookings, userName, C }: {
+function TabInicio({ profiles, bookings, userName, C, analytics, isPro }: {
   profiles: Profile[];
   bookings: Booking[];
   userName?: string;
   C: Colors;
+  analytics: any;
+  isPro: boolean;
 }) {
   const totalServices = profiles.reduce((sum, p) => sum + p.services.length, 0);
   return (
@@ -838,6 +848,66 @@ function TabInicio({ profiles, bookings, userName, C }: {
         <StatCard label="Servicios"   value={totalServices}                                                                   sub="en todos tus perfiles"     color="amber"   isDark={C.isDark} shadow={C.cardShadow} />
         <StatCard label="Perfiles"    value={profiles.length}                                                                 sub="perfiles profesionales"    color="violet"  isDark={C.isDark} shadow={C.cardShadow} />
       </div>
+
+      {analytics && (
+        <div style={{
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 16, padding: 20, marginTop: 16,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <h3 style={{ color: '#f0ebff', fontSize: 16, fontWeight: 600, margin: 0 }}>Resumen de reservas</h3>
+            {!isPro && (
+              <Link to="/pricing" style={{
+                fontSize: 12, color: '#a78bfa', textDecoration: 'none',
+                background: 'rgba(107,99,255,0.15)',
+                border: '1px solid rgba(107,99,255,0.3)',
+                borderRadius: 20, padding: '3px 10px',
+              }}>
+                Ver todo con Pro →
+              </Link>
+            )}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
+            {[
+              { label: 'Pendientes', value: analytics.byStatus.PENDING, color: '#f59e0b' },
+              { label: 'Confirmadas', value: analytics.byStatus.CONFIRMED, color: '#3b82f6' },
+              { label: 'Completadas', value: analytics.byStatus.COMPLETED, color: '#10b981' },
+              { label: 'Canceladas', value: analytics.byStatus.CANCELLED, color: '#ef4444' },
+            ].map(({ label, value, color }) => (
+              <div key={label} style={{
+                background: 'rgba(255,255,255,0.03)', borderRadius: 10,
+                padding: '12px 8px', textAlign: 'center',
+              }}>
+                <div style={{ color, fontSize: 24, fontWeight: 700 }}>{value}</div>
+                <div style={{ color: '#6b6b80', fontSize: 11 }}>{label}</div>
+              </div>
+            ))}
+          </div>
+
+          {analytics.byService.length > 0 && (
+            <div>
+              <p style={{ color: '#9d95b5', fontSize: 13, margin: '0 0 8px' }}>Servicios más solicitados:</p>
+              {analytics.byService.slice(0, 3).map((s: any) => (
+                <div key={s.name} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                }}>
+                  <span style={{ color: '#cdc0e0', fontSize: 13 }}>{s.name}</span>
+                  <span style={{ color: '#9d95b5', fontSize: 12 }}>{s.count} × ${s.revenue.toFixed(0)} {s.currency}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!isPro && (
+            <p style={{ color: '#6b6b80', fontSize: 12, marginTop: 12, textAlign: 'center' }}>
+              Mostrando últimas 10 reservas. <Link to="/pricing" style={{ color: '#a78bfa' }}>Activa Pro</Link> para ver historial completo y tendencias.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
