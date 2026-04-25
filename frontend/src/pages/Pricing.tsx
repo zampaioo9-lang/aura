@@ -17,7 +17,7 @@ const FREE_FEATURES = [
 const PRO_FEATURES = [
   'Todo lo del plan gratuito',
   'Notificaciones por WhatsApp al cliente y a ti',
-  'Fotos ilimitadas por servicio',
+  'Hasta 20 fotos por servicio',
   'Los 4 templates (incluye Elegant y Creative)',
   'Analytics completos y tendencias',
   'Posición destacada en el directorio',

@@ -108,13 +108,13 @@ router.get('/analytics', authMiddleware, async (req: AuthRequest, res, next) => 
       select: { isAdmin: true, plan: true, planExpiresAt: true },
     });
 
+    if (!user) throw new AppError(404, 'Usuario no encontrado');
+
     const profiles = await prisma.profile.findMany({
       where: { userId: req.userId },
       select: { id: true },
     });
     const profileIds = profiles.map(p => p.id);
-
-    if (!user) throw new AppError(404, 'Usuario no encontrado');
     const isPro = isProUser(user);
 
     const dateFilter = isPro ? {} : {

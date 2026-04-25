@@ -248,6 +248,7 @@ export default function Dashboard() {
   const isProfessional = profiles.length > 0;
 
   const trialExpired = (() => {
+    if (isPro) return false;  // Pro/Lifetime users are never "expired"
     // Lifetime plan nunca expira
     if (user?.plan === 'PRO' && user?.planInterval === 'LIFETIME') return false;
     // Plan activo con fecha futura
@@ -1165,7 +1166,7 @@ function TabExplorar({ C }: { C: Colors }) {
 
   useEffect(() => {
     api.get('/profiles/directory')
-      .then(r => setProfiles(r.data))
+      .then(r => setProfiles(r.data.profiles ?? []))
       .catch(() => setProfiles([]))
       .finally(() => setLoading(false));
   }, []);

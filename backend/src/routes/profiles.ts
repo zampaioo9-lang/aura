@@ -276,6 +276,17 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res, next) => {
 
     const data = profileSchema.partial().parse(req.body);
 
+    // Guard: ELEGANT y CREATIVE solo para Pro
+    if (data.template && ['ELEGANT', 'CREATIVE'].includes(data.template)) {
+      const user = await prisma.user.findUnique({
+        where: { id: req.userId },
+        select: { isAdmin: true, plan: true, planExpiresAt: true },
+      });
+      if (user && !isProUser(user)) {
+        throw new AppError(403, 'Los templates Elegant y Creative requieren el plan Pro.', 'PRO_REQUIRED');
+      }
+    }
+
     if (data.slug && data.slug !== existing.slug) {
       const slugExists = await prisma.profile.findUnique({ where: { slug: data.slug } });
       if (slugExists) throw new AppError(409, 'Ese username ya esta en uso');

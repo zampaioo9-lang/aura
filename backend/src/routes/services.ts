@@ -170,12 +170,13 @@ router.post('/:id/images', authMiddleware, async (req: AuthRequest, res, next) =
 
     const currentImages = service.images;
 
-    const imageLimit = isProUser(user!) ? MAX_IMAGES_PRO : MAX_IMAGES_FREE;
+    const isPro = isProUser(user!);
+    const imageLimit = isPro ? MAX_IMAGES_PRO : MAX_IMAGES_FREE;
     if (currentImages.length >= imageLimit) {
-      const msg = !isProUser(user!)
+      const msg = !isPro
         ? 'El plan gratuito permite máximo 3 fotos por servicio. Activa Pro para subir más.'
         : `Has alcanzado el límite de ${MAX_IMAGES_PRO} fotos por servicio.`;
-      const code = !isProUser(user!) ? 'PRO_REQUIRED' : undefined;
+      const code = !isPro ? 'PRO_REQUIRED' : undefined;
       throw new AppError(403, msg, code);
     }
 
