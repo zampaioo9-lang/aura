@@ -178,6 +178,7 @@ export default function Dashboard() {
   );
 
   const [analytics, setAnalytics] = useState<any>(null);
+  const [analyticsError, setAnalyticsError] = useState(false);
 
   useEffect(() => { localStorage.setItem('aliax_theme', theme); }, [theme]);
   useEffect(() => { localStorage.setItem('aliax_accent', accentId); }, [accentId]);
@@ -203,7 +204,7 @@ export default function Dashboard() {
   useEffect(() => {
     api.get('/bookings/analytics')
       .then(res => setAnalytics(res.data))
-      .catch(() => {});
+      .catch(() => setAnalyticsError(true));
   }, []);
 
   const updateBookingStatus = async (id: string, status: string) => {
@@ -527,7 +528,7 @@ export default function Dashboard() {
         >
           <div className="p-4 pb-8">
             {mobileSection === 'inicio' && (
-              <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} isPro={isPro ?? false} />
+              <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} analyticsError={analyticsError} isPro={isPro ?? false} />
             )}
             {mobileSection === 'citas' && (
               <TabCitas
@@ -801,7 +802,7 @@ export default function Dashboard() {
 
           {/* Tab content */}
           <div className="flex-1 overflow-y-auto p-6" style={{ background: C.tabsBg, borderRadius: '0 0 16px 16px' }}>
-            {activeTab === 'inicio'      && <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} isPro={isPro ?? false} />}
+            {activeTab === 'inicio'      && <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} analyticsError={analyticsError} isPro={isPro ?? false} />}
             {activeTab === 'citas'       && (
               <TabCitas
                 pendingBookings={pendingBookings}
@@ -827,12 +828,13 @@ export default function Dashboard() {
 }
 
 /* ────────────────── Tab: Inicio ────────────────── */
-function TabInicio({ profiles, bookings, userName, C, analytics, isPro }: {
+function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError, isPro }: {
   profiles: Profile[];
   bookings: Booking[];
   userName?: string;
   C: Colors;
   analytics: any;
+  analyticsError: boolean;
   isPro: boolean;
 }) {
   const totalServices = profiles.reduce((sum, p) => sum + p.services.length, 0);
@@ -848,6 +850,12 @@ function TabInicio({ profiles, bookings, userName, C, analytics, isPro }: {
         <StatCard label="Servicios"   value={totalServices}                                                                   sub="en todos tus perfiles"     color="amber"   isDark={C.isDark} shadow={C.cardShadow} />
         <StatCard label="Perfiles"    value={profiles.length}                                                                 sub="perfiles profesionales"    color="violet"  isDark={C.isDark} shadow={C.cardShadow} />
       </div>
+
+      {analyticsError && (
+        <div style={{ color: '#6b6b80', fontSize: 13, textAlign: 'center', padding: 16 }}>
+          No se pudo cargar el resumen de reservas.
+        </div>
+      )}
 
       {analytics && (
         <div style={{

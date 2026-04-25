@@ -114,7 +114,8 @@ router.get('/analytics', authMiddleware, async (req: AuthRequest, res, next) => 
     });
     const profileIds = profiles.map(p => p.id);
 
-    const isPro = isProUser(user!);
+    if (!user) throw new AppError(404, 'Usuario no encontrado');
+    const isPro = isProUser(user);
 
     const dateFilter = isPro ? {} : {
       createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
@@ -124,13 +125,14 @@ router.get('/analytics', authMiddleware, async (req: AuthRequest, res, next) => 
       where: { profileId: { in: profileIds }, ...dateFilter },
       include: { service: { select: { name: true, price: true, currency: true } } },
       orderBy: { createdAt: 'desc' },
+      take: 500, // safety cap — sufficient for MVP analytics
     });
 
     const byService: Record<string, { name: string; count: number; revenue: number; currency: string }> = {};
     for (const b of bookings) {
       if (b.status === 'COMPLETED') {
-        const key = b.service.name;
-        if (!byService[key]) byService[key] = { name: key, count: 0, revenue: 0, currency: b.service.currency };
+        const key = `${b.service.name}::${b.service.currency}`;
+        if (!byService[key]) byService[key] = { name: b.service.name, count: 0, revenue: 0, currency: b.service.currency };
         byService[key].count++;
         byService[key].revenue += Number(b.service.price);
       }
