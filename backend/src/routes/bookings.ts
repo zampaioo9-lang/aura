@@ -100,6 +100,73 @@ router.get('/client/:email', async (req, res, next) => {
   }
 });
 
+// GET /api/bookings/analytics — Pro: full analytics. Free: last 10 bookings summary
+router.get('/analytics', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { isAdmin: true, plan: true, planExpiresAt: true },
+    });
+
+    const profiles = await prisma.profile.findMany({
+      where: { userId: req.userId },
+      select: { id: true },
+    });
+    const profileIds = profiles.map(p => p.id);
+
+    const isPro = isProUser(user!);
+
+    const dateFilter = isPro ? {} : {
+      createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+    };
+
+    const bookings = await prisma.booking.findMany({
+      where: { profileId: { in: profileIds }, ...dateFilter },
+      include: { service: { select: { name: true, price: true, currency: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const byService: Record<string, { name: string; count: number; revenue: number; currency: string }> = {};
+    for (const b of bookings) {
+      if (b.status === 'COMPLETED') {
+        const key = b.service.name;
+        if (!byService[key]) byService[key] = { name: key, count: 0, revenue: 0, currency: b.service.currency };
+        byService[key].count++;
+        byService[key].revenue += Number(b.service.price);
+      }
+    }
+
+    const byStatus = {
+      PENDING: bookings.filter(b => b.status === 'PENDING').length,
+      CONFIRMED: bookings.filter(b => b.status === 'CONFIRMED').length,
+      COMPLETED: bookings.filter(b => b.status === 'COMPLETED').length,
+      CANCELLED: bookings.filter(b => b.status === 'CANCELLED').length,
+    };
+
+    const perDay: Record<string, number> = {};
+    if (isPro) {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      for (const b of bookings) {
+        if (new Date(b.createdAt) >= thirtyDaysAgo) {
+          const day = b.createdAt.toISOString().slice(0, 10);
+          perDay[day] = (perDay[day] || 0) + 1;
+        }
+      }
+    }
+
+    res.json({
+      isPro,
+      totalBookings: bookings.length,
+      byStatus,
+      byService: Object.values(byService).sort((a, b) => b.count - a.count),
+      perDay: isPro ? perDay : null,
+      recentBookings: bookings.slice(0, isPro ? 50 : 10),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ── GET /api/bookings/:id (PUBLIC) ─────────────────────────────────
 router.get('/:id', async (req, res, next) => {
   try {
@@ -273,74 +340,6 @@ router.patch('/:id/status', authMiddleware, async (req: AuthRequest, res, next) 
     }
 
     throw new AppError(400, 'Estado invalido');
-  } catch (err) {
-    next(err);
-  }
-});
-
-// GET /api/bookings/analytics — Pro: full analytics. Free: last 10 bookings summary
-router.get('/analytics', authMiddleware, async (req: AuthRequest, res, next) => {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.userId },
-      select: { isAdmin: true, plan: true, planExpiresAt: true },
-    });
-
-    const profiles = await prisma.profile.findMany({
-      where: { userId: req.userId },
-      select: { id: true },
-    });
-    const profileIds = profiles.map(p => p.id);
-
-    const isPro = isProUser(user!);
-
-    const dateFilter = isPro ? {} : {
-      createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-    };
-
-    const bookings = await prisma.booking.findMany({
-      where: { profileId: { in: profileIds }, ...dateFilter },
-      include: { service: { select: { name: true, price: true, currency: true } } },
-      orderBy: { createdAt: 'desc' },
-      take: isPro ? undefined : 10,
-    });
-
-    const byService: Record<string, { name: string; count: number; revenue: number; currency: string }> = {};
-    for (const b of bookings) {
-      if (b.status === 'COMPLETED') {
-        const key = b.service.name;
-        if (!byService[key]) byService[key] = { name: key, count: 0, revenue: 0, currency: b.service.currency };
-        byService[key].count++;
-        byService[key].revenue += Number(b.service.price);
-      }
-    }
-
-    const byStatus = {
-      PENDING: bookings.filter(b => b.status === 'PENDING').length,
-      CONFIRMED: bookings.filter(b => b.status === 'CONFIRMED').length,
-      COMPLETED: bookings.filter(b => b.status === 'COMPLETED').length,
-      CANCELLED: bookings.filter(b => b.status === 'CANCELLED').length,
-    };
-
-    const perDay: Record<string, number> = {};
-    if (isPro) {
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      for (const b of bookings) {
-        if (new Date(b.createdAt) >= thirtyDaysAgo) {
-          const day = b.createdAt.toISOString().slice(0, 10);
-          perDay[day] = (perDay[day] || 0) + 1;
-        }
-      }
-    }
-
-    res.json({
-      isPro,
-      totalBookings: bookings.length,
-      byStatus,
-      byService: Object.values(byService).sort((a, b) => b.count - a.count),
-      perDay: isPro ? perDay : null,
-      recentBookings: bookings.slice(0, isPro ? 50 : 10),
-    });
   } catch (err) {
     next(err);
   }
