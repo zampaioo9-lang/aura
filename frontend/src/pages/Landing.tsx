@@ -322,6 +322,184 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ─── 5. Directorio ─── */}
+      <section
+        className="relative z-10 py-24"
+        style={{
+          background: 'linear-gradient(160deg, #06101e 0%, #080e1c 50%, #06091a 100%)',
+          borderTop: '1px solid rgba(59,130,246,0.12)',
+          borderBottom: '1px solid rgba(59,130,246,0.12)',
+        }}
+      >
+        {/* Blue ambient glow */}
+        <div className="absolute top-0 right-0 w-96 h-96 pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)' }} />
+
+        <div className="relative max-w-6xl mx-auto px-6">
+          {/* Header */}
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-5 text-xs font-medium"
+              style={{ background: 'rgba(59,130,246,0.1)', borderColor: 'rgba(59,130,246,0.2)', color: '#7dd3fc' }}>
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(59,130,246,0.8)]" />
+              Directorio público · Gratis para todos
+            </div>
+            <h2
+              className="text-white mb-4"
+              style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 'clamp(36px, 5vw, 52px)', letterSpacing: '2px' }}
+            >
+              ENCUENTRA TU{' '}
+              <span style={{ background: 'linear-gradient(90deg, #60a5fa, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                PROFESIONAL IDEAL
+              </span>
+            </h2>
+            <p className="text-white/40 max-w-md mx-auto">
+              Psicólogos, barberos, nutricionistas y más. Reserva directamente desde su perfil.
+            </p>
+          </div>
+
+          {/* Search form */}
+          <form onSubmit={handleDirectorySearch} className="flex gap-3 max-w-2xl mx-auto mb-6 flex-wrap">
+            <div className="flex-[2] min-w-[180px] relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+              <input
+                type="text"
+                placeholder="Profesión (ej: Psicólogo, Barbero...)"
+                value={searchProf}
+                onChange={e => setSearchProf(e.target.value)}
+                className="w-full pl-9 pr-3 py-3 rounded-xl text-sm text-white placeholder-white/25 outline-none"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+              />
+            </div>
+            <div className="flex-1 min-w-[130px] relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+              <input
+                type="text"
+                placeholder="Ciudad"
+                value={searchCity}
+                onChange={e => setSearchCity(e.target.value)}
+                className="w-full pl-9 pr-3 py-3 rounded-xl text-sm text-white placeholder-white/25 outline-none"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+              />
+            </div>
+            <button
+              type="submit"
+              className="px-5 py-3 rounded-xl text-sm font-bold text-white"
+              style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 4px 16px rgba(59,130,246,0.3)' }}
+            >
+              Buscar
+            </button>
+          </form>
+
+          {/* Quick profession chips */}
+          <div className="flex flex-wrap gap-2 justify-center mb-10">
+            {QUICK_PROFESSIONS.map(p => (
+              <button
+                key={p}
+                onClick={() => navigate(`/explorar?profession=${encodeURIComponent(p)}`)}
+                className="px-3.5 py-1.5 rounded-full text-xs transition-all"
+                style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'rgba(255,255,255,0.4)' }}
+                onMouseEnter={e => {
+                  (e.target as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.4)';
+                  (e.target as HTMLButtonElement).style.color = '#7dd3fc';
+                }}
+                onMouseLeave={e => {
+                  (e.target as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.1)';
+                  (e.target as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)';
+                }}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+
+          {/* Profile cards grid */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            {profiles.slice(0, 6).map(profile => (
+              <Link
+                key={profile.id}
+                to={profile.slug === '#' ? '/explorar' : `/book/${profile.slug}`}
+                className="block rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 no-underline"
+                style={{
+                  background: profile.isPro
+                    ? 'linear-gradient(160deg, rgba(147,51,234,0.07) 0%, rgba(255,255,255,0.03) 100%)'
+                    : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${profile.isPro ? 'rgba(147,51,234,0.3)' : 'rgba(255,255,255,0.07)'}`,
+                }}
+              >
+                {/* Header */}
+                <div className="flex items-start gap-3 mb-3">
+                  {profile.avatar ? (
+                    <img src={profile.avatar} alt={profile.title}
+                      className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-white/10" />
+                  ) : (
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-base flex-shrink-0 border-2 border-white/10"
+                      style={{ background: 'rgba(147,51,234,0.35)' }}
+                    >
+                      {profile.title?.[0] ?? '?'}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-white font-semibold text-sm">{profile.title}</span>
+                      {profile.isPro && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold text-amber-soft bg-amber-wash border border-amber-glow/40">
+                          <Zap className="h-2 w-2" /> PRO
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-white/35 text-xs mt-0.5">{profile.profession}</p>
+                    {profile.country && (
+                      <p className="text-white/25 text-[11px] mt-0.5 flex items-center gap-1">
+                        <MapPin className="h-2.5 w-2.5" />{profile.country}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Bio */}
+                {profile.bio && (
+                  <p className="text-white/35 text-xs leading-relaxed mb-3 line-clamp-2">{profile.bio}</p>
+                )}
+
+                {/* Services */}
+                {profile.services.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-4">
+                    {profile.services.slice(0, 2).map(s => (
+                      <span key={s.id} className="px-2 py-0.5 rounded-md text-[10px] text-white/35 bg-white/[0.05] border border-white/[0.07]">
+                        {s.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* CTA */}
+                <div
+                  className="w-full py-2 rounded-lg text-center text-xs font-semibold"
+                  style={profile.isPro
+                    ? { background: 'linear-gradient(135deg,#8b5cf6,#6366f1)', color: '#fff', boxShadow: '0 3px 12px rgba(99,51,234,0.3)' }
+                    : { background: 'transparent', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }
+                  }
+                >
+                  {profile.isPro ? 'Reservar cita' : 'Ver perfil'}
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Ver todos */}
+          <div className="text-center">
+            <Link
+              to="/explorar"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-105"
+              style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', color: '#7dd3fc' }}
+            >
+              Ver todos los profesionales →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ─── PLACEHOLDER SECTIONS — se completan en tasks siguientes ─── */}
       <div className="h-10" />
 
