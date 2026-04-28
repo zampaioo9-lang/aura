@@ -591,6 +591,145 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ─── 7. Pricing ─── */}
+      <section
+        className="relative z-10 py-24"
+        style={{ background: 'linear-gradient(160deg, #080414 0%, #0e0920 50%, #080414 100%)' }}
+      >
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse, rgba(147,51,234,0.1) 0%, transparent 65%)' }} />
+
+        <div className="relative max-w-4xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <div className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest mb-5 text-amber-soft bg-amber-wash border border-amber-glow/20">
+              Planes
+            </div>
+            <h2
+              className="text-white mb-4"
+              style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 'clamp(40px, 6vw, 64px)', letterSpacing: '2px', lineHeight: 1 }}
+            >
+              EMPIEZA GRATIS.<br />
+              <span className="text-amber-glow">CRECE</span> CUANDO QUIERAS.
+            </h2>
+            <p className="text-white/40 max-w-sm mx-auto">
+              Tu perfil y tus reservas son siempre gratis. Activa Pro cuando necesites más.
+            </p>
+          </div>
+
+          {/* Cards */}
+          <div className="grid md:grid-cols-2 gap-5 mb-8">
+
+            {/* Free */}
+            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-7">
+              <div className="flex items-center gap-2 mb-4 text-white/40 text-xs font-bold uppercase tracking-widest">
+                🎁 &nbsp;Gratuito
+              </div>
+              <div className="flex items-baseline gap-1 mb-1">
+                <span
+                  className="text-white"
+                  style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '52px', letterSpacing: '1px', lineHeight: 1 }}
+                >
+                  $0
+                </span>
+              </div>
+              <p className="text-white/30 text-sm mb-5">Para siempre · Sin tarjeta</p>
+              <div className="h-px bg-white/[0.07] mb-5" />
+              <ul className="space-y-3 mb-6">
+                {FREE_FEATURES.map(f => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm text-white/50">
+                    <Check className="h-4 w-4 text-[#6b63ff] flex-shrink-0 mt-0.5" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={() => user ? navigate('/dashboard') : navigate('/register')}
+                className="w-full py-3.5 rounded-xl text-sm font-bold text-amber-soft transition-colors hover:bg-amber-wash-strong"
+                style={{ border: '1px solid rgba(107,99,255,0.4)', background: 'transparent', fontFamily: 'Urbanist, sans-serif' }}
+              >
+                {user ? 'Ir al dashboard' : 'Crear cuenta gratis'}
+              </button>
+            </div>
+
+            {/* Pro */}
+            <div
+              className="rounded-2xl p-7 relative"
+              style={{ background: 'linear-gradient(135deg, rgba(107,99,255,0.12) 0%, rgba(147,51,234,0.08) 100%)', border: '1.5px solid rgba(107,99,255,0.4)' }}
+            >
+              <div
+                className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap"
+                style={{ background: 'linear-gradient(90deg, #6b63ff, #9333ea)' }}
+              >
+                RECOMENDADO
+              </div>
+              <div className="flex items-center gap-2 mb-4 text-amber-soft text-xs font-bold uppercase tracking-widest">
+                ⚡ &nbsp;Pro
+              </div>
+              <div className="flex items-baseline gap-1 mb-1">
+                <span className="text-white/50 text-xl font-bold self-start mt-2">$</span>
+                <span
+                  className="text-white"
+                  style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '52px', letterSpacing: '1px', lineHeight: 1 }}
+                >
+                  9
+                </span>
+                <span className="text-white/40 text-base">USD / mes</span>
+              </div>
+              <p className="text-white/40 text-sm mb-5">Todo lo del plan gratuito, más:</p>
+              <div className="h-px bg-white/[0.07] mb-5" />
+              <ul className="space-y-3 mb-6">
+                {PRO_FEATURES.map(f => (
+                  <li key={f.text} className="flex items-start gap-2.5 text-sm text-white/60">
+                    <Check className="h-4 w-4 text-[#9333ea] flex-shrink-0 mt-0.5" />
+                    <span>
+                      {f.text}
+                      {f.highlight && (
+                        <span className="ml-1.5 inline-block px-1.5 py-0.5 rounded text-[9px] font-bold text-amber-soft bg-amber-wash border border-amber-glow/30 align-middle">
+                          PRO
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {isPro ? (
+                <div className="w-full py-3.5 rounded-xl text-sm font-bold text-center text-amber-soft bg-amber-wash">
+                  ✓ Ya tienes Pro activo
+                </div>
+              ) : (
+                <button
+                  onClick={handleStripe}
+                  disabled={loadingStripe}
+                  className="w-full py-3.5 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-60"
+                  style={{ background: 'linear-gradient(135deg, #6b63ff, #9333ea)', boxShadow: '0 6px 24px rgba(107,99,255,0.35)', fontFamily: 'Urbanist, sans-serif' }}
+                >
+                  {loadingStripe ? 'Redirigiendo...' : 'Activar Pro — $9/mes'}
+                </button>
+              )}
+              <p className="text-center text-xs text-white/25 mt-2">Cancela en cualquier momento</p>
+            </div>
+          </div>
+
+          {/* Coupon strip */}
+          <div
+            className="flex items-center gap-4 rounded-2xl px-5 py-4"
+            style={{ background: 'rgba(240,168,48,0.07)', border: '1px solid rgba(240,168,48,0.2)' }}
+          >
+            <span className="text-2xl flex-shrink-0">🏷️</span>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-yellow-200 mb-1">Descuento de lanzamiento — 20% off por 12 meses</p>
+              <p className="text-xs text-white/35">Solo $7.20 USD/mes el primer año. Máximo 20 canjes. Caduca 5 Jun 2026.</p>
+            </div>
+            <div
+              className="flex-shrink-0 px-4 py-2 rounded-xl text-yellow-200 font-bold text-lg"
+              style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '2px', background: 'rgba(240,168,48,0.15)', border: '1px solid rgba(240,168,48,0.3)' }}
+            >
+              CONFIANZA20
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ─── PLACEHOLDER SECTIONS — se completan en tasks siguientes ─── */}
       <div className="h-10" />
 
