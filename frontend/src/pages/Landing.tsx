@@ -250,8 +250,80 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ─── 3. Stats strip ─── */}
+      <div className="relative z-10 border-t border-b border-white/[0.05] bg-white/[0.02]">
+        <div className="max-w-4xl mx-auto px-6 py-5 flex flex-wrap justify-center gap-x-12 gap-y-4">
+          {[
+            { value: '∞', label: 'Reservas activas' },
+            { value: '$0', label: 'Para siempre' },
+            { value: '4', label: 'Templates únicos' },
+            { value: '24/7', label: 'Tu perfil disponible' },
+          ].map(s => (
+            <div key={s.label} className="text-center">
+              <div
+                className="text-3xl text-amber-glow"
+                style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '1px' }}
+              >
+                {s.value}
+              </div>
+              <div className="text-[10px] text-white/25 uppercase tracking-widest mt-1">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ─── 4. Cómo funciona ─── */}
+      <section id="como-funciona" className="relative z-10 max-w-6xl mx-auto px-6 py-24">
+        <div className="text-center mb-14">
+          <p className="text-xs uppercase tracking-[0.25em] text-amber-glow/60 font-semibold mb-4">Proceso</p>
+          <h2
+            className="text-white mb-4"
+            style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 'clamp(36px, 5vw, 52px)', letterSpacing: '2px' }}
+          >
+            TRES PASOS. LISTO.
+          </h2>
+          <p className="text-white/40 max-w-md mx-auto">De cero a recibir reservas en minutos.</p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-10">
+          {[
+            {
+              step: '01', icon: UserPlus,
+              title: 'Crea tu cuenta',
+              desc: 'Regístrate en segundos. Sin tarjeta, sin compromisos. Tu espacio profesional te espera.',
+            },
+            {
+              step: '02', icon: Layers,
+              title: 'Arma tu perfil',
+              desc: 'Elige un template, agrega tus servicios, precios y configura tu disponibilidad semanal.',
+            },
+            {
+              step: '03', icon: Send,
+              title: 'Comparte tu link',
+              desc: 'Publica tu perfil y comparte el link. Tus clientes reservan y reciben confirmación al instante.',
+            },
+          ].map(({ step, icon: Icon, title, desc }, i) => (
+            <div key={step} className="relative text-center md:text-left group">
+              {i < 2 && (
+                <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-px bg-gradient-to-r from-white/10 to-transparent" />
+              )}
+              <div className="inline-flex items-center justify-center mb-6">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-2xl bg-amber-wash-strong border border-amber-glow/10 flex items-center justify-center group-hover:border-amber-glow/30 transition-all duration-500">
+                    <Icon className="h-7 w-7 text-amber-glow" />
+                  </div>
+                  <span className="absolute -top-2 -right-2 text-[10px] font-mono text-amber-glow/40 font-bold">{step}</span>
+                </div>
+              </div>
+              <h3 className="text-white font-semibold text-lg mb-3" style={{ fontFamily: 'Urbanist, sans-serif' }}>{title}</h3>
+              <p className="text-sm text-white/40 leading-relaxed max-w-xs mx-auto md:mx-0">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ─── PLACEHOLDER SECTIONS — se completan en tasks siguientes ─── */}
-      <div className="h-40 flex items-center justify-center text-white/10 text-sm">... más secciones próximamente ...</div>
+      <div className="h-10" />
 
       {/* ─── 10. Footer (mínimo temporal) ─── */}
       <footer className="relative z-10 border-t border-white/5 py-8 px-6 text-center">
