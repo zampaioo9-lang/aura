@@ -359,33 +359,37 @@ export default function Landing() {
           </div>
 
           {/* Search form */}
-          <form onSubmit={handleDirectorySearch} className="flex gap-3 max-w-2xl mx-auto mb-6 flex-wrap">
+          <form onSubmit={handleDirectorySearch} className="flex gap-3 max-w-2xl mx-auto mb-6 flex-wrap p-3 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(59,130,246,0.2)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
             <div className="flex-[2] min-w-[180px] relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400/70" />
               <input
                 type="text"
                 placeholder="Profesión (ej: Psicólogo, Barbero...)"
                 value={searchProf}
                 onChange={e => setSearchProf(e.target.value)}
-                className="w-full pl-9 pr-3 py-3 rounded-xl text-sm text-white placeholder-white/25 outline-none"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                className="w-full pl-9 pr-3 py-3 rounded-xl text-sm text-white placeholder-white/50 outline-none transition-all"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(59,130,246,0.4)', boxShadow: '0 0 0 0 rgba(59,130,246,0)' }}
+                onFocus={e => (e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.2)')}
+                onBlur={e => (e.target.style.boxShadow = '0 0 0 0 rgba(59,130,246,0)')}
               />
             </div>
             <div className="flex-1 min-w-[130px] relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400/70" />
               <input
                 type="text"
                 placeholder="Ciudad"
                 value={searchCity}
                 onChange={e => setSearchCity(e.target.value)}
-                className="w-full pl-9 pr-3 py-3 rounded-xl text-sm text-white placeholder-white/25 outline-none"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                className="w-full pl-9 pr-3 py-3 rounded-xl text-sm text-white placeholder-white/50 outline-none transition-all"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(59,130,246,0.4)', boxShadow: '0 0 0 0 rgba(59,130,246,0)' }}
+                onFocus={e => (e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.2)')}
+                onBlur={e => (e.target.style.boxShadow = '0 0 0 0 rgba(59,130,246,0)')}
               />
             </div>
             <button
               type="submit"
-              className="px-5 py-3 rounded-xl text-sm font-bold text-white"
-              style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 4px 16px rgba(59,130,246,0.3)' }}
+              className="px-6 py-3 rounded-xl text-sm font-bold text-white"
+              style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 4px 20px rgba(59,130,246,0.5)' }}
             >
               Buscar
             </button>
@@ -398,14 +402,16 @@ export default function Landing() {
                 key={p}
                 onClick={() => navigate(`/explorar?profession=${encodeURIComponent(p)}`)}
                 className="px-3.5 py-1.5 rounded-full text-xs transition-all"
-                style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'rgba(255,255,255,0.4)' }}
+                style={{ border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.65)' }}
                 onMouseEnter={e => {
-                  (e.target as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.4)';
+                  (e.target as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.6)';
                   (e.target as HTMLButtonElement).style.color = '#7dd3fc';
+                  (e.target as HTMLButtonElement).style.background = 'rgba(59,130,246,0.1)';
                 }}
                 onMouseLeave={e => {
-                  (e.target as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.1)';
-                  (e.target as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)';
+                  (e.target as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.2)';
+                  (e.target as HTMLButtonElement).style.color = 'rgba(255,255,255,0.65)';
+                  (e.target as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)';
                 }}
               >
                 {p}
@@ -419,12 +425,13 @@ export default function Landing() {
               <Link
                 key={profile.id}
                 to={profile.slug === '#' ? '/explorar' : `/book/${profile.slug}`}
-                className="block rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 no-underline"
+                className="block rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl no-underline"
                 style={{
                   background: profile.isPro
-                    ? 'linear-gradient(160deg, rgba(147,51,234,0.07) 0%, rgba(255,255,255,0.03) 100%)'
-                    : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${profile.isPro ? 'rgba(147,51,234,0.3)' : 'rgba(255,255,255,0.07)'}`,
+                    ? 'linear-gradient(160deg, rgba(147,51,234,0.14) 0%, rgba(99,102,241,0.08) 100%)'
+                    : 'rgba(255,255,255,0.08)',
+                  border: `1px solid ${profile.isPro ? 'rgba(147,51,234,0.55)' : 'rgba(255,255,255,0.2)'}`,
+                  boxShadow: profile.isPro ? '0 4px 24px rgba(147,51,234,0.15)' : '0 4px 16px rgba(0,0,0,0.3)',
                 }}
               >
                 {/* Header */}
@@ -449,9 +456,9 @@ export default function Landing() {
                         </span>
                       )}
                     </div>
-                    <p className="text-white/35 text-xs mt-0.5">{profile.profession}</p>
+                    <p className="text-white/65 text-xs mt-0.5">{profile.profession}</p>
                     {profile.country && (
-                      <p className="text-white/25 text-[11px] mt-0.5 flex items-center gap-1">
+                      <p className="text-white/45 text-[11px] mt-0.5 flex items-center gap-1">
                         <MapPin className="h-2.5 w-2.5" />{profile.country}
                       </p>
                     )}
@@ -460,14 +467,14 @@ export default function Landing() {
 
                 {/* Bio */}
                 {profile.bio && (
-                  <p className="text-white/35 text-xs leading-relaxed mb-3 line-clamp-2">{profile.bio}</p>
+                  <p className="text-white/55 text-xs leading-relaxed mb-3 line-clamp-2">{profile.bio}</p>
                 )}
 
                 {/* Services */}
                 {profile.services.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-4">
                     {profile.services.slice(0, 2).map(s => (
-                      <span key={s.id} className="px-2 py-0.5 rounded-md text-[10px] text-white/35 bg-white/[0.05] border border-white/[0.07]">
+                      <span key={s.id} className="px-2 py-0.5 rounded-md text-[10px] text-white/60 bg-white/[0.1] border border-white/[0.18]">
                         {s.name}
                       </span>
                     ))}
@@ -478,8 +485,8 @@ export default function Landing() {
                 <div
                   className="w-full py-2 rounded-lg text-center text-xs font-semibold"
                   style={profile.isPro
-                    ? { background: 'linear-gradient(135deg,#8b5cf6,#6366f1)', color: '#fff', boxShadow: '0 3px 12px rgba(99,51,234,0.3)' }
-                    : { background: 'transparent', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }
+                    ? { background: 'linear-gradient(135deg,#8b5cf6,#6366f1)', color: '#fff', boxShadow: '0 3px 16px rgba(99,51,234,0.45)' }
+                    : { background: 'rgba(59,130,246,0.12)', color: '#7dd3fc', border: '1px solid rgba(59,130,246,0.35)' }
                   }
                 >
                   {profile.isPro ? 'Reservar cita' : 'Ver perfil'}
