@@ -500,6 +500,97 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ─── 6. Features ─── */}
+      <section className="relative z-10 max-w-6xl mx-auto px-6 py-24">
+        <div className="text-center mb-14">
+          <p className="text-xs uppercase tracking-[0.25em] text-amber-glow/60 font-semibold mb-4">Por qué Aliax</p>
+          <h2
+            className="text-white mb-4"
+            style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 'clamp(36px, 5vw, 52px)', letterSpacing: '2px' }}
+          >
+            TODO LO QUE NECESITAS
+          </h2>
+          <p className="text-white/40 max-w-lg mx-auto">
+            Herramientas para profesionales independientes. Las más poderosas, reservadas para Pro.
+          </p>
+        </div>
+
+        {/* Pro features — 4 cards */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          {[
+            {
+              icon: Bell,
+              title: 'WhatsApp al instante',
+              desc: 'Notificaciones automáticas para ti y tus clientes. Sin no-shows.',
+              accent: 'from-emerald-500/20 to-teal-500/20',
+              border: 'hover:border-emerald-500/30',
+              iconColor: 'text-emerald-400',
+              iconBg: 'bg-emerald-500/10',
+            },
+            {
+              icon: Image,
+              title: 'Portfolio de fotos',
+              desc: 'Hasta 20 fotos por servicio. Muestra tu trabajo como se merece.',
+              accent: 'from-amber-500/20 to-orange-500/20',
+              border: 'hover:border-amber-500/30',
+              iconColor: 'text-amber-400',
+              iconBg: 'bg-amber-500/10',
+            },
+            {
+              icon: BarChart2,
+              title: 'Analytics y tendencias',
+              desc: 'Descubre qué servicios te dejan más. Toma decisiones con datos.',
+              accent: 'from-blue-500/20 to-indigo-500/20',
+              border: 'hover:border-blue-500/30',
+              iconColor: 'text-blue-400',
+              iconBg: 'bg-blue-500/10',
+            },
+            {
+              icon: Globe,
+              title: 'Directorio destacado',
+              desc: 'Aparece primero en el directorio. Los clientes te encuentran en Google.',
+              accent: 'from-violet-500/20 to-fuchsia-500/20',
+              border: 'hover:border-violet-500/30',
+              iconColor: 'text-violet-400',
+              iconBg: 'bg-violet-500/10',
+            },
+          ].map(({ icon: Icon, title, desc, accent, border, iconColor, iconBg }) => (
+            <div
+              key={title}
+              className={`group relative rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 transition-all duration-500 hover:bg-white/[0.04] hover:-translate-y-1 ${border}`}
+            >
+              {/* Pro badge */}
+              <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded-md text-[9px] font-bold text-amber-soft bg-amber-wash border border-amber-glow/30">
+                PRO
+              </div>
+              {/* Hover glow */}
+              <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${accent} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+              <div className="relative z-10">
+                <div className={`inline-flex p-2.5 rounded-xl ${iconBg} ${iconColor} mb-4`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <h3 className="text-white font-semibold mb-2" style={{ fontFamily: 'Urbanist, sans-serif' }}>{title}</h3>
+                <p className="text-xs text-white/40 leading-relaxed">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Free features — 3 small cards */}
+        <div className="grid sm:grid-cols-3 gap-4">
+          {[
+            { icon: Shield, label: 'Perfil público con link único' },
+            { icon: Star, label: 'Reservas ilimitadas · siempre gratis' },
+            { icon: Bell, label: 'Notificaciones por email incluidas' },
+          ].map(({ icon: Icon, label }) => (
+            <div key={label} className="flex items-center gap-3 rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3.5 text-sm text-white/35">
+              <Icon className="h-4 w-4 text-amber-glow/40 shrink-0" />
+              {label}
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ─── PLACEHOLDER SECTIONS — se completan en tasks siguientes ─── */}
       <div className="h-10" />
 
