@@ -117,9 +117,10 @@ export default function Landing() {
       <nav className="relative z-10 flex items-center justify-between px-6 lg:px-12 py-5 max-w-7xl mx-auto">
         <Link to="/" className="flex items-center gap-2.5">
           {/* Pulsing dot */}
-          <div className="relative w-3 h-3">
-            <div className="absolute inset-0 rounded-full bg-amber-glow animate-ping opacity-60" />
-            <div className="relative w-3 h-3 rounded-full bg-amber-glow shadow-[0_0_8px_rgba(147,51,234,0.8)]" />
+          <div className="relative flex items-center justify-center w-3 h-3">
+            <div className="absolute rounded-full bg-amber-glow/15 animate-ping" style={{ width: '32px', height: '32px', animationDuration: '2s' }} />
+            <div className="absolute rounded-full bg-amber-glow/25 animate-ping" style={{ width: '20px', height: '20px', animationDuration: '2s', animationDelay: '0.5s' }} />
+            <div className="relative w-3 h-3 rounded-full bg-amber-glow shadow-[0_0_12px_rgba(147,51,234,1)]" />
           </div>
           <span className="text-lg font-semibold text-white tracking-wide" style={{ fontFamily: 'Urbanist, sans-serif' }}>
             Aliax.io
