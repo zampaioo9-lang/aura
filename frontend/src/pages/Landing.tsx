@@ -730,12 +730,107 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ─── PLACEHOLDER SECTIONS — se completan en tasks siguientes ─── */}
-      <div className="h-10" />
+      {/* ─── 8. Templates ─── */}
+      <section className="relative z-10 max-w-6xl mx-auto px-6 py-20">
+        <div className="text-center mb-12">
+          <p className="text-xs uppercase tracking-[0.25em] text-amber-glow/60 font-semibold mb-4">Apariencia</p>
+          <h2
+            className="text-white mb-4"
+            style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 'clamp(36px, 5vw, 52px)', letterSpacing: '2px' }}
+          >
+            TU COLOR. TU IDENTIDAD.
+          </h2>
+          <p className="text-white/40 max-w-md mx-auto">
+            Elige el color de tu perfil con un clic. Cuatro paletas diseñadas para destacar.
+          </p>
+        </div>
 
-      {/* ─── 10. Footer (mínimo temporal) ─── */}
-      <footer className="relative z-10 border-t border-white/5 py-8 px-6 text-center">
-        <p className="text-xs text-white/15">&copy; {new Date().getFullYear()} Aliax.io. Todos los derechos reservados.</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { name: 'Minimalist', gradient: 'linear-gradient(160deg,#2d2b6e,#4c46a8)', accent: 'rgb(107,99,255)', pro: false },
+            { name: 'Bold', gradient: 'linear-gradient(160deg,#3d2f00,#7a5f00)', accent: 'rgb(222,182,7)', pro: false },
+            { name: 'Elegant', gradient: 'linear-gradient(160deg,#0c3d5e,#1b6fa8)', accent: 'rgb(62,153,201)', pro: true },
+            { name: 'Creative', gradient: 'linear-gradient(160deg,#500650,#9d1fa8)', accent: 'rgb(217,72,240)', pro: true },
+          ].map(t => (
+            <div key={t.name} className="group rounded-2xl border border-white/[0.05] overflow-hidden hover:border-white/15 transition-all duration-500 hover:-translate-y-1 relative">
+              {t.pro && (
+                <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded text-[9px] font-bold text-amber-soft bg-amber-wash border border-amber-glow/30">
+                  PRO
+                </div>
+              )}
+              <div style={{ background: t.gradient }} className="p-5 h-44 flex flex-col items-center justify-between">
+                <div className="flex flex-col items-center gap-2 pt-2">
+                  <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40" />
+                  <div className="text-white text-xs font-semibold opacity-90">Profesional</div>
+                  <div className="text-white/60 text-[10px]">Especialidad</div>
+                </div>
+                <div className="h-7 w-24 rounded-lg text-white text-[10px] font-semibold flex items-center justify-center" style={{ background: t.accent }}>
+                  Reservar
+                </div>
+              </div>
+              <div className="bg-white/[0.03] px-5 py-4 flex items-center justify-between">
+                <div className="text-white text-sm font-medium" style={{ fontFamily: 'Urbanist, sans-serif' }}>{t.name}</div>
+                <div className="w-4 h-4 rounded-full border-2 border-white/20" style={{ background: t.accent }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── 9. CTA Final ─── */}
+      <section className="relative z-10 py-28">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-20" />
+        </div>
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <div className="relative">
+            <div className="hidden sm:block absolute inset-0 -top-20 mx-auto w-96 h-96 rounded-full pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(147,51,234,0.08) 0%, transparent 70%)' }} />
+            <h2
+              className="relative text-white mb-6"
+              style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 'clamp(44px, 6vw, 68px)', letterSpacing: '2px', lineHeight: 1.05 }}
+            >
+              TU PRÓXIMO CLIENTE<br />
+              <span style={{ background: 'linear-gradient(95deg, #a855f7, #6ee7b7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                TE ESTÁ BUSCANDO
+              </span>
+            </h2>
+            <p className="relative text-white/40 max-w-md mx-auto mb-10 text-lg">
+              Crea tu perfil hoy. Es gratis para siempre.
+            </p>
+            <Link
+              to="/register"
+              className="relative inline-flex items-center gap-2 px-8 py-4 text-white font-bold rounded-full transition-all hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+                boxShadow: '0 6px 40px rgba(99,51,234,0.45)',
+                fontFamily: 'Urbanist, sans-serif',
+                fontSize: '16px',
+              }}
+            >
+              Crear perfil gratis →
+            </Link>
+            <p className="relative mt-4 text-xs text-white/25">Sin tarjeta de crédito · Cancela cuando quieras</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 10. Footer ─── */}
+      <footer className="relative z-10 border-t border-white/[0.05]">
+        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-amber-glow/50" />
+            <span className="text-sm text-white/20 font-semibold" style={{ fontFamily: 'Urbanist, sans-serif' }}>Aliax.io</span>
+          </div>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-white/20">
+            <Link to="/explorar" className="hover:text-white/50 transition-colors">Explorar profesionales</Link>
+            <Link to="/pricing" className="hover:text-white/50 transition-colors">Precios</Link>
+            <Link to="/login" className="hover:text-white/50 transition-colors">Iniciar sesión</Link>
+            <Link to="/register" className="hover:text-white/50 transition-colors">Registrarse</Link>
+            <Link to="/privacy" className="hover:text-white/50 transition-colors">Privacidad</Link>
+          </div>
+          <p className="text-xs text-white/15">&copy; {new Date().getFullYear()} Aliax.io.</p>
+        </div>
       </footer>
 
     </div>
