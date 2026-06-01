@@ -11,6 +11,7 @@ export async function createCheckoutSession(
   userId: string,
   email: string,
   interval: 'MONTHLY' | 'YEARLY' | 'LIFETIME',
+  currency: 'USD' | 'MXN' = 'USD',
 ): Promise<string> {
   // Find or create Stripe customer
   let user = await prisma.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
@@ -24,28 +25,40 @@ export async function createCheckoutSession(
 
   if (interval === 'LIFETIME') {
     const isLaunch = Date.now() < LAUNCH_END.getTime();
-    const priceId = isLaunch ? env.STRIPE_PRICE_LIFETIME_LAUNCH : env.STRIPE_PRICE_LIFETIME;
+    const priceId = currency === 'MXN'
+      ? (isLaunch ? env.STRIPE_PRICE_LIFETIME_LAUNCH_MXN : env.STRIPE_PRICE_LIFETIME_REGULAR_MXN)
+      : (isLaunch ? env.STRIPE_PRICE_LIFETIME_LAUNCH : env.STRIPE_PRICE_LIFETIME);
 
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
+    const sessionParams: any = {
       mode: 'payment',
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${env.FRONTEND_URL}/payment/cancel`,
       metadata: { userId, interval: 'LIFETIME' },
-    });
+    };
 
+    // For MXN, avoid customer currency lock by using customer_email instead of customer id
+    if (currency === 'MXN') {
+      sessionParams.customer_email = email;
+    } else {
+      sessionParams.customer = customerId;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
     return session.url!;
   }
 
-  const priceId = interval === 'MONTHLY' ? env.STRIPE_PRICE_MONTHLY : env.STRIPE_PRICE_YEARLY;
+  const priceId = interval === 'MONTHLY'
+    ? (currency === 'MXN' ? env.STRIPE_PRICE_MONTHLY_MXN : env.STRIPE_PRICE_MONTHLY)
+    : env.STRIPE_PRICE_YEARLY;
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],
+    allow_promotion_codes: true,
     success_url: `${env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${env.FRONTEND_URL}/payment/cancel`,
     metadata: { userId, interval },
@@ -70,6 +83,8 @@ export async function handleWebhookEvent(rawBody: Buffer, sig: string): Promise<
 
     if (!userId || !interval) return;
 
+    const hasDiscount = ((session.total_details as any)?.amount_discount ?? 0) > 0;
+
     if (interval === 'LIFETIME') {
       await prisma.user.update({
         where: { id: userId },
@@ -78,6 +93,7 @@ export async function handleWebhookEvent(rawBody: Buffer, sig: string): Promise<
           planInterval: 'LIFETIME',
           planExpiresAt: null,
           stripeSubscriptionId: null,
+          stripeHasDiscount: hasDiscount,
         },
       });
       return;
@@ -95,6 +111,7 @@ export async function handleWebhookEvent(rawBody: Buffer, sig: string): Promise<
         planInterval: interval,
         planExpiresAt,
         stripeSubscriptionId,
+        stripeHasDiscount: hasDiscount,
       },
     });
   }

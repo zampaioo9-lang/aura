@@ -1,17 +1,85 @@
+# Landing Redesign Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Reescribir `Landing.tsx` con estilo glassmorphism, tipografía Bebas Neue + Urbanist, sección de directorio con fetch real, y sección de pricing embebida.
+
+**Architecture:** Landing.tsx es una reescritura completa — misma ruta `/`, misma lógica de auth. Se agrega `useEffect` para fetch del directorio (con fallback estático) y `useState` para el loading de Stripe. Todos los demás archivos de la app permanecen intactos.
+
+**Tech Stack:** React + TypeScript + Tailwind v4 + lucide-react · Google Fonts (Bebas Neue, Urbanist) · react-router-dom · api client existente
+
+---
+
+## File Map
+
+| Archivo | Acción |
+|---|---|
+| `frontend/index.html` | Modificar — reemplazar import de fuentes en `<head>` |
+| `frontend/src/index.css` | Modificar — actualizar variables `--font-*` |
+| `frontend/src/pages/Landing.tsx` | Reescritura completa |
+
+---
+
+### Task 1: Actualizar tipografía global
+
+**Files:**
+- Modify: `frontend/index.html:31`
+- Modify: `frontend/src/index.css:8-10`
+
+- [ ] **Step 1: Reemplazar import de fuentes en index.html**
+
+Buscar la línea actual (aprox línea 31):
+```html
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+```
+Reemplazar con:
+```html
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Urbanist:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+```
+
+- [ ] **Step 2: Actualizar variables de fuente en index.css**
+
+En `frontend/src/index.css`, reemplazar dentro del bloque `@theme`:
+```css
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Urbanist', sans-serif;
+  --font-hero: 'Bebas Neue', sans-serif;
+```
+
+- [ ] **Step 3: Arrancar el dev server y verificar que no hay errores de compilación**
+
+```bash
+cd "frontend" && npm run dev
+```
+Abrir `http://localhost:5173`. El dashboard y otras páginas deben seguir funcionando (usan las mismas variables CSS). El cambio de fuente se verá hasta que reescribamos Landing.tsx.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add frontend/index.html frontend/src/index.css
+git commit -m "style: replace fonts with Bebas Neue + Urbanist for landing redesign"
+```
+
+---
+
+### Task 2: Landing.tsx — Imports + Nav + Hero
+
+**Files:**
+- Rewrite: `frontend/src/pages/Landing.tsx`
+
+- [ ] **Step 1: Reemplazar todo el contenido de Landing.tsx con la estructura base + Nav + Hero**
+
+```tsx
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Search, MapPin, Zap, Bell, Image, BarChart2, Globe,
   Shield, Star, Check, ArrowRight, UserPlus, Layers, Send,
-  Wand2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
-import './Landing.css';
 
-const HERO_VIDEO =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_065045_c44942da-53c6-4804-b734-f9e07fc22e08.mp4';
-
+// ─── Types ────────────────────────────────────────────────────────
 interface DirectoryProfile {
   id: string;
   slug: string;
@@ -24,6 +92,7 @@ interface DirectoryProfile {
   services: { id: string; name: string; price: number; currency: string }[];
 }
 
+// ─── Static data ──────────────────────────────────────────────────
 const QUICK_PROFESSIONS = [
   'Psicólogo/a', 'Barbero/a', 'Nutricionista', 'Entrenador/a Personal',
   'Médico/a General', 'Estilista', 'Coach de Vida', 'Fisioterapeuta',
@@ -68,6 +137,7 @@ const PRO_FEATURES: { text: string; highlight: boolean }[] = [
   { text: 'Recordatorio automático 24h por WhatsApp', highlight: false },
 ];
 
+// ─── Component ────────────────────────────────────────────────────
 export default function Landing() {
   const { user, isPro } = useAuth();
   const navigate = useNavigate();
@@ -107,198 +177,196 @@ export default function Landing() {
   return (
     <div className="bg-aura-950 text-white font-body min-h-screen overflow-x-hidden">
 
-      {/* ═══════════════════════════════════════
-          1. HERO — Bloom AI · Liquid Glass
-      ═══════════════════════════════════════ */}
-      <section className="ln-hero-wrap">
+      {/* ─── Ambient background ─── */}
+      <div className="fixed inset-0 pointer-events-none" aria-hidden>
+        <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full opacity-20"
+          style={{ background: 'radial-gradient(ellipse, rgba(99,51,234,0.6) 0%, transparent 65%)' }} />
+        <div className="absolute bottom-0 right-[-10%] w-[500px] h-[500px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)' }} />
+      </div>
 
-        {/* Video background */}
-        <video autoPlay loop muted playsInline style={{
-          position: 'absolute', inset: 0,
-          width: '100%', height: '100%',
-          objectFit: 'cover', zIndex: 0,
-        }}>
-          <source src={HERO_VIDEO} type="video/mp4" />
-        </video>
-
-        {/* Subtle dark veil for legibility */}
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
-          background: 'rgba(6,3,15,0.28)',
-        }} />
-
-        {/* ── Nav full-width ── */}
-        <nav className="ln-hero-nav" style={{ position: 'absolute', zIndex: 3 }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-            <div style={{
-              width: 10, height: 10, borderRadius: '50%',
-              background: '#9b87f5', boxShadow: '0 0 10px rgba(155,135,245,0.7)',
-            }} />
-            <span style={{ color: '#fff', fontWeight: 600, fontSize: 17, letterSpacing: '-0.01em' }}>
-              Aliax.io
-            </span>
+      {/* ─── 1. Nav ─── */}
+      <nav className="relative z-10 flex items-center justify-between px-6 lg:px-12 py-5 max-w-7xl mx-auto">
+        <Link to="/" className="flex items-center gap-2.5">
+          {/* Pulsing dot */}
+          <div className="relative w-3 h-3">
+            <div className="absolute inset-0 rounded-full bg-amber-glow animate-ping opacity-60" />
+            <div className="relative w-3 h-3 rounded-full bg-amber-glow shadow-[0_0_8px_rgba(147,51,234,0.8)]" />
+          </div>
+          <span className="text-lg font-semibold text-white tracking-wide" style={{ fontFamily: 'Urbanist, sans-serif' }}>
+            Aliax.io
+          </span>
+        </Link>
+        <div className="flex items-center gap-1">
+          <Link to="/explorar" className="text-sm text-white/40 hover:text-white/70 transition-colors px-3 py-2">
+            Explorar profesionales
           </Link>
-          <div className="ln-nav-links" style={{ display: 'flex', gap: 6 }}>
-            <Link to="/explorar" className="ln-nav-btn ln-pill-hover" style={{ textDecoration: 'none' }}>
-              Explorar
+          <Link to="/pricing" className="text-sm text-white/40 hover:text-white/70 transition-colors px-3 py-2">
+            Precios
+          </Link>
+          <Link to="/login" className="text-sm text-white/50 hover:text-white transition-colors px-3 py-2">
+            Iniciar sesión
+          </Link>
+          <Link
+            to="/register"
+            className="ml-2 px-4 py-2 text-sm font-semibold text-amber-soft bg-amber-wash border border-amber-glow/20 rounded-full hover:bg-amber-wash-strong hover:border-amber-glow/40 transition-all"
+          >
+            Crear cuenta gratis
+          </Link>
+        </div>
+      </nav>
+
+      {/* ─── 2. Hero ─── */}
+      <section className="relative z-10 max-w-6xl mx-auto px-6 pt-16 pb-20 grid md:grid-cols-2 gap-12 items-center">
+
+        {/* Left col */}
+        <div>
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-wash border border-amber-glow/20 text-amber-soft text-xs font-medium mb-8">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-glow shadow-[0_0_6px_rgba(147,51,234,0.9)]" />
+            Gratis para siempre · Sin tarjeta
+          </div>
+
+          <h1
+            className="text-white mb-6 leading-none"
+            style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: 'clamp(52px, 7vw, 80px)', letterSpacing: '2px' }}
+          >
+            TU AGENDA<br />
+            <span style={{ background: 'linear-gradient(95deg, #a855f7 0%, #818cf8 50%, #6ee7b7 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              PROFESIONAL,
+            </span><br />
+            SIN CAOS
+          </h1>
+
+          <p className="text-white/45 text-lg leading-relaxed mb-10 max-w-md">
+            Crea tu perfil, publica tus servicios y recibe reservas automáticas.
+            Tus clientes reservan, tú te concentras en tu trabajo.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <Link
+              to="/register"
+              className="inline-flex items-center gap-2 px-7 py-3.5 font-bold text-white rounded-xl transition-all hover:scale-105"
+              style={{ background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', boxShadow: '0 6px 28px rgba(99,51,234,0.45)', fontFamily: 'Urbanist, sans-serif', fontSize: '15px' }}
+            >
+              Crear mi perfil gratis
+              <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link to="/login" className="ln-nav-btn ln-pill-hover" style={{ textDecoration: 'none' }}>
-              Login
-            </Link>
-            <Link to="/register" className="ln-nav-registro ln-pill-hover" style={{ textDecoration: 'none' }}>
-              Registro
+            <Link
+              to="/explorar"
+              className="inline-flex items-center gap-2 px-6 py-3.5 text-white/50 font-medium text-sm rounded-xl hover:text-white/80 transition-colors border border-white/10 bg-white/[0.03]"
+            >
+              Explorar directorio
             </Link>
           </div>
-        </nav>
+          <p className="mt-4 text-xs text-white/25">Sin tarjeta de crédito · Cancela cuando quieras</p>
+        </div>
 
-        {/* ── Two-panel layout ── */}
-        <div className="ln-content" style={{ position: 'relative', zIndex: 2 }}>
+        {/* Right col — glass card */}
+        <div className="relative h-72 md:h-80 hidden md:block">
+          {/* Stats pill */}
+          <div
+            className="absolute -top-2 -left-6 flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-white/10 z-10"
+            style={{ background: 'rgba(22,20,40,0.9)', backdropFilter: 'blur(10px)' }}
+          >
+            <div className="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_6px_rgba(34,197,94,0.8)]" />
+            <span className="text-sm text-white/60"><span className="text-white font-semibold">48</span> reservas este mes</span>
+          </div>
 
-          {/* ════ LEFT PANEL ════ */}
-          <div className="ln-left">
-
-            {/* Hero center — flex column, vertically centered */}
-            <div className="ln-hero-body" style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 0 }}>
-
-              {/* Badge */}
-              <div className="liquid-glass ln-a1 ln-badge" style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                borderRadius: 999, padding: '7px 14px', alignSelf: 'flex-start',
-                fontSize: 11, color: 'rgba(255,255,255,0.72)',
-              }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#9b87f5', boxShadow: '0 0 6px rgba(155,135,245,0.9)', flexShrink: 0 }} />
-                Gratis para siempre · Sin tarjeta
+          {/* Main glass profile card */}
+          <div
+            className="absolute inset-x-0 top-8 rounded-2xl border border-white/10 p-5"
+            style={{ background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(16px)', boxShadow: '0 12px 40px rgba(0,0,0,0.4)' }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 border-2 border-white/10"
+                style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.5), rgba(99,102,241,0.5))' }}
+              >
+                M
               </div>
-
-              {/* Headline */}
-              <h1 className="ln-a2" style={{
-                margin: 0,
-                marginTop: 12,
-                fontSize: 'clamp(2.4rem, 5.5vw, 5.2rem)',
-                fontWeight: 700,
-                lineHeight: 1.02,
-                letterSpacing: '-0.03em',
-                color: '#fff',
-              }}>
-                Tu agenda<br />
-                profesional,<br />
-                <em style={{ fontStyle: 'italic', color: 'rgba(167,139,250,0.85)', fontWeight: 500 }}>
-                  sin caos.
-                </em>
-              </h1>
-
-              {/* Subtext */}
-              <p className="ln-a2" style={{
-                margin: 0, color: 'rgba(255,255,255,0.45)',
-                fontSize: 14, lineHeight: 1.65, maxWidth: 340,
-              }}>
-                Crea tu perfil, publica tus servicios y recibe reservas automáticas.
-                Tus clientes agendan solos.
-              </p>
-
-              {/* CTAs */}
-              <div className="ln-a3 ln-cta-row" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                <Link
-                  to={user ? '/dashboard' : '/register'}
-                  className="ln-btn-cta liquid-glass-strong"
-                  style={{ borderRadius: 999 }}
-                >
-                  {user ? 'Ir al dashboard' : 'Crear perfil gratis'}
-                  <ArrowRight size={15} />
-                </Link>
-                <Link
-                  to="/explorar"
-                  className="liquid-glass ln-pill-hover ln-btn-secondary-mobile"
-                  style={{ borderRadius: 999, padding: '13px 22px', fontSize: 13, color: 'rgba(255,255,255,0.65)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                >
-                  Explorar directorio
-                </Link>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-white font-semibold text-sm">María González</span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-amber-soft border border-amber-glow/40 bg-amber-wash">
+                    <Zap className="h-2.5 w-2.5" /> PRO
+                  </span>
+                </div>
+                <p className="text-white/40 text-xs mt-0.5">Psicóloga · CDMX</p>
               </div>
-
-              {/* Feature pills */}
-              <div className="ln-a4 ln-pills-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-                {['Recordatorios automáticos', 'Directorio público', 'Sin tarjeta'].map(p => (
-                  <div key={p} style={{ borderRadius: 999, padding: '6px 13px', fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>
-                    {p}
-                  </div>
-                ))}
-              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {['Terapia individual', 'Ansiedad', 'Parejas'].map(s => (
+                <span key={s} className="px-2 py-1 rounded-md text-xs text-white/40 border border-white/8 bg-white/[0.04]">{s}</span>
+              ))}
+            </div>
+            <div
+              className="w-full py-2.5 rounded-xl text-center text-sm font-bold text-white"
+              style={{ background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', boxShadow: '0 4px 16px rgba(99,51,234,0.4)' }}
+            >
+              Reservar cita
             </div>
           </div>
 
-          {/* ════ RIGHT PANEL (desktop only) ════ */}
-          <div className="ln-right ln-right-anim">
-
-            {/* Community card */}
-            <div className="liquid-glass" style={{ borderRadius: 20, padding: '18px 22px', alignSelf: 'flex-end', maxWidth: 400, width: '100%', marginTop: 24 }}>
-              <p style={{ color: '#fff', fontWeight: 600, fontSize: 16, margin: '0 0 6px' }}>Únete a profesionales</p>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, lineHeight: 1.55, margin: 0 }}>
-                Crea tu perfil y empieza a recibir reservas desde hoy.
-              </p>
-            </div>
-
-            {/* Feature cards — vertically centered */}
-            <div style={{ alignSelf: 'flex-end', maxWidth: 400, width: '100%', display: 'flex', flexDirection: 'column', gap: 10, margin: 'auto 0' }}>
-
-              {/* Two small cards */}
-              <div style={{ display: 'flex', gap: 10 }}>
-                <div className="liquid-glass" style={{ flex: 1, borderRadius: 22, padding: 26 }}>
-                  <div style={{ marginBottom: 12 }}><Wand2 size={22} color="#a78bfa" /></div>
-                  <p style={{ color: '#fff', fontWeight: 600, fontSize: 16, margin: '0 0 6px' }}>Agenda inteligente</p>
-                  <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, lineHeight: 1.5, margin: 0 }}>
-                    Clientes reservan solos, sin llamadas.
-                  </p>
-                </div>
-                <div className="liquid-glass" style={{ flex: 1, borderRadius: 22, padding: 26 }}>
-                  <div style={{ marginBottom: 12 }}><BarChart2 size={22} color="#a78bfa" /></div>
-                  <p style={{ color: '#fff', fontWeight: 600, fontSize: 16, margin: '0 0 6px' }}>Analytics Pro</p>
-                  <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, lineHeight: 1.5, margin: 0 }}>
-                    Descubre qué servicios generan más.
-                  </p>
-                </div>
-              </div>
-
-              {/* Profile preview */}
-              <div className="liquid-glass" style={{ borderRadius: 22, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{
-                  width: 56, height: 56, borderRadius: 12, flexShrink: 0,
-                  background: 'linear-gradient(135deg, rgba(107,99,255,0.35), rgba(147,51,234,0.35))',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#a78bfa', fontSize: 22, fontWeight: 700,
-                }}>
-                  M
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
-                    <span style={{ color: '#fff', fontWeight: 600, fontSize: 15 }}>María González</span>
-                    <span className="liquid-glass" style={{ borderRadius: 999, padding: '1px 6px', fontSize: 9, color: '#a78bfa', fontWeight: 700, letterSpacing: '0.04em', flexShrink: 0 }}>
-                      PRO
-                    </span>
-                  </div>
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, margin: 0 }}>Psicóloga · CDMX</p>
-                </div>
-                <Link to="/explorar" style={{
-                  width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-                  background: 'rgba(107,99,255,0.25)',
-                  border: '1px solid rgba(167,139,250,0.35)',
-                  color: '#fff', fontSize: 20,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  textDecoration: 'none', lineHeight: 1,
-                }}>
-                  +
-                </Link>
-              </div>
+          {/* Floating notification */}
+          <div
+            className="absolute -bottom-2 -right-4 flex items-center gap-3 px-4 py-3 rounded-xl border border-white/10 min-w-[210px] z-10"
+            style={{ background: 'rgba(22,20,40,0.95)', backdropFilter: 'blur(12px)', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}
+          >
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-base border border-green-500/30 bg-green-500/10">✓</div>
+            <div>
+              <p className="text-white text-xs font-semibold">Nueva reserva confirmada</p>
+              <p className="text-white/35 text-[11px]">Lun 28, 10:00 AM · WhatsApp enviado</p>
             </div>
           </div>
-
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════
-          2. Stats strip
-      ═══════════════════════════════════════ */}
+      {/* ─── PLACEHOLDER SECTIONS — se completan en tasks siguientes ─── */}
+      <div className="h-40 flex items-center justify-center text-white/10 text-sm">... más secciones próximamente ...</div>
+
+      {/* ─── 10. Footer (mínimo temporal) ─── */}
+      <footer className="relative z-10 border-t border-white/5 py-8 px-6 text-center">
+        <p className="text-xs text-white/15">&copy; {new Date().getFullYear()} Aliax.io. Todos los derechos reservados.</p>
+      </footer>
+
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: Verificar en el dev server**
+
+Abrir `http://localhost:5173`. Verificar:
+- Nav visible con punto pulsante morado
+- Hero en dos columnas (desktop)
+- Glass card con efecto vidrio visible
+- Notificación flotante y pill de stats posicionados correctamente
+- En móvil (< 768px): solo columna izquierda, glass card oculta
+- No hay errores en consola
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add frontend/src/pages/Landing.tsx
+git commit -m "feat(landing): nav + hero glassmorphism con glass card de perfil"
+```
+
+---
+
+### Task 3: Landing.tsx — Stats strip + Cómo funciona
+
+**Files:**
+- Modify: `frontend/src/pages/Landing.tsx`
+
+- [ ] **Step 1: Reemplazar el div placeholder por Stats strip + Cómo funciona**
+
+Buscar `{/* ─── PLACEHOLDER SECTIONS` y reemplazarlo con:
+
+```tsx
+      {/* ─── 3. Stats strip ─── */}
       <div className="relative z-10 border-t border-b border-white/[0.05] bg-white/[0.02]">
-        <div className="ln-stats-strip max-w-4xl mx-auto px-6 py-10 flex flex-wrap justify-center gap-x-10 gap-y-5">
+        <div className="max-w-4xl mx-auto px-6 py-5 flex flex-wrap justify-center gap-x-12 gap-y-4">
           {[
             { value: '∞', label: 'Reservas activas' },
             { value: '$0', label: 'Para siempre' },
@@ -306,18 +374,19 @@ export default function Landing() {
             { value: '24/7', label: 'Tu perfil disponible' },
           ].map(s => (
             <div key={s.label} className="text-center">
-              <div className="ln-stats-value text-amber-glow" style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '3.2rem', letterSpacing: '2px', lineHeight: 1 }}>
+              <div
+                className="text-3xl text-amber-glow"
+                style={{ fontFamily: 'Bebas Neue, sans-serif', letterSpacing: '1px' }}
+              >
                 {s.value}
               </div>
-              <div className="ln-stats-label text-xs text-white/40 uppercase tracking-widest mt-2">{s.label}</div>
+              <div className="text-[10px] text-white/25 uppercase tracking-widest mt-1">{s.label}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════
-          3. Cómo funciona
-      ═══════════════════════════════════════ */}
+      {/* ─── 4. Cómo funciona ─── */}
       <section id="como-funciona" className="relative z-10 max-w-6xl mx-auto px-6 py-24">
         <div className="text-center mb-14">
           <p className="text-xs uppercase tracking-[0.25em] text-amber-glow/60 font-semibold mb-4">Proceso</p>
@@ -366,10 +435,34 @@ export default function Landing() {
           ))}
         </div>
       </section>
+```
 
-      {/* ═══════════════════════════════════════
-          4. Directorio
-      ═══════════════════════════════════════ */}
+- [ ] **Step 2: Verificar en dev server**
+
+- Stats strip visible con 4 valores en Bebas Neue morado
+- Sección "Cómo funciona" con 3 pasos e íconos
+- Paso 3 no menciona WhatsApp
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add frontend/src/pages/Landing.tsx
+git commit -m "feat(landing): stats strip + seccion como funciona actualizada"
+```
+
+---
+
+### Task 4: Landing.tsx — Sección Directorio
+
+**Files:**
+- Modify: `frontend/src/pages/Landing.tsx`
+
+- [ ] **Step 1: Agregar sección directorio después de "Cómo funciona"**
+
+Inmediatamente después del cierre `</section>` de "Cómo funciona", agregar:
+
+```tsx
+      {/* ─── 5. Directorio ─── */}
       <section
         className="relative z-10 py-24"
         style={{
@@ -378,10 +471,12 @@ export default function Landing() {
           borderBottom: '1px solid rgba(59,130,246,0.12)',
         }}
       >
+        {/* Blue ambient glow */}
         <div className="absolute top-0 right-0 w-96 h-96 pointer-events-none"
           style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)' }} />
 
         <div className="relative max-w-6xl mx-auto px-6">
+          {/* Header */}
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-5 text-xs font-medium"
               style={{ background: 'rgba(59,130,246,0.1)', borderColor: 'rgba(59,130,246,0.2)', color: '#7dd3fc' }}>
@@ -402,58 +497,54 @@ export default function Landing() {
             </p>
           </div>
 
-          <form onSubmit={handleDirectorySearch} className="flex gap-3 max-w-2xl mx-auto mb-6 flex-wrap p-3 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(59,130,246,0.2)', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+          {/* Search form */}
+          <form onSubmit={handleDirectorySearch} className="flex gap-3 max-w-2xl mx-auto mb-6 flex-wrap">
             <div className="flex-[2] min-w-[180px] relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400/70" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
               <input
                 type="text"
                 placeholder="Profesión (ej: Psicólogo, Barbero...)"
                 value={searchProf}
                 onChange={e => setSearchProf(e.target.value)}
-                className="w-full pl-9 pr-3 py-3 rounded-xl text-sm text-white placeholder-white/50 outline-none transition-all"
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(59,130,246,0.4)', boxShadow: '0 0 0 0 rgba(59,130,246,0)' }}
-                onFocus={e => (e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.2)')}
-                onBlur={e => (e.target.style.boxShadow = '0 0 0 0 rgba(59,130,246,0)')}
+                className="w-full pl-9 pr-3 py-3 rounded-xl text-sm text-white placeholder-white/25 outline-none"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
               />
             </div>
             <div className="flex-1 min-w-[130px] relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400/70" />
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
               <input
                 type="text"
                 placeholder="Ciudad"
                 value={searchCity}
                 onChange={e => setSearchCity(e.target.value)}
-                className="w-full pl-9 pr-3 py-3 rounded-xl text-sm text-white placeholder-white/50 outline-none transition-all"
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(59,130,246,0.4)', boxShadow: '0 0 0 0 rgba(59,130,246,0)' }}
-                onFocus={e => (e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.2)')}
-                onBlur={e => (e.target.style.boxShadow = '0 0 0 0 rgba(59,130,246,0)')}
+                className="w-full pl-9 pr-3 py-3 rounded-xl text-sm text-white placeholder-white/25 outline-none"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
               />
             </div>
             <button
               type="submit"
-              className="px-6 py-3 rounded-xl text-sm font-bold text-white"
-              style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 4px 20px rgba(59,130,246,0.5)' }}
+              className="px-5 py-3 rounded-xl text-sm font-bold text-white"
+              style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 4px 16px rgba(59,130,246,0.3)' }}
             >
               Buscar
             </button>
           </form>
 
+          {/* Quick profession chips */}
           <div className="flex flex-wrap gap-2 justify-center mb-10">
             {QUICK_PROFESSIONS.map(p => (
               <button
                 key={p}
                 onClick={() => navigate(`/explorar?profession=${encodeURIComponent(p)}`)}
                 className="px-3.5 py-1.5 rounded-full text-xs transition-all"
-                style={{ border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.65)' }}
+                style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: 'rgba(255,255,255,0.4)' }}
                 onMouseEnter={e => {
-                  (e.target as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.6)';
+                  (e.target as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.4)';
                   (e.target as HTMLButtonElement).style.color = '#7dd3fc';
-                  (e.target as HTMLButtonElement).style.background = 'rgba(59,130,246,0.1)';
                 }}
                 onMouseLeave={e => {
-                  (e.target as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.2)';
-                  (e.target as HTMLButtonElement).style.color = 'rgba(255,255,255,0.65)';
-                  (e.target as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)';
+                  (e.target as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.1)';
+                  (e.target as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)';
                 }}
               >
                 {p}
@@ -461,20 +552,21 @@ export default function Landing() {
             ))}
           </div>
 
+          {/* Profile cards grid */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             {profiles.slice(0, 6).map(profile => (
               <Link
                 key={profile.id}
                 to={profile.slug === '#' ? '/explorar' : `/book/${profile.slug}`}
-                className="block rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl no-underline"
+                className="block rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 no-underline"
                 style={{
                   background: profile.isPro
-                    ? 'linear-gradient(160deg, rgba(147,51,234,0.14) 0%, rgba(99,102,241,0.08) 100%)'
-                    : 'rgba(255,255,255,0.08)',
-                  border: `1px solid ${profile.isPro ? 'rgba(147,51,234,0.55)' : 'rgba(255,255,255,0.2)'}`,
-                  boxShadow: profile.isPro ? '0 4px 24px rgba(147,51,234,0.15)' : '0 4px 16px rgba(0,0,0,0.3)',
+                    ? 'linear-gradient(160deg, rgba(147,51,234,0.07) 0%, rgba(255,255,255,0.03) 100%)'
+                    : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${profile.isPro ? 'rgba(147,51,234,0.3)' : 'rgba(255,255,255,0.07)'}`,
                 }}
               >
+                {/* Header */}
                 <div className="flex items-start gap-3 mb-3">
                   {profile.avatar ? (
                     <img src={profile.avatar} alt={profile.title}
@@ -496,34 +588,37 @@ export default function Landing() {
                         </span>
                       )}
                     </div>
-                    <p className="text-white/65 text-xs mt-0.5">{profile.profession}</p>
+                    <p className="text-white/35 text-xs mt-0.5">{profile.profession}</p>
                     {profile.country && (
-                      <p className="text-white/45 text-[11px] mt-0.5 flex items-center gap-1">
+                      <p className="text-white/25 text-[11px] mt-0.5 flex items-center gap-1">
                         <MapPin className="h-2.5 w-2.5" />{profile.country}
                       </p>
                     )}
                   </div>
                 </div>
 
+                {/* Bio */}
                 {profile.bio && (
-                  <p className="text-white/55 text-xs leading-relaxed mb-3 line-clamp-2">{profile.bio}</p>
+                  <p className="text-white/35 text-xs leading-relaxed mb-3 line-clamp-2">{profile.bio}</p>
                 )}
 
+                {/* Services */}
                 {profile.services.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-4">
                     {profile.services.slice(0, 2).map(s => (
-                      <span key={s.id} className="px-2 py-0.5 rounded-md text-[10px] text-white/60 bg-white/[0.1] border border-white/[0.18]">
+                      <span key={s.id} className="px-2 py-0.5 rounded-md text-[10px] text-white/35 bg-white/[0.05] border border-white/[0.07]">
                         {s.name}
                       </span>
                     ))}
                   </div>
                 )}
 
+                {/* CTA */}
                 <div
                   className="w-full py-2 rounded-lg text-center text-xs font-semibold"
                   style={profile.isPro
-                    ? { background: 'linear-gradient(135deg,#8b5cf6,#6366f1)', color: '#fff', boxShadow: '0 3px 16px rgba(99,51,234,0.45)' }
-                    : { background: 'rgba(59,130,246,0.12)', color: '#7dd3fc', border: '1px solid rgba(59,130,246,0.35)' }
+                    ? { background: 'linear-gradient(135deg,#8b5cf6,#6366f1)', color: '#fff', boxShadow: '0 3px 12px rgba(99,51,234,0.3)' }
+                    : { background: 'transparent', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }
                   }
                 >
                   {profile.isPro ? 'Reservar cita' : 'Ver perfil'}
@@ -532,6 +627,7 @@ export default function Landing() {
             ))}
           </div>
 
+          {/* Ver todos */}
           <div className="text-center">
             <Link
               to="/explorar"
@@ -543,10 +639,34 @@ export default function Landing() {
           </div>
         </div>
       </section>
+```
 
-      {/* ═══════════════════════════════════════
-          5. Features
-      ═══════════════════════════════════════ */}
+- [ ] **Step 2: Verificar en dev server**
+
+- Sección con fondo azul/índigo diferenciado visible
+- Search form funcional (al enviar redirige a /explorar con params)
+- Chips de profesiones redirigen a /explorar?profession=X
+- Cards reales si el API responde, o las 3 de muestra si falla
+- Cards Pro con borde morado y badge ⚡ PRO
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add frontend/src/pages/Landing.tsx
+git commit -m "feat(landing): seccion directorio con fetch real y fallback estatico"
+```
+
+---
+
+### Task 5: Landing.tsx — Sección Features
+
+**Files:**
+- Modify: `frontend/src/pages/Landing.tsx`
+
+- [ ] **Step 1: Agregar sección features después del cierre `</section>` del directorio**
+
+```tsx
+      {/* ─── 6. Features ─── */}
       <section className="relative z-10 max-w-6xl mx-auto px-6 py-24">
         <div className="text-center mb-14">
           <p className="text-xs uppercase tracking-[0.25em] text-amber-glow/60 font-semibold mb-4">Por qué Aliax</p>
@@ -561,40 +681,55 @@ export default function Landing() {
           </p>
         </div>
 
+        {/* Pro features — 4 cards */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           {[
             {
-              icon: Bell, title: 'WhatsApp al instante',
+              icon: Bell,
+              title: 'WhatsApp al instante',
               desc: 'Notificaciones automáticas para ti y tus clientes. Sin no-shows.',
-              accent: 'from-emerald-500/20 to-teal-500/20', border: 'hover:border-emerald-500/30',
-              iconColor: 'text-emerald-400', iconBg: 'bg-emerald-500/10',
+              accent: 'from-emerald-500/20 to-teal-500/20',
+              border: 'hover:border-emerald-500/30',
+              iconColor: 'text-emerald-400',
+              iconBg: 'bg-emerald-500/10',
             },
             {
-              icon: Image, title: 'Portfolio de fotos',
+              icon: Image,
+              title: 'Portfolio de fotos',
               desc: 'Hasta 20 fotos por servicio. Muestra tu trabajo como se merece.',
-              accent: 'from-amber-500/20 to-orange-500/20', border: 'hover:border-amber-500/30',
-              iconColor: 'text-amber-400', iconBg: 'bg-amber-500/10',
+              accent: 'from-amber-500/20 to-orange-500/20',
+              border: 'hover:border-amber-500/30',
+              iconColor: 'text-amber-400',
+              iconBg: 'bg-amber-500/10',
             },
             {
-              icon: BarChart2, title: 'Analytics y tendencias',
+              icon: BarChart2,
+              title: 'Analytics y tendencias',
               desc: 'Descubre qué servicios te dejan más. Toma decisiones con datos.',
-              accent: 'from-blue-500/20 to-indigo-500/20', border: 'hover:border-blue-500/30',
-              iconColor: 'text-blue-400', iconBg: 'bg-blue-500/10',
+              accent: 'from-blue-500/20 to-indigo-500/20',
+              border: 'hover:border-blue-500/30',
+              iconColor: 'text-blue-400',
+              iconBg: 'bg-blue-500/10',
             },
             {
-              icon: Globe, title: 'Directorio destacado',
+              icon: Globe,
+              title: 'Directorio destacado',
               desc: 'Aparece primero en el directorio. Los clientes te encuentran en Google.',
-              accent: 'from-violet-500/20 to-fuchsia-500/20', border: 'hover:border-violet-500/30',
-              iconColor: 'text-violet-400', iconBg: 'bg-violet-500/10',
+              accent: 'from-violet-500/20 to-fuchsia-500/20',
+              border: 'hover:border-violet-500/30',
+              iconColor: 'text-violet-400',
+              iconBg: 'bg-violet-500/10',
             },
           ].map(({ icon: Icon, title, desc, accent, border, iconColor, iconBg }) => (
             <div
               key={title}
               className={`group relative rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 transition-all duration-500 hover:bg-white/[0.04] hover:-translate-y-1 ${border}`}
             >
+              {/* Pro badge */}
               <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded-md text-[9px] font-bold text-amber-soft bg-amber-wash border border-amber-glow/30">
                 PRO
               </div>
+              {/* Hover glow */}
               <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${accent} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
               <div className="relative z-10">
                 <div className={`inline-flex p-2.5 rounded-xl ${iconBg} ${iconColor} mb-4`}>
@@ -607,6 +742,7 @@ export default function Landing() {
           ))}
         </div>
 
+        {/* Free features — 3 small cards */}
         <div className="grid sm:grid-cols-3 gap-4">
           {[
             { icon: Shield, label: 'Perfil público con link único' },
@@ -620,10 +756,32 @@ export default function Landing() {
           ))}
         </div>
       </section>
+```
 
-      {/* ═══════════════════════════════════════
-          6. Pricing
-      ═══════════════════════════════════════ */}
+- [ ] **Step 2: Verificar en dev server**
+
+- 4 cards Pro con badge PRO en esquina superior derecha
+- 3 cards Free sin badge, más discretas
+- Hover glow funciona en cards Pro
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add frontend/src/pages/Landing.tsx
+git commit -m "feat(landing): seccion features con 4 forzadores Pro + 3 free"
+```
+
+---
+
+### Task 6: Landing.tsx — Sección Pricing
+
+**Files:**
+- Modify: `frontend/src/pages/Landing.tsx`
+
+- [ ] **Step 1: Agregar sección pricing después del cierre `</section>` de features**
+
+```tsx
+      {/* ─── 7. Pricing ─── */}
       <section
         className="relative z-10 py-24"
         style={{ background: 'linear-gradient(160deg, #080414 0%, #0e0920 50%, #080414 100%)' }}
@@ -648,6 +806,7 @@ export default function Landing() {
             </p>
           </div>
 
+          {/* Cards */}
           <div className="grid md:grid-cols-2 gap-5 mb-8">
 
             {/* Free */}
@@ -656,7 +815,12 @@ export default function Landing() {
                 🎁 &nbsp;Gratuito
               </div>
               <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-white" style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '52px', letterSpacing: '1px', lineHeight: 1 }}>$0</span>
+                <span
+                  className="text-white"
+                  style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '52px', letterSpacing: '1px', lineHeight: 1 }}
+                >
+                  $0
+                </span>
               </div>
               <p className="text-white/30 text-sm mb-5">Para siempre · Sin tarjeta</p>
               <div className="h-px bg-white/[0.07] mb-5" />
@@ -693,7 +857,12 @@ export default function Landing() {
               </div>
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-white/50 text-xl font-bold self-start mt-2">$</span>
-                <span className="text-white" style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '52px', letterSpacing: '1px', lineHeight: 1 }}>9</span>
+                <span
+                  className="text-white"
+                  style={{ fontFamily: 'Bebas Neue, sans-serif', fontSize: '52px', letterSpacing: '1px', lineHeight: 1 }}
+                >
+                  9
+                </span>
                 <span className="text-white/40 text-base">USD / mes</span>
               </div>
               <p className="text-white/40 text-sm mb-5">Todo lo del plan gratuito, más:</p>
@@ -750,10 +919,35 @@ export default function Landing() {
           </div>
         </div>
       </section>
+```
 
-      {/* ═══════════════════════════════════════
-          7. Templates
-      ═══════════════════════════════════════ */}
+- [ ] **Step 2: Verificar en dev server**
+
+- Título en Bebas Neue mayúsculas con "CRECE" en morado
+- Card Free con botón correcto según estado de auth
+- Card Pro con lógica: usuario no auth → /register, no Pro → Stripe checkout, Pro → mensaje "Ya tienes Pro activo"
+- Strip del cupón CONFIANZA20 visible
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add frontend/src/pages/Landing.tsx
+git commit -m "feat(landing): seccion pricing embebida con logica Stripe y cupon CONFIANZA20"
+```
+
+---
+
+### Task 7: Landing.tsx — Templates + CTA Final + Footer
+
+**Files:**
+- Modify: `frontend/src/pages/Landing.tsx`
+
+- [ ] **Step 1: Agregar las 3 secciones finales, reemplazando el footer temporal**
+
+Buscar el footer temporal `{/* ─── 10. Footer (mínimo temporal)` y reemplazar con:
+
+```tsx
+      {/* ─── 8. Templates ─── */}
       <section className="relative z-10 max-w-6xl mx-auto px-6 py-20">
         <div className="text-center mb-12">
           <p className="text-xs uppercase tracking-[0.25em] text-amber-glow/60 font-semibold mb-4">Apariencia</p>
@@ -800,9 +994,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════
-          8. CTA Final
-      ═══════════════════════════════════════ */}
+      {/* ─── 9. CTA Final ─── */}
       <section className="relative z-10 py-28">
         <div className="max-w-5xl mx-auto px-6">
           <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-20" />
@@ -840,9 +1032,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════
-          9. Footer
-      ═══════════════════════════════════════ */}
+      {/* ─── 10. Footer ─── */}
       <footer className="relative z-10 border-t border-white/[0.05]">
         <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
@@ -859,7 +1049,104 @@ export default function Landing() {
           <p className="text-xs text-white/15">&copy; {new Date().getFullYear()} Aliax.io.</p>
         </div>
       </footer>
+```
 
-    </div>
-  );
-}
+- [ ] **Step 2: Verificar en dev server — revisión completa de toda la landing**
+
+Revisar en orden:
+1. Nav — punto pulsante, links correctos
+2. Hero — dos columnas, glass card, notificación flotante
+3. Stats strip — 4 valores en Bebas Neue
+4. Cómo funciona — 3 pasos, paso 3 sin mencionar WhatsApp
+5. Directorio — fondo azul, búsqueda funcional, chips, cards
+6. Features — 4 Pro + 3 Free
+7. Pricing — Free $0 y Pro $9, cupón CONFIANZA20
+8. Templates — Elegant y Creative con badge PRO
+9. CTA Final — Bebas Neue, gradiente verde/morado
+10. Footer — todos los links
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add frontend/src/pages/Landing.tsx
+git commit -m "feat(landing): templates con badge Pro, CTA final y footer completo"
+```
+
+---
+
+### Task 8: Responsive móvil + OG tags + Deploy
+
+**Files:**
+- Modify: `frontend/index.html` (OG tags)
+- Verify: `frontend/src/pages/Landing.tsx` (responsive)
+
+- [ ] **Step 1: Verificar responsive en móvil (< 768px)**
+
+En DevTools (Chrome), activar vista móvil (375px). Verificar:
+- Nav: el link "Explorar profesionales" puede estar oculto en pantallas muy pequeñas — si la barra se rompe, reducir a solo mostrar "Precios" y los dos botones en mobile (los otros links opcionales). Ajustar con clase `hidden sm:inline` si es necesario.
+- Hero: una sola columna, glass card no visible (`hidden md:block` ya aplicado)
+- Stats strip: `flex-wrap` permite que los 4 stats se acomoden
+- Directorio: grid de 1 columna en mobile (`sm:grid-cols-2`)
+- Features: grid de 2 columnas en mobile para Pro cards
+- Pricing: una sola columna (`md:grid-cols-2`)
+- Templates: 2 columnas en mobile (`grid-cols-2`)
+
+Si algún elemento se desborda, agregar `overflow-x-hidden` o ajustar paddings.
+
+- [ ] **Step 2: Actualizar OG tags en index.html**
+
+Buscar y actualizar:
+```html
+<title>Aliax.io — Tu agenda profesional, sin caos</title>
+<meta name="description" content="Crea tu perfil profesional, publica tus servicios y recibe reservas automáticas. Gratis para siempre. Con directorio público para encontrar profesionales." />
+<meta property="og:title" content="Aliax.io — Tu agenda profesional, sin caos" />
+<meta property="og:description" content="Crea tu perfil, publica tus servicios y recibe reservas. Gratis para siempre." />
+```
+
+- [ ] **Step 3: Commit final**
+
+```bash
+git add frontend/src/pages/Landing.tsx frontend/index.html
+git commit -m "fix(landing): responsive movil y og tags actualizados"
+```
+
+- [ ] **Step 4: Deploy a producción**
+
+```bash
+cd "Mis proyectos/aura" && vercel --prod
+```
+
+Confirmar `www.aliax.io` mostrando la nueva landing. Revisar en móvil real si es posible.
+
+---
+
+## Checklist de cobertura del spec
+
+| Requisito del spec | Tarea |
+|---|---|
+| Bebas Neue + Urbanist | Task 1 |
+| Nav con punto pulsante | Task 2 |
+| Hero dos columnas + glass card | Task 2 |
+| Badge "Gratis para siempre" | Task 2 |
+| CTA "Crear mi perfil gratis" | Task 2 |
+| CTA secundario "Explorar directorio" | Task 2 |
+| Stats strip con 4 valores | Task 3 |
+| Cómo funciona - paso 3 sin WhatsApp | Task 3 |
+| Sección Directorio con fondo azul | Task 4 |
+| Fetch real + fallback estático | Task 4 |
+| Cards Pro primero con badge y glow | Task 4 |
+| Search form → /explorar?params | Task 4 |
+| Chips → /explorar?profession=X | Task 4 |
+| Features: 4 Pro + 3 Free | Task 5 |
+| Badge PRO en cards Pro | Task 5 |
+| Pricing embebido en landing | Task 6 |
+| Título Bebas Neue mayúsculas | Task 6 |
+| Labels PRO inline en Pro features | Task 6 |
+| Lógica Stripe (no auth/no Pro/Pro activo) | Task 6 |
+| Cupón CONFIANZA20 visible | Task 6 |
+| Templates con badge PRO en Elegant/Creative | Task 7 |
+| CTA Final copy actualizado | Task 7 |
+| Footer con todos los links | Task 7 |
+| Responsive móvil | Task 8 |
+| OG tags actualizados | Task 8 |
+| Deploy | Task 8 |

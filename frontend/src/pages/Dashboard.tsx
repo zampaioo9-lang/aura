@@ -6,8 +6,10 @@ import {
   Plus, LogOut, Calendar, Clock,
   CalendarDays, Facebook, Instagram, Linkedin, MessageCircle,
   Home, Compass, Briefcase, Pencil, Search, ChevronRight, Camera,
-  Sun, Moon, Copy, ExternalLink, Zap,
+  Sun, Moon, Copy, ExternalLink,
 } from 'lucide-react';
+import { SchedulingPanel } from './SchedulingConfig';
+import ProGate from '../components/ProGate';
 import { useUpload } from '../hooks/useUpload';
 import { formatCurrency } from '../lib/utils';
 import { PROFESSION_CATEGORIES } from '../lib/professions';
@@ -66,7 +68,7 @@ interface ClientBooking {
   profile: { title: string; slug: string };
 }
 
-type Tab = 'inicio' | 'citas' | 'explorar' | 'profesional';
+type Tab = 'inicio' | 'citas' | 'explorar' | 'agenda';
 type MobileSection = 'perfil' | Tab;
 
 interface Colors {
@@ -86,8 +88,7 @@ interface Colors {
 
 const ACCENT_THEMES = [
   {
-    id: 'profesional',
-    label: 'Profesional',
+    id: 'profesional', label: 'Profesional', pro: false,
     accent: 'rgb(147,51,234)',
     accentDark:  'rgba(147,51,234,0.15)',
     accentLight: 'rgba(147,51,234,0.08)',
@@ -95,8 +96,7 @@ const ACCENT_THEMES = [
     lightGradient: 'linear-gradient(160deg, #9333ea 0%, #c084fc 100%)',
   },
   {
-    id: 'bold',
-    label: 'Bold',
+    id: 'bold', label: 'Bold', pro: false,
     accent: 'rgb(222,182,7)',
     accentDark:  'rgba(222,182,7,0.15)',
     accentLight: 'rgba(222,182,7,0.08)',
@@ -104,8 +104,7 @@ const ACCENT_THEMES = [
     lightGradient: 'linear-gradient(160deg, #deb607 0%, #f59e0b 100%)',
   },
   {
-    id: 'elegante',
-    label: 'Elegante',
+    id: 'elegante', label: 'Elegante', pro: true,
     accent: 'rgb(62,153,201)',
     accentDark:  'rgba(62,153,201,0.15)',
     accentLight: 'rgba(62,153,201,0.08)',
@@ -113,26 +112,33 @@ const ACCENT_THEMES = [
     lightGradient: 'linear-gradient(160deg, #3e99c9 0%, #60c4f0 100%)',
   },
   {
-    id: 'creative',
-    label: 'Creative',
+    id: 'creative', label: 'Creative', pro: true,
     accent: 'rgb(217,72,240)',
     accentDark:  'rgba(217,72,240,0.15)',
     accentLight: 'rgba(217,72,240,0.08)',
     darkGradient:  'linear-gradient(160deg, #500650 0%, #9d1fa8 100%)',
     lightGradient: 'linear-gradient(160deg, #d948f0 0%, #f472b6 100%)',
   },
+  {
+    id: 'carbono', label: 'Carbono', pro: true,
+    accent: 'rgb(160,160,170)',
+    accentDark:  'rgba(160,160,170,0.15)',
+    accentLight: 'rgba(160,160,170,0.08)',
+    darkGradient:  'linear-gradient(160deg, #0f0f12 0%, #2a2a32 100%)',
+    lightGradient: 'linear-gradient(160deg, #2a2a32 0%, #4a4a56 100%)',
+  },
 ];
 
 const DARK: Colors = {
-  sideBg: '#18181f',
-  navBg: '#18181f',
-  mainBg: '#0f0f12',
-  tabsBg: '#18181f',
-  border: '#2e2e3d',
-  cardBg: '#22222c',
+  sideBg: 'transparent',
+  navBg: 'transparent',
+  mainBg: '#0a0618',
+  tabsBg: '#0a0618',
+  border: '#2d1f52',
+  cardBg: '#160e30',
   cardShadow: 'none',
   text: '#e8e8f0',
-  muted: '#6b6b80',
+  muted: '#8a7ab0',
   accent: 'rgb(147,51,234)',
   accentLight: 'rgba(147,51,234,0.15)',
   isDark: true,
@@ -141,13 +147,13 @@ const DARK: Colors = {
 const LIGHT: Colors = {
   sideBg: 'white',
   navBg: 'white',
-  mainBg: 'rgb(245, 244, 240)',
-  tabsBg: 'white',
-  border: 'rgb(220, 215, 235)',
+  mainBg: 'white',
+  tabsBg: '#ede8ff',
+  border: 'rgba(109,40,217,0.15)',
   cardBg: 'white',
-  cardShadow: '0 2px 8px rgba(0,0,0,0.07)',
-  text: '#2d2b55',
-  muted: '#6b6b8f',
+  cardShadow: '0 2px 8px rgba(0,0,0,0.06)',
+  text: '#1e0a3c',
+  muted: '#6d5a8f',
   accent: 'rgb(147,51,234)',
   accentLight: 'rgba(147,51,234,0.08)',
   isDark: false,
@@ -168,7 +174,7 @@ export default function Dashboard() {
   );
   const [mobileSection, setMobileSection] = useState<MobileSection>(() => {
     const tab = searchParams.get('tab') as Tab;
-    return (tab && ['inicio', 'citas', 'explorar', 'profesional'].includes(tab)) ? tab : 'perfil';
+    return (tab && ['inicio', 'citas', 'explorar', 'agenda'].includes(tab)) ? tab : 'perfil';
   });
   const [theme, setTheme] = useState<'dark' | 'light'>(
     () => (localStorage.getItem('aliax_theme') as 'dark' | 'light') || 'dark'
@@ -182,6 +188,12 @@ export default function Dashboard() {
 
   useEffect(() => { localStorage.setItem('aliax_theme', theme); }, [theme]);
   useEffect(() => { localStorage.setItem('aliax_accent', accentId); }, [accentId]);
+
+  // Si no es Pro y tiene un color Pro seleccionado, resetear al primero gratis
+  useEffect(() => {
+    const current = ACCENT_THEMES.find(t => t.id === accentId);
+    if (current?.pro && !isPro) setAccentId('profesional');
+  }, [isPro, accentId]);
 
   const accentTheme = ACCENT_THEMES.find(t => t.id === accentId) ?? ACCENT_THEMES[0];
   const C = {
@@ -237,7 +249,6 @@ export default function Dashboard() {
 
   const pendingBookings   = bookings.filter(b => b.status === 'PENDING');
   const confirmedBookings = bookings.filter(b => b.status === 'CONFIRMED');
-  const totalServices     = profiles.reduce((sum, p) => sum + p.services.length, 0);
 
   const initials = (user?.name ?? '?')
     .split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
@@ -247,59 +258,61 @@ export default function Dashboard() {
   const hasSocial     = SOCIAL_ICONS.some(({ key }) => !!socialLinks[key]);
   const isProfessional = profiles.length > 0;
 
-  const trialExpired = (() => {
-    if (isPro) return false;  // Pro/Lifetime users are never "expired"
-    // Lifetime plan nunca expira
-    if (user?.plan === 'PRO' && user?.planInterval === 'LIFETIME') return false;
-    // Plan activo con fecha futura
-    if (user?.plan === 'PRO' && user?.planExpiresAt) {
-      if (new Date(user.planExpiresAt).getTime() > Date.now()) return false;
-    }
-    if (!user?.trialEndsAt) return false;
-    return new Date(user.trialEndsAt).getTime() < Date.now();
-  })();
-
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: 'inicio',      label: 'Inicio',             icon: <Home className="h-4 w-4" /> },
-    { id: 'citas',       label: 'Mis Citas',          icon: <Calendar className="h-4 w-4" /> },
-    { id: 'explorar',    label: 'Explorar',           icon: <Compass className="h-4 w-4" /> },
-    { id: 'profesional', label: 'Perfil Profesional', icon: <Briefcase className="h-4 w-4" /> },
+    { id: 'inicio',   label: 'Inicio',           icon: <Home className="h-4 w-4" /> },
+    { id: 'citas',    label: 'Mis Citas',         icon: <Calendar className="h-4 w-4" /> },
+    { id: 'explorar', label: 'Explorar',          icon: <Compass className="h-4 w-4" /> },
+    { id: 'agenda',   label: 'Configurar Agenda', icon: <CalendarDays className="h-4 w-4" /> },
   ];
 
-  /* gradient for mobile profile card */
+  /* gradient for mobile profile card and dark shell */
   const profileGradient = theme === 'dark'
     ? accentTheme.darkGradient
     : accentTheme.lightGradient;
 
+  const shellBg = theme === 'dark' ? accentTheme.darkGradient : 'white';
+
+  // Board gradient — linear gradient derived from accent color
+  const _am = accentTheme.accent.match(/rgb\((\d+),(\d+),(\d+)\)/);
+  const [_r, _g, _b] = _am ? [_am[1], _am[2], _am[3]] : ['147', '51', '234'];
+  const boardBg = theme === 'dark'
+    ? `linear-gradient(145deg, rgba(${_r},${_g},${_b},0.42) 0%, #07040f 52%, rgba(${_r},${_g},${_b},0.28) 100%)`
+    : C.tabsBg;
+
   return (
-    <div className="h-dvh flex flex-col overflow-hidden" style={{ background: C.mainBg }}>
+    <div className="h-dvh flex flex-col overflow-hidden" style={{ background: shellBg }}>
 
       {/* ── Navbar ── */}
       <nav
         className="px-5 py-3 flex items-center justify-between shrink-0"
-        style={{
-          background: C.isDark ? 'rgba(24, 24, 31, 0.65)' : 'rgba(255, 255, 255, 0.65)',
-          backdropFilter: 'blur(18px)',
-          WebkitBackdropFilter: 'blur(18px)',
-          borderBottom: `1px solid ${C.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-        }}
+        style={{ background: 'transparent' }}
       >
-        <Link to="/" className="font-bold text-lg" style={{ color: C.text }}>Aliax.io</Link>
-        <div className="flex items-center gap-1">
-          {/* theme toggle — only on mobile in navbar */}
+        <Link to="/" className="font-bold text-lg" style={{ color: C.isDark ? 'white' : C.text }}>Aliax.io</Link>
+        <div className="flex items-center gap-2">
+          {/* Actualizar plan — desktop only */}
+          <Link
+            to="/pricing"
+            className="hidden md:flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+            style={{ background: C.isDark ? 'rgba(255,255,255,0.12)' : C.accentLight, color: C.isDark ? 'white' : C.accent, border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.2)' : C.accent + '44'}` }}
+          >
+            Actualizar plan
+          </Link>
+          {/* Theme toggle — all sizes */}
           <button
-            className="md:hidden p-2 rounded-lg transition-colors"
+            className="p-2 rounded-lg transition-colors"
             onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-            style={{ color: C.muted }}
+            style={{ color: C.isDark ? 'rgba(255,255,255,0.7)' : C.muted }}
+            onMouseEnter={e => (e.currentTarget.style.color = C.isDark ? 'white' : C.text)}
+            onMouseLeave={e => (e.currentTarget.style.color = C.isDark ? 'rgba(255,255,255,0.7)' : C.muted)}
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
           <button
             onClick={() => { logout(); navigate('/'); }}
             className="flex items-center gap-1.5 text-sm transition-colors px-2 py-1.5"
-            style={{ color: C.muted }}
-            onMouseEnter={e => (e.currentTarget.style.color = C.text)}
-            onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+            style={{ color: C.isDark ? 'rgba(255,255,255,0.7)' : C.muted }}
+            onMouseEnter={e => (e.currentTarget.style.color = C.isDark ? 'white' : C.text)}
+            onMouseLeave={e => (e.currentTarget.style.color = C.isDark ? 'rgba(255,255,255,0.7)' : C.muted)}
           >
             <LogOut className="h-4 w-4" />
             <span className="hidden md:inline">Salir</span>
@@ -310,7 +323,8 @@ export default function Dashboard() {
       {/* ── Trial banner ── */}
       {(() => {
         if (!user?.trialEndsAt) return null;
-        // No mostrar si tiene plan PRO activo
+        if (user?.isAdmin) return null;
+        if (user?.plan === 'FREE') return null;
         if (user?.plan === 'PRO' && user?.planInterval === 'LIFETIME') return null;
         if (user?.plan === 'PRO' && user?.planExpiresAt && new Date(user.planExpiresAt).getTime() > Date.now()) return null;
 
@@ -338,7 +352,7 @@ export default function Dashboard() {
           >
             <span>{label}</span>
             <Link
-              to={expired ? '/pricing' : '/dashboard?tab=profesional'}
+              to="/pricing"
               className="shrink-0 font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity"
               style={{ color }}
             >
@@ -482,20 +496,33 @@ export default function Dashboard() {
               <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
                 Apariencia
               </span>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {ACCENT_THEMES.map(t => (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {ACCENT_THEMES.map(t => t.pro ? (
+                  <ProGate key={t.id} isPro={isPro} display="inline-block" compact>
+                    <button
+                      title={t.label}
+                      onClick={() => setAccentId(t.id)}
+                      style={{
+                        width: 22, height: 22, borderRadius: '50%',
+                        background: t.accent,
+                        border: `3px solid ${accentId === t.id ? 'white' : 'transparent'}`,
+                        outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
+                        outlineOffset: '2px', cursor: 'pointer',
+                        display: 'block',
+                      }}
+                    />
+                  </ProGate>
+                ) : (
                   <button
                     key={t.id}
                     title={t.label}
                     onClick={() => setAccentId(t.id)}
                     style={{
-                      width: 22, height: 22,
-                      borderRadius: '50%',
+                      width: 22, height: 22, borderRadius: '50%',
                       background: t.accent,
                       border: `3px solid ${accentId === t.id ? 'white' : 'transparent'}`,
                       outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
-                      outlineOffset: '2px',
-                      cursor: 'pointer',
+                      outlineOffset: '2px', cursor: 'pointer',
                     }}
                   />
                 ))}
@@ -543,11 +570,7 @@ export default function Dashboard() {
               />
             )}
             {mobileSection === 'explorar' && <TabExplorar C={C} />}
-            {mobileSection === 'profesional' && (
-              trialExpired
-                ? <TrialExpiredScreen C={C} />
-                : <TabProfesional profiles={profiles} totalServices={totalServices} bookings={bookings} C={C} />
-            )}
+            {mobileSection === 'agenda' && <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />}
             <div className="mt-10 text-center">
               <Link to="/pricing" className="text-xs" style={{ color: C.muted }}>Ver planes</Link>
             </div>
@@ -603,10 +626,10 @@ export default function Dashboard() {
 
           {/* Other tabs */}
           {([
-            { section: 'inicio'      as const, label: 'Inicio',    icon: <Home className="h-6 w-6" /> },
-            { section: 'citas'       as const, label: 'Citas',     icon: <Calendar className="h-6 w-6" /> },
-            { section: 'explorar'    as const, label: 'Explorar',  icon: <Compass className="h-6 w-6" /> },
-            { section: 'profesional' as const, label: 'Pro',       icon: <Briefcase className="h-6 w-6" /> },
+            { section: 'inicio'   as const, label: 'Inicio',   icon: <Home className="h-6 w-6" /> },
+            { section: 'citas'    as const, label: 'Citas',    icon: <Calendar className="h-6 w-6" /> },
+            { section: 'explorar' as const, label: 'Explorar', icon: <Compass className="h-6 w-6" /> },
+            { section: 'agenda'   as const, label: 'Agenda',   icon: <CalendarDays className="h-6 w-6" /> },
           ]).map(({ section, label, icon }) => {
             const isActive = mobileSection === section;
             return (
@@ -627,184 +650,184 @@ export default function Dashboard() {
               </button>
             );
           })}
+
+          {/* +Añadir Perfil */}
+          {profiles.length === 0 ? (
+            <Link
+              to="/profile/new"
+              className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors"
+              style={{ color: C.accent, textDecoration: 'none' }}
+            >
+              <Plus className="h-6 w-6" />
+              <span style={{ fontSize: 10, fontWeight: 500, lineHeight: 1 }}>+Perfil</span>
+            </Link>
+          ) : (
+            <ProGate isPro={isPro ?? false} display="flex">
+              <div
+                className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors"
+                style={{ color: C.muted }}
+              >
+                <Plus className="h-6 w-6" />
+                <span style={{ fontSize: 10, fontWeight: 500, lineHeight: 1 }}>+Perfil</span>
+              </div>
+            </ProGate>
+          )}
         </div>
       </div>
 
       {/* ════════════════════════════════════════
-          DESKTOP LAYOUT (sidebar + tabs) — unchanged
+          DESKTOP LAYOUT — unified shell + content board
           ════════════════════════════════════════ */}
-      <div className="hidden md:flex flex-1 overflow-hidden" style={{ gap: 12, padding: '12px 12px 12px 12px' }}>
+      <div className="hidden md:flex flex-1 overflow-hidden" style={{ padding: '0 14px 14px 0' }}>
 
-        {/* Sidebar */}
-        <aside
-          className="shrink-0 flex flex-col p-6 gap-5 overflow-y-auto"
-          style={{ width: '400px', background: profileGradient, borderRight: `1px solid ${C.border}`, borderRadius: '16px' }}
-        >
-          {/* Avatar */}
-          <div className="flex flex-col items-center text-center gap-3 pt-2">
-            <div className="relative">
+        {/* Nav Sidebar — transparent, part of the outer shell */}
+        <aside style={{
+          width: 240, flexShrink: 0,
+          background: 'transparent',
+          display: 'flex', flexDirection: 'column',
+          padding: '18px 10px 18px 18px',
+          overflowY: 'auto', scrollbarWidth: 'none',
+        }}>
+
+          {/* Profile header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 4px', marginBottom: 22 }}>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
               <button
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={uploadingAvatar}
-                className="rounded-full overflow-hidden flex items-center justify-center text-4xl font-bold select-none focus:outline-none"
                 style={{
-                  width: '140px', height: '140px',
-                  background: 'rgba(255,255,255,0.18)',
-                  color: 'white',
-                  border: '3px solid rgba(255,255,255,0.45)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                  width: 52, height: 52, borderRadius: '50%', overflow: 'hidden',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 18, fontWeight: 700, color: C.accent,
+                  background: C.accentLight, border: `2px solid ${C.border}`,
+                  outline: 'none', cursor: 'pointer', flexShrink: 0,
                 }}
               >
                 {sidebarAvatar
-                  ? <img src={sidebarAvatar} alt={user?.name} className="w-full h-full object-cover" />
+                  ? <img src={sidebarAvatar} alt={user?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : initials}
               </button>
               <button
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={uploadingAvatar}
-                className="absolute bottom-0 right-0 w-7 h-7 rounded-full flex items-center justify-center"
-                style={{ background: 'rgba(255,255,255,0.25)', border: '2px solid rgba(255,255,255,0.4)' }}
+                style={{
+                  position: 'absolute', bottom: -2, right: -2, width: 18, height: 18, borderRadius: '50%',
+                  background: C.accent, border: `2px solid ${C.isDark ? '#09051a' : 'white'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                }}
               >
                 {uploadingAvatar
-                  ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  : <Camera className="h-3 w-3 text-white" />}
+                  ? <div className="w-2 h-2 border border-white border-t-transparent rounded-full animate-spin" />
+                  : <Camera className="h-2.5 w-2.5 text-white" />}
               </button>
               <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} />
             </div>
-            <div>
-              <p className="font-bold text-2xl leading-tight" style={{ color: 'white' }}>{user?.name}</p>
-              {user?.bio && <p className="text-sm mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.8)' }}>{user.bio}</p>}
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontWeight: 700, fontSize: 14, color: C.text, margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {user?.name}
+              </p>
+              <span style={{ fontSize: 11, fontWeight: 600, background: C.accentLight, color: C.accent, borderRadius: 6, padding: '2px 8px' }}>
+                {isPro ? 'Pro' : 'Free'}
+              </span>
             </div>
           </div>
 
-          {/* Social icons */}
-          <div className="flex justify-center gap-2">
-            {SOCIAL_ICONS.map(({ key, Icon }) => {
-              const url = buildSocialUrl(key, socialLinks[key] || '');
-              if (!url) return (
-                <span key={key} className="p-2 rounded-lg" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                  <Icon className="h-4 w-4" />
-                </span>
-              );
-              return (
-                <a key={key} href={url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-center rounded-full transition-opacity hover:opacity-75"
-                  style={{ width: 36, height: 36, background: 'rgba(0,0,0,0.25)', color: 'white' }}>
-                  <Icon className="h-4 w-4" />
-                </a>
-              );
-            })}
-          </div>
+          {/* "General" — main navigation */}
+          <DashSection label="General">
+            {TABS.map(tab => (
+              <DashNavRow key={tab.id} icon={tab.icon} isActive={activeTab === tab.id} C={C} onClick={() => setActiveTab(tab.id)}>
+                {tab.label}
+              </DashNavRow>
+            ))}
+          </DashSection>
 
-          <div className="h-px" style={{ background: 'rgba(255,255,255,0.2)' }} />
-
-          {/* Editar perfil */}
-          <div className="flex-1" />
-
-          {/* Grouped: Editar perfil + Modo oscuro + Apariencia */}
-          <div className="flex flex-col gap-3">
-            <Link
-              to="/account"
-              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-full"
-              style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.35)', color: 'white' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.3)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.2)')}
-            >
-              <Pencil className="h-4 w-4" />
-              Editar perfil
+          {/* "Mi perfil" */}
+          <DashSection label="Mi perfil">
+            <Link to="/account" style={{ textDecoration: 'none' }}>
+              <DashNavRow icon={<Pencil className="h-4 w-4" />} isActive={false} C={C} onClick={() => {}}>
+                Editar perfil
+              </DashNavRow>
             </Link>
+            {profiles.length > 0 && (
+              <a href={`/${profiles[0].slug}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <DashNavRow icon={<ExternalLink className="h-4 w-4" />} isActive={false} C={C} onClick={() => {}}>
+                  Ver perfil público
+                </DashNavRow>
+              </a>
+            )}
+            {profiles.length === 0 ? (
+              <Link to="/profile/new" style={{ textDecoration: 'none' }}>
+                <DashNavRow icon={<Plus className="h-4 w-4" />} isActive={false} C={C} onClick={() => {}}>
+                  Crear perfil
+                </DashNavRow>
+              </Link>
+            ) : (
+              <ProGate isPro={isPro ?? false}>
+                <DashNavRow icon={<Plus className="h-4 w-4" />} isActive={false} C={C} onClick={() => {}}>
+                  Añadir perfil
+                </DashNavRow>
+              </ProGate>
+            )}
+          </DashSection>
 
-            <button
-              onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-              className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
-              style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.25)' }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'white')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.8)')}
-            >
-              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-            </button>
-
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%' }}>
-              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
-                Apariencia
-              </span>
-              <div style={{ display: 'flex', gap: 10 }}>
-                {ACCENT_THEMES.map(t => (
-                  <button
-                    key={t.id}
-                    title={t.label}
-                    onClick={() => setAccentId(t.id)}
-                    style={{
-                      width: 26, height: 26,
-                      borderRadius: '50%',
-                      background: t.accent,
-                      border: `3px solid ${accentId === t.id ? 'white' : 'transparent'}`,
+          {/* "Preferencias" */}
+          <DashSection label="Preferencias">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px' }}>
+              <span style={{ fontSize: 12, color: C.muted, flexShrink: 0 }}>Color</span>
+              <div style={{ display: 'flex', gap: 7 }}>
+                {ACCENT_THEMES.map(t => t.pro ? (
+                  <ProGate key={t.id} isPro={isPro ?? false} display="inline-block" compact>
+                    <button title={t.label} onClick={() => setAccentId(t.id)} style={{
+                      width: 20, height: 20, borderRadius: '50%', background: t.accent,
+                      border: `3px solid ${accentId === t.id ? (C.isDark ? 'white' : '#333') : 'transparent'}`,
                       outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
-                      outlineOffset: '2px',
-                      cursor: 'pointer',
-                      transition: 'transform 0.15s, outline 0.15s',
-                    }}
-                  />
+                      outlineOffset: '2px', cursor: 'pointer', display: 'block',
+                    }} />
+                  </ProGate>
+                ) : (
+                  <button key={t.id} title={t.label} onClick={() => setAccentId(t.id)} style={{
+                    width: 20, height: 20, borderRadius: '50%', background: t.accent,
+                    border: `3px solid ${accentId === t.id ? (C.isDark ? 'white' : '#333') : 'transparent'}`,
+                    outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
+                    outlineOffset: '2px', cursor: 'pointer',
+                  }} />
                 ))}
               </div>
             </div>
+          </DashSection>
+
+          <div style={{ flex: 1 }} />
+
+          {/* Footer */}
+          <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Link to="/pricing"
+              style={{ fontSize: 14, color: C.muted, textDecoration: 'none', padding: '7px 10px', borderRadius: 8 }}
+              onMouseEnter={e => (e.currentTarget.style.color = C.text)}
+              onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+            >
+              Ver planes
+            </Link>
+            <button
+              onClick={() => { logout(); navigate('/'); }}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', padding: '7px 10px', borderRadius: 8, textAlign: 'left' }}
+              onMouseEnter={e => (e.currentTarget.style.color = C.text)}
+              onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Cerrar sesión
+            </button>
           </div>
-
-          {/* Logout */}
-          <button
-            onClick={() => { logout(); navigate('/'); }}
-            className="flex items-center justify-center gap-2 text-sm transition-colors py-1"
-            style={{ color: 'rgba(255,255,255,0.6)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'white')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Cerrar sesión
-          </button>
-
-          <Link
-            to="/pricing"
-            className="text-center text-xs transition-colors"
-            style={{ color: 'rgba(255,255,255,0.35)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
-          >
-            Ver planes
-          </Link>
         </aside>
 
-        {/* Main area */}
-        <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Tabs */}
-          <div
-            className="flex shrink-0 px-6 justify-start"
-            style={{ background: C.tabsBg, borderBottom: `1px solid ${C.border}`, borderRadius: '16px 16px 0 0' }}
-          >
-            {TABS.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className="flex flex-row items-center gap-1.5 px-4 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap"
-                style={activeTab === tab.id
-                  ? { borderBottomColor: C.accent, color: C.accent }
-                  : { borderBottomColor: 'transparent', color: C.muted }}
-                onMouseEnter={e => { if (activeTab !== tab.id) e.currentTarget.style.color = C.text; }}
-                onMouseLeave={e => { if (activeTab !== tab.id) e.currentTarget.style.color = C.muted; }}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-                {tab.id === 'profesional' && (
-                  <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-semibold leading-none">Pro</span>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab content */}
-          <div className="flex-1 overflow-y-auto p-6" style={{ background: C.tabsBg, borderRadius: '0 0 16px 16px' }}>
-            {activeTab === 'inicio'      && <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} analyticsError={analyticsError} isPro={isPro ?? false} />}
-            {activeTab === 'citas'       && (
+        {/* Content board — floating panel with rounded corners */}
+        <main className="flex-1 flex flex-col overflow-hidden" style={{
+          background: boardBg,
+          borderRadius: 18,
+          boxShadow: C.isDark ? '0 0 0 1px rgba(255,255,255,0.06), 0 8px 40px rgba(0,0,0,0.4)' : '0 0 0 1px rgba(109,40,217,0.15), 0 12px 48px rgba(109,40,217,0.18), 0 4px 16px rgba(109,40,217,0.12)',
+        }}>
+          <div className="flex-1 overflow-y-auto p-6">
+            {activeTab === 'inicio'   && <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} analyticsError={analyticsError} isPro={isPro ?? false} twoCol />}
+            {activeTab === 'citas'    && (
               <TabCitas
                 pendingBookings={pendingBookings}
                 confirmedBookings={confirmedBookings}
@@ -815,12 +838,8 @@ export default function Dashboard() {
                 C={C}
               />
             )}
-            {activeTab === 'explorar'    && <TabExplorar C={C} />}
-            {activeTab === 'profesional' && (
-              trialExpired
-                ? <TrialExpiredScreen C={C} />
-                : <TabProfesional profiles={profiles} totalServices={totalServices} C={C} />
-            )}
+            {activeTab === 'explorar' && <TabExplorar C={C} />}
+            {activeTab === 'agenda'   && <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />}
           </div>
         </main>
       </div>
@@ -828,8 +847,44 @@ export default function Dashboard() {
   );
 }
 
+function DashSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(148,132,170,0.55)', margin: '0 0 4px 10px' }}>
+        {label}
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function DashNavRow({ icon, isActive, C, onClick, children }: { icon: React.ReactNode; isActive: boolean; C: Colors; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '9px 12px', borderRadius: 10, width: '100%', textAlign: 'left',
+        background: isActive ? C.accent : 'transparent',
+        border: 'none', cursor: 'pointer', transition: 'background .15s',
+      }}
+      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = C.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'; }}
+      onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+    >
+      <span style={{ color: isActive ? 'white' : C.isDark ? 'rgba(255,255,255,0.6)' : C.muted, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+        {icon}
+      </span>
+      <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 500, color: isActive ? 'white' : C.isDark ? 'rgba(255,255,255,0.85)' : C.text, lineHeight: 1 }}>
+        {children}
+      </span>
+    </button>
+  );
+}
+
 /* ────────────────── Tab: Inicio ────────────────── */
-function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError, isPro }: {
+function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError, isPro, twoCol = false }: {
   profiles: Profile[];
   bookings: Booking[];
   userName?: string;
@@ -837,27 +892,35 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
   analytics: any;
   analyticsError: boolean;
   isPro: boolean;
+  twoCol?: boolean;
 }) {
   const totalServices = profiles.reduce((sum, p) => sum + p.services.length, 0);
-  return (
-    <div className="max-w-2xl">
-      <h2 className="text-2xl font-bold mb-1" style={{ color: C.text }}>
-        Hola, {userName?.split(' ')[0] ?? 'bienvenido'} 👋
-      </h2>
-      <p className="mb-6" style={{ color: C.muted }}>Aquí tienes un resumen de tu actividad.</p>
-      <div className="grid grid-cols-2 gap-4">
-        <StatCard label="Reservas"    value={bookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED').length} sub="pendientes y confirmadas" color="indigo"  isDark={C.isDark} shadow={C.cardShadow} />
-        <StatCard label="Completadas" value={bookings.filter(b => b.status === 'COMPLETED').length}                           sub="reservas completadas"      color="emerald" isDark={C.isDark} shadow={C.cardShadow} />
-        <StatCard label="Servicios"   value={totalServices}                                                                   sub="en todos tus perfiles"     color="amber"   isDark={C.isDark} shadow={C.cardShadow} />
-        <StatCard label="Perfiles"    value={profiles.length}                                                                 sub="perfiles profesionales"    color="violet"  isDark={C.isDark} shadow={C.cardShadow} />
-      </div>
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const _am = C.accent.match(/rgb\((\d+),(\d+),(\d+)\)/);
+  const [_r, _g, _b] = _am ? [_am[1], _am[2], _am[3]] : ['147', '51', '234'];
+  const copyUrl = (slug: string, id: string) => {
+    navigator.clipboard.writeText(`${window.location.origin}/${slug}`).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
 
+  const statsGrid = (
+    <div className="grid grid-cols-2 gap-4">
+      <StatCard label="Reservas"    value={bookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED').length} sub="pendientes y confirmadas" color="indigo"  isDark={C.isDark} shadow={C.cardShadow} />
+      <StatCard label="Completadas" value={bookings.filter(b => b.status === 'COMPLETED').length}                           sub="reservas completadas"      color="emerald" isDark={C.isDark} shadow={C.cardShadow} />
+      <StatCard label="Servicios"   value={totalServices}                                                                   sub="en todos tus perfiles"     color="amber"   isDark={C.isDark} shadow={C.cardShadow} />
+      <StatCard label="Perfiles"    value={profiles.length}                                                                 sub="perfiles profesionales"    color="violet"  isDark={C.isDark} shadow={C.cardShadow} />
+    </div>
+  );
+
+  const analyticsBlock = (
+    <>
       {analyticsError && (
         <div style={{ color: '#6b6b80', fontSize: 13, textAlign: 'center', padding: 16 }}>
           No se pudo cargar el resumen de reservas.
         </div>
       )}
-
       {analytics && (
         <div style={{
           background: 'rgba(255,255,255,0.04)',
@@ -877,7 +940,6 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
               </Link>
             )}
           </div>
-
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
             {[
               { label: 'Pendientes', value: analytics.byStatus.PENDING, color: '#f59e0b' },
@@ -894,7 +956,6 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
               </div>
             ))}
           </div>
-
           {analytics.byService.length > 0 && (
             <div>
               <p style={{ color: '#9d95b5', fontSize: 13, margin: '0 0 8px' }}>Servicios más solicitados:</p>
@@ -909,7 +970,6 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
               ))}
             </div>
           )}
-
           {!isPro && (
             <p style={{ color: '#6b6b80', fontSize: 12, marginTop: 12, textAlign: 'center' }}>
               Mostrando últimas 10 reservas. <Link to="/pricing" style={{ color: '#a78bfa' }}>Activa Pro</Link> para ver historial completo y tendencias.
@@ -917,6 +977,110 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
           )}
         </div>
       )}
+    </>
+  );
+
+  /* ── Desktop two-column layout ── */
+  if (twoCol) {
+    return (
+      <div style={{ maxWidth: 900, margin: '0 auto' }}>
+        <h2 className="text-2xl font-bold mb-1" style={{ color: C.text }}>
+          Hola, {userName?.split(' ')[0] ?? 'bienvenido'} 👋
+        </h2>
+        <p style={{ color: C.muted, marginBottom: 24 }}>Aquí tienes un resumen de tu actividad.</p>
+        <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {statsGrid}
+          {analyticsBlock}
+        </div>
+        {profiles.length > 0 && (
+          <div style={{ width: 300, flexShrink: 0 }}>
+            <div style={{
+              background: C.isDark
+                ? `linear-gradient(145deg, rgba(${_r},${_g},${_b},0.25) 0%, rgba(${_r},${_g},${_b},0.1) 100%)`
+                : C.accentLight,
+              border: `1.5px solid ${C.isDark ? `rgba(${_r},${_g},${_b},0.4)` : C.accent + '33'}`,
+              borderRadius: 16, padding: '20px 18px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <ExternalLink style={{ width: 15, height: 15, color: 'white' }} />
+                </div>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: C.isDark ? 'white' : C.text, margin: 0 }}>Comparte tu perfil</p>
+                  <p style={{ fontSize: 11, color: C.muted, margin: 0, marginTop: 1 }}>Envíalo a tus clientes</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {profiles.map(p => (
+                  <div key={p.id} style={{
+                    background: C.isDark ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.7)',
+                    borderRadius: 10, padding: '10px 12px',
+                  }}>
+                    {profiles.length > 1 && (
+                      <p style={{ fontSize: 11, fontWeight: 600, color: C.muted, margin: '0 0 4px' }}>{p.title}</p>
+                    )}
+                    <p style={{ fontSize: 12, fontWeight: 600, color: C.accent, fontFamily: 'monospace', margin: '0 0 8px', wordBreak: 'break-all' }}>
+                      aliax.io/{p.slug}
+                    </p>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={() => copyUrl(p.slug, p.id)} style={{
+                        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                        background: C.accent, color: 'white', border: 'none', borderRadius: 8,
+                        fontSize: 12, fontWeight: 600, padding: '7px 0', cursor: 'pointer',
+                      }}>
+                        {copiedId === p.id ? <><span>✓</span> Copiado</> : <><Copy style={{ width: 13, height: 13 }} /> Copiar</>}
+                      </button>
+                      <a href={`/${p.slug}`} target="_blank" rel="noopener noreferrer" style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: 34, background: C.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+                        borderRadius: 8, color: C.isDark ? 'rgba(255,255,255,0.7)' : C.muted, textDecoration: 'none',
+                      }}>
+                        <ExternalLink style={{ width: 13, height: 13 }} />
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Mobile single-column layout ── */
+  return (
+    <div className="max-w-2xl">
+      <h2 className="text-2xl font-bold mb-1" style={{ color: C.text }}>
+        Hola, {userName?.split(' ')[0] ?? 'bienvenido'} 👋
+      </h2>
+      <p className="mb-6" style={{ color: C.muted }}>Aquí tienes un resumen de tu actividad.</p>
+      {statsGrid}
+      {profiles.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <p className="text-sm font-medium mb-2" style={{ color: C.muted }}>Comparte este link con tus clientes</p>
+          <div className="flex flex-col gap-2">
+            {profiles.map(p => (
+              <div key={p.id} className="flex items-center gap-2 rounded-lg px-3 py-2"
+                style={{ background: C.isDark ? 'rgba(108,99,255,0.08)' : 'rgba(108,99,255,0.06)', border: `1px solid ${C.isDark ? 'rgba(108,99,255,0.2)' : 'rgba(108,99,255,0.15)'}` }}>
+                {profiles.length > 1 && (
+                  <span className="text-xs shrink-0 font-medium truncate max-w-20" style={{ color: C.muted }}>{p.title}</span>
+                )}
+                <span className="text-xs flex-1 truncate font-mono" style={{ color: C.accent }}>aliax.io/{p.slug}</span>
+                <button onClick={() => copyUrl(p.slug, p.id)} className="shrink-0 p-1 rounded transition-opacity hover:opacity-70" style={{ color: C.accent }} title="Copiar enlace">
+                  {copiedId === p.id ? <span className="text-xs font-medium text-green-500">✓ Copiado</span> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+                <a href={`/${p.slug}`} target="_blank" rel="noopener noreferrer" className="shrink-0 p-1 rounded transition-opacity hover:opacity-70" style={{ color: C.accent }} title="Ver perfil público">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {analyticsBlock}
     </div>
   );
 }
@@ -1473,232 +1637,65 @@ function TabExplorar({ C }: { C: Colors }) {
   );
 }
 
-/* ────────────────── Tab: Perfil Profesional ────────────────── */
-function TabProfesional({ profiles, totalServices, bookings = [], C }: { profiles: Profile[]; totalServices: number; bookings?: Booking[]; C: Colors }) {
-  const btnBg     = C.isDark ? '#2e2e3d' : '#f1f5f9';
-  const btnBorder = `1px solid ${C.border}`;
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const copyUrl = (slug: string, id: string) => {
-    const url = `${window.location.origin}/${slug}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
-  };
-
+/* ────────────────── Tab: Configurar Agenda ────────────────── */
+function TabAgenda({ theme, profiles, C, isPro }: { theme: 'dark' | 'light'; profiles: Profile[]; C: Colors; isPro: boolean }) {
   if (profiles.length === 0) {
     return (
-      <div className="max-w-lg mx-auto py-16 px-4">
-        {/* Trial banner */}
-        <div
-          className="rounded-2xl p-8 text-center"
-          style={{
-            background: C.isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
-            border: `1px solid ${C.border}`,
-          }}
-        >
-          {/* Badge */}
-          <span
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mb-6"
-            style={{ background: C.accentLight, color: C.accent }}
-          >
-            <Zap className="h-3 w-3" />
-            Prueba gratuita · 14 días
-          </span>
-
-          <h2 className="text-xl font-bold mb-2" style={{ color: C.text }}>
-            Activa tu perfil profesional
-          </h2>
-          <p className="text-sm mb-8" style={{ color: C.muted }}>
-            Crea tu perfil, publicá tus servicios y empezá a recibir reservas.<br />
-            Sin tarjeta de crédito. Cancela cuando quieras.
-          </p>
-
-          {/* Included features */}
-          <ul className="text-left space-y-2.5 mb-8">
-            {[
-              'Perfil público con URL personalizada',
-              'Gestión de servicios y precios',
-              'Reservas online + notificaciones por WhatsApp',
-              'Selector de apariencia y colores',
-            ].map(item => (
-              <li key={item} className="flex items-center gap-2.5 text-sm" style={{ color: C.muted }}>
-                <span
-                  className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                  style={{ background: C.accent }}
-                >
-                  ✓
-                </span>
-                {item}
-              </li>
-            ))}
-          </ul>
-
+      <div style={{ maxWidth: 560, margin: '0 auto' }}>
+        {/* CTA banner */}
+        <div style={{
+          background: C.cardBg, border: `1px solid ${C.border}`,
+          borderRadius: 14, padding: '14px 18px', marginBottom: 24,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        }}>
+          <div>
+            <p style={{ color: C.text, fontWeight: 600, fontSize: 14, margin: 0 }}>Activa tu agenda creando tu perfil</p>
+            <p style={{ color: C.muted, fontSize: 12, margin: '3px 0 0' }}>Con tu perfil recibirás reservas en línea</p>
+          </div>
           <Link
             to="/profile/new"
-            className="inline-flex items-center gap-2 px-6 py-3 text-white text-sm font-semibold rounded-xl w-full justify-center transition-opacity hover:opacity-90"
-            style={{ background: C.accent }}
+            className="flex items-center gap-1.5 whitespace-nowrap text-white text-xs font-semibold px-4 py-2 rounded-lg transition-opacity hover:opacity-90"
+            style={{ background: C.accent, textDecoration: 'none' }}
           >
-            <Plus className="h-4 w-4" />
-            Crear mi perfil gratis
+            <Plus className="h-3.5 w-3.5" /> Crear perfil
           </Link>
-          <p className="mt-3 text-xs" style={{ color: C.isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' }}>
-            Sin tarjeta de crédito · Cancela cuando quieras
-          </p>
+        </div>
+
+        {/* Free features */}
+        <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', margin: '0 0 10px' }}>Incluido gratis</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+          {[
+            { icon: '📅', label: 'Disponibilidad', desc: 'Define tus días y horarios de atención' },
+            { icon: '🗂️', label: 'Servicios', desc: 'Crea y administra tu catálogo de servicios' },
+          ].map(({ icon, label, desc }) => (
+            <div key={label} style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px' }}>
+              <span style={{ fontSize: 22 }}>{icon}</span>
+              <p style={{ color: C.text, fontWeight: 600, fontSize: 13, margin: '8px 0 4px' }}>{label}</p>
+              <p style={{ color: C.muted, fontSize: 12, margin: 0, lineHeight: 1.4 }}>{desc}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Pro features */}
+        <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', margin: '0 0 10px' }}>Plan Pro</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {[
+            { icon: '🗓️', label: 'Horarios por servicio', desc: 'Disponibilidad independiente para cada servicio' },
+            { icon: '🚫', label: 'Bloqueos fijos', desc: 'Bloquea franjas recurrentes automáticamente' },
+            { icon: '⚙️', label: 'Reglas de reserva', desc: 'Auto-confirmación, lista de espera y pagos previos' },
+            { icon: '🔔', label: 'Notificaciones Pro', desc: 'Recordatorios, feedback y reagendamiento automático' },
+          ].map(({ icon, label, desc }) => (
+            <ProGate key={label} isPro={isPro}>
+              <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px', height: '100%', boxSizing: 'border-box' }}>
+                <span style={{ fontSize: 22 }}>{icon}</span>
+                <p style={{ color: C.text, fontWeight: 600, fontSize: 13, margin: '8px 0 4px' }}>{label}</p>
+                <p style={{ color: C.muted, fontSize: 12, margin: 0, lineHeight: 1.4 }}>{desc}</p>
+              </div>
+            </ProGate>
+          ))}
         </div>
       </div>
     );
   }
-
-  return (
-    <div className="max-w-3xl">
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h2 className="text-xl font-semibold" style={{ color: C.text }}>Mis Perfiles</h2>
-          <p className="text-sm mt-0.5" style={{ color: C.muted }}>
-            {profiles.length} {profiles.length === 1 ? 'perfil' : 'perfiles'} &middot; {totalServices} servicios en total
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <button
-            disabled
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg opacity-50 cursor-not-allowed"
-            style={{ background: btnBg, color: C.muted, border: btnBorder }}
-          >
-            <Plus className="h-4 w-4" />
-            Añadir Perfil
-          </button>
-          <p className="text-xs" style={{ color: C.muted }}>Próximamente</p>
-        </div>
-      </div>
-      {/* Stats resumen profesional */}
-      {(() => {
-        const now = new Date();
-        const thisMonth = bookings.filter(b => {
-          const d = new Date(b.date);
-          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && b.status !== 'CANCELLED';
-        });
-        const totalMins = thisMonth.reduce((acc, b) => {
-          const [sh, sm] = b.startTime.split(':').map(Number);
-          const [eh, em] = b.endTime.split(':').map(Number);
-          return acc + ((eh * 60 + em) - (sh * 60 + sm));
-        }, 0);
-        const confirmed = thisMonth.filter(b => b.status === 'CONFIRMED' || b.status === 'COMPLETED').length;
-        const avgHours = thisMonth.length > 0 ? Math.round((totalMins / thisMonth.length) / 6) / 10 : 0;
-        const occupancy = thisMonth.length > 0 ? Math.round((confirmed / thisMonth.length) * 100) : 0;
-        return (
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            <StatCard label="Reservas este mes" value={thisMonth.length}       sub="del mes actual"        color="indigo"  isDark={C.isDark} shadow={C.cardShadow} />
-            <StatCard label="Promedio por cita" value={`${avgHours}h`}         sub="duración promedio"     color="emerald" isDark={C.isDark} shadow={C.cardShadow} />
-            <StatCard label="Servicios activos" value={totalServices}          sub="en todos tus perfiles" color="amber"   isDark={C.isDark} shadow={C.cardShadow} />
-            <StatCard label="Ocupación"         value={`${occupancy}%`}        sub="citas confirmadas"     color="violet"  isDark={C.isDark} shadow={C.cardShadow} />
-          </div>
-        );
-      })()}
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        {profiles.map(p => (
-          <div key={p.id} className="rounded-xl p-5" style={{ background: C.cardBg, border: `1px solid ${C.border}`, boxShadow: C.cardShadow }}>
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <h3 className="font-semibold" style={{ color: C.text }}>{p.title}</h3>
-                <p className="text-sm" style={{ color: C.muted }}>{p.profession}</p>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full" style={{
-                background: p.published
-                  ? (C.isDark ? 'rgba(34,197,94,0.15)' : '#dcfce7')
-                  : (C.isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9'),
-                color: p.published
-                  ? (C.isDark ? '#4ade80' : '#15803d')
-                  : C.muted,
-              }}>
-                {p.published ? 'Publicado' : 'Borrador'}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-sm mb-3" style={{ color: C.muted }}>
-              <span>{p.services.length} servicios</span>
-              <span>&middot;</span>
-              <span>{p._count.bookings} reservas</span>
-              <span>&middot;</span>
-              <span className="capitalize">{p.template.toLowerCase()}</span>
-            </div>
-
-            {/* URL pública */}
-            <div className="mb-3">
-              <p className="text-xs mb-1.5 font-medium" style={{ color: C.muted }}>Comparte este link con tus clientes</p>
-              <div
-                className="flex items-center gap-2 rounded-lg px-3 py-2"
-                style={{ background: C.isDark ? 'rgba(108,99,255,0.08)' : 'rgba(108,99,255,0.06)', border: `1px solid ${C.isDark ? 'rgba(108,99,255,0.2)' : 'rgba(108,99,255,0.15)'}` }}
-              >
-                <span className="text-xs flex-1 truncate font-mono" style={{ color: C.accent }}>
-                  aliax.io/{p.slug}
-                </span>
-              <button
-                onClick={() => copyUrl(p.slug, p.id)}
-                className="shrink-0 p-1 rounded transition-opacity hover:opacity-70"
-                style={{ color: C.accent }}
-                title="Copiar enlace"
-              >
-                {copiedId === p.id
-                  ? <span className="text-xs font-medium text-green-500">✓ Copiado</span>
-                  : <Copy className="h-3.5 w-3.5" />}
-              </button>
-              <a
-                href={`/${p.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 p-1 rounded transition-opacity hover:opacity-70"
-                style={{ color: C.accent }}
-                title="Ver perfil público"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Link to="/dashboard/scheduling" className="flex-1 text-sm px-3 py-2 rounded-lg inline-flex items-center justify-center gap-1.5 font-medium" style={{ background: C.accentLight, color: C.accent, border: `1px solid ${C.accent}33` }}>
-                <CalendarDays className="h-3.5 w-3.5" /> Configurar Agenda
-              </Link>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TrialExpiredScreen({ C }: { C: Colors }) {
-  return (
-    <div className="max-w-lg mx-auto py-16 px-4">
-      <div
-        className="rounded-2xl p-8 text-center"
-        style={{ background: C.isDark ? 'rgba(255,255,255,0.04)' : '#fef2f2', border: `1px solid ${C.isDark ? '#7f1d1d' : '#fecaca'}` }}
-      >
-        <div
-          className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5 text-2xl"
-          style={{ background: C.isDark ? 'rgba(127,29,29,0.4)' : '#fee2e2' }}
-        >
-          🔒
-        </div>
-        <h2 className="text-xl font-bold mb-2" style={{ color: C.text }}>
-          Tu período de prueba finalizó
-        </h2>
-        <p className="text-sm mb-8" style={{ color: C.muted }}>
-          Para seguir recibiendo reservas y gestionar tu perfil profesional, activá tu plan.
-        </p>
-        <Link
-          to="/pricing"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 text-white text-sm font-semibold rounded-xl w-full transition-opacity hover:opacity-90"
-          style={{ background: '#6b63ff' }}
-        >
-          Activar plan profesional
-        </Link>
-        <p className="mt-3 text-xs" style={{ color: C.isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' }}>
-          Soporte en soporte@aliax.io
-        </p>
-      </div>
-    </div>
-  );
+  return <SchedulingPanel theme={theme} />;
 }

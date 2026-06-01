@@ -17,6 +17,9 @@ export const env = {
   STRIPE_PRICE_YEARLY: process.env.STRIPE_PRICE_YEARLY || '',
   STRIPE_PRICE_LIFETIME_LAUNCH: process.env.STRIPE_PRICE_LIFETIME_LAUNCH || '',
   STRIPE_PRICE_LIFETIME: process.env.STRIPE_PRICE_LIFETIME || '',
+  STRIPE_PRICE_MONTHLY_MXN: process.env.STRIPE_PRICE_MONTHLY_MXN || '',
+  STRIPE_PRICE_LIFETIME_LAUNCH_MXN: process.env.STRIPE_PRICE_LIFETIME_LAUNCH_MXN || '',
+  STRIPE_PRICE_LIFETIME_REGULAR_MXN: process.env.STRIPE_PRICE_LIFETIME_REGULAR_MXN || '',
   PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID || '',
   PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET || '',
   PAYPAL_PLAN_MONTHLY: process.env.PAYPAL_PLAN_MONTHLY || '',
@@ -24,4 +27,5 @@ export const env = {
   PAYPAL_BASE_URL: process.env.PAYPAL_BASE_URL || 'https://api-m.sandbox.paypal.com',
   RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || 'Aliax <notificaciones@aliax.io>',
+  RESEND_AUDIENCE_ID: process.env.RESEND_AUDIENCE_ID || '',
 };

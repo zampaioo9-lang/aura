@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { requireActiveSubscription } from '../middleware/requireActiveSubscription';
 import { AppError } from '../middleware/errorHandler';
 import { createScheduleBlockSchema, updateScheduleBlockSchema } from '../utils/validation';
 
 const router = Router();
 const prisma = new PrismaClient();
+
+router.use(authMiddleware, requireActiveSubscription);
 
 async function verifyOwnership(blockId: string, userId: string) {
   const block = await prisma.scheduleBlock.findUnique({

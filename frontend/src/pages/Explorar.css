@@ -1,0 +1,81 @@
+.explorar-root {
+  font-family: 'Sora', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Fade-up con blur — signature motion sites ── */
+@keyframes ex-fade-up {
+  0%   { opacity: 0; transform: translateY(24px); filter: blur(6px); }
+  100% { opacity: 1; transform: translateY(0);    filter: blur(0);   }
+}
+@keyframes ex-fade-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ── Search bar glow pulse ── */
+@keyframes ex-glow {
+  0%,100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.12), 0 8px 40px rgba(0,0,0,0.6); }
+  50%      { box-shadow: 0 0 0 1px rgba(167,139,250,0.45), 0 8px 60px rgba(107,99,255,0.3), 0 0 80px rgba(107,99,255,0.12); }
+}
+
+/* ── Loader ── */
+@keyframes ex-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Stagger clases ── */
+.ex-a1 { animation: ex-fade-up 0.7s cubic-bezier(0.16,1,0.3,1) 0.10s both; }
+.ex-a2 { animation: ex-fade-up 0.7s cubic-bezier(0.16,1,0.3,1) 0.22s both; }
+.ex-a3 { animation: ex-fade-up 0.7s cubic-bezier(0.16,1,0.3,1) 0.34s both; }
+.ex-a4 { animation: ex-fade-up 0.7s cubic-bezier(0.16,1,0.3,1) 0.46s both; }
+.ex-a5 { animation: ex-fade-in 0.6s ease                        0.65s both; }
+.ex-a6 { animation: ex-fade-in 0.5s ease                        0.20s both; }
+
+/* ── Search bar ── */
+.ex-search-bar { animation: ex-glow 4s ease-in-out infinite; }
+.ex-btn-search  { transition: filter 0.2s ease; }
+.ex-btn-search:hover { filter: brightness(1.2); }
+
+/* ── Cards ── */
+.ex-card {
+  transition: transform 0.25s cubic-bezier(0.16,1,0.3,1),
+              box-shadow 0.25s ease,
+              border-color 0.25s ease,
+              background 0.25s ease;
+}
+.ex-card:hover {
+  transform: translateY(-10px) !important;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.7),
+              0 0 0 1px rgba(167,139,250,0.45),
+              0 0 40px rgba(107,99,255,0.15) !important;
+  background: rgba(255,255,255,0.1) !important;
+}
+.ex-card-pro:hover { border-color: rgba(167,139,250,0.7) !important; }
+
+/* ── Pills ── */
+.ex-pill { transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease; }
+.ex-pill:hover {
+  border-color: rgba(167,139,250,0.5) !important;
+  color: #c4b5fd !important;
+  background: rgba(107,99,255,0.14) !important;
+}
+
+/* ── Spinner ── */
+.ex-spinner { animation: ex-spin 0.75s linear infinite; }
+
+/* ── Inputs ── */
+input::placeholder { color: rgba(255,255,255,0.3); }
+input:focus { outline: none; }
+
+/* ── Search bar — mobile: ambos campos en una línea ── */
+@media (max-width: 640px) {
+  .ex-sf-profession { flex: 1.5; }
+  .ex-sf-profession input { padding: 16px 8px 16px 14px !important; font-size: 14px !important; }
+  .ex-sf-sep { margin: 10px 0 !important; }
+  .ex-sf-city { min-width: 0 !important; flex: 1; }
+  .ex-sf-city input { padding: 16px 8px 16px 34px !important; font-size: 14px !important; }
+  .ex-sf-pin { left: 11px !important; }
+  .ex-btn-search { padding: 0 14px !important; gap: 0 !important; }
+  .ex-btn-search-label { display: none; }
+}

@@ -14,10 +14,11 @@ const LAUNCH_END = new Date('2026-03-29T00:00:00Z');
 // POST /api/subscriptions/stripe/checkout
 router.post('/stripe/checkout', authMiddleware, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { interval } = req.body as { interval?: string };
+    const { interval, currency } = req.body as { interval?: string; currency?: string };
     if (interval !== 'MONTHLY' && interval !== 'YEARLY' && interval !== 'LIFETIME') {
       throw new AppError(400, 'interval must be MONTHLY, YEARLY or LIFETIME');
     }
+    const resolvedCurrency = currency === 'MXN' ? 'MXN' : 'USD';
 
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
@@ -25,10 +26,12 @@ router.post('/stripe/checkout', authMiddleware, async (req: AuthRequest, res: Re
     });
     if (!user) throw new AppError(404, 'User not found');
 
-    const url = await createCheckoutSession(req.userId!, user.email, interval);
+    const url = await createCheckoutSession(req.userId!, user.email, interval, resolvedCurrency);
     res.json({ url });
-  } catch (err) {
-    next(err);
+  } catch (err: any) {
+    console.error('Stripe checkout error:', err?.message, err?.raw || '');
+    const message = err?.raw?.message || err?.message || 'Error interno';
+    res.status(500).json({ error: message });
   }
 });
 
@@ -80,12 +83,17 @@ router.post('/paypal/capture', authMiddleware, async (req: AuthRequest, res: Res
 // POST /api/subscriptions/paypal/order/create  (pago único Lifetime)
 router.post('/paypal/order/create', authMiddleware, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const { currency } = req.body as { currency?: string };
+    const resolvedCurrency = currency === 'MXN' ? 'MXN' : 'USD';
     const isLaunch = Date.now() < LAUNCH_END.getTime();
-    const amount = isLaunch ? '79.00' : '149.00';
+    const amount = resolvedCurrency === 'MXN'
+      ? (isLaunch ? '1299.00' : '2499.00')
+      : (isLaunch ? '79.00' : '149.00');
     const { orderId, approvalUrl } = await createPayPalOrder(
       amount,
       `${env.FRONTEND_URL}/payment/paypal-return`,
       `${env.FRONTEND_URL}/pricing`,
+      resolvedCurrency,
     );
     res.json({ orderId, approvalUrl });
   } catch (err) {

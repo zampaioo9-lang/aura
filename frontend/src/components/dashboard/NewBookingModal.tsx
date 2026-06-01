@@ -3,6 +3,7 @@ import { X, Calendar, Clock, User, Mail, Phone, FileText, Briefcase } from 'luci
 import api from '../../api/client';
 import { useToast } from '../Toast';
 import { generateTimeOptions } from '../../lib/utils';
+import PhoneInput from '../PhoneInput';
 
 interface Colors {
   cardBg: string;
@@ -36,11 +37,12 @@ interface Props {
   C: Colors;
   onClose: () => void;
   onCreated: () => void;
+  prefillClient?: { name: string; email: string; phone: string };
 }
 
 const TIME_OPTIONS = generateTimeOptions(0, 1440, 15);
 
-export default function NewBookingModal({ slot, services, C, onClose, onCreated }: Props) {
+export default function NewBookingModal({ slot, services, C, onClose, onCreated, prefillClient }: Props) {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -49,9 +51,9 @@ export default function NewBookingModal({ slot, services, C, onClose, onCreated 
     date: slot.date,
     startTime: slot.time,
     serviceId: services[0]?.id ?? '',
-    clientName: '',
-    clientEmail: '',
-    clientPhone: '',
+    clientName: prefillClient?.name ?? '',
+    clientEmail: prefillClient?.email ?? '',
+    clientPhone: prefillClient?.phone ?? '',
     clientNotes: '',
   });
 
@@ -101,6 +103,7 @@ export default function NewBookingModal({ slot, services, C, onClose, onCreated 
     background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgb(248,247,252)',
     border: `1px solid ${C.border}`,
     color: C.text,
+    colorScheme: C.isDark ? 'dark' : 'light',
     borderRadius: 8,
     padding: '8px 12px',
     width: '100%',
@@ -225,12 +228,10 @@ export default function NewBookingModal({ slot, services, C, onClose, onCreated 
           {/* Client Phone */}
           <div>
             <label style={labelStyle}><Phone className="h-3.5 w-3.5" /> Teléfono (opcional)</label>
-            <input
-              type="tel"
-              placeholder="+34612345678"
+            <PhoneInput
               value={form.clientPhone}
-              onChange={e => set('clientPhone', e.target.value)}
-              style={inputStyle}
+              onChange={val => set('clientPhone', val)}
+              placeholder="55 1234 5678"
             />
           </div>
 

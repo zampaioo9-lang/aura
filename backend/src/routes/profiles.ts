@@ -98,15 +98,26 @@ router.get('/check-username/:username', async (req, res, next) => {
 // GET /api/profiles/directory — Public directory with filters
 router.get('/directory', async (req, res, next) => {
   try {
-    const { profession, city, page = '1', limit = '20' } = req.query as Record<string, string>;
+    const {
+      profession, city, country,
+      therapeuticApproach, problematic, population,
+      modality, maxPrice,
+      page = '1', limit = '20',
+    } = req.query as Record<string, string>;
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.min(50, parseInt(limit, 10) || 20);
     const skip = (pageNum - 1) * limitNum;
 
     const baseWhere: Prisma.ProfileWhereInput = { published: true };
-    if (profession) baseWhere.profession = { contains: profession, mode: 'insensitive' };
-    if (city) (baseWhere as any).country = { contains: city, mode: 'insensitive' };
+    if (profession)           baseWhere.profession           = { contains: profession, mode: 'insensitive' };
+    if (city)                 baseWhere.city                 = { contains: city, mode: 'insensitive' };
+    if (country)              baseWhere.country              = { contains: country, mode: 'insensitive' };
+    if (modality)             baseWhere.modality             = modality;
+    if (therapeuticApproach)  baseWhere.therapeuticApproaches = { hasSome: [therapeuticApproach] };
+    if (problematic)          baseWhere.problematics         = { hasSome: [problematic] };
+    if (population)           baseWhere.populations          = { hasSome: [population] };
+    if (maxPrice)             baseWhere.pricePerSession      = { lte: parseFloat(maxPrice) };
 
     const now = new Date();
 
@@ -152,7 +163,20 @@ router.get('/directory', async (req, res, next) => {
       bio: true,
       avatar: true,
       country: true,
+      city: true,
       specialty: true,
+      modality: true,
+      pricePerSession: true,
+      sessionCurrency: true,
+      sessionDurationMinutes: true,
+      therapeuticApproaches: true,
+      problematics: true,
+      populations: true,
+      languages: true,
+      cedula: true,
+      degree: true,
+      university: true,
+      yearsExperience: true,
       user: {
         select: { plan: true, planExpiresAt: true },
       },

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, CheckCircle, XCircle, Check, Pencil, Calendar, Clock } from 'lucide-react';
 import api from '../../api/client';
 import { timeToMinutes, minutesToTime } from '../../lib/utils';
 import NewBookingModal from './NewBookingModal';
@@ -97,6 +97,10 @@ export default function ProfessionalCalendar({ C, profiles }: { C: Colors; profi
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalSlot, setModalSlot] = useState<ModalSlot | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<CalendarBooking | null>(null);
+  const [dragging, setDragging] = useState<CalendarBooking | null>(null);
+  const [dragOver, setDragOver] = useState<{ date: string; startMins: number } | null>(null);
+  const [dragError, setDragError] = useState('');
 
   const days = weekDays(monday);
   const fromDate = toDateStr(days[0]);
@@ -164,6 +168,34 @@ export default function ProfessionalCalendar({ C, profiles }: { C: Colors; profi
   }
   function goToday() { setMonday(startOfWeek(new Date())); }
 
+  function wouldConflict(newDate: string, newStartMins: number, duration: number, excludeId: string): boolean {
+    const newEndMins = newStartMins + duration;
+    return bookings.some(b => {
+      if (b.id === excludeId) return false;
+      if (b.date.slice(0, 10) !== newDate) return false;
+      if (b.status === 'CANCELLED' || b.status === 'COMPLETED') return false;
+      return newStartMins < timeToMinutes(b.endTime) && newEndMins > timeToMinutes(b.startTime);
+    });
+  }
+
+  async function handleDragReschedule(booking: CalendarBooking, newDate: string, newStartMins: number) {
+    setDragging(null);
+    setDragOver(null);
+    const duration = timeToMinutes(booking.endTime) - timeToMinutes(booking.startTime);
+    if (newDate === booking.date.slice(0, 10) && newStartMins === timeToMinutes(booking.startTime)) return;
+    try {
+      await api.patch(`/bookings/${booking.id}/reschedule`, {
+        date: newDate,
+        startTime: minutesToTime(newStartMins),
+        endTime: minutesToTime(newStartMins + duration),
+      });
+      fetchWeek();
+    } catch (err: any) {
+      setDragError(err?.response?.data?.error ?? 'No se pudo mover la cita.');
+      setTimeout(() => setDragError(''), 4000);
+    }
+  }
+
   const weekLabel = (() => {
     const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
     const start = days[0].toLocaleDateString('es-ES', opts);
@@ -204,9 +236,19 @@ export default function ProfessionalCalendar({ C, profiles }: { C: Colors; profi
           </button>
         </div>
         <p className="text-xs" style={{ color: C.muted }}>
-          Clic en un horario libre para crear una cita
+          Clic en horario libre para crear · clic o arrastra una cita para moverla
         </p>
       </div>
+
+      {dragError && (
+        <div style={{
+          marginBottom: 10, padding: '8px 14px', borderRadius: 8,
+          background: 'rgba(239,68,68,0.10)', border: '1px solid #fca5a5',
+          fontSize: 13, color: '#b91c1c',
+        }}>
+          {dragError}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
@@ -267,31 +309,66 @@ export default function ProfessionalCalendar({ C, profiles }: { C: Colors; profi
                     const occupied = slotBookings.length > 0;
                     const clickable = within && !occupied;
 
+                    // Preview drag target in this cell
+                    const isPreviewCell = dragging && dragOver?.date === toDateStr(d) && Math.floor((dragOver?.startMins ?? -1) / 60) === hour;
+                    const previewDuration = dragging ? timeToMinutes(dragging.endTime) - timeToMinutes(dragging.startTime) : 0;
+                    const previewConflict = isPreviewCell && dragOver ? wouldConflict(dragOver.date, dragOver.startMins, previewDuration, dragging!.id) : false;
+
                     return (
                       <div
                         key={di}
-                        onClick={() => clickable && handleSlotClick(d, hour)}
+                        onClick={() => !dragging && clickable && handleSlotClick(d, hour)}
+                        onDragOver={e => {
+                          if (!dragging) return;
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = 'move';
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const offsetY = Math.max(0, e.clientY - rect.top);
+                          const snapped = Math.round((offsetY / CELL_H) * 4) * 15;
+                          setDragOver({ date: toDateStr(d), startMins: hour * 60 + Math.min(45, snapped) });
+                        }}
+                        onDragLeave={e => {
+                          if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(null);
+                        }}
+                        onDrop={e => {
+                          e.preventDefault();
+                          if (!dragging || !dragOver || previewConflict) return;
+                          handleDragReschedule(dragging, dragOver.date, dragOver.startMins);
+                        }}
                         style={{
                           borderLeft: `1px solid ${C.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
-                          background: within
-                            ? (C.isDark ? 'transparent' : 'transparent')
-                            : (C.isDark ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.04)'),
-                          cursor: clickable ? 'pointer' : 'default',
+                          background: within ? 'transparent' : (C.isDark ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.04)'),
+                          cursor: clickable && !dragging ? 'pointer' : 'default',
                           position: 'relative',
                           transition: 'background 0.15s',
                         }}
                         onMouseEnter={e => {
-                          if (clickable) (e.currentTarget as HTMLDivElement).style.background = C.accentLight;
+                          if (clickable && !dragging) (e.currentTarget as HTMLDivElement).style.background = C.accentLight;
                         }}
                         onMouseLeave={e => {
-                          if (clickable) (e.currentTarget as HTMLDivElement).style.background = 'transparent';
+                          if (clickable && !dragging) (e.currentTarget as HTMLDivElement).style.background = 'transparent';
                         }}
                       >
                         {/* Free slot hint */}
-                        {clickable && (
+                        {clickable && !dragging && (
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                             <Plus className="h-3.5 w-3.5" style={{ color: C.accent }} />
                           </div>
+                        )}
+
+                        {/* Drag preview */}
+                        {isPreviewCell && dragOver && (
+                          <div style={{
+                            position: 'absolute',
+                            top: ((dragOver.startMins % 60) / 60) * CELL_H + 2,
+                            left: 2, right: 2,
+                            height: Math.max((previewDuration / 60) * CELL_H - 4, 20),
+                            zIndex: 20,
+                            background: previewConflict ? 'rgba(239,68,68,0.25)' : 'rgba(108,99,255,0.25)',
+                            border: `2px dashed ${previewConflict ? '#ef4444' : '#6c63ff'}`,
+                            borderRadius: 6,
+                            pointerEvents: 'none',
+                          }} />
                         )}
 
                         {/* Booking blocks */}
@@ -304,9 +381,19 @@ export default function ProfessionalCalendar({ C, profiles }: { C: Colors; profi
                           const durationMins = timeToMinutes(b.endTime) - timeToMinutes(b.startTime);
                           const heightPx = Math.max((durationMins / 60) * CELL_H - 4, CELL_H - 4);
 
+                          const isDraggingThis = dragging?.id === b.id;
                           return (
                             <div
                               key={b.id}
+                              draggable
+                              onClick={e => { e.stopPropagation(); if (!dragging) setSelectedBooking(b); }}
+                              onDragStart={e => {
+                                e.stopPropagation();
+                                setDragging(b);
+                                setDragError('');
+                                e.dataTransfer.effectAllowed = 'move';
+                              }}
+                              onDragEnd={() => { setDragging(null); setDragOver(null); }}
                               style={{
                                 position: 'absolute',
                                 top: 2,
@@ -319,8 +406,12 @@ export default function ProfessionalCalendar({ C, profiles }: { C: Colors; profi
                                 borderRadius: 6,
                                 padding: '2px 5px',
                                 overflow: 'hidden',
-                                pointerEvents: 'none',
+                                cursor: isDraggingThis ? 'grabbing' : 'grab',
+                                transition: 'filter 0.15s, opacity 0.15s',
+                                opacity: isDraggingThis ? 0.35 : 1,
                               }}
+                              onMouseEnter={e => { if (!isDraggingThis) (e.currentTarget as HTMLDivElement).style.filter = 'brightness(0.92)'; }}
+                              onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.filter = 'none'}
                             >
                               <p className="text-xs font-semibold leading-tight truncate" style={{ color: sc.text }}>
                                 {b.clientName}
@@ -365,7 +456,7 @@ export default function ProfessionalCalendar({ C, profiles }: { C: Colors; profi
         </div>
       </div>
 
-      {/* Modal */}
+      {/* New booking modal */}
       {modalSlot && (
         <NewBookingModal
           slot={modalSlot}
@@ -376,6 +467,300 @@ export default function ProfessionalCalendar({ C, profiles }: { C: Colors; profi
           onCreated={() => { setModalSlot(null); fetchWeek(); }}
         />
       )}
+
+      {/* Booking detail modal */}
+      {selectedBooking && (
+        <BookingDetailModal
+          booking={selectedBooking}
+          C={C}
+          onClose={() => setSelectedBooking(null)}
+          onUpdated={() => { setSelectedBooking(null); fetchWeek(); }}
+        />
+      )}
     </>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// BOOKING DETAIL MODAL
+// ════════════════════════════════════════════════════════════════════
+const STATUS_LABELS: Record<string, string> = {
+  CONFIRMED: 'Confirmada',
+  PENDING:   'Pendiente',
+  COMPLETED: 'Completada',
+  CANCELLED: 'Cancelada',
+  NO_SHOW:   'No se presentó',
+};
+
+function BookingDetailModal({
+  booking, C, onClose, onUpdated,
+}: {
+  booking: CalendarBooking;
+  C: Colors;
+  onClose: () => void;
+  onUpdated: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editDate, setEditDate] = useState(booking.date.slice(0, 10));
+  const [editTime, setEditTime] = useState(booking.startTime.slice(0, 5));
+  const [error, setError] = useState('');
+
+  const sc = STATUS_COLORS[booking.status] ?? STATUS_COLORS.CONFIRMED;
+
+  async function doAction(action: 'confirm' | 'cancel' | 'complete') {
+    setLoading(true);
+    setError('');
+    try {
+      await api.put(`/bookings/${booking.id}/${action}`);
+      onUpdated();
+    } catch (err: any) {
+      setError(err?.response?.data?.error ?? 'No se pudo actualizar la cita. Intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function doEdit() {
+    setLoading(true);
+    setError('');
+    try {
+      const durationMins = timeToMinutes(booking.endTime) - timeToMinutes(booking.startTime);
+      const newStartMins = timeToMinutes(editTime);
+      const newEndTime = minutesToTime(newStartMins + durationMins);
+      await api.patch(`/bookings/${booking.id}/reschedule`, {
+        date: editDate,
+        startTime: editTime,
+        endTime: newEndTime,
+      });
+      onUpdated();
+    } catch (err: any) {
+      setError(err?.response?.data?.error ?? 'No se pudo actualizar la cita. Intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const canConfirm  = booking.status === 'PENDING';
+  const canComplete = booking.status === 'CONFIRMED';
+  const canCancel   = booking.status === 'PENDING';
+  const canEdit     = booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED';
+
+  const dayLabel = new Date(booking.date.slice(0, 10) + 'T12:00:00').toLocaleDateString('es-ES', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: C.cardBg,
+          border: `1px solid ${C.border}`,
+          borderRadius: 16,
+          boxShadow: C.cardShadow,
+          width: '100%',
+          maxWidth: 440,
+          overflow: 'hidden',
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          padding: '18px 20px 14px',
+          borderBottom: `1px solid ${C.border}`,
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+        }}>
+          <div>
+            <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8, color: C.muted, marginBottom: 4 }}>
+              Detalle de cita
+            </p>
+            <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 20, color: C.text, lineHeight: 1.2 }}>
+              {booking.clientName}
+            </h3>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{
+              fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20,
+              background: sc.bg, color: sc.text, border: `1px solid ${sc.border}`,
+            }}>
+              {STATUS_LABELS[booking.status] ?? booking.status}
+            </span>
+            <button
+              onClick={onClose}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.muted, padding: 2, lineHeight: 0 }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '18px 20px' }}>
+          {/* Service */}
+          <div style={{
+            background: C.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+            borderRadius: 10, padding: '12px 14px', marginBottom: 14,
+          }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 2 }}>{booking.service.name}</p>
+            <p style={{ fontSize: 12, color: C.muted }}>{booking.profile.title}</p>
+          </div>
+
+          {/* Date / time — view or edit */}
+          {!editMode ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Calendar size={14} style={{ color: C.accent, flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontSize: 10, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Fecha</p>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: C.text, textTransform: 'capitalize' }}>{dayLabel}</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Clock size={14} style={{ color: C.accent, flexShrink: 0 }} />
+                <div>
+                  <p style={{ fontSize: 10, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Horario</p>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: C.text }}>{booking.startTime.slice(0,5)} – {booking.endTime.slice(0,5)} ({booking.service.durationMinutes} min)</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+              <div>
+                <label style={{ fontSize: 11, color: C.muted, display: 'block', marginBottom: 4 }}>Nueva fecha</label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={e => setEditDate(e.target.value)}
+                  style={{
+                    width: '100%', padding: '7px 10px', borderRadius: 8, fontSize: 13,
+                    background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                    border: `1px solid ${C.border}`, color: C.text,
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: C.muted, display: 'block', marginBottom: 4 }}>Nueva hora inicio</label>
+                <input
+                  type="time"
+                  value={editTime}
+                  onChange={e => setEditTime(e.target.value)}
+                  style={{
+                    width: '100%', padding: '7px 10px', borderRadius: 8, fontSize: 13,
+                    background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                    border: `1px solid ${C.border}`, color: C.text,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <p style={{ fontSize: 12, color: '#b91c1c', marginBottom: 10 }}>{error}</p>
+          )}
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {!editMode ? (
+              <>
+                {canEdit && (
+                  <ActionBtn
+                    icon={<Pencil size={13} />}
+                    label="Editar"
+                    onClick={() => setEditMode(true)}
+                    color="#6c63ff"
+                    bg="rgba(108,99,255,0.10)"
+                    disabled={loading}
+                  />
+                )}
+                {canConfirm && (
+                  <ActionBtn
+                    icon={<Check size={13} />}
+                    label="Confirmar"
+                    onClick={() => doAction('confirm')}
+                    color="#16a34a"
+                    bg="rgba(34,197,94,0.12)"
+                    disabled={loading}
+                  />
+                )}
+                {canComplete && (
+                  <ActionBtn
+                    icon={<CheckCircle size={13} />}
+                    label="Completar"
+                    onClick={() => doAction('complete')}
+                    color="#475569"
+                    bg="rgba(100,116,139,0.12)"
+                    disabled={loading}
+                  />
+                )}
+                {canCancel && (
+                  <ActionBtn
+                    icon={<XCircle size={13} />}
+                    label="Cancelar"
+                    onClick={() => doAction('cancel')}
+                    color="#b91c1c"
+                    bg="rgba(239,68,68,0.10)"
+                    disabled={loading}
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                <ActionBtn
+                  icon={<Check size={13} />}
+                  label="Guardar cambios"
+                  onClick={doEdit}
+                  color="#16a34a"
+                  bg="rgba(34,197,94,0.12)"
+                  disabled={loading}
+                />
+                <ActionBtn
+                  icon={<X size={13} />}
+                  label="Cancelar edición"
+                  onClick={() => { setEditMode(false); setError(''); }}
+                  color={C.muted}
+                  bg={C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}
+                  disabled={loading}
+                />
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActionBtn({
+  icon, label, onClick, color, bg, disabled,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  color: string;
+  bg: string;
+  disabled: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 5,
+        padding: '7px 14px', borderRadius: 8, border: 'none',
+        background: bg, color, fontSize: 12, fontWeight: 600,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.6 : 1,
+        transition: 'opacity 0.15s',
+      }}
+    >
+      {icon}{label}
+    </button>
   );
 }

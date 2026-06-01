@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './components/Toast';
 import Landing from './pages/Landing';
@@ -19,6 +20,7 @@ import Pricing from './pages/Pricing';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PayPalReturn from './pages/PayPalReturn';
 import Explorar from './pages/Explorar';
+import PsicologosDirectory from './pages/PsicologosDirectory';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -29,6 +31,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
+    <HelmetProvider>
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
@@ -51,12 +54,18 @@ function App() {
             <Route path="/payment/cancel" element={<Pricing />} />
             <Route path="/privacidad" element={<PrivacyPolicy />} />
             <Route path="/explorar" element={<Explorar />} />
+            {/* SEO: directorio de psicólogos por país / ciudad / enfoque */}
+            <Route path="/psicologos" element={<PsicologosDirectory />} />
+            <Route path="/psicologos/:countryCode" element={<PsicologosDirectory />} />
+            <Route path="/psicologos/:countryCode/:citySlug" element={<PsicologosDirectory />} />
+            <Route path="/psicologos/:countryCode/:citySlug/:approach" element={<PsicologosDirectory />} />
             <Route path="/book/:slug" element={<BookingPage />} />
             <Route path="/:slug" element={<PublicProfile />} />
           </Routes>
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
+    </HelmetProvider>
   );
 }
 

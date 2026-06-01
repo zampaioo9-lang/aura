@@ -61,10 +61,26 @@ model Profile {
   customization Json?
   socialLinks   Json      @default("{}")
   availability  Json      @default("{}")
-  specialty       String?
-  yearsExperience Int?
-  country         String?
-  published       Boolean   @default(false)
+  specialty              String?
+  yearsExperience        Int?
+  country                String?
+  city                   String?
+  published              Boolean   @default(false)
+
+  // Campos para salud mental / psicólogos
+  therapeuticApproaches  String[]  @default([])
+  problematics           String[]  @default([])
+  populations            String[]  @default([])
+  modality               String?
+  pricePerSession        Decimal?
+  sessionCurrency        String?   @default("MXN")
+  sessionDurationMinutes Int?      @default(50)
+  cedula                 String?
+  university             String?
+  degree                 String?
+  languages              String[]  @default([])
+  acceptsInvoice         Boolean?  @default(false)
+  workingStyle           String?
   createdAt       DateTime  @default(now())
   updatedAt     DateTime  @updatedAt @default(now())
 
@@ -83,6 +99,7 @@ enum Template {
   BOLD
   ELEGANT
   CREATIVE
+  CARBONO
 }
 
 model Service {

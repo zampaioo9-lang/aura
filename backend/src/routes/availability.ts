@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { requireActiveSubscription } from '../middleware/requireActiveSubscription';
 import { AppError } from '../middleware/errorHandler';
 import {
   createAvailabilitySlotSchema,
@@ -10,6 +11,8 @@ import {
 
 const router = Router();
 const prisma = new PrismaClient();
+
+router.use(authMiddleware, requireActiveSubscription);
 
 function timeToMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);

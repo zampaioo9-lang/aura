@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, X, Plus, Power, Sparkles } from 'lucide-react';
+import { ArrowLeft, X, Plus, Power, Sparkles, GripVertical, Pencil, CalendarDays, Layers, Ban, Settings2, Bell } from 'lucide-react';
 import api from '../api/client';
 import { useToast } from '../components/Toast';
+import { useAuth } from '../context/AuthContext';
+import ProGate from '../components/ProGate';
 import {
   DAY_NAMES_SHORT, TIMEZONES, LANGUAGES,
   type AvailabilitySlot, type BookingSettings,
@@ -61,7 +63,7 @@ function Card({ children, style = {} }: { children: React.ReactNode; style?: Rea
   return (
     <div style={{
       background: 'var(--sc-side)', border: '1px solid var(--sc-border)', borderRadius: 12,
-      padding: 24, marginBottom: 20, ...style,
+      padding: 24, marginBottom: 20, boxShadow: '0 2px 12px rgba(0,0,0,0.18)', ...style,
     }}>
       {children}
     </div>
@@ -159,7 +161,7 @@ function SectionDivider({ label }: { label: string }) {
   );
 }
 
-function ToggleRow({ label, desc, on, onChange }: { label: string; desc?: string; on: boolean; onChange: () => void }) {
+function ToggleRow({ label, desc, on, onChange }: { label: string; desc?: string | ReactNode; on: boolean; onChange: () => void }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--sc-border)' }}>
       <div>
@@ -379,7 +381,7 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
 // ════════════════════════════════════════════════════════════════════
 type SvcFilter = 'active' | 'inactive' | 'all';
 
-function TabServicios({ profileId }: { profileId: string }) {
+function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?: boolean }) {
   const { toast } = useToast();
   const { services, stats, loading, createService, updateService, toggleService } = useServices();
   const [filter, setFilter] = useState<SvcFilter>('active');
@@ -395,6 +397,11 @@ function TabServicios({ profileId }: { profileId: string }) {
   const [franjasByDay, setFranjasByDay] = useState<Record<number, { startTime: string; endTime: string }[]>>({});
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [order, setOrder] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('aliax_svc_order') || '[]'); } catch { return []; }
+  });
 
   const filtered = useMemo(() => {
     const byProfile = services.filter(s => s.profileId === profileId);
@@ -483,6 +490,34 @@ function TabServicios({ profileId }: { profileId: string }) {
     setModalOpen(true);
   };
 
+  const openEdit = (s: Service) => {
+    setEditingService(s);
+    setModalMode('edit');
+    setModalOpen(true);
+  };
+
+  const getSorted = (list: Service[]) => {
+    if (!order.length) return list;
+    const map = new Map(list.map(s => [s.id, s]));
+    const sorted: Service[] = [];
+    for (const id of order) { const s = map.get(id); if (s) sorted.push(s); }
+    for (const s of list) { if (!order.includes(s.id)) sorted.push(s); }
+    return sorted;
+  };
+
+  const handleDrop = (targetId: string) => {
+    if (!dragId || dragId === targetId) { setDragId(null); setDragOverId(null); return; }
+    const ids = getSorted(filtered).map(s => s.id);
+    const from = ids.indexOf(dragId), to = ids.indexOf(targetId);
+    ids.splice(from, 1); ids.splice(to, 0, dragId);
+    const allIds = order.filter(id => services.some(s => s.id === id));
+    for (const s of services) { if (!allIds.includes(s.id)) allIds.push(s.id); }
+    const finalOrder = [...new Set([...ids, ...allIds])];
+    setOrder(finalOrder);
+    localStorage.setItem('aliax_svc_order', JSON.stringify(finalOrder));
+    setDragId(null); setDragOverId(null);
+  };
+
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '4px solid #6c63ff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   const currentFranjas = selectedDay !== null ? (franjasByDay[selectedDay] ?? []) : [];
@@ -524,49 +559,89 @@ function TabServicios({ profileId }: { profileId: string }) {
             {filter === 'active' ? 'No tienes servicios activos.' : filter === 'inactive' ? 'No tienes servicios inactivos.' : 'No tienes servicios.'}
           </p>
         )}
-        {filtered.map(s => (
-          <div key={s.id} style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            background: selectedSvc?.id === s.id ? 'rgba(108,99,255,0.08)' : 'var(--sc-inner)',
-            border: `1px solid ${selectedSvc?.id === s.id ? '#6c63ff' : 'var(--sc-border)'}`,
-            borderRadius: 10, padding: '12px 14px', transition: 'all .15s',
-            opacity: s.isActive ? 1 : 0.6,
-          }}>
-            <div style={{ width: 10, height: 36, borderRadius: 5, background: colorMap[s.id], flexShrink: 0 }} />
-            <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => loadSlots(s)}>
-              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--sc-text)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                {s.name}
-                <span style={{
-                  fontSize: 10, padding: '2px 6px', borderRadius: 4, fontWeight: 600,
-                  background: s.isActive ? 'rgba(67,217,173,0.15)' : 'rgba(255,255,255,0.06)',
-                  color: s.isActive ? '#43d9ad' : 'var(--sc-muted)',
-                }}>{s.isActive ? 'Activo' : 'Inactivo'}</span>
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--sc-muted)', marginTop: 2 }}>
-                {s.durationMinutes} min · ${Number(s.price).toLocaleString()} {s.currency}
-              </div>
+        {getSorted(filtered).map(s => (
+          <div
+            key={s.id}
+            draggable
+            onDragStart={() => setDragId(s.id)}
+            onDragOver={e => { e.preventDefault(); if (s.id !== dragId) setDragOverId(s.id); }}
+            onDrop={() => handleDrop(s.id)}
+            onDragEnd={() => { setDragId(null); setDragOverId(null); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 0,
+              border: `1px solid ${dragOverId === s.id ? '#6c63ff' : selectedSvc?.id === s.id ? '#6c63ff' : 'var(--sc-border)'}`,
+              borderRadius: 10, transition: 'all .15s',
+              opacity: dragId === s.id ? 0.4 : s.isActive ? 1 : 0.6,
+              outline: dragOverId === s.id ? '2px dashed #6c63ff' : 'none',
+              outlineOffset: 2,
+            }}
+          >
+            {/* Drag handle */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '0 8px', cursor: 'grab', color: 'var(--sc-muted)',
+              borderRight: '1px solid var(--sc-border)', alignSelf: 'stretch',
+              borderRadius: '10px 0 0 10px',
+              background: 'var(--sc-inner)',
+            }}>
+              <GripVertical size={15} />
             </div>
-            <button
-              onClick={() => handleToggle(s.id)}
-              disabled={togglingId === s.id}
-              title={s.isActive ? 'Desactivar' : 'Activar'}
-              style={{
-                flexShrink: 0, background: s.isActive ? 'rgba(255,101,132,0.12)' : 'rgba(67,217,173,0.12)',
-                border: `1px solid ${s.isActive ? 'rgba(255,101,132,0.3)' : 'rgba(67,217,173,0.3)'}`,
-                borderRadius: 8, cursor: 'pointer', padding: '6px 10px', color: s.isActive ? '#ff6584' : '#43d9ad',
-                display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontFamily: 'DM Sans',
-                opacity: togglingId === s.id ? 0.5 : 1,
-              }}
-            >
-              <Power size={13} />
-              <span style={{ display: 'none' }}>{s.isActive ? 'Desactivar' : 'Activar'}</span>
-            </button>
+
+            {/* Content */}
+            <div style={{
+              flex: 1, display: 'flex', alignItems: 'center', gap: 12,
+              background: selectedSvc?.id === s.id ? 'rgba(108,99,255,0.08)' : 'var(--sc-inner)',
+              borderRadius: '0 10px 10px 0', padding: '12px 14px',
+            }}>
+              <div style={{ width: 10, height: 36, borderRadius: 5, background: colorMap[s.id], flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => loadSlots(s)}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--sc-text)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  {s.name}
+                  <span style={{
+                    fontSize: 10, padding: '2px 6px', borderRadius: 4, fontWeight: 600,
+                    background: s.isActive ? 'rgba(67,217,173,0.15)' : 'rgba(255,255,255,0.06)',
+                    color: s.isActive ? '#43d9ad' : 'var(--sc-muted)',
+                  }}>{s.isActive ? 'Activo' : 'Inactivo'}</span>
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--sc-muted)', marginTop: 2 }}>
+                  {s.durationMinutes} min · ${Number(s.price).toLocaleString()} {s.currency}
+                </div>
+              </div>
+              {/* Botón Editar */}
+              <button
+                onClick={e => { e.stopPropagation(); openEdit(s); }}
+                style={{
+                  flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5,
+                  background: 'rgba(108,99,255,0.12)', border: '1px solid rgba(108,99,255,0.3)',
+                  borderRadius: 8, cursor: 'pointer', padding: '6px 12px',
+                  color: '#6c63ff', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500,
+                }}
+              >
+                <Pencil size={12} /> Editar
+              </button>
+              {/* Botón Activar/Desactivar */}
+              <button
+                onClick={() => handleToggle(s.id)}
+                disabled={togglingId === s.id}
+                title={s.isActive ? 'Desactivar' : 'Activar'}
+                style={{
+                  flexShrink: 0, background: s.isActive ? 'rgba(255,101,132,0.12)' : 'rgba(67,217,173,0.12)',
+                  border: `1px solid ${s.isActive ? 'rgba(255,101,132,0.3)' : 'rgba(67,217,173,0.3)'}`,
+                  borderRadius: 8, cursor: 'pointer', padding: '6px 10px', color: s.isActive ? '#ff6584' : '#43d9ad',
+                  display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontFamily: 'DM Sans',
+                  opacity: togglingId === s.id ? 0.5 : 1,
+                }}
+              >
+                <Power size={13} />
+              </button>
+            </div>
           </div>
         ))}
       </div>
 
       {/* Editor de horarios del servicio seleccionado */}
       {selectedSvc && (
+        <ProGate isPro={isPro}>
         <Card>
           <CardHeader dot={colorMap[selectedSvc.id]} title={`Horario: ${selectedSvc.name}`} />
           <p style={{ fontSize: 12, color: 'var(--sc-muted)', marginBottom: 12 }}>Días disponibles para este servicio</p>
@@ -603,9 +678,13 @@ function TabServicios({ profileId }: { profileId: string }) {
           )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 16, borderTop: '1px solid var(--sc-border)', gap: 8, flexWrap: 'wrap' }}>
             <BtnGhost small onClick={addFranja}>+ Añadir franja</BtnGhost>
-            <BtnPrimary onClick={handleSaveSlots} disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</BtnPrimary>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <BtnGhost small onClick={() => setSelectedSvc(null)}>Cancelar</BtnGhost>
+              <BtnPrimary onClick={handleSaveSlots} disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</BtnPrimary>
+            </div>
           </div>
         </Card>
+        </ProGate>
       )}
 
       {/* Modal crear/editar servicio */}
@@ -624,7 +703,7 @@ function TabServicios({ profileId }: { profileId: string }) {
 // ════════════════════════════════════════════════════════════════════
 // TAB: BLOQUEOS
 // ════════════════════════════════════════════════════════════════════
-function TabBloqueos({ profileId }: { profileId: string }) {
+function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: boolean }) {
   const { toast } = useToast();
   const [blocks, setBlocks] = useState<ScheduleBlock[]>([]);
   const [loading, setLoading] = useState(true);
@@ -766,11 +845,13 @@ function TabBloqueos({ profileId }: { profileId: string }) {
       </div>
 
       <SectionDivider label="Bloqueos recurrentes" />
-      <Card>
-        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, marginBottom: 12, color: 'var(--sc-text)' }}>Bloqueos semanales fijos</div>
-        <p style={{ color: 'var(--sc-muted)', fontSize: 14, marginBottom: 14 }}>Configura horarios que siempre estarán bloqueados independientemente de tu disponibilidad base.</p>
-        <BtnGhost small>+ Añadir bloqueo recurrente</BtnGhost>
-      </Card>
+      <ProGate isPro={isPro}>
+        <Card>
+          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, marginBottom: 12, color: 'var(--sc-text)' }}>Bloqueos semanales fijos</div>
+          <p style={{ color: 'var(--sc-muted)', fontSize: 14, marginBottom: 14 }}>Configura horarios que siempre estarán bloqueados independientemente de tu disponibilidad base.</p>
+          <BtnGhost small>+ Añadir bloqueo recurrente</BtnGhost>
+        </Card>
+      </ProGate>
     </>
   );
 }
@@ -778,7 +859,7 @@ function TabBloqueos({ profileId }: { profileId: string }) {
 // ════════════════════════════════════════════════════════════════════
 // TAB: REGLAS
 // ════════════════════════════════════════════════════════════════════
-function TabReglas({ profileId }: { profileId: string }) {
+function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: boolean }) {
   const { toast } = useToast();
   const [settings, setSettings] = useState<BookingSettings>({
     profileId, bufferMinutes: 0, advanceBookingDays: 60, minAdvanceHours: 1,
@@ -849,30 +930,40 @@ function TabReglas({ profileId }: { profileId: string }) {
       {/* Comportamiento del sistema */}
       <Card>
         <CardHeader dot="#43d9ad" title="Comportamiento del sistema" />
-        <ToggleRow label="Confirmación automática" desc="Las reservas se confirman sin revisión manual" on={settings.autoConfirm} onChange={() => upd('autoConfirm', !settings.autoConfirm)} />
-        <ToggleRow label="Lista de espera" desc="Los clientes pueden unirse a lista de espera si no hay slots" on={toggles.waitlist} onChange={() => setToggles(t => ({ ...t, waitlist: !t.waitlist }))} />
-        <ToggleRow label="Múltiples reservas por slot" desc="Permite solapamiento de citas (requiere recursos separados)" on={toggles.multiplePerSlot} onChange={() => setToggles(t => ({ ...t, multiplePerSlot: !t.multiplePerSlot }))} />
+        <ProGate isPro={isPro}>
+          <ToggleRow label="Confirmación automática" desc="Las reservas se confirman sin revisión manual" on={settings.autoConfirm} onChange={() => upd('autoConfirm', !settings.autoConfirm)} />
+        </ProGate>
+        <ProGate isPro={isPro}>
+          <ToggleRow label="Lista de espera" desc="Los clientes pueden unirse a lista de espera si no hay slots" on={toggles.waitlist} onChange={() => setToggles(t => ({ ...t, waitlist: !t.waitlist }))} />
+        </ProGate>
+        <ProGate isPro={isPro}>
+          <ToggleRow label="Múltiples reservas por slot" desc="Permite solapamiento de citas (requiere recursos separados)" on={toggles.multiplePerSlot} onChange={() => setToggles(t => ({ ...t, multiplePerSlot: !t.multiplePerSlot }))} />
+        </ProGate>
         <ToggleRow label="Permitir cancelaciones" desc="Los clientes pueden cancelar por sí mismos" on={toggles.allowCancel} onChange={() => setToggles(t => ({ ...t, allowCancel: !t.allowCancel }))} />
         <div style={{ borderBottom: 'none' }}>
-          <ToggleRow label="Pago requerido al reservar" desc="El cliente debe pagar antes de confirmar la cita" on={toggles.requirePayment} onChange={() => setToggles(t => ({ ...t, requirePayment: !t.requirePayment }))} />
+          <ProGate isPro={isPro}>
+            <ToggleRow label="Pago requerido al reservar" desc="El cliente debe pagar antes de confirmar la cita" on={toggles.requirePayment} onChange={() => setToggles(t => ({ ...t, requirePayment: !t.requirePayment }))} />
+          </ProGate>
         </div>
       </Card>
 
       {/* Límites por cliente */}
-      <Card>
-        <CardHeader dot="#ff6584" title="Límites por cliente" />
-        <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <FormSelect label="Máx. reservas activas por cliente" value="3" onChange={() => {}} options={[
-            { value: '1', label: '1 reserva' }, { value: '2', label: '2 reservas' },
-            { value: '3', label: '3 reservas' }, { value: '5', label: '5 reservas' },
-            { value: '0', label: 'Sin límite' },
-          ]} />
-          <FormSelect label="Intervalo mínimo entre reservas" value="none" onChange={() => {}} options={[
-            { value: 'none', label: 'Sin restricción' }, { value: '1d', label: '1 día' },
-            { value: '3d', label: '3 días' }, { value: '7d', label: '1 semana' },
-          ]} />
-        </div>
-      </Card>
+      <ProGate isPro={isPro}>
+        <Card>
+          <CardHeader dot="#ff6584" title="Límites por cliente" />
+          <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <FormSelect label="Máx. reservas activas por cliente" value="3" onChange={() => {}} options={[
+              { value: '1', label: '1 reserva' }, { value: '2', label: '2 reservas' },
+              { value: '3', label: '3 reservas' }, { value: '5', label: '5 reservas' },
+              { value: '0', label: 'Sin límite' },
+            ]} />
+            <FormSelect label="Intervalo mínimo entre reservas" value="none" onChange={() => {}} options={[
+              { value: 'none', label: 'Sin restricción' }, { value: '1d', label: '1 día' },
+              { value: '3d', label: '3 días' }, { value: '7d', label: '1 semana' },
+            ]} />
+          </div>
+        </Card>
+      </ProGate>
     </>
   );
 }
@@ -880,9 +971,10 @@ function TabReglas({ profileId }: { profileId: string }) {
 // ════════════════════════════════════════════════════════════════════
 // TAB: NOTIFICACIONES
 // ════════════════════════════════════════════════════════════════════
-function TabNotificaciones() {
+function TabNotificaciones({ isPro = false }: { isPro?: boolean }) {
   const { toast } = useToast();
-  const [channels, setChannels] = useState({ email: true, sms: false, whatsapp: true });
+  const [emailEnabled, setEmailEnabled] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [reminders, setReminders] = useState({
     confirmacion: true, recordatorio24h: true, recordatorio1h: false,
     cancelacion: true, feedback: false,
@@ -890,6 +982,24 @@ function TabNotificaciones() {
   const [profNotifs, setProfNotifs] = useState({
     nuevaReserva: true, cancelacion: true, reagendamiento: false, listaEspera: false,
   });
+
+  useEffect(() => {
+    api.get('/booking-settings').then(r => {
+      if (r.data.emailEnabled !== undefined) setEmailEnabled(r.data.emailEnabled);
+    }).catch(() => {});
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.put('/booking-settings', { emailEnabled });
+      toast('Notificaciones guardadas');
+    } catch {
+      toast('Error al guardar');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const tog = (_obj: any, set: any, key: string) => set((p: any) => ({ ...p, [key]: !p[key] }));
 
@@ -900,29 +1010,18 @@ function TabNotificaciones() {
           <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 26, letterSpacing: -0.5, color: 'var(--sc-text)' }}>Notificaciones</h2>
           <p style={{ fontSize: 13, color: 'var(--sc-muted)', marginTop: 2 }}>Configura cómo y cuándo se avisa al cliente y a ti</p>
         </div>
-        <BtnPrimary onClick={() => toast('Notificaciones guardadas')}>Guardar cambios</BtnPrimary>
+        <BtnPrimary onClick={handleSave} disabled={saving}>{saving ? 'Guardando…' : 'Guardar cambios'}</BtnPrimary>
       </div>
 
       {/* Canales */}
       <Card>
-        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, marginBottom: 16, color: 'var(--sc-text)' }}>Canales de comunicación</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-          {([['email', '📧', 'Email', 'Conectado'], ['sms', '💬', 'SMS', 'No conectado'], ['whatsapp', '📱', 'WhatsApp', 'Conectado']] as [keyof typeof channels, string, string, string][]).map(([key, icon, name, status]) => (
-            <div
-              key={key}
-              onClick={() => setChannels(p => ({ ...p, [key]: !p[key] }))}
-              style={{
-                background: channels[key] ? 'rgba(108,99,255,0.08)' : 'var(--sc-inner)',
-                border: `1px solid ${channels[key] ? '#6c63ff' : 'var(--sc-border)'}`,
-                borderRadius: 10, padding: 16, textAlign: 'center', cursor: 'pointer', transition: 'all .15s',
-              }}
-            >
-              <div style={{ fontSize: 24, marginBottom: 8 }}>{icon}</div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--sc-text)' }}>{name}</div>
-              <div style={{ fontSize: 11, color: 'var(--sc-muted)', marginTop: 2 }}>{channels[key] ? '✓ ' : ''}{status}</div>
-            </div>
-          ))}
-        </div>
+        <CardHeader dot="#22c55e" title="Canales de comunicación" />
+        <ToggleRow
+          label="📧 Email"
+          desc={emailEnabled ? <span style={{ color: '#22c55e', fontWeight: 500 }}>✓ Conectado</span> : <span style={{ color: 'var(--sc-muted)', fontWeight: 500 }}>Desconectado</span>}
+          on={emailEnabled}
+          onChange={() => setEmailEnabled(v => !v)}
+        />
       </Card>
 
       {/* Recordatorios */}
@@ -930,9 +1029,13 @@ function TabNotificaciones() {
         <CardHeader dot="#6c63ff" title="Recordatorios automáticos al cliente" />
         <ToggleRow label="Confirmación de reserva" desc="Inmediato tras reservar" on={reminders.confirmacion} onChange={() => tog(reminders, setReminders, 'confirmacion')} />
         <ToggleRow label="Recordatorio previo 24h" desc="24 horas antes de la cita" on={reminders.recordatorio24h} onChange={() => tog(reminders, setReminders, 'recordatorio24h')} />
-        <ToggleRow label="Recordatorio previo 1h" desc="1 hora antes de la cita" on={reminders.recordatorio1h} onChange={() => tog(reminders, setReminders, 'recordatorio1h')} />
+        <ProGate isPro={isPro}>
+          <ToggleRow label="Recordatorio previo 1h" desc="1 hora antes de la cita" on={reminders.recordatorio1h} onChange={() => tog(reminders, setReminders, 'recordatorio1h')} />
+        </ProGate>
         <ToggleRow label="Aviso de cancelación" desc="Al cancelar la cita" on={reminders.cancelacion} onChange={() => tog(reminders, setReminders, 'cancelacion')} />
-        <ToggleRow label="Solicitud de feedback" desc="2 horas después de la cita" on={reminders.feedback} onChange={() => tog(reminders, setReminders, 'feedback')} />
+        <ProGate isPro={isPro}>
+          <ToggleRow label="Solicitud de feedback" desc="2 horas después de la cita" on={reminders.feedback} onChange={() => tog(reminders, setReminders, 'feedback')} />
+        </ProGate>
       </Card>
 
       {/* Notificaciones al profesional */}
@@ -940,8 +1043,12 @@ function TabNotificaciones() {
         <CardHeader dot="#f6c90e" title="Notificaciones al profesional" />
         <ToggleRow label="Nueva reserva recibida" on={profNotifs.nuevaReserva} onChange={() => tog(profNotifs, setProfNotifs, 'nuevaReserva')} />
         <ToggleRow label="Cancelación de reserva" on={profNotifs.cancelacion} onChange={() => tog(profNotifs, setProfNotifs, 'cancelacion')} />
-        <ToggleRow label="Reagendamiento" on={profNotifs.reagendamiento} onChange={() => tog(profNotifs, setProfNotifs, 'reagendamiento')} />
-        <ToggleRow label="Nuevo cliente en lista de espera" on={profNotifs.listaEspera} onChange={() => tog(profNotifs, setProfNotifs, 'listaEspera')} />
+        <ProGate isPro={isPro}>
+          <ToggleRow label="Reagendamiento" on={profNotifs.reagendamiento} onChange={() => tog(profNotifs, setProfNotifs, 'reagendamiento')} />
+        </ProGate>
+        <ProGate isPro={isPro}>
+          <ToggleRow label="Nuevo cliente en lista de espera" on={profNotifs.listaEspera} onChange={() => tog(profNotifs, setProfNotifs, 'listaEspera')} />
+        </ProGate>
       </Card>
     </>
   );
@@ -952,12 +1059,12 @@ function TabNotificaciones() {
 // ════════════════════════════════════════════════════════════════════
 type Tab = 'availability' | 'services' | 'blocks' | 'rules' | 'notifications';
 
-const PAGES: { id: Tab; icon: string; label: string }[] = [
-  { id: 'availability',   icon: '📅', label: 'Disponibilidad' },
-  { id: 'services',       icon: '🗂️', label: 'Servicios' },
-  { id: 'blocks',         icon: '🚫', label: 'Bloqueos' },
-  { id: 'rules',          icon: '⚙️', label: 'Reglas de reserva' },
-  { id: 'notifications',  icon: '🔔', label: 'Notificaciones' },
+const PAGES: { id: Tab; icon: ReactNode; label: string }[] = [
+  { id: 'availability',   icon: <CalendarDays size={15} />, label: 'Disponibilidad' },
+  { id: 'services',       icon: <Layers       size={15} />, label: 'Servicios' },
+  { id: 'blocks',         icon: <Ban          size={15} />, label: 'Bloqueos' },
+  { id: 'rules',          icon: <Settings2    size={15} />, label: 'Reglas de reserva' },
+  { id: 'notifications',  icon: <Bell         size={15} />, label: 'Notificaciones' },
 ];
 
 interface Profile { id: string; title: string; slug: string }
@@ -965,7 +1072,159 @@ interface Profile { id: string; title: string; slug: string }
 const THEME_DARK  = { main: '#0f0f12', side: '#18181f', inner: '#22222c', border: '#2e2e3d', text: '#e8e8f0', muted: '#6b6b80', muted2: '#3a3a4d' };
 const THEME_LIGHT = { main: 'rgb(245,244,240)', side: 'white', inner: '#f0f0f8', border: 'rgb(220,215,235)', text: '#2d2b55', muted: '#6b6b8f', muted2: '#c5c5d5' };
 
+// ════════════════════════════════════════════════════════════════════
+// EMBEDDED PANEL — para incrustar en Dashboard como pestaña
+// ════════════════════════════════════════════════════════════════════
+export function SchedulingPanel({ theme }: { theme: 'dark' | 'light' }) {
+  const { isPro } = useAuth();
+  const [tab, setTab]               = useState<Tab>('availability');
+  const [profiles, setProfiles]     = useState<Profile[]>([]);
+  const [selectedProfileId, setSel] = useState('');
+  const [loading, setLoading]       = useState(true);
+  const [showFade, setShowFade]     = useState(true);
+  const asideRef                    = useRef<HTMLElement>(null);
+  const T = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
+
+  useEffect(() => {
+    const el = asideRef.current;
+    if (!el) return;
+    const check = () => setShowFade(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    check();
+    el.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check, { passive: true });
+    return () => { el.removeEventListener('scroll', check); window.removeEventListener('resize', check); };
+  }, [loading]);
+
+  useEffect(() => {
+    api.get('/profiles').then(res => {
+      setProfiles(res.data);
+      if (res.data.length > 0) setSel(res.data[0].id);
+    }).finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}>
+      <div style={{ width: 32, height: 32, border: '4px solid #6c63ff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+    </div>
+  );
+
+  return (
+    <div className="sc-panel" style={{
+      color: T.text, fontFamily: 'DM Sans, sans-serif',
+      '--sc-main': T.main, '--sc-side': T.side, '--sc-inner': T.inner,
+      '--sc-border': T.border, '--sc-text': T.text, '--sc-muted': T.muted, '--sc-muted2': T.muted2,
+    } as React.CSSProperties}>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .sc-panel { display: flex; flex-direction: row; min-height: 400px; gap: 10px; }
+        .sc-panel-aside {
+          width: 180px; flex-shrink: 0;
+          display: flex; flex-direction: column; gap: 4px;
+          padding: 12px 8px;
+          border: 1px solid var(--sc-border);
+          background: var(--sc-side);
+          border-radius: 12px;
+        }
+        .sc-panel-btn {
+          display: flex; align-items: center; gap: 8px;
+          padding: 10px 12px; border-radius: 8px; border: none;
+          width: 100%; text-align: left; cursor: pointer;
+          font-family: DM Sans, sans-serif; font-size: 13px;
+          transition: all .15s;
+        }
+        .sc-panel-main { flex: 1; padding: 24px; overflow-y: auto; }
+        @media (max-width: 767px) {
+          .sc-panel { flex-direction: column !important; }
+          .sc-panel-aside {
+            width: 100% !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            padding: 8px 10px !important;
+            border-radius: 10px !important;
+            border-bottom: 1px solid var(--sc-border) !important;
+            gap: 6px !important;
+            -ms-overflow-style: none; scrollbar-width: none;
+          }
+          .sc-panel-aside::-webkit-scrollbar { display: none; }
+          .sc-panel-btn {
+            padding: 7px 14px !important;
+            border-radius: 20px !important;
+            white-space: nowrap !important;
+            width: auto !important;
+            flex-shrink: 0 !important;
+            font-size: 12px !important;
+            gap: 5px !important;
+          }
+          .sc-panel-main { padding: 16px !important; }
+          .sc-grid-2 { grid-template-columns: 1fr !important; }
+        }
+        .sc-aside-wrap { position: relative; }
+        .sc-aside-fade {
+          display: none;
+          position: absolute; right: 0; top: 0; bottom: 0; width: 48px;
+          background: linear-gradient(to right, transparent, var(--sc-side));
+          pointer-events: none;
+          transition: opacity 0.2s;
+        }
+        @media (max-width: 767px) {
+          .sc-aside-fade { display: block; }
+        }
+      `}</style>
+
+      <div className="sc-aside-wrap">
+      <aside className="sc-panel-aside" ref={asideRef}>
+        {profiles.length > 1 && (
+          <div style={{ paddingBottom: 8, flexShrink: 0 }}>
+            <select value={selectedProfileId} onChange={e => setSel(e.target.value)}
+              style={{ background: T.inner, border: `1px solid ${T.border}`, borderRadius: 8, padding: '6px 10px', color: T.text, fontFamily: 'DM Sans', fontSize: 12, outline: 'none' }}>
+              {profiles.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+            </select>
+          </div>
+        )}
+        {PAGES.map(p => (
+          <button
+            key={p.id}
+            onClick={() => setTab(p.id)}
+            className="sc-panel-btn"
+            style={{
+              color: tab === p.id ? '#6c63ff' : T.muted,
+              background: tab === p.id ? 'rgba(108,99,255,0.15)' : 'transparent',
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{p.icon}</span>
+            {p.label}
+          </button>
+        ))}
+      </aside>
+      <div className="sc-aside-fade" style={{ opacity: showFade ? 1 : 0 }} />
+      </div>
+
+      <main className="sc-panel-main">
+        {tab === 'availability' && (
+          <div style={{ marginBottom: 24 }}>
+            <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 22, letterSpacing: -0.5, color: T.text, margin: 0 }}>Disponibilidad base</h2>
+            <p style={{ fontSize: 13, color: T.muted, marginTop: 4, marginBottom: 0 }}>Define tus días y horarios de atención generales</p>
+          </div>
+        )}
+        {selectedProfileId ? (
+          <>
+            {tab === 'availability'  && <TabDisponibilidad profileId={selectedProfileId} />}
+            {tab === 'services'      && <TabServicios      profileId={selectedProfileId} isPro={isPro ?? false} />}
+            {tab === 'blocks'        && <TabBloqueos       profileId={selectedProfileId} isPro={isPro ?? false} />}
+            {tab === 'rules'         && <TabReglas         profileId={selectedProfileId} isPro={isPro ?? false} />}
+            {tab === 'notifications' && <TabNotificaciones isPro={isPro ?? false} />}
+          </>
+        ) : (
+          <p style={{ color: T.muted, fontSize: 14 }}>No tienes perfiles configurados aún.</p>
+        )}
+      </main>
+    </div>
+  );
+}
+
 export default function SchedulingConfig() {
+  const { isPro } = useAuth();
   const [tab, setTab]                 = useState<Tab>('availability');
   const [profiles, setProfiles]       = useState<Profile[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState('');
@@ -1048,7 +1307,7 @@ export default function SchedulingConfig() {
         </div>
 
         {/* Botón volver */}
-        <Link to="/dashboard?tab=profesional" className="sc-aside-back" style={{
+        <Link to="/dashboard?tab=agenda" className="sc-aside-back" style={{
           display: 'flex', alignItems: 'center', gap: 6, margin: '0 4px 16px',
           padding: '8px 12px', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 500,
           background: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(108,99,255,0.08)',
@@ -1100,10 +1359,10 @@ export default function SchedulingConfig() {
         {selectedProfileId && (
           <>
             {tab === 'availability'   && <TabDisponibilidad profileId={selectedProfileId} />}
-            {tab === 'services'       && <TabServicios      profileId={selectedProfileId} />}
-            {tab === 'blocks'         && <TabBloqueos       profileId={selectedProfileId} />}
-            {tab === 'rules'          && <TabReglas         profileId={selectedProfileId} />}
-            {tab === 'notifications'  && <TabNotificaciones />}
+            {tab === 'services'       && <TabServicios      profileId={selectedProfileId} isPro={isPro ?? false} />}
+            {tab === 'blocks'         && <TabBloqueos       profileId={selectedProfileId} isPro={isPro ?? false} />}
+            {tab === 'rules'          && <TabReglas         profileId={selectedProfileId} isPro={isPro ?? false} />}
+            {tab === 'notifications'  && <TabNotificaciones isPro={isPro ?? false} />}
           </>
         )}
       </main>

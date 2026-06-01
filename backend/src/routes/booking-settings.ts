@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { requireActiveSubscription } from '../middleware/requireActiveSubscription';
 import { AppError } from '../middleware/errorHandler';
 import { upsertBookingSettingsSchema } from '../utils/validation';
 
 const router = Router();
 const prisma = new PrismaClient();
+
+router.use(authMiddleware, requireActiveSubscription);
 
 async function getProfileId(userId: string, profileId?: string): Promise<string> {
   if (profileId) {
@@ -34,6 +37,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res, next) => {
         minAdvanceHours: 1,
         cancellationHours: 24,
         autoConfirm: false,
+        emailEnabled: true,
         timezone: 'America/Mexico_City',
         language: 'es',
       });

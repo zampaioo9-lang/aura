@@ -53,6 +53,7 @@ export async function createPayPalOrder(
   amount: string,
   returnUrl: string,
   cancelUrl: string,
+  currency: 'USD' | 'MXN' = 'USD',
 ): Promise<{ orderId: string; approvalUrl: string }> {
   const token = await getAccessToken();
   const res = await fetch(`${env.PAYPAL_BASE_URL}/v2/checkout/orders`, {
@@ -71,7 +72,7 @@ export async function createPayPalOrder(
       purchase_units: [
         {
           amount: {
-            currency_code: 'USD',
+            currency_code: currency,
             value: amount,
           },
           description: 'Aliax Pro Lifetime',

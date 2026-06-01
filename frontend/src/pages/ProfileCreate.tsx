@@ -7,10 +7,12 @@ import UsernameInput from '../components/UsernameInput';
 import ImageUpload from '../components/ImageUpload';
 import VideoUpload from '../components/VideoUpload';
 import PhoneInput from '../components/PhoneInput';
+import CountrySelect from '../components/CountrySelect';
+import CitySelect from '../components/CitySelect';
 import api from '../api/client';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
-const TEMPLATES = ['MINIMALIST', 'BOLD', 'ELEGANT', 'CREATIVE'] as const;
+const TEMPLATES = ['MINIMALIST', 'BOLD', 'ELEGANT', 'CREATIVE', 'CARBONO'] as const;
 
 export default function ProfileCreate() {
   const navigate = useNavigate();
@@ -34,6 +36,10 @@ export default function ProfileCreate() {
       slug: '',
       title: '',
       profession: '',
+      specialty: '',
+      yearsExperience: '',
+      country: '',
+      city: '',
       bio: '',
       phone: '',
       template: 'MINIMALIST',
@@ -50,6 +56,9 @@ export default function ProfileCreate() {
     try {
       await api.post('/profiles', {
         ...data,
+        specialty: data.specialty || undefined,
+        yearsExperience: data.yearsExperience !== '' ? Number(data.yearsExperience) : undefined,
+        country: data.country || undefined,
         avatar: avatar || undefined,
         videoUrl: videoUrl || undefined,
       });
@@ -149,6 +158,38 @@ export default function ProfileCreate() {
                 )}
                 {errors.profession && <p className="text-xs text-red-500 mt-1">{errors.profession.message}</p>}
               </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Especialidad</label>
+                  <input
+                    {...register('specialty')}
+                    placeholder="Ej: Dermatología clínica"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Años de experiencia</label>
+                  <input
+                    type="number" min={0} max={100}
+                    {...register('yearsExperience')}
+                    placeholder="Ej: 8"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <CountrySelect
+                label="País de origen"
+                value={watch('country') || ''}
+                onChange={v => setValue('country', v)}
+              />
+
+              <CitySelect
+                country={watch('country') || ''}
+                value={watch('city') || ''}
+                onChange={v => setValue('city', v)}
+              />
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">

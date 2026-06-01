@@ -13,6 +13,7 @@ const CURRENCIES = [
   { value: 'COP', label: '$ COP' },
   { value: 'ARS', label: '$ ARS' },
   { value: 'CLP', label: '$ CLP' },
+  { value: 'PEN', label: 'S/ PEN' },
 ] as const;
 
 const DURATIONS = [
@@ -30,7 +31,7 @@ const serviceFormSchema = z.object({
   name: z.string().min(3, 'Minimo 3 caracteres').max(100, 'Maximo 100 caracteres'),
   description: z.string().max(500, 'Maximo 500 caracteres').optional().or(z.literal('')),
   price: z.coerce.number().min(0, 'El precio no puede ser negativo').max(100000, 'Maximo 100,000'),
-  currency: z.enum(['EUR', 'USD', 'MXN', 'COP', 'ARS', 'CLP']),
+  currency: z.enum(['EUR', 'USD', 'MXN', 'COP', 'ARS', 'CLP', 'PEN']),
   durationMinutes: z.coerce.number().refine(v => [15, 30, 45, 60, 90, 120, 180, 240].includes(v), {
     message: 'Selecciona una duracion valida',
   }),
@@ -98,7 +99,7 @@ export default function ServiceForm({ onSubmit, initialData, mode, loading = fal
           id="svc-name"
           {...register('name')}
           placeholder="Ej: Consulta Psicologica"
-          className={`w-full px-3 py-2 border rounded-lg outline-none transition-colors ${
+          className={`w-full px-3 py-2 border rounded-lg outline-none transition-colors bg-white text-slate-900 placeholder:text-slate-400 ${
             errors.name ? 'border-red-300 focus:ring-red-500' : 'border-slate-300 focus:ring-indigo-500'
           } focus:ring-2 focus:border-transparent`}
         />
@@ -116,7 +117,7 @@ export default function ServiceForm({ onSubmit, initialData, mode, loading = fal
           rows={3}
           maxLength={500}
           placeholder="Describe tu servicio..."
-          className={`w-full px-3 py-2 border rounded-lg outline-none resize-none transition-colors ${
+          className={`w-full px-3 py-2 border rounded-lg outline-none resize-none transition-colors bg-white text-slate-900 placeholder:text-slate-400 ${
             errors.description ? 'border-red-300 focus:ring-red-500' : 'border-slate-300 focus:ring-indigo-500'
           } focus:ring-2 focus:border-transparent`}
         />
@@ -137,7 +138,7 @@ export default function ServiceForm({ onSubmit, initialData, mode, loading = fal
             min="0"
             max="100000"
             {...register('price')}
-            className={`w-full px-3 py-2 border rounded-lg outline-none transition-colors ${
+            className={`w-full px-3 py-2 border rounded-lg outline-none transition-colors bg-white text-slate-900 ${
               errors.price ? 'border-red-300 focus:ring-red-500' : 'border-slate-300 focus:ring-indigo-500'
             } focus:ring-2 focus:border-transparent`}
           />
@@ -148,10 +149,11 @@ export default function ServiceForm({ onSubmit, initialData, mode, loading = fal
           <select
             id="svc-currency"
             {...register('currency')}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-slate-900"
+            style={{ colorScheme: 'light' }}
           >
             {CURRENCIES.map(c => (
-              <option key={c.value} value={c.value}>{c.label}</option>
+              <option key={c.value} value={c.value} style={{ backgroundColor: '#fff', color: '#0f172a' }}>{c.label}</option>
             ))}
           </select>
         </div>
@@ -163,12 +165,13 @@ export default function ServiceForm({ onSubmit, initialData, mode, loading = fal
         <select
           id="svc-duration"
           {...register('durationMinutes')}
-          className={`w-full px-3 py-2 border rounded-lg outline-none transition-colors ${
+          className={`w-full px-3 py-2 border rounded-lg outline-none transition-colors bg-white text-slate-900 ${
             errors.durationMinutes ? 'border-red-300 focus:ring-red-500' : 'border-slate-300 focus:ring-indigo-500'
           } focus:ring-2 focus:border-transparent`}
+          style={{ colorScheme: 'light' }}
         >
           {DURATIONS.map(d => (
-            <option key={d.value} value={d.value}>{d.label}</option>
+            <option key={d.value} value={d.value} style={{ backgroundColor: '#fff', color: '#0f172a' }}>{d.label}</option>
           ))}
         </select>
         {errors.durationMinutes && <p className="text-xs text-red-500 mt-1">{errors.durationMinutes.message}</p>}

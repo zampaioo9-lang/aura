@@ -56,6 +56,7 @@ interface PhoneInputProps {
   required?: boolean;
   error?: string;
   placeholder?: string;
+  isDark?: boolean;
 }
 
 export default function PhoneInput({
@@ -65,7 +66,8 @@ export default function PhoneInput({
   optional,
   required,
   error,
-  placeholder = '11 1234-5678',
+  placeholder = '55 1234 5678',
+  isDark = false,
 }: PhoneInputProps) {
   const [dialCode, setDialCode] = useState('+52');
   const [number, setNumber] = useState('');
@@ -113,10 +115,10 @@ export default function PhoneInput({
   return (
     <div>
       {label && (
-        <label className="block text-sm font-medium text-slate-700 mb-1">
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: isDark ? '#f1f0f5' : '#334155', marginBottom: 4 }}>
           {label}{' '}
-          {required && <span className="text-red-500">*</span>}
-          {optional && <span className="text-slate-400 font-normal">(opcional)</span>}
+          {required && <span style={{ color: '#f87171' }}>*</span>}
+          {optional && <span style={{ color: isDark ? '#6b7280' : '#94a3b8', fontWeight: 400 }}>(opcional)</span>}
         </label>
       )}
       <div ref={ref} className="relative flex gap-2">
@@ -124,11 +126,19 @@ export default function PhoneInput({
         <button
           type="button"
           onClick={() => setOpen(o => !o)}
-          className="flex items-center gap-1.5 px-3 py-2 border border-slate-300 rounded-lg bg-white hover:bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm shrink-0 transition-colors"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '8px 12px',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : '#cbd5e1'}`,
+            borderRadius: 8,
+            background: isDark ? '#2a2640' : '#ffffff',
+            color: isDark ? '#f1f0f5' : '#334155',
+            fontSize: 14, cursor: 'pointer', flexShrink: 0, outline: 'none',
+          }}
         >
           <span className="text-base leading-none">{selectedCountry.flag}</span>
-          <span className="text-slate-700 font-medium">{dialCode}</span>
-          <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+          <span style={{ fontWeight: 500 }}>{dialCode}</span>
+          <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} style={{ color: isDark ? '#9ca3af' : '#94a3b8' }} />
         </button>
 
         {/* Input número */}
@@ -137,9 +147,14 @@ export default function PhoneInput({
           value={number}
           onChange={e => handleNumberChange(e.target.value)}
           placeholder={placeholder}
-          className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm transition-colors ${
-            error ? 'border-red-300 bg-red-50' : 'border-slate-300'
-          }`}
+          style={{
+            flex: 1, padding: '8px 12px',
+            border: `1px solid ${error ? '#f87171' : isDark ? 'rgba(255,255,255,0.15)' : '#cbd5e1'}`,
+            borderRadius: 8,
+            background: isDark ? '#2a2640' : '#ffffff',
+            color: isDark ? '#f1f0f5' : '#0f172a',
+            fontSize: 14, outline: 'none',
+          }}
         />
 
         {/* Dropdown */}

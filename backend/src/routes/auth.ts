@@ -5,6 +5,8 @@ import { hashPassword, comparePassword, signToken } from '../services/authServic
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { registerSchema, loginSchema } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
+import { sendEmail, emailTemplates } from '../services/emailService';
+import { addContact } from '../services/audienceService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -18,16 +20,33 @@ router.post('/register', async (req, res, next) => {
     if (existing) throw new AppError(409, 'Email already registered');
 
     const hashed = await hashPassword(data.password);
-    const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
     const user = await prisma.user.create({
       data: {
         email: data.email,
         password: hashed,
         name: data.name,
         phone: data.phone || null,
-        trialEndsAt,
+        plan: 'FREE',
       },
     });
+
+    // Add to newsletter audience (non-blocking)
+    addContact(user.email, user.name).catch(() => {});
+
+    // Send welcome email (non-blocking)
+    const welcomeTpl = emailTemplates.welcome({
+      userName: user.name,
+      userEmail: user.email,
+      hasProfile: false,
+    });
+    sendEmail(welcomeTpl.to, welcomeTpl.subject, welcomeTpl.html).then(async (result) => {
+      if (result.success) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { welcomeEmailSentAt: new Date() },
+        });
+      }
+    }).catch(() => {});
 
     const token = signToken(user.id);
     res.status(201).json({

@@ -294,6 +294,66 @@ export const emailTemplates = {
     `),
   }),
 
+  // Bienvenida al nuevo usuario registrado
+  welcome: (data: {
+    userName: string;
+    userEmail: string;
+    hasProfile: boolean;
+  }) => ({
+    to: data.userEmail,
+    subject: '¡Bienvenido a Aliax! 🎉',
+    html: baseTemplate('Bienvenido a Aliax', `
+      ${heading(`¡Hola ${data.userName}!`)}
+      ${subtext('Nos da mucho gusto que formes parte de Aliax. Tu cuenta ha sido creada exitosamente con el <strong>plan gratuito</strong> — sin límite de tiempo.')}
+
+      <div style="margin-top:20px;padding:16px;background:#f0fdf4;border-radius:8px;">
+        <p style="margin:0 0 6px;color:#16a34a;font-size:13px;font-weight:600;">Plan Gratuito — siempre gratis</p>
+        <p style="margin:0;color:#18181b;font-size:15px;">Gestiona tus citas, servicios y clientes sin costo. Cuando quieras más funciones, puedes actualizar a Pro.</p>
+      </div>
+
+      ${!data.hasProfile ? `
+      <div style="margin-top:24px;padding:20px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;">
+        <p style="margin:0 0 6px;color:#92400e;font-size:15px;font-weight:600;">¿Eres profesional?</p>
+        <p style="margin:0 0 12px;color:#78716c;font-size:14px;line-height:1.5;">Crea tu perfil profesional en minutos y comienza a recibir reservas de tus clientes. Configura tus servicios, horarios y muestra tu experiencia.</p>
+        ${ctaButton('Crear mi perfil profesional', 'https://www.aliax.io/dashboard/profile')}
+      </div>
+      ` : ''}
+
+      <div style="margin-top:24px;">
+        <p style="margin:0 0 8px;color:#18181b;font-size:15px;font-weight:600;">¿Qué puedes hacer en Aliax?</p>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:6px 0;color:#52525b;font-size:14px;">✦ Crear tu perfil profesional con tu marca personal</td></tr>
+          <tr><td style="padding:6px 0;color:#52525b;font-size:14px;">✦ Configurar tus servicios y precios</td></tr>
+          <tr><td style="padding:6px 0;color:#52525b;font-size:14px;">✦ Gestionar citas y reservas en un solo lugar</td></tr>
+          <tr><td style="padding:6px 0;color:#52525b;font-size:14px;">✦ Recibir notificaciones automáticas por email</td></tr>
+        </table>
+      </div>
+
+      ${ctaButton('Ir a mi dashboard', 'https://www.aliax.io/dashboard')}
+
+      <p style="margin-top:24px;color:#a1a1aa;font-size:13px;">Si tienes dudas, responde a este correo o escríbenos. ¡Estamos para ayudarte!</p>
+    `),
+  }),
+
+  // Anuncio masivo a usuarios
+  announcement: (data: {
+    userName: string;
+    userEmail: string;
+    subject: string;
+    body: string;
+  }) => ({
+    to: data.userEmail,
+    subject: data.subject,
+    html: baseTemplate(data.subject, `
+      ${heading(`Hola ${data.userName} 👋`)}
+      <div style="margin-top:16px;color:#52525b;font-size:15px;line-height:1.7;">
+        ${data.body.replace(/\n/g, '<br>')}
+      </div>
+      ${ctaButton('Ir a mi dashboard', 'https://www.aliax.io/dashboard')}
+      <p style="margin-top:24px;color:#a1a1aa;font-size:12px;">Recibes este correo porque tienes una cuenta registrada en Aliax.io.</p>
+    `),
+  }),
+
   // Al profesional: cita cancelada por el cliente
   cancellationProfessional: (data: {
     professionalName: string;

@@ -35,6 +35,9 @@ export function startReminderJob() {
       console.log(`[CRON] Found ${bookings.length} bookings for tomorrow`);
 
       for (const booking of bookings) {
+        const notifSettings = await prisma.bookingSettings.findUnique({ where: { profileId: booking.profileId } });
+        const emailEnabled = notifSettings?.emailEnabled ?? true;
+
         // ── Recordatorio al cliente ──────────────────────────────────
         const alreadySentClient = await prisma.notification.findFirst({
           where: {
@@ -84,7 +87,7 @@ export function startReminderJob() {
           console.log(`[CRON] Reminder cliente ${result.success ? 'sent' : 'FAILED'} → ${booking.clientName}`);
 
           // Email recordatorio al cliente
-          if (booking.clientEmail) {
+          if (booking.clientEmail && emailEnabled) {
             const alreadySentClientEmail = await prisma.notification.findFirst({
               where: {
                 bookingId: booking.id,
@@ -175,7 +178,7 @@ export function startReminderJob() {
 
             // Email recordatorio al profesional
             const professionalEmail = booking.profile.user.email;
-            if (professionalEmail) {
+            if (professionalEmail && emailEnabled) {
               const alreadySentProEmail = await prisma.notification.findFirst({
                 where: {
                   bookingId: booking.id,

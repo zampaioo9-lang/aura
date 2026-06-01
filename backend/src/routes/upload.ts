@@ -23,6 +23,11 @@ function saveLocal(buffer: Buffer, ext: string): string {
   return `http://localhost:${env.PORT}/uploads/${filename}`;
 }
 
+// GET /api/upload/health — Cloudinary status (auth)
+router.get('/health', authMiddleware, (_req, res) => {
+  res.json({ cloudinary: isCloudinaryConfigured() });
+});
+
 // POST /api/upload/image
 router.post('/image', authMiddleware, (req, res, next) => {
   uploadImageMiddleware(req, res, (err) => {
@@ -34,15 +39,15 @@ router.post('/image', authMiddleware, (req, res, next) => {
     if (!req.file) throw new AppError(400, 'No se envio ninguna imagen');
 
     if (!isCloudinaryConfigured()) {
-      const ext = req.file.originalname ? path.extname(req.file.originalname) : '.png';
-      const url = saveLocal(req.file.buffer, ext);
-      return res.json({ url, publicId: `local-${Date.now()}` });
+      throw new AppError(503, 'Servicio de imágenes no configurado. Contacta al administrador.');
     }
 
     const result = await uploadImage(req.file.buffer);
     res.json(result);
-  } catch (err) {
-    next(err);
+  } catch (err: any) {
+    // Convert Cloudinary errors to AppError so the message is visible in the response
+    if (err instanceof AppError) return next(err);
+    next(new AppError(500, `Error al subir imagen: ${err?.message || 'desconocido'}`));
   }
 });
 

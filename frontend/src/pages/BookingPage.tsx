@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Clock, MapPin, ArrowLeft, Award } from 'lucide-react';
 import api from '../api/client';
 import BookingForm from '../components/BookingForm';
-import ServiceCard from '../components/ServiceCard';
+import { formatPrice, formatDuration } from '../lib/utils';
+import './BookingPage.css';
 
 export default function BookingPage() {
   const { slug } = useParams();
@@ -19,55 +21,122 @@ export default function BookingPage() {
       .finally(() => setLoading(false));
   }, [slug]);
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full" /></div>;
-  if (!profile) return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 gap-3">
-      <p className="text-slate-600 text-lg">No se encontró el perfil solicitado.</p>
-      <button onClick={() => navigate(-1)} className="text-indigo-600 hover:underline text-sm">Volver</button>
+  if (loading) return (
+    <div className="bp-fullscreen">
+      <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid rgba(107,99,255,0.3)', borderTopColor: '#7c6fff', animation: 'spin 0.8s linear infinite' }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-5xl mb-4">&#10003;</div>
-          <h2 className="text-2xl font-semibold text-slate-900 mb-2">Reserva Registrada!</h2>
-          <p className="text-slate-500 mb-6">Recibiras una confirmacion pronto.</p>
-          <button onClick={() => navigate(`/${slug}`)}
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors">
-            Ver Perfil
-          </button>
-        </div>
+  if (!profile) return (
+    <div className="bp-fullscreen">
+      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15 }}>No se encontró el perfil solicitado.</p>
+      <button onClick={() => navigate(-1)} style={{ color: '#a78bfa', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}>
+        ← Volver
+      </button>
+    </div>
+  );
+
+  if (success) return (
+    <div className="bp-fullscreen">
+      <div className="bp-success-card">
+        <div className="bp-success-icon">✓</div>
+        <h2 className="bp-success-title">¡Reserva Registrada!</h2>
+        <p className="bp-success-sub">Recibirás una confirmación pronto.</p>
+        <button className="bp-success-btn" onClick={() => navigate(`/${slug}`)}>
+          Ver Perfil
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
+
+  const initials = profile.title
+    ?.split(' ')
+    .slice(0, 2)
+    .map((w: string) => w[0])
+    .join('')
+    .toUpperCase() ?? '?';
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-xl mx-auto px-6 py-12">
-        <h1 className="text-2xl font-semibold text-slate-900 mb-2">Reservar con {profile.title}</h1>
-        <p className="text-slate-500 mb-8">Selecciona un servicio para reservar tu cita.</p>
+    <div className="bp-wrap">
+      <div className="bp-orb-1" />
+      <div className="bp-orb-2" />
 
-        <div className="space-y-4">
-          {profile.services?.map((s: any) => (
-            <ServiceCard key={s.id} service={s} onBook={(id) => {
-              const svc = profile.services.find((sv: any) => sv.id === id);
-              if (svc) setSelectedService({ id: svc.id, name: svc.name });
-            }} />
-          ))}
+      <div className="bp-content">
+        {/* Back */}
+        <button className="bp-back" onClick={() => navigate(-1)}>
+          <ArrowLeft size={14} />
+          Volver
+        </button>
+
+        {/* Professional card */}
+        <div className="bp-pro-card">
+          {profile.avatar
+            ? <img className="bp-avatar" src={profile.avatar} alt={profile.title} />
+            : <div className="bp-avatar-initials">{initials}</div>
+          }
+          <div style={{ minWidth: 0 }}>
+            <h1 className="bp-pro-name">{profile.title}</h1>
+            <p className="bp-pro-profession">{profile.profession}</p>
+            <div className="bp-pro-tags">
+              {profile.specialty && (
+                <span className="bp-tag">{profile.specialty}</span>
+              )}
+              {profile.country && (
+                <span className="bp-tag">
+                  <MapPin size={10} style={{ display: 'inline', marginRight: 3 }} />
+                  {profile.country}
+                </span>
+              )}
+              {profile.yearsExperience && (
+                <span className="bp-tag">
+                  <Award size={10} style={{ display: 'inline', marginRight: 3 }} />
+                  {profile.yearsExperience} años exp.
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {selectedService && (
-          <BookingForm
-            profileId={profile.id}
-            serviceId={selectedService.id}
-            serviceName={selectedService.name}
-            onClose={() => setSelectedService(null)}
-            onSuccess={() => { setSuccess(true); setSelectedService(null); }}
-          />
-        )}
+        {/* Services */}
+        <p className="bp-services-title">Selecciona un servicio</p>
+
+        <div>
+          {profile.services?.map((s: any) => (
+            <div key={s.id} className="bp-svc-card">
+              <div style={{ minWidth: 0 }}>
+                <p className="bp-svc-name">{s.name}</p>
+                <div className="bp-svc-meta">
+                  <Clock size={11} />
+                  {formatDuration(s.durationMinutes)}
+                </div>
+                {s.description && (
+                  <p className="bp-svc-desc">{s.description}</p>
+                )}
+              </div>
+              <div className="bp-svc-right">
+                <span className="bp-svc-price">{formatPrice(s.price, s.currency)}</span>
+                <button
+                  className="bp-svc-btn"
+                  onClick={() => setSelectedService({ id: s.id, name: s.name })}
+                >
+                  Reservar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {selectedService && (
+        <BookingForm
+          profileId={profile.id}
+          serviceId={selectedService.id}
+          serviceName={selectedService.name}
+          onClose={() => setSelectedService(null)}
+          onSuccess={() => { setSuccess(true); setSelectedService(null); }}
+        />
+      )}
     </div>
   );
 }

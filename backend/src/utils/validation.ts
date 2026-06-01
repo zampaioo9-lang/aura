@@ -18,7 +18,7 @@ export const profileSchema = z.object({
   bio: z.string().max(500).optional().or(z.literal('')),
   profession: z.string().min(2).max(100),
   phone: z.string().max(20).optional().or(z.literal('')),
-  template: z.enum(['MINIMALIST', 'BOLD', 'ELEGANT', 'CREATIVE']).default('MINIMALIST'),
+  template: z.enum(['MINIMALIST', 'BOLD', 'ELEGANT', 'CREATIVE', 'CARBONO']).default('MINIMALIST'),
   avatar: z.string().url().optional().or(z.literal('')),
   coverImage: z.string().url().optional().or(z.literal('')),
   videoUrl: z.string().url().optional().or(z.literal('')),
@@ -34,7 +34,23 @@ export const profileSchema = z.object({
   }))).optional(),
   specialty: z.string().max(100).optional().or(z.literal('')),
   yearsExperience: z.number().int().min(0).max(100).optional().nullable(),
+  country: z.string().max(100).optional().or(z.literal('')),
+  city: z.string().max(100).optional().or(z.literal('')),
   published: z.boolean().optional(),
+  // Salud mental
+  therapeuticApproaches: z.array(z.string()).optional(),
+  problematics: z.array(z.string()).optional(),
+  populations: z.array(z.string()).optional(),
+  modality: z.string().max(20).optional().or(z.literal('')),
+  pricePerSession: z.number().min(0).optional().nullable(),
+  sessionCurrency: z.string().max(10).optional(),
+  sessionDurationMinutes: z.number().int().min(15).max(240).optional().nullable(),
+  cedula: z.string().max(50).optional().or(z.literal('')),
+  university: z.string().max(200).optional().or(z.literal('')),
+  degree: z.string().max(50).optional().or(z.literal('')),
+  languages: z.array(z.string()).optional(),
+  acceptsInvoice: z.boolean().optional(),
+  workingStyle: z.string().max(1000).optional().or(z.literal('')),
 });
 
 const CURRENCIES = ['EUR', 'USD', 'MXN', 'COP', 'ARS', 'CLP'] as const;
@@ -96,6 +112,7 @@ export const upsertBookingSettingsSchema = z.object({
   minAdvanceHours:    z.number().int().min(0).max(72).default(1),
   cancellationHours:  z.number().int().min(0).max(168).default(24),
   autoConfirm:        z.boolean().default(false),
+  emailEnabled:       z.boolean().default(true),
   timezone:           z.string().max(60).default('America/Mexico_City'),
   language:           z.string().max(10).default('es'),
 });

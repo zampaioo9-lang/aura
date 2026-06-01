@@ -20,14 +20,16 @@ export const PROFESSION_CATEGORIES: ProfessionCategory[] = [
     professions: [
       'Psicólogo/a', 'Psicoterapeuta', 'Coach de Vida', 'Coach Ejecutivo',
       'Coach Nutricional', 'Terapeuta Holístico/a', 'Terapeuta Ocupacional',
-      'Consejero/a Familiar',
+      'Consejero/a Familiar', 'Terapeuta',
     ],
   },
   {
-    category: 'Belleza y Estética',
+    category: 'Estética',
     professions: [
-      'Estilista', 'Barbero/a', 'Maquillador/a', 'Manicurista',
-      'Cosmetólogo/a', 'Esteticista', 'Depilador/a', 'Tatuador/a', 'Piercer',
+      'Estilista', 'Barbero/a', 'Peluquero/a', 'Estética / Salón de Belleza',
+      'Manicurista', 'Pedicurista', 'Maquillador/a', 'Cosmetólogo/a',
+      'Esteticista', 'Depilador/a', 'Tatuador/a', 'Piercer',
+      'Estilista y Barbero',
     ],
   },
   {
@@ -47,12 +49,36 @@ export const PROFESSION_CATEGORIES: ProfessionCategory[] = [
     ],
   },
   {
-    category: 'Tecnología y Digital',
+    category: 'Tecnología',
     professions: [
-      'Desarrollador/a Web', 'Desarrollador/a Móvil', 'Diseñador/a Gráfico/a',
-      'Diseñador/a UX/UI', 'Community Manager', 'Especialista en Marketing Digital',
-      'Especialista en SEO', 'Fotógrafo/a', 'Videógrafo/a', 'Editor/a de Video',
-      'Informático/a / Soporte Técnico',
+      // Desarrollo
+      'Desarrollador/a Web', 'Desarrollador/a Web Front-end', 'Desarrollador/a Web Back-end',
+      'Desarrollador/a Full Stack', 'Desarrollador/a Móvil', 'Desarrollador/a de Aplicaciones',
+      'Ingeniero/a de Software', 'Desarrollador/a de Juegos',
+      // Diseño digital
+      'Diseñador/a Web', 'Diseñador/a Gráfico/a', 'Diseñador/a UX/UI',
+      'Diseñador/a de Experiencia Digital', 'Ilustrador/a Digital',
+      'Animador/a Digital', 'Motion Graphics',
+      // Creación de contenido
+      'Creador/a de Contenido Digital', 'Fotógrafo/a', 'Videógrafo/a',
+      'Editor/a de Video', 'Productor/a Audiovisual', 'Copywriter / Redactor/a',
+      // Marketing digital
+      'Especialista en Marketing Digital', 'Especialista en SEO',
+      'Especialista en SEM / Publicidad Digital', 'Community Manager',
+      'Social Media Manager', 'Especialista en Email Marketing', 'Growth Hacker',
+      'Especialista en E-commerce',
+      // Consultoría tech
+      'Consultor/a de Tecnología', 'Consultor/a de Transformación Digital',
+      'Consultor/a de Negocios Digitales', 'Product Manager', 'Scrum Master',
+      'Analista de Negocio', 'Especialista en WordPress', 'Especialista en Shopify',
+      'Especialista en Webflow', 'Consultor de TI', 'Consultor',
+      // Soporte y sistemas
+      'Informático/a / Soporte Técnico', 'Técnico/a en Sistemas',
+      'Administrador/a de Redes', 'Especialista en Ciberseguridad',
+      'Especialista en Cloud Computing',
+      // Datos e IA
+      'Analista de Datos', 'Científico/a de Datos',
+      'Especialista en Inteligencia Artificial', 'Especialista en Business Intelligence',
     ],
   },
   {
