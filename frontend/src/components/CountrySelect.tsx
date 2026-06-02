@@ -1,6 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 
+const ACCENT_MAP: Record<string, string> = {
+  profesional: '#9333ea', bold: '#deb607', elegante: '#3e99c9',
+  creative: '#d948f0', carbono: '#14463f', aguamarina: '#2dd4bf', nocturno: '#581c9b',
+};
+function darkBg(amount = 0.45): string {
+  const hex = ACCENT_MAP[localStorage.getItem('aliax_accent') || 'profesional'] ?? '#9333ea';
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  return `rgb(${Math.round(r * amount)},${Math.round(g * amount)},${Math.round(b * amount)})`;
+}
+
 const COUNTRIES = [
   { flag: '🇩🇪', name: 'Alemania' },
   { flag: '🇦🇷', name: 'Argentina' },
@@ -98,10 +108,11 @@ export default function CountrySelect({
           style={{
             width: '100%', display: 'flex', alignItems: 'center', gap: 8,
             padding: '8px 12px',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : '#cbd5e1'}`,
+            border: `1px solid ${isDark ? 'rgba(45,212,191,0.2)' : '#cbd5e1'}`,
             borderRadius: 8,
-            background: isDark ? '#2a2640' : '#ffffff',
-            color: isDark ? '#f1f0f5' : '#334155',
+            background: isDark ? 'rgba(255,255,255,0.06)' : '#ffffff',
+            backdropFilter: isDark ? 'blur(8px)' : 'none',
+            color: isDark ? '#e8f0f0' : '#334155',
             fontSize: 14, cursor: 'pointer', outline: 'none', textAlign: 'left',
           }}
         >
@@ -124,34 +135,49 @@ export default function CountrySelect({
         </button>
 
         {open && (
-          <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
-            <div className="p-2 border-b border-slate-100">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg">
-                <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+          <div style={{
+            position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4,
+            background: isDark ? darkBg(0.45) : '#ffffff',
+            border: `1px solid ${isDark ? 'rgba(45,212,191,0.2)' : '#e2e8f0'}`,
+            borderRadius: 10, boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 4px 20px rgba(0,0,0,0.1)',
+            zIndex: 50, overflow: 'hidden',
+          }}>
+            <div style={{ padding: 8, borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9'}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: isDark ? 'rgba(255,255,255,0.05)' : '#f8fafc', borderRadius: 8 }}>
+                <Search className="h-3.5 w-3.5 shrink-0" style={{ color: isDark ? 'rgba(255,255,255,0.3)' : '#94a3b8' }} />
                 <input
                   type="text"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Buscar país..."
-                  className="flex-1 bg-transparent text-sm outline-none text-slate-700 placeholder-slate-400"
+                  style={{ flex: 1, background: 'transparent', fontSize: 13, outline: 'none', color: isDark ? '#e8f0f0' : '#334155', border: 'none' }}
                   autoFocus
                 />
               </div>
             </div>
-            <div className="max-h-56 overflow-y-auto">
+            <div style={{ maxHeight: 220, overflowY: 'auto' }}>
               {filtered.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-4">Sin resultados</p>
+                <p style={{ fontSize: 13, color: isDark ? 'rgba(255,255,255,0.3)' : '#94a3b8', textAlign: 'center', padding: '16px 0' }}>Sin resultados</p>
               ) : (
                 filtered.map(c => (
                   <button
                     key={c.name}
                     type="button"
                     onClick={() => handleSelect(c.name)}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-indigo-50 transition-colors ${
-                      value === c.name ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-slate-700'
-                    }`}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '9px 14px', border: 'none', cursor: 'pointer', textAlign: 'left',
+                      fontSize: 13, fontFamily: 'inherit',
+                      background: value === c.name ? 'rgba(45,212,191,0.12)' : 'transparent',
+                      color: value === c.name ? '#2dd4bf' : (isDark ? '#e8f0f0' : '#334155'),
+                      borderLeft: value === c.name ? '3px solid #2dd4bf' : '3px solid transparent',
+                      fontWeight: value === c.name ? 600 : 400,
+                      transition: 'background 0.1s',
+                    }}
+                    onMouseEnter={e => { if (value !== c.name) (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(45,212,191,0.04)'; }}
+                    onMouseLeave={e => { if (value !== c.name) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                   >
-                    <span className="text-base leading-none">{c.flag}</span>
+                    <span style={{ fontSize: 15, lineHeight: 1 }}>{c.flag}</span>
                     <span>{c.name}</span>
                   </button>
                 ))

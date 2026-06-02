@@ -129,9 +129,11 @@ export default function PhoneInput({
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '8px 12px',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : '#cbd5e1'}`,
+            border: `1px solid ${isDark ? 'rgba(45,212,191,0.2)' : '#cbd5e1'}`,
             borderRadius: 8,
-            background: isDark ? '#2a2640' : '#ffffff',
+            background: isDark ? 'rgba(45,212,191,0.06)' : '#ffffff',
+            backdropFilter: isDark ? 'blur(8px)' : 'none',
+            WebkitBackdropFilter: isDark ? 'blur(8px)' : 'none',
             color: isDark ? '#f1f0f5' : '#334155',
             fontSize: 14, cursor: 'pointer', flexShrink: 0, outline: 'none',
           }}
@@ -149,9 +151,11 @@ export default function PhoneInput({
           placeholder={placeholder}
           style={{
             flex: 1, padding: '8px 12px',
-            border: `1px solid ${error ? '#f87171' : isDark ? 'rgba(255,255,255,0.15)' : '#cbd5e1'}`,
+            border: `1px solid ${error ? '#f87171' : isDark ? 'rgba(45,212,191,0.2)' : '#cbd5e1'}`,
             borderRadius: 8,
-            background: isDark ? '#2a2640' : '#ffffff',
+            background: isDark ? 'rgba(45,212,191,0.06)' : '#ffffff',
+            backdropFilter: isDark ? 'blur(8px)' : 'none',
+            WebkitBackdropFilter: isDark ? 'blur(8px)' : 'none',
             color: isDark ? '#f1f0f5' : '#0f172a',
             fontSize: 14, outline: 'none',
           }}

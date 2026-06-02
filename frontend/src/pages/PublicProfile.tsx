@@ -48,6 +48,7 @@ export default function PublicProfile() {
           profileId={profile.id}
           serviceId={bookingService.id}
           serviceName={bookingService.name}
+          primaryColor={profile.customization?.primaryColor || '#2dd4bf'}
           onClose={() => setBookingService(null)}
           onSuccess={() => { setBookingSuccess(true); setBookingService(null); }}
         />

@@ -1,44 +1,40 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import PhoneInput from '../components/PhoneInput';
 
-function AuraLogo({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 32 32" className={className} fill="none">
-      <circle cx="16" cy="16" r="4" stroke="currentColor" fill="none">
-        <animate attributeName="r" from="4" to="32" dur="2.8s" begin="0s" repeatCount="indefinite" />
-        <animate attributeName="opacity" from="0.9" to="0" dur="2.8s" begin="0s" repeatCount="indefinite" />
-        <animate attributeName="stroke-width" from="2" to="0" dur="2.8s" begin="0s" repeatCount="indefinite" />
-      </circle>
-      <circle cx="16" cy="16" r="4" stroke="currentColor" fill="none">
-        <animate attributeName="r" from="4" to="32" dur="2.8s" begin="0.9s" repeatCount="indefinite" />
-        <animate attributeName="opacity" from="0.9" to="0" dur="2.8s" begin="0.9s" repeatCount="indefinite" />
-        <animate attributeName="stroke-width" from="2" to="0" dur="2.8s" begin="0.9s" repeatCount="indefinite" />
-      </circle>
-      <circle cx="16" cy="16" r="4" stroke="currentColor" fill="none">
-        <animate attributeName="r" from="4" to="32" dur="2.8s" begin="1.8s" repeatCount="indefinite" />
-        <animate attributeName="opacity" from="0.9" to="0" dur="2.8s" begin="1.8s" repeatCount="indefinite" />
-        <animate attributeName="stroke-width" from="2" to="0" dur="2.8s" begin="1.8s" repeatCount="indefinite" />
-      </circle>
-      <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
-      <circle cx="16" cy="16" r="9" stroke="currentColor" strokeWidth="1.5" opacity="0.6" />
-      <circle cx="16" cy="16" r="4" fill="currentColor" />
-    </svg>
-  );
-}
+const PROFESSIONS = [
+  'Psicólogo/a',
+  'Psicoterapeuta',
+  'Terapeuta de pareja',
+  'Terapeuta familiar',
+  'Psiquiatra',
+  'Neuropsicólogo/a',
+  'Coach terapéutico/a',
+];
+
+const inp: React.CSSProperties = {
+  width: '100%', padding: '11px 14px',
+  background: 'rgba(255,255,255,0.05)',
+  border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: 10, color: '#fff',
+  fontSize: 14, fontFamily: 'inherit', outline: 'none',
+  transition: 'border-color 0.2s',
+};
 
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [name, setName]         = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [phone, setPhone]       = useState('');
+  const [profession, setProfession] = useState('');
+  const [cedula, setCedula]     = useState('');
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [showPwd, setShowPwd]   = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +42,8 @@ export default function Register() {
     setLoading(true);
     try {
       await register(name, email, password, phone || undefined);
+      // Pre-fill ProfileCreate with data collected here
+      localStorage.setItem('aliax_register_prefill', JSON.stringify({ profession, cedula }));
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al registrarse');
@@ -55,103 +53,184 @@ export default function Register() {
   };
 
   return (
-    <div className="grain-overlay bg-aura-950 text-white font-body min-h-screen flex items-center justify-center px-4 py-10 overflow-hidden" style={{ isolation: 'isolate' }}>
+    <div style={{
+      minHeight: '100vh', background: '#0c0c0c', color: '#fff',
+      fontFamily: "'Inter', system-ui, sans-serif",
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '32px 16px', position: 'relative', overflow: 'hidden',
+    }}>
+      {/* Teal glow orb */}
+      <div style={{
+        position: 'absolute', top: '-15%', left: '50%', transform: 'translateX(-50%)',
+        width: 700, height: 600,
+        background: 'radial-gradient(ellipse, rgba(45,212,191,0.10) 0%, transparent 65%)',
+        pointerEvents: 'none',
+      }} />
 
-      {/* Ambient background */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden>
-        <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full bg-amber-glow/[0.07] blur-[140px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-aura-600/40 blur-[120px]" />
-      </div>
-
-      <div className="relative z-10 w-full max-w-md">
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 440 }}>
 
         {/* Logo */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2.5 group">
-            <AuraLogo className="h-9 w-9 text-amber-glow transition-transform duration-500 group-hover:rotate-90" />
-            <span className="text-2xl font-display text-white tracking-wide">Aliax.io</span>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#9b87f5', boxShadow: '0 0 10px rgba(155,135,245,0.9)' }} />
+            <span style={{ fontSize: 20, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>Aliax</span>
           </Link>
         </div>
 
         {/* Card */}
-        <div className="bg-white/[0.03] border border-white/10 rounded-2xl backdrop-blur-sm p-8">
-          <div className="mb-6">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-glow/10 border border-amber-glow/20 text-amber-soft text-xs font-semibold mb-3">
-              <Sparkles className="h-3 w-3" /> Plan gratuito · Sin tarjeta de crédito
-            </span>
-            <h2 className="text-xl font-semibold text-white">Crea tu cuenta gratis</h2>
-            <p className="text-sm text-white/40 mt-1">Empieza a recibir reservas hoy, sin costo.</p>
+        <div style={{
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(45,212,191,0.15)',
+          borderRadius: 20, padding: '36px 32px',
+          backdropFilter: 'blur(20px)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+        }}>
+          {/* Header */}
+          <div style={{ marginBottom: 28 }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.2)',
+              borderRadius: 999, padding: '4px 12px', marginBottom: 12,
+            }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#2dd4bf' }} />
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#2dd4bf' }}>
+                Gratis · Sin tarjeta
+              </span>
+            </div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px' }}>Crea tu perfil gratis</h2>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+              Aparece en búsquedas de Google desde hoy
+            </p>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg">
+            <div style={{
+              marginBottom: 20, padding: '10px 14px',
+              background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+              borderRadius: 10, fontSize: 13, color: 'rgba(248,113,113,0.9)',
+            }}>
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
             <div>
-              <label className="block text-sm font-medium text-white/70 mb-1">Nombre</label>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
+                Nombre completo
+              </label>
               <input
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none bg-white text-slate-900"
+                type="text" value={name} onChange={e => setName(e.target.value)} required
+                placeholder="Ej. Dra. Laura Mendoza"
+                style={inp}
+                onFocus={e => (e.currentTarget.style.borderColor = 'rgba(45,212,191,0.5)')}
+                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-white/70 mb-1">Email</label>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
+                Profesión
+              </label>
+              <select
+                value={profession} onChange={e => setProfession(e.target.value)} required
+                style={{
+                  ...inp,
+                  appearance: 'none', WebkitAppearance: 'none',
+                  cursor: 'pointer',
+                  color: profession ? '#fff' : 'rgba(255,255,255,0.3)',
+                }}
+                onFocus={e => (e.currentTarget.style.borderColor = 'rgba(45,212,191,0.5)')}
+                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+              >
+                <option value="" disabled style={{ background: '#1a1a1a' }}>Selecciona tu profesión</option>
+                {PROFESSIONS.map(p => (
+                  <option key={p} value={p} style={{ background: '#1a1a1a' }}>{p}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
+                Cédula profesional
+                <span style={{ marginLeft: 6, fontSize: 11, color: 'rgba(255,255,255,0.25)', fontWeight: 400 }}>opcional</span>
+              </label>
               <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none bg-white text-slate-900"
+                type="text" value={cedula} onChange={e => setCedula(e.target.value)}
+                placeholder="Ej. 8734521"
+                style={inp}
+                onFocus={e => (e.currentTarget.style.borderColor = 'rgba(45,212,191,0.5)')}
+                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-white/70 mb-1">Contraseña</label>
-              <div className="relative">
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
+                Email
+              </label>
+              <input
+                type="email" value={email} onChange={e => setEmail(e.target.value)} required
+                style={inp}
+                onFocus={e => (e.currentTarget.style.borderColor = 'rgba(45,212,191,0.5)')}
+                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
+                Contraseña
+              </label>
+              <div style={{ position: 'relative' }}>
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none bg-white text-slate-900 text-base"
+                  type={showPwd ? 'text' : 'password'} value={password}
+                  onChange={e => setPassword(e.target.value)} required minLength={6}
+                  placeholder="Mínimo 6 caracteres"
+                  style={{ ...inp, paddingRight: 40 }}
+                  onFocus={e => (e.currentTarget.style.borderColor = 'rgba(45,212,191,0.5)')}
+                  onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
                 />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => setShowPassword(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                <button type="button" tabIndex={-1} onClick={() => setShowPwd(v => !v)}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: 0, display: 'flex' }}>
+                  {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
             </div>
+
             <div>
               <PhoneInput
-                label="Teléfono"
+                label="WhatsApp / Teléfono"
                 optional
                 value={phone}
                 onChange={setPhone}
                 isDark
               />
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 bg-amber-glow hover:opacity-90 text-white font-medium rounded-lg transition-opacity disabled:opacity-50"
+
+            <button type="submit" disabled={loading} style={{
+              marginTop: 4, width: '100%', padding: '13px',
+              background: 'linear-gradient(135deg, #2dd4bf, #0d9488)',
+              color: '#fff', fontSize: 14, fontWeight: 600,
+              border: 'none', borderRadius: 10, cursor: 'pointer',
+              fontFamily: 'inherit', opacity: loading ? 0.6 : 1,
+              transition: 'filter 0.2s',
+            }}
+              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.1)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1)'; }}
             >
-              {loading ? 'Creando cuenta...' : 'Crear cuenta gratis'}
+              {loading ? 'Creando cuenta...' : 'Crear mi perfil gratis'}
             </button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-white/40">
+          <p style={{ marginTop: 8, textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>
+            Al registrarte aceptas nuestros{' '}
+            <Link to="/terminos" style={{ color: 'rgba(45,212,191,0.5)', textDecoration: 'none' }}>Términos</Link>
+            {' '}y{' '}
+            <Link to="/privacidad" style={{ color: 'rgba(45,212,191,0.5)', textDecoration: 'none' }}>Privacidad</Link>
+          </p>
+
+          <p style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>
             ¿Ya tienes cuenta?{' '}
-            <Link to="/login" className="text-amber-glow hover:text-amber-soft transition-colors">
+            <Link to="/login" style={{ color: '#2dd4bf', textDecoration: 'none', fontWeight: 500 }}>
               Iniciar sesión
             </Link>
           </p>

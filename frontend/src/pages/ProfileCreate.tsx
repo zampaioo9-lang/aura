@@ -24,6 +24,12 @@ export default function ProfileCreate() {
   const [professionSuggestions, setProfessionSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  // Read data pre-filled from Register form
+  const prefill = (() => {
+    try { return JSON.parse(localStorage.getItem('aliax_register_prefill') || '{}'); }
+    catch { return {}; }
+  })();
+
   const {
     register,
     handleSubmit,
@@ -35,7 +41,8 @@ export default function ProfileCreate() {
     defaultValues: {
       slug: '',
       title: '',
-      profession: '',
+      profession: prefill.profession || '',
+      cedula: prefill.cedula || '',
       specialty: '',
       yearsExperience: '',
       country: '',
@@ -62,6 +69,7 @@ export default function ProfileCreate() {
         avatar: avatar || undefined,
         videoUrl: videoUrl || undefined,
       });
+      localStorage.removeItem('aliax_register_prefill');
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al crear perfil');

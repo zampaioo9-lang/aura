@@ -38,8 +38,8 @@ export default function ServiceFormModal({ isOpen, onClose, service, mode, onSub
       <div className="absolute inset-0 bg-black/50 transition-opacity" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-slide-in" style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.35)' }}>
-        <div className="flex items-center justify-between p-5 border-b border-slate-200">
+      <div className="relative bg-white rounded-2xl max-w-lg w-full animate-slide-in overflow-hidden" style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.35)', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+        <div className="flex items-center justify-between p-5 border-b border-slate-200 flex-shrink-0">
           <h3 className="text-lg font-semibold text-slate-900">
             {mode === 'create' ? 'Nuevo Servicio' : 'Editar Servicio'}
           </h3>
@@ -51,7 +51,7 @@ export default function ServiceFormModal({ isOpen, onClose, service, mode, onSub
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="p-5">
+        <div className="p-5 overflow-y-auto">
           <ServiceForm
             onSubmit={onSubmit}
             initialData={service}

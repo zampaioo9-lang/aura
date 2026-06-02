@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, X, Plus, Power, Sparkles, GripVertical, Pencil, CalendarDays, Layers, Ban, Settings2, Bell } from 'lucide-react';
+import DatePickerField from '../components/DatePickerField';
+import CustomSelect from '../components/CustomSelect';
 import api from '../api/client';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../context/AuthContext';
@@ -34,7 +36,7 @@ function genTimeOpts() {
   return opts;
 }
 const TIME_OPTS = genTimeOpts();
-const SERVICE_COLORS = ['#6c63ff', '#ff6584', '#43d9ad', '#f6c90e', '#ff8c42', '#a8ff78', '#ff61d2'];
+const SERVICE_COLORS = ['#2dd4bf', '#ff6584', '#43d9ad', '#f6c90e', '#ff8c42', '#a8ff78', '#ff61d2'];
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 // ── Sub-components ───────────────────────────────────────────────────
@@ -48,7 +50,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
       onClick={onChange}
       style={{
         width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', flexShrink: 0,
-        background: on ? '#6c63ff' : 'var(--sc-border)', position: 'relative', transition: 'background .2s',
+        background: on ? '#2dd4bf' : 'var(--sc-border)', position: 'relative', transition: 'background .2s',
       }}
     >
       <span style={{
@@ -63,7 +65,9 @@ function Card({ children, style = {} }: { children: React.ReactNode; style?: Rea
   return (
     <div style={{
       background: 'var(--sc-side)', border: '1px solid var(--sc-border)', borderRadius: 12,
-      padding: 24, marginBottom: 20, boxShadow: '0 2px 12px rgba(0,0,0,0.18)', ...style,
+      padding: 24, marginBottom: 20,
+      backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+      boxShadow: '0 2px 16px rgba(0,0,0,0.10)', ...style,
     }}>
       {children}
     </div>
@@ -86,7 +90,7 @@ function BtnPrimary({ onClick, children, disabled = false, small = false }: {
 }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
-      background: '#6c63ff', color: 'white', border: 'none', borderRadius: 8, cursor: disabled ? 'not-allowed' : 'pointer',
+      background: '#2dd4bf', color: 'white', border: 'none', borderRadius: 8, cursor: disabled ? 'not-allowed' : 'pointer',
       padding: small ? '6px 12px' : '10px 20px', fontSize: small ? 13 : 14, fontFamily: 'DM Sans, sans-serif', fontWeight: 500,
       transition: 'background .15s', opacity: disabled ? 0.6 : 1,
     }}>{children}</button>
@@ -119,12 +123,11 @@ function FormSelect({ label, value, onChange, options }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--sc-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{label}</label>
-      <select value={value} onChange={e => onChange(e.target.value)} style={{
-        background: 'var(--sc-inner)', border: '1px solid var(--sc-border)', borderRadius: 8, padding: '10px 14px',
-        color: 'var(--sc-text)', fontFamily: 'DM Sans, sans-serif', fontSize: 14, outline: 'none',
-      }}>
-        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
+      <CustomSelect
+        value={String(value)}
+        onChange={onChange}
+        options={options.map(o => ({ value: String(o.value), label: o.label }))}
+      />
     </div>
   );
 }
@@ -143,8 +146,8 @@ function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) 
 function DayChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button onClick={onClick} style={{
-      padding: '8px 14px', borderRadius: 20, border: `1px solid ${active ? '#6c63ff' : 'var(--sc-border)'}`,
-      background: active ? 'rgba(108,99,255,0.2)' : 'var(--sc-inner)', color: active ? '#6c63ff' : 'var(--sc-muted)',
+      padding: '8px 14px', borderRadius: 20, border: `1px solid ${active ? '#2dd4bf' : 'var(--sc-border)'}`,
+      background: active ? 'rgba(45,212,191,0.18)' : 'var(--sc-inner)', color: active ? '#2dd4bf' : 'var(--sc-muted)',
       cursor: 'pointer', fontSize: 13, fontWeight: active ? 500 : 400, fontFamily: 'DM Sans, sans-serif',
       transition: 'all .15s',
     }}>{label}</button>
@@ -259,7 +262,7 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
     await fetchSlots();
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '4px solid #6c63ff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid rgba(45,212,191,0.3)', borderTopColor: '#2dd4bf', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   const dayHours = (day: number) => slots.filter(s => s.dayOfWeek === day && s.isActive).reduce((acc, s) => acc + (t2m(s.endTime) - t2m(s.startTime)) / 60, 0);
 
@@ -267,8 +270,8 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
     <>
       {/* Días laborables */}
       <Card>
-        <CardHeader dot="#6c63ff" title="Días laborables" action={
-          <button onClick={() => setShowTemplates(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500, background: 'rgba(108,99,255,0.12)', color: '#6c63ff' }}>
+        <CardHeader dot="#2dd4bf" title="Días laborables" action={
+          <button onClick={() => setShowTemplates(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500, background: 'rgba(45,212,191,0.12)', color: '#2dd4bf' }}>
             <Sparkles size={13} /> Aplicar plantilla
           </button>
         } />
@@ -287,7 +290,7 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
               {DAY_ORDER.filter(d => activeDays.includes(d)).map(d => (
                 <button key={d} onClick={() => setSelectedDay(d)} style={{
                   padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans',
-                  background: selectedDay === d ? '#6c63ff' : 'var(--sc-inner)', color: selectedDay === d ? 'white' : 'var(--sc-muted)',
+                  background: selectedDay === d ? '#2dd4bf' : 'var(--sc-inner)', color: selectedDay === d ? 'white' : 'var(--sc-muted)',
                 }}>{DAY_NAMES_SHORT[d]}</button>
               ))}
             </div>
@@ -336,9 +339,9 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
           {DAY_ORDER.map(d => {
             const h = dayHours(d);
             return (
-              <div key={d} style={{ textAlign: 'center', padding: '10px 4px', borderRadius: 8, background: h > 0 ? 'rgba(108,99,255,0.1)' : 'var(--sc-inner)', border: `1px solid ${h > 0 ? '#6c63ff40' : 'var(--sc-border)'}` }}>
+              <div key={d} style={{ textAlign: 'center', padding: '10px 4px', borderRadius: 8, background: h > 0 ? 'rgba(45,212,191,0.10)' : 'var(--sc-inner)', border: `1px solid ${h > 0 ? '#2dd4bf40' : 'var(--sc-border)'}` }}>
                 <div style={{ fontSize: 10, color: 'var(--sc-muted)', marginBottom: 4 }}>{DAY_NAMES_SHORT[d]}</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: h > 0 ? '#6c63ff' : 'var(--sc-muted2)' }}>{h > 0 ? `${h.toFixed(1)}h` : '—'}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: h > 0 ? '#2dd4bf' : 'var(--sc-muted2)' }}>{h > 0 ? `${h.toFixed(1)}h` : '—'}</div>
               </div>
             );
           })}
@@ -518,7 +521,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
     setDragId(null); setDragOverId(null);
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '4px solid #6c63ff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid rgba(45,212,191,0.3)', borderTopColor: '#2dd4bf', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   const currentFranjas = selectedDay !== null ? (franjasByDay[selectedDay] ?? []) : [];
   const byProfile = services.filter(s => s.profileId === profileId);
@@ -542,9 +545,9 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
       <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
         {(['active', 'inactive', 'all'] as SvcFilter[]).map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
-            padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === f ? '#6c63ff' : 'var(--sc-border)'}`,
-            background: filter === f ? 'rgba(108,99,255,0.15)' : 'var(--sc-inner)',
-            color: filter === f ? '#6c63ff' : 'var(--sc-muted)',
+            padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === f ? '#2dd4bf' : 'var(--sc-border)'}`,
+            background: filter === f ? 'rgba(45,212,191,0.15)' : 'var(--sc-inner)',
+            color: filter === f ? '#2dd4bf' : 'var(--sc-muted)',
             cursor: 'pointer', fontSize: 13, fontFamily: 'DM Sans', fontWeight: filter === f ? 500 : 400,
           }}>
             {f === 'active' ? 'Activos' : f === 'inactive' ? 'Inactivos' : 'Todos'}
@@ -569,10 +572,10 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
             onDragEnd={() => { setDragId(null); setDragOverId(null); }}
             style={{
               display: 'flex', alignItems: 'center', gap: 0,
-              border: `1px solid ${dragOverId === s.id ? '#6c63ff' : selectedSvc?.id === s.id ? '#6c63ff' : 'var(--sc-border)'}`,
+              border: `1px solid ${dragOverId === s.id ? '#2dd4bf' : selectedSvc?.id === s.id ? '#2dd4bf' : 'var(--sc-border)'}`,
               borderRadius: 10, transition: 'all .15s',
               opacity: dragId === s.id ? 0.4 : s.isActive ? 1 : 0.6,
-              outline: dragOverId === s.id ? '2px dashed #6c63ff' : 'none',
+              outline: dragOverId === s.id ? '2px dashed #2dd4bf' : 'none',
               outlineOffset: 2,
             }}
           >
@@ -590,7 +593,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
             {/* Content */}
             <div style={{
               flex: 1, display: 'flex', alignItems: 'center', gap: 12,
-              background: selectedSvc?.id === s.id ? 'rgba(108,99,255,0.08)' : 'var(--sc-inner)',
+              background: selectedSvc?.id === s.id ? 'rgba(45,212,191,0.08)' : 'var(--sc-inner)',
               borderRadius: '0 10px 10px 0', padding: '12px 14px',
             }}>
               <div style={{ width: 10, height: 36, borderRadius: 5, background: colorMap[s.id], flexShrink: 0 }} />
@@ -612,9 +615,9 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
                 onClick={e => { e.stopPropagation(); openEdit(s); }}
                 style={{
                   flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5,
-                  background: 'rgba(108,99,255,0.12)', border: '1px solid rgba(108,99,255,0.3)',
+                  background: 'rgba(45,212,191,0.12)', border: '1px solid rgba(45,212,191,0.3)',
                   borderRadius: 8, cursor: 'pointer', padding: '6px 12px',
-                  color: '#6c63ff', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500,
+                  color: '#2dd4bf', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500,
                 }}
               >
                 <Pencil size={12} /> Editar
@@ -655,7 +658,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
               {DAY_ORDER.filter(d => activeDays.includes(d)).map(d => (
                 <button key={d} onClick={() => setSelectedDay(d)} style={{
                   padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12,
-                  background: selectedDay === d ? '#6c63ff' : 'var(--sc-inner)', color: selectedDay === d ? 'white' : 'var(--sc-muted)',
+                  background: selectedDay === d ? '#2dd4bf' : 'var(--sc-inner)', color: selectedDay === d ? 'white' : 'var(--sc-muted)',
                 }}>{DAY_NAMES_SHORT[d]}</button>
               ))}
             </div>
@@ -756,7 +759,7 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
     return b.startDate.slice(0, 10) === b.endDate.slice(0, 10) ? s : `${s} → ${e}`;
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '4px solid #6c63ff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid rgba(45,212,191,0.3)', borderTopColor: '#2dd4bf', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   return (
     <>
@@ -770,7 +773,7 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
 
       {/* Formulario */}
       {showForm && (
-        <div style={{ background: 'rgba(108,99,255,0.06)', border: '1px dashed rgba(108,99,255,0.4)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
+        <div style={{ background: 'rgba(45,212,191,0.06)', border: '1px dashed rgba(45,212,191,0.4)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
           <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, color: 'var(--sc-text)', marginBottom: 16 }}>Nuevo bloqueo</div>
           <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             <div style={{ gridColumn: '1/-1', display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -778,25 +781,30 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
               <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="ej. Vacaciones de verano"
                 style={{ background: 'var(--sc-inner)', border: '1px solid var(--sc-border)', borderRadius: 8, padding: '10px 14px', color: 'var(--sc-text)', fontFamily: 'DM Sans', fontSize: 14, outline: 'none' }} />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 12, color: 'var(--sc-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 500 }}>Fecha inicio</label>
-              <input type="date" value={form.startDate} min={new Date().toISOString().split('T')[0]} onChange={e => setForm(f => ({ ...f, startDate: e.target.value, endDate: e.target.value }))}
-                style={{ background: 'var(--sc-inner)', border: '1px solid var(--sc-border)', borderRadius: 8, padding: '10px 14px', color: 'var(--sc-text)', fontFamily: 'DM Sans', fontSize: 14, outline: 'none' }} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 12, color: 'var(--sc-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 500 }}>Fecha fin</label>
-              <input type="date" value={form.endDate} min={form.startDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
-                style={{ background: 'var(--sc-inner)', border: '1px solid var(--sc-border)', borderRadius: 8, padding: '10px 14px', color: 'var(--sc-text)', fontFamily: 'DM Sans', fontSize: 14, outline: 'none' }} />
-            </div>
+            <DatePickerField
+              label="Fecha inicio"
+              value={form.startDate}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={v => setForm(f => ({ ...f, startDate: v, endDate: v }))}
+            />
+            <DatePickerField
+              label="Fecha fin"
+              value={form.endDate}
+              min={form.startDate}
+              onChange={v => setForm(f => ({ ...f, endDate: v }))}
+            />
             <div style={{ gridColumn: '1/-1', display: 'flex', flexDirection: 'column', gap: 6 }}>
               <label style={{ fontSize: 12, color: 'var(--sc-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 500 }}>Tipo</label>
-              <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-                style={{ background: 'var(--sc-inner)', border: '1px solid var(--sc-border)', borderRadius: 8, padding: '10px 14px', color: 'var(--sc-text)', fontFamily: 'DM Sans', fontSize: 14, outline: 'none' }}>
-                <option value="vacaciones">🏖️ Vacaciones</option>
-                <option value="reunion">💼 Reunión interna</option>
-                <option value="personal">🏠 Personal</option>
-                <option value="otro">🔧 Otro</option>
-              </select>
+              <CustomSelect
+                value={form.type}
+                onChange={v => setForm(f => ({ ...f, type: v }))}
+                options={[
+                  { value: 'vacaciones', label: '🏖️ Vacaciones' },
+                  { value: 'reunion',    label: '💼 Reunión interna' },
+                  { value: 'personal',   label: '🏠 Personal' },
+                  { value: 'otro',       label: '🔧 Otro' },
+                ]}
+              />
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
@@ -835,7 +843,7 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
                   {expired ? ' · Expirado' : ''}
                 </div>
               </div>
-              <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', background: 'rgba(108,99,255,0.2)', color: '#6c63ff' }}>
+              <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', background: 'rgba(45,212,191,0.18)', color: '#2dd4bf' }}>
                 {b.isAllDay ? 'Completo' : 'Parcial'}
               </span>
               <BtnDanger onClick={() => handleDelete(b.id)}>Eliminar</BtnDanger>
@@ -886,7 +894,7 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
     finally { setSaving(false); }
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '4px solid #6c63ff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid rgba(45,212,191,0.3)', borderTopColor: '#2dd4bf', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   return (
     <>
@@ -900,7 +908,7 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
 
       {/* Ventanas de tiempo */}
       <Card>
-        <CardHeader dot="#6c63ff" title="Ventanas de tiempo" />
+        <CardHeader dot="#2dd4bf" title="Ventanas de tiempo" />
         <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <FormSelect label="Antelación mínima para reservar" value={String(settings.minAdvanceHours)} onChange={v => upd('minAdvanceHours', Number(v))} options={[
             { value: '0', label: 'Inmediatamente' }, { value: '1', label: '1 hora antes' },
@@ -1026,7 +1034,7 @@ function TabNotificaciones({ isPro = false }: { isPro?: boolean }) {
 
       {/* Recordatorios */}
       <Card>
-        <CardHeader dot="#6c63ff" title="Recordatorios automáticos al cliente" />
+        <CardHeader dot="#2dd4bf" title="Recordatorios automáticos al cliente" />
         <ToggleRow label="Confirmación de reserva" desc="Inmediato tras reservar" on={reminders.confirmacion} onChange={() => tog(reminders, setReminders, 'confirmacion')} />
         <ToggleRow label="Recordatorio previo 24h" desc="24 horas antes de la cita" on={reminders.recordatorio24h} onChange={() => tog(reminders, setReminders, 'recordatorio24h')} />
         <ProGate isPro={isPro}>
@@ -1069,8 +1077,8 @@ const PAGES: { id: Tab; icon: ReactNode; label: string }[] = [
 
 interface Profile { id: string; title: string; slug: string }
 
-const THEME_DARK  = { main: '#0f0f12', side: '#18181f', inner: '#22222c', border: '#2e2e3d', text: '#e8e8f0', muted: '#6b6b80', muted2: '#3a3a4d' };
-const THEME_LIGHT = { main: 'rgb(245,244,240)', side: 'white', inner: '#f0f0f8', border: 'rgb(220,215,235)', text: '#2d2b55', muted: '#6b6b8f', muted2: '#c5c5d5' };
+const THEME_DARK  = { main: 'transparent', side: 'rgba(255,255,255,0.05)', inner: 'rgba(255,255,255,0.07)', border: 'rgba(45,212,191,0.15)', text: '#e8f0f0', muted: '#6aada8', muted2: 'rgba(45,212,191,0.2)' };
+const THEME_LIGHT = { main: 'transparent', side: 'rgba(255,255,255,0.72)', inner: 'rgba(255,255,255,0.55)', border: 'rgba(13,148,136,0.18)', text: '#0a1f1e', muted: '#3d8a82', muted2: 'rgba(13,148,136,0.15)' };
 
 // ════════════════════════════════════════════════════════════════════
 // EMBEDDED PANEL — para incrustar en Dashboard como pestaña
@@ -1104,7 +1112,7 @@ export function SchedulingPanel({ theme }: { theme: 'dark' | 'light' }) {
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}>
-      <div style={{ width: 32, height: 32, border: '4px solid #6c63ff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      <div style={{ width: 32, height: 32, border: '3px solid rgba(45,212,191,0.3)', borderTopColor: '#2dd4bf', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
     </div>
   );
 
@@ -1123,6 +1131,7 @@ export function SchedulingPanel({ theme }: { theme: 'dark' | 'light' }) {
           padding: 12px 8px;
           border: 1px solid var(--sc-border);
           background: var(--sc-side);
+          backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
           border-radius: 12px;
         }
         .sc-panel-btn {
@@ -1188,8 +1197,8 @@ export function SchedulingPanel({ theme }: { theme: 'dark' | 'light' }) {
             onClick={() => setTab(p.id)}
             className="sc-panel-btn"
             style={{
-              color: tab === p.id ? '#6c63ff' : T.muted,
-              background: tab === p.id ? 'rgba(108,99,255,0.15)' : 'transparent',
+              color: tab === p.id ? '#2dd4bf' : T.muted,
+              background: tab === p.id ? 'rgba(45,212,191,0.15)' : 'transparent',
             }}
           >
             <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{p.icon}</span>
@@ -1242,7 +1251,7 @@ export default function SchedulingConfig() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: T.main }}>
-        <div style={{ width: 32, height: 32, border: '4px solid #6c63ff', borderTopColor: 'transparent', borderRadius: '50%' }} />
+        <div style={{ width: 32, height: 32, border: '3px solid rgba(45,212,191,0.3)', borderTopColor: '#2dd4bf', borderRadius: '50%' }} />
       </div>
     );
   }
@@ -1302,7 +1311,7 @@ export default function SchedulingConfig() {
       {/* ── Sidebar ─────────────────────────────────────────── */}
       <aside className="sc-aside" style={{ width: 240, background: T.side, borderRight: `1px solid ${T.border}`, padding: '28px 16px', display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
         {/* Logo */}
-        <div className="sc-aside-logo" style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#6c63ff', padding: '0 12px 8px', letterSpacing: -0.5 }}>
+        <div className="sc-aside-logo" style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#2dd4bf', padding: '0 12px 8px', letterSpacing: -0.5 }}>
           Aliax.io<span style={{ color: T.text }}> Pro</span>
         </div>
 
@@ -1310,8 +1319,8 @@ export default function SchedulingConfig() {
         <Link to="/dashboard?tab=agenda" className="sc-aside-back" style={{
           display: 'flex', alignItems: 'center', gap: 6, margin: '0 4px 16px',
           padding: '8px 12px', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 500,
-          background: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(108,99,255,0.08)',
-          color: '#6c63ff', border: `1px solid ${T.border}`, transition: 'all .15s', flexShrink: 0,
+          background: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(45,212,191,0.08)',
+          color: '#2dd4bf', border: `1px solid ${T.border}`, transition: 'all .15s', flexShrink: 0,
         }}>
           <ArrowLeft size={14} /> Volver
         </Link>
@@ -1330,8 +1339,8 @@ export default function SchedulingConfig() {
         {PAGES.map(p => (
           <button key={p.id} onClick={() => setTab(p.id)} className="sc-aside-tab" style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8,
-            cursor: 'pointer', fontSize: 14, color: tab === p.id ? '#6c63ff' : T.muted,
-            background: tab === p.id ? 'rgba(108,99,255,0.15)' : 'transparent',
+            cursor: 'pointer', fontSize: 14, color: tab === p.id ? '#2dd4bf' : T.muted,
+            background: tab === p.id ? 'rgba(45,212,191,0.15)' : 'transparent',
             border: 'none', width: '100%', textAlign: 'left', fontFamily: 'DM Sans, sans-serif',
             transition: 'all .15s',
           }}>

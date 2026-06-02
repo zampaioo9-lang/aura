@@ -23,7 +23,7 @@ export default function BookingPage() {
 
   if (loading) return (
     <div className="bp-fullscreen">
-      <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid rgba(107,99,255,0.3)', borderTopColor: '#7c6fff', animation: 'spin 0.8s linear infinite' }} />
+      <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid rgba(45,212,191,0.2)', borderTopColor: '#2dd4bf', animation: 'spin 0.8s linear infinite' }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -31,7 +31,7 @@ export default function BookingPage() {
   if (!profile) return (
     <div className="bp-fullscreen">
       <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15 }}>No se encontró el perfil solicitado.</p>
-      <button onClick={() => navigate(-1)} style={{ color: '#a78bfa', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}>
+      <button onClick={() => navigate(-1)} style={{ color: '#2dd4bf', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}>
         ← Volver
       </button>
     </div>
@@ -133,6 +133,7 @@ export default function BookingPage() {
           profileId={profile.id}
           serviceId={selectedService.id}
           serviceName={selectedService.name}
+          primaryColor={profile.customization?.primaryColor || '#2dd4bf'}
           onClose={() => setSelectedService(null)}
           onSuccess={() => { setSuccess(true); setSelectedService(null); }}
         />

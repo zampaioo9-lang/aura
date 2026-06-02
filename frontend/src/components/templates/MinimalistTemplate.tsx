@@ -27,8 +27,8 @@ function hexToRgb(hex: string): [number, number, number] | null {
 }
 
 function buildTheme(hex: string | undefined) {
-  const rgb = hex ? hexToRgb(hex) : null;
-  const [r, g, b] = rgb ?? [147, 51, 234];
+  const parsed = hex ? hexToRgb(hex) : null;
+  const [r, g, b] = parsed ?? [45, 212, 191];
   const accent       = `rgb(${r},${g},${b})`;
   const accentSoft   = `rgba(${r},${g},${b},0.12)`;
   const accentBorder = `rgba(${r},${g},${b},0.28)`;
@@ -39,28 +39,43 @@ function buildTheme(hex: string | undefined) {
 
   // Radial glow background — 3 orbs at different positions
   const glowBg = (base: string) =>
-    `radial-gradient(ellipse 55% 55% at 12% 75%, rgba(${r},${g},${b},0.22) 0%, transparent 65%),` +
-    `radial-gradient(ellipse 45% 45% at 88% 18%, rgba(${r},${g},${b},0.15) 0%, transparent 65%),` +
-    `radial-gradient(ellipse 30% 35% at 58% 92%, rgba(${r},${g},${b},0.10) 0%, transparent 60%),` +
+    `radial-gradient(ellipse 55% 55% at 12% 75%, rgba(${r},${g},${b},0.28) 0%, transparent 65%),` +
+    `radial-gradient(ellipse 45% 45% at 88% 18%, rgba(${r},${g},${b},0.20) 0%, transparent 65%),` +
+    `radial-gradient(ellipse 30% 35% at 58% 92%, rgba(${r},${g},${b},0.13) 0%, transparent 60%),` +
     base;
+
+  // Dark base tinted with the professional's color (instead of pure black)
+  const darkBase    = `rgb(${Math.round(r*0.11)},${Math.round(g*0.06)},${Math.round(b*0.17)})`;
+  const darkFlat    = `rgb(${Math.round(r*0.09)},${Math.round(g*0.04)},${Math.round(b*0.14)})`;
+  const sidebarDark = `rgba(${Math.round(r*0.13)},${Math.round(g*0.07)},${Math.round(b*0.20)},0.97)`;
+  const sidebarLight = `rgba(${Math.min(255,218+Math.round(r*0.15))},${Math.min(255,228+Math.round(g*0.10))},${Math.min(255,222+Math.round(b*0.13))},0.98)`;
+
+  // Light base and muted derived from the accent color
+  const lightBase = `rgb(${Math.min(255,238+Math.round(r*0.06))},${Math.min(255,238+Math.round(g*0.04))},${Math.min(255,245+Math.round(b*0.04))})`;
+  const total = r + g + b;
+  const ls = Math.min(330 / Math.max(total, 1), 0.70);
+  const lightMuted = `rgb(${Math.round(r*ls)},${Math.round(g*ls)},${Math.round(b*ls)})`;
 
   return {
     dark: {
-      main: glowBg('#080414'),
-      mainFlat: '#080414',
-      card: 'rgba(20,12,40,0.85)',
+      main: glowBg(darkBase),
+      mainFlat: darkFlat,
+      card: `rgba(${Math.round(r*0.14)},${Math.round(g*0.08)},${Math.round(b*0.21)},0.85)`,
+      cardTinted: `rgba(${Math.round(r*0.14)},${Math.round(g*0.08)},${Math.round(b*0.21)},0.85)`,
       border: accentFaint,
-      text: '#e8e8f0', muted: 'rgb(148,132,170)',
+      text: '#e8f0f0', muted: 'rgb(110,165,160)',
       accent, accentSoft, accentBorder,
     },
     light: {
-      main: glowBg('#f2eeff'),
-      mainFlat: '#f2eeff',
+      main: glowBg(lightBase),
+      mainFlat: lightBase,
       card: 'rgba(255,255,255,0.88)',
-      border: '#e9d5ff',
-      text: '#1e0a3c', muted: '#6d28d9',
+      cardTinted: `rgba(${r},${g},${b},0.07)`,
+      border: accentFaint,
+      text: '#0a1f1e', muted: lightMuted,
       accent, accentSoft: `rgba(${r},${g},${b},0.08)`, accentBorder: `rgba(${r},${g},${b},0.25)`,
     },
+    sidebarDark, sidebarLight,
     sideGradientDark:  `linear-gradient(160deg, ${ds} 0%, ${de} 100%)`,
     sideGradientLight: `linear-gradient(160deg, ${accent} 0%, ${ll} 100%)`,
   };
@@ -131,7 +146,7 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
   /* ── MOBILE ─────────────────────────────────────────── */
   if (isMobile) {
     return (
-      <div style={{ minHeight: '100vh', background: C.main, color: C.text, fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif", paddingTop: 16 }}>
+      <div style={{ minHeight: '100vh', background: C.main, color: C.text, fontFamily: "'Inter','Plus Jakarta Sans',system-ui,sans-serif", paddingTop: 16 }}>
         {/* Floating controls */}
         <div style={{ position: 'absolute', top: 14, right: 16, display: 'flex', gap: 8, zIndex: 20 }}>
           <CtrlBtn onClick={() => navigate(-1)}><ArrowLeft size={16} /></CtrlBtn>
@@ -284,7 +299,7 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
 
   /* ── DESKTOP ─────────────────────────────────────────── */
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: C.main, color: C.text, fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif" }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: C.main, color: C.text, fontFamily: "'Inter','Plus Jakarta Sans',system-ui,sans-serif" }}>
 
       {/* Floating controls */}
       <div style={{ position: 'fixed', bottom: 24, right: 24, display: 'flex', flexDirection: 'column', gap: 10, zIndex: 100 }}>
@@ -296,13 +311,15 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
 
       {/* ── Sidebar — dashboard nav style ── */}
       <aside style={{
-        width: 290, flexShrink: 0,
-        background: darkMode ? 'rgba(9,5,22,0.98)' : 'rgba(246,242,255,0.98)',
+        width: 380, flexShrink: 0,
+        background: darkMode ? theme.sidebarDark : theme.sidebarLight,
         backdropFilter: 'blur(24px)',
-        borderRight: `1px solid ${C.border}`,
+        boxShadow: darkMode
+          ? '4px 0 24px rgba(0,0,0,0.5)'
+          : '4px 0 20px rgba(13,148,136,0.08)',
         overflowY: 'auto', scrollbarWidth: 'none',
         display: 'flex', flexDirection: 'column',
-        padding: '36px 18px 28px',
+        padding: '52px 36px 44px',
       }}>
 
         {/* Profile header */}
@@ -310,14 +327,14 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
           {profile.avatar ? (
             <img src={profile.avatar} alt={displayName} style={{
               width: 120, height: 120, borderRadius: '50%', objectFit: 'cover',
-              border: `3px solid ${C.accentBorder}`,
-              boxShadow: `0 0 0 6px ${C.accentSoft}, 0 10px 32px rgba(0,0,0,0.45)`,
+              border: `3px solid ${C.accent}`,
+              boxShadow: `0 0 0 5px ${C.accentSoft}, 0 10px 32px rgba(0,0,0,0.25)`,
               marginBottom: 16,
             }} />
           ) : (
             <div style={{
               width: 120, height: 120, borderRadius: '50%',
-              background: C.accentSoft, border: `3px solid ${C.accentBorder}`,
+              background: C.accentSoft, border: `3px solid ${C.accent}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 36, fontWeight: 700, color: C.accent, marginBottom: 16,
             }}>
@@ -429,15 +446,15 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
             {whatsappUrl && (
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px',
-                  background: 'rgba(37,211,102,0.15)', border: '1px solid rgba(37,211,102,0.32)',
-                  borderRadius: 10, textDecoration: 'none', marginBottom: 6, transition: 'opacity .15s',
+                  display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 22px',
+                  background: '#25D366', borderRadius: 20, textDecoration: 'none',
+                  marginBottom: 6, transition: 'opacity .15s', alignSelf: 'flex-start',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
+                onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
                 onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
               >
-                <MessageCircle size={15} color="#25D366" />
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#25D366' }}>WhatsApp Business</span>
+                <MessageCircle size={14} color="white" />
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'white' }}>WhatsApp Business</span>
               </a>
             )}
             {activeSocials.filter(s => s.key !== 'whatsapp').length > 0 && (
@@ -691,7 +708,7 @@ function AvailabilityWidget({ activeDays, byDay, C }: { activeDays: number[]; by
 
   return (
     <div style={{ position: 'relative' }}>
-      <div ref={scrollRef} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.28)', backdropFilter: 'blur(8px)', overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none' }}>
+      <div ref={scrollRef} style={{ background: C.cardTinted ?? C.card, border: `1px solid ${C.border}`, borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.18)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none' }}>
       <div style={{ display: 'flex', minWidth: 'max-content' }}>
       {activeDays.map((day, i) => (
         <div

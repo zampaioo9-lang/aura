@@ -5,10 +5,11 @@ import api from '../api/client';
 import {
   Plus, LogOut, Calendar, Clock,
   CalendarDays, Facebook, Instagram, Linkedin, MessageCircle,
-  Home, Compass, Briefcase, Pencil, Search, ChevronRight, Camera,
+  Home, Star, Briefcase, Pencil, Search, ChevronRight, Camera,
   Sun, Moon, Copy, ExternalLink,
 } from 'lucide-react';
 import { SchedulingPanel } from './SchedulingConfig';
+import AccountSettings from './AccountSettings';
 import ProGate from '../components/ProGate';
 import { useUpload } from '../hooks/useUpload';
 import { formatCurrency } from '../lib/utils';
@@ -68,7 +69,7 @@ interface ClientBooking {
   profile: { title: string; slug: string };
 }
 
-type Tab = 'inicio' | 'citas' | 'explorar' | 'agenda';
+type Tab = 'inicio' | 'citas' | 'resenas' | 'agenda' | 'cuenta';
 type MobileSection = 'perfil' | Tab;
 
 interface Colors {
@@ -121,26 +122,42 @@ const ACCENT_THEMES = [
   },
   {
     id: 'carbono', label: 'Carbono', pro: true,
-    accent: 'rgb(160,160,170)',
-    accentDark:  'rgba(160,160,170,0.15)',
-    accentLight: 'rgba(160,160,170,0.08)',
-    darkGradient:  'linear-gradient(160deg, #0f0f12 0%, #2a2a32 100%)',
-    lightGradient: 'linear-gradient(160deg, #2a2a32 0%, #4a4a56 100%)',
+    accent: 'rgb(20,70,65)',
+    accentDark:  'rgba(20,70,65,0.25)',
+    accentLight: 'rgba(20,70,65,0.12)',
+    darkGradient:  'linear-gradient(160deg, #020808 0%, #050f0e 100%)',
+    lightGradient: 'linear-gradient(160deg, #0a2420 0%, #0f3530 100%)',
+  },
+  {
+    id: 'aguamarina', label: 'Aguamarina', pro: false,
+    accent: 'rgb(45,212,191)',
+    accentDark:  'rgba(45,212,191,0.15)',
+    accentLight: 'rgba(45,212,191,0.08)',
+    darkGradient:  'linear-gradient(160deg, #052e2a 0%, #0d9488 100%)',
+    lightGradient: 'linear-gradient(160deg, #2dd4bf 0%, #5eead4 100%)',
+  },
+  {
+    id: 'nocturno', label: 'Nocturno', pro: false,
+    accent: 'rgb(88,28,155)',
+    accentDark:  'rgba(88,28,155,0.18)',
+    accentLight: 'rgba(88,28,155,0.10)',
+    darkGradient:  'linear-gradient(160deg, #1a0641 0%, #3c0e80 100%)',
+    lightGradient: 'linear-gradient(160deg, #5b21b6 0%, #7c3aed 100%)',
   },
 ];
 
 const DARK: Colors = {
   sideBg: 'transparent',
   navBg: 'transparent',
-  mainBg: '#0a0618',
-  tabsBg: '#0a0618',
-  border: '#2d1f52',
-  cardBg: '#160e30',
+  mainBg: '#0c0c0c',
+  tabsBg: '#071412',
+  border: 'rgba(45,212,191,0.15)',
+  cardBg: 'rgba(10,25,22,0.85)',
   cardShadow: 'none',
-  text: '#e8e8f0',
-  muted: '#8a7ab0',
-  accent: 'rgb(147,51,234)',
-  accentLight: 'rgba(147,51,234,0.15)',
+  text: '#e8f0f0',
+  muted: '#6aada8',
+  accent: 'rgb(45,212,191)',
+  accentLight: 'rgba(45,212,191,0.12)',
   isDark: true,
 };
 
@@ -148,14 +165,14 @@ const LIGHT: Colors = {
   sideBg: 'white',
   navBg: 'white',
   mainBg: 'white',
-  tabsBg: '#ede8ff',
-  border: 'rgba(109,40,217,0.15)',
+  tabsBg: '#e6faf8',
+  border: 'rgba(13,148,136,0.15)',
   cardBg: 'white',
   cardShadow: '0 2px 8px rgba(0,0,0,0.06)',
-  text: '#1e0a3c',
-  muted: '#6d5a8f',
-  accent: 'rgb(147,51,234)',
-  accentLight: 'rgba(147,51,234,0.08)',
+  text: '#0a1f1e',
+  muted: '#3d8a82',
+  accent: 'rgb(13,148,136)',
+  accentLight: 'rgba(45,212,191,0.08)',
   isDark: false,
 };
 
@@ -174,7 +191,7 @@ export default function Dashboard() {
   );
   const [mobileSection, setMobileSection] = useState<MobileSection>(() => {
     const tab = searchParams.get('tab') as Tab;
-    return (tab && ['inicio', 'citas', 'explorar', 'agenda'].includes(tab)) ? tab : 'perfil';
+    return (tab && ['inicio', 'citas', 'resenas', 'agenda', 'cuenta'].includes(tab)) ? tab : 'perfil';
   });
   const [theme, setTheme] = useState<'dark' | 'light'>(
     () => (localStorage.getItem('aliax_theme') as 'dark' | 'light') || 'dark'
@@ -261,7 +278,7 @@ export default function Dashboard() {
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'inicio',   label: 'Inicio',           icon: <Home className="h-4 w-4" /> },
     { id: 'citas',    label: 'Mis Citas',         icon: <Calendar className="h-4 w-4" /> },
-    { id: 'explorar', label: 'Explorar',          icon: <Compass className="h-4 w-4" /> },
+    { id: 'resenas',  label: 'Reseñas',            icon: <Star className="h-4 w-4" /> },
     { id: 'agenda',   label: 'Configurar Agenda', icon: <CalendarDays className="h-4 w-4" /> },
   ];
 
@@ -276,7 +293,7 @@ export default function Dashboard() {
   const _am = accentTheme.accent.match(/rgb\((\d+),(\d+),(\d+)\)/);
   const [_r, _g, _b] = _am ? [_am[1], _am[2], _am[3]] : ['147', '51', '234'];
   const boardBg = theme === 'dark'
-    ? `linear-gradient(145deg, rgba(${_r},${_g},${_b},0.42) 0%, #07040f 52%, rgba(${_r},${_g},${_b},0.28) 100%)`
+    ? `linear-gradient(160deg, rgba(${_r},${_g},${_b},0.30) 0%, rgba(${Math.round(Number(_r)*0.25)},${Math.round(Number(_g)*0.25)},${Math.round(Number(_b)*0.25)},0.98) 100%)`
     : C.tabsBg;
 
   return (
@@ -483,20 +500,20 @@ export default function Dashboard() {
           {/* Edit + apariencia + logout — centered, fixed bottom strip */}
           <div className="flex flex-col items-center gap-3 px-6 pt-4 pb-24" style={{ flexShrink: 0 }}>
             <div className="flex justify-center w-full">
-              <Link
-                to="/account"
+              <button
+                onClick={() => setMobileSection('cuenta')}
                 className="flex items-center justify-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium"
                 style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.35)', color: 'white' }}
               >
                 <Pencil className="h-3.5 w-3.5" />
                 Editar perfil
-              </Link>
+              </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
               <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
                 Apariencia
               </span>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', justifyContent: 'center', maxWidth: 200 }}>
                 {ACCENT_THEMES.map(t => t.pro ? (
                   <ProGate key={t.id} isPro={isPro} display="inline-block" compact>
                     <button
@@ -569,8 +586,9 @@ export default function Dashboard() {
                 C={C}
               />
             )}
-            {mobileSection === 'explorar' && <TabExplorar C={C} />}
+            {mobileSection === 'resenas' && <TabResenas C={C} />}
             {mobileSection === 'agenda' && <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />}
+            {mobileSection === 'cuenta' && <AccountSettings asTab tabIsDark={C.isDark} />}
             <div className="mt-10 text-center">
               <Link to="/pricing" className="text-xs" style={{ color: C.muted }}>Ver planes</Link>
             </div>
@@ -628,7 +646,7 @@ export default function Dashboard() {
           {([
             { section: 'inicio'   as const, label: 'Inicio',   icon: <Home className="h-6 w-6" /> },
             { section: 'citas'    as const, label: 'Citas',    icon: <Calendar className="h-6 w-6" /> },
-            { section: 'explorar' as const, label: 'Explorar', icon: <Compass className="h-6 w-6" /> },
+            { section: 'resenas' as const, label: 'Reseñas', icon: <Star className="h-6 w-6" /> },
             { section: 'agenda'   as const, label: 'Agenda',   icon: <CalendarDays className="h-6 w-6" /> },
           ]).map(({ section, label, icon }) => {
             const isActive = mobileSection === section;
@@ -678,7 +696,7 @@ export default function Dashboard() {
       {/* ════════════════════════════════════════
           DESKTOP LAYOUT — unified shell + content board
           ════════════════════════════════════════ */}
-      <div className="hidden md:flex flex-1 overflow-hidden" style={{ padding: '0 14px 14px 0' }}>
+      <div className="hidden md:flex flex-1 overflow-hidden" style={{ padding: '28px 28px 28px 28px' }}>
 
         {/* Nav Sidebar — transparent, part of the outer shell */}
         <aside style={{
@@ -743,11 +761,9 @@ export default function Dashboard() {
 
           {/* "Mi perfil" */}
           <DashSection label="Mi perfil">
-            <Link to="/account" style={{ textDecoration: 'none' }}>
-              <DashNavRow icon={<Pencil className="h-4 w-4" />} isActive={false} C={C} onClick={() => {}}>
-                Editar perfil
-              </DashNavRow>
-            </Link>
+            <DashNavRow icon={<Pencil className="h-4 w-4" />} isActive={activeTab === 'cuenta'} C={C} onClick={() => setActiveTab('cuenta')}>
+              Editar perfil
+            </DashNavRow>
             {profiles.length > 0 && (
               <a href={`/${profiles[0].slug}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                 <DashNavRow icon={<ExternalLink className="h-4 w-4" />} isActive={false} C={C} onClick={() => {}}>
@@ -772,9 +788,9 @@ export default function Dashboard() {
 
           {/* "Preferencias" */}
           <DashSection label="Preferencias">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px' }}>
-              <span style={{ fontSize: 12, color: C.muted, flexShrink: 0 }}>Color</span>
-              <div style={{ display: 'flex', gap: 7 }}>
+            <div style={{ padding: '4px 12px 8px' }}>
+              <span style={{ fontSize: 12, color: C.muted, display: 'block', marginBottom: 8 }}>Color</span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                 {ACCENT_THEMES.map(t => t.pro ? (
                   <ProGate key={t.id} isPro={isPro ?? false} display="inline-block" compact>
                     <button title={t.label} onClick={() => setAccentId(t.id)} style={{
@@ -823,7 +839,7 @@ export default function Dashboard() {
         <main className="flex-1 flex flex-col overflow-hidden" style={{
           background: boardBg,
           borderRadius: 18,
-          boxShadow: C.isDark ? '0 0 0 1px rgba(255,255,255,0.06), 0 8px 40px rgba(0,0,0,0.4)' : '0 0 0 1px rgba(109,40,217,0.15), 0 12px 48px rgba(109,40,217,0.18), 0 4px 16px rgba(109,40,217,0.12)',
+          boxShadow: C.isDark ? '0 8px 40px rgba(0,0,0,0.4)' : '0 12px 48px rgba(13,148,136,0.10), 0 4px 16px rgba(13,148,136,0.06)',
         }}>
           <div className="flex-1 overflow-y-auto p-6">
             {activeTab === 'inicio'   && <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} analyticsError={analyticsError} isPro={isPro ?? false} twoCol />}
@@ -838,8 +854,9 @@ export default function Dashboard() {
                 C={C}
               />
             )}
-            {activeTab === 'explorar' && <TabExplorar C={C} />}
+            {activeTab === 'resenas' && <TabResenas C={C} />}
             {activeTab === 'agenda'   && <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />}
+            {activeTab === 'cuenta'   && <AccountSettings asTab tabIsDark={C.isDark} />}
           </div>
         </main>
       </div>
@@ -988,7 +1005,7 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
           Hola, {userName?.split(' ')[0] ?? 'bienvenido'} 👋
         </h2>
         <p style={{ color: C.muted, marginBottom: 24 }}>Aquí tienes un resumen de tu actividad.</p>
-        <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: 40, alignItems: 'flex-start' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           {statsGrid}
           {analyticsBlock}
@@ -1155,7 +1172,13 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
               const canCancel = b.status === 'PENDING' || b.status === 'CONFIRMED';
               return (
                 <div key={b.id} className="rounded-xl p-4 flex items-center justify-between"
-                  style={{ background: C.cardBg, border: `1px solid ${C.border}`, boxShadow: C.cardShadow }}>
+                  style={{
+                    background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.72)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.9)'}`,
+                    boxShadow: C.isDark ? 'none' : '0 2px 12px rgba(0,0,0,0.06)',
+                  }}>
                   <div>
                     <div className="flex items-center gap-2 mb-0.5">
                       <p className="font-medium" style={{ color: C.text }}>{b.profile.title}</p>
@@ -1230,7 +1253,7 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
                 <div className="space-y-2">
                   {pendingBookings.map(b => (
                     <ProBookingCard key={b.id} booking={b} C={C}>
-                      <button onClick={() => updateBookingStatus(b.id, 'CONFIRMED')} className="text-sm px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors">Confirmar</button>
+                      <button onClick={() => updateBookingStatus(b.id, 'CONFIRMED')} style={{ background: 'linear-gradient(135deg, #2dd4bf, #0d9488)', color: '#fff' }} className="text-sm px-3 py-1.5 rounded-lg transition-colors">Confirmar</button>
                       <button onClick={() => updateBookingStatus(b.id, 'CANCELLED')} className="text-sm px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors">Cancelar</button>
                     </ProBookingCard>
                   ))}
@@ -1243,7 +1266,7 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
                 <div className="space-y-2">
                   {confirmedBookings.map(b => (
                     <ProBookingCard key={b.id} booking={b} C={C}>
-                      <button onClick={() => updateBookingStatus(b.id, 'COMPLETED')} className="text-sm px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition-colors">Completar</button>
+                      <button onClick={() => updateBookingStatus(b.id, 'COMPLETED')} style={{ background: 'rgba(45,212,191,0.12)', color: '#0d9488', border: '1px solid rgba(45,212,191,0.25)' }} className="text-sm px-3 py-1.5 rounded-lg transition-colors">Completar</button>
                     </ProBookingCard>
                   ))}
                 </div>
@@ -1288,7 +1311,13 @@ function ViewSwitcher({ view, onChange, proCount, clientCount, C }: {
 function ProBookingCard({ booking: b, children, C }: { booking: Booking; children: React.ReactNode; C: Colors }) {
   return (
     <div className="rounded-xl p-4 flex items-center justify-between"
-      style={{ background: C.cardBg, border: `1px solid ${C.border}`, boxShadow: C.cardShadow }}>
+      style={{
+        background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.72)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.9)'}`,
+        boxShadow: C.isDark ? 'none' : '0 2px 12px rgba(0,0,0,0.06)',
+      }}>
       <div>
         <p className="font-medium" style={{ color: C.text }}>{b.clientName}</p>
         <p className="text-sm" style={{ color: C.muted }}>{b.service.name} &middot; {formatCurrency(b.service.price, b.service.currency)}</p>
@@ -1302,337 +1331,37 @@ function ProBookingCard({ booking: b, children, C }: { booking: Booking; childre
   );
 }
 
-/* ────────────────── Tab: Explorar ────────────────── */
-interface DirectoryProfile {
-  id: string; slug: string; title: string; profession: string;
-  bio?: string; avatar?: string;
-  services: { id: string; name: string; price: number; currency: string; durationMinutes: number; isActive: boolean }[];
-  user?: { name: string };
-  socialLinks?: Record<string, string>;
-  availabilitySlots?: { dayOfWeek: number; startTime: string; endTime: string }[];
-  createdAt?: string;
-}
+/* ────────────────── Tab: Reseñas ────────────────── */
 
-const DAY_NAMES_ES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-const DAY_ORDER_WEEK = [1, 2, 3, 4, 5, 6, 0];
-
-type ExploreScreen = 'directory' | 'professionals' | 'profile';
-
-function TabExplorar({ C }: { C: Colors }) {
-  const [profiles, setProfiles] = useState<DirectoryProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [screen, setScreen] = useState<ExploreScreen>('directory');
-  const [selectedProfession, setSelectedProfession] = useState('');
-  const [selectedProfile, setSelectedProfile] = useState<DirectoryProfile | null>(null);
-  const [bookingState, setBookingState] = useState<{ profileId: string; serviceId: string; serviceName: string } | null>(null);
-  const [bookingSuccess, setBookingSuccess] = useState(false);
-
-  useEffect(() => {
-    api.get('/profiles/directory')
-      .then(r => setProfiles(r.data.profiles ?? []))
-      .catch(() => setProfiles([]))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const existingProfessions = useMemo(() => new Set(profiles.map(p => p.profession).filter(Boolean)), [profiles]);
-  const allPredefined = useMemo(() => new Set(PROFESSION_CATEGORIES.flatMap(c => c.professions)), []);
-
-  const availableCategories = useMemo(() =>
-    PROFESSION_CATEGORIES
-      .map(cat => ({ ...cat, professions: cat.professions.filter(p => existingProfessions.has(p)) }))
-      .filter(cat => cat.professions.length > 0),
-    [existingProfessions]);
-
-  const uncategorized = useMemo(() =>
-    [...existingProfessions].filter(p => !allPredefined.has(p)),
-    [existingProfessions, allPredefined]);
-
-  const filteredCategories = useMemo(() => {
-    if (!search.trim()) return availableCategories;
-    const q = search.toLowerCase();
-    return availableCategories
-      .map(cat => ({ ...cat, professions: cat.professions.filter(p => p.toLowerCase().includes(q) || cat.category.toLowerCase().includes(q)) }))
-      .filter(cat => cat.professions.length > 0);
-  }, [availableCategories, search]);
-
-  const filteredUncategorized = useMemo(() => {
-    if (!search.trim()) return uncategorized;
-    const q = search.toLowerCase();
-    return uncategorized.filter(p => p.toLowerCase().includes(q));
-  }, [uncategorized, search]);
-
-  const professionalsForProfession = useMemo(() =>
-    profiles.filter(p => p.profession === selectedProfession),
-    [profiles, selectedProfession]);
-
-  function goBack() {
-    if (screen === 'profile') { setSelectedProfile(null); setScreen('professionals'); }
-    else if (screen === 'professionals') { setSelectedProfession(''); setScreen('directory'); }
-  }
-
-  async function handleSelectProfile(p: DirectoryProfile) {
-    setSelectedProfile(p);
-    setScreen('profile');
-    try {
-      const { data } = await api.get(`/profiles/${p.slug}`);
-      setSelectedProfile(prev => prev?.id === p.id ? { ...prev, ...data } : prev);
-    } catch {}
-  }
-
-  const initials = (name: string) => name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-
-  if (screen === 'profile' && selectedProfile) {
-    const p = selectedProfile;
-    const socialLinks = p.socialLinks || {};
-    const hasSocialLinks = SOCIAL_ICONS.some(({ key }) => !!(socialLinks as any)[key]);
-    const availByDay: Record<number, { startTime: string; endTime: string }[]> = {};
-    (p.availabilitySlots || []).forEach(s => {
-      if (!availByDay[s.dayOfWeek]) availByDay[s.dayOfWeek] = [];
-      availByDay[s.dayOfWeek].push({ startTime: s.startTime, endTime: s.endTime });
-    });
-    const activeDays = DAY_ORDER_WEEK.filter(d => availByDay[d]?.length > 0);
-    const memberYear = p.createdAt ? new Date(p.createdAt).getFullYear() : null;
-
-    return (
-      <div className="max-w-2xl">
-        <button onClick={goBack} className="flex items-center gap-1.5 text-sm mb-5" style={{ color: C.accent }}>
-          <ChevronRight className="h-4 w-4 rotate-180" /> Volver
-        </button>
-
-        {/* Tarjeta cuadrada del profesional */}
-        <div className="rounded-2xl p-6 mb-4 flex flex-col items-center text-center mx-auto"
-          style={{ background: C.cardBg, border: `1px solid ${C.border}`, boxShadow: C.cardShadow, width: 300 }}>
-          <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold mb-3 overflow-hidden"
-            style={{ background: C.accentLight, color: C.accent }}>
-            {p.avatar ? <img src={p.avatar} alt={p.title} className="w-20 h-20 object-cover" /> : initials(p.title || p.slug)}
-          </div>
-          <h2 className="text-base font-bold leading-tight" style={{ color: C.text }}>{p.title}</h2>
-          {p.profession && <p className="text-sm mt-1" style={{ color: C.accent }}>{p.profession}</p>}
-          {memberYear && (
-            <p className="text-xs mt-1 flex items-center gap-1 justify-center" style={{ color: C.muted }}>
-              <Clock className="h-3 w-3" /> En Aliax.io desde {memberYear}
-            </p>
-          )}
-          {p.bio && <p className="text-xs mt-2 leading-relaxed" style={{ color: C.muted }}>{p.bio}</p>}
-          {hasSocialLinks && (
-            <div className="flex gap-2 mt-3">
-              {SOCIAL_ICONS.map(({ key, Icon, color }) => {
-                const val = (socialLinks as any)[key];
-                const url = val ? buildSocialUrl(key, val) : null;
-                if (!url) return null;
-                return (
-                  <a key={key} href={url} target="_blank" rel="noopener noreferrer"
-                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-opacity hover:opacity-75"
-                    style={{ backgroundColor: color + '22', color }}>
-                    <Icon className="h-4 w-4" />
-                  </a>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Disponibilidad */}
-        {activeDays.length > 0 && (
-          <div className="rounded-xl p-4 mb-4 mx-auto"
-            style={{ background: C.cardBg, border: `1px solid ${C.border}`, width: 300 }}>
-            <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: C.muted }}>Disponibilidad</p>
-            <div className="space-y-2">
-              {activeDays.map(day => (
-                <div key={day} className="flex items-center gap-3">
-                  <span className="text-xs font-semibold w-8" style={{ color: C.text }}>{DAY_NAMES_ES[day]}</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {availByDay[day].map((slot, i) => (
-                      <span key={i} className="text-xs px-2 py-0.5 rounded"
-                        style={{ background: C.accentLight, color: C.accent }}>
-                        {slot.startTime} – {slot.endTime}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Servicios */}
-        {p.services.length === 0
-          ? <p className="text-sm text-center py-8" style={{ color: C.muted }}>No hay servicios disponibles</p>
-          : (
-            <div className="mx-auto" style={{ width: 300 }}>
-              <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: C.muted }}>Servicios</p>
-              <div className="space-y-3">
-                {p.services.map(s => (
-                  <div key={s.id} className="rounded-xl p-4 flex items-center justify-between"
-                    style={{ background: C.cardBg, border: `1px solid ${C.border}`, boxShadow: C.cardShadow }}>
-                    <div>
-                      <p className="font-medium" style={{ color: C.text }}>{s.name}</p>
-                      <p className="text-sm" style={{ color: C.muted }}>{formatCurrency(s.price, s.currency)} · {s.durationMinutes} min</p>
-                    </div>
-                    <button
-                      onClick={() => setBookingState({ profileId: p.id, serviceId: s.id, serviceName: s.name })}
-                      className="text-sm px-3 py-1.5 text-white rounded-lg"
-                      style={{ background: C.accent }}
-                    >
-                      Reservar
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-      {bookingState && !bookingSuccess && (
-        <BookingForm
-          profileId={bookingState.profileId}
-          serviceId={bookingState.serviceId}
-          serviceName={bookingState.serviceName}
-          onClose={() => setBookingState(null)}
-          onSuccess={() => { setBookingSuccess(true); setBookingState(null); }}
-        />
-      )}
-
-      {bookingSuccess && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-8 text-center">
-            <div className="text-4xl mb-4">&#10003;</div>
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">¡Reserva registrada!</h3>
-            <p className="text-slate-500 mb-6">Recibirás una confirmación pronto.</p>
-            <button onClick={() => setBookingSuccess(false)}
-              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors">
-              Cerrar
-            </button>
-          </div>
-        </div>
-      )}
-      </div>
-    );
-  }
-
-  if (screen === 'professionals') {
-    return (
-      <div className="max-w-2xl">
-        <button onClick={goBack} className="flex items-center gap-1.5 text-sm mb-4" style={{ color: C.accent }}>
-          <ChevronRight className="h-4 w-4 rotate-180" /> Volver
-        </button>
-        <h2 className="text-xl font-semibold mb-1" style={{ color: C.text }}>{selectedProfession}</h2>
-        <p className="text-sm mb-5" style={{ color: C.muted }}>
-          {professionalsForProfession.length} profesional{professionalsForProfession.length !== 1 ? 'es' : ''}
-        </p>
-        {professionalsForProfession.length === 0
-          ? <p className="text-sm text-center py-12" style={{ color: C.muted }}>No hay profesionales en esta categoría</p>
-          : (
-            <div className="space-y-3">
-              {professionalsForProfession.map(p => (
-                <button key={p.id}
-                  onClick={() => handleSelectProfile(p)}
-                  className="w-full rounded-xl p-4 flex items-center gap-4 text-left transition-colors"
-                  style={{ background: C.cardBg, border: `1px solid ${C.border}`, boxShadow: C.cardShadow }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = C.accent)}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = C.border)}>
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold shrink-0 overflow-hidden"
-                    style={{ background: C.accentLight, color: C.accent }}>
-                    {p.avatar ? <img src={p.avatar} alt={p.title} className="w-12 h-12 object-cover" /> : initials(p.title || p.slug)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate" style={{ color: C.text }}>{p.title}</p>
-                    {p.bio && <p className="text-sm truncate" style={{ color: C.muted }}>{p.bio}</p>}
-                    <p className="text-xs mt-0.5" style={{ color: C.muted }}>{p.services.length} servicios</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 shrink-0" style={{ color: C.muted }} />
-                </button>
-              ))}
-            </div>
-          )}
-      </div>
-    );
-  }
-
-  if (loading) return (
-    <div className="flex items-center justify-center py-20">
-      <div className="animate-spin h-6 w-6 border-4 border-t-transparent rounded-full"
-        style={{ borderColor: C.accent, borderTopColor: 'transparent' }} />
-    </div>
-  );
-
-  const isEmpty = filteredCategories.length === 0 && filteredUncategorized.length === 0;
-  const headerBg = C.isDark ? 'rgba(255,255,255,0.04)' : 'rgb(248,245,252)';
-
+function TabResenas({ C }: { C: Colors }) {
   return (
-    <div className="max-w-2xl">
-      <div className="mb-5">
-        <h2 className="text-xl font-semibold mb-1" style={{ color: C.text }}>Explorar</h2>
-        <p className="text-sm" style={{ color: C.muted }}>Encuentra el profesional que necesitás</p>
-      </div>
-      <div className="relative mb-5">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: C.muted }} />
-        <input
-          value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar profesión..."
-          className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none"
-          style={{ background: C.cardBg, border: `1px solid ${C.border}`, color: C.text }}
-          onFocus={e => (e.currentTarget.style.borderColor = C.accent)}
-          onBlur={e => (e.currentTarget.style.borderColor = C.border)}
-        />
-      </div>
-      {isEmpty ? (
-        <p className="text-center py-12 text-sm" style={{ color: C.muted }}>
-          {search ? 'No se encontraron resultados' : 'No hay profesionales registrados aún'}
-        </p>
-      ) : (
-        <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${C.border}`, boxShadow: C.cardShadow }}>
-          {filteredCategories.map((cat, ci) => (
-            <div key={cat.category}>
-              {ci > 0 && <div className="h-px" style={{ background: C.border }} />}
-              <div className="px-4 py-2" style={{ background: headerBg, borderBottom: `1px solid ${C.border}` }}>
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: C.muted }}>{cat.category}</p>
-              </div>
-              {cat.professions.map(profession => {
-                const count = profiles.filter(p => p.profession === profession).length;
-                return (
-                  <button key={profession}
-                    onClick={() => { setSelectedProfession(profession); setScreen('professionals'); }}
-                    className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors"
-                    style={{ borderBottom: `1px solid ${C.border}`, background: C.cardBg }}
-                    onMouseEnter={e => (e.currentTarget.style.background = C.accentLight)}
-                    onMouseLeave={e => (e.currentTarget.style.background = C.cardBg)}>
-                    <span className="text-sm" style={{ color: C.text }}>{profession}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: C.accentLight, color: C.accent }}>{count}</span>
-                      <ChevronRight className="h-4 w-4" style={{ color: C.muted }} />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-          {filteredUncategorized.length > 0 && (
-            <div>
-              <div className="px-4 py-2" style={{ background: headerBg, borderBottom: `1px solid ${C.border}` }}>
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: C.muted }}>Otros</p>
-              </div>
-              {filteredUncategorized.map(profession => {
-                const count = profiles.filter(p => p.profession === profession).length;
-                return (
-                  <button key={profession}
-                    onClick={() => { setSelectedProfession(profession); setScreen('professionals'); }}
-                    className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors"
-                    style={{ borderBottom: `1px solid ${C.border}`, background: C.cardBg }}
-                    onMouseEnter={e => (e.currentTarget.style.background = C.accentLight)}
-                    onMouseLeave={e => (e.currentTarget.style.background = C.cardBg)}>
-                    <span className="text-sm" style={{ color: C.text }}>{profession}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: C.accentLight, color: C.accent }}>{count}</span>
-                      <ChevronRight className="h-4 w-4" style={{ color: C.muted }} />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+    <div style={{ maxWidth: 560 }}>
+      <h2 className="text-xl font-bold mb-1" style={{ color: C.text }}>Reseñas</h2>
+      <p className="text-sm mb-8" style={{ color: C.muted }}>Lo que dicen tus pacientes sobre ti.</p>
+
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        padding: '56px 32px', textAlign: 'center',
+        background: C.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.7)',
+        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+        border: `1px solid ${C.isDark ? 'rgba(45,212,191,0.12)' : 'rgba(45,212,191,0.2)'}`,
+        borderRadius: 16,
+      }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: '50%',
+          background: 'rgba(45,212,191,0.12)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          marginBottom: 16,
+        }}>
+          <Star style={{ width: 24, height: 24, color: '#2dd4bf' }} />
         </div>
-      )}
+        <p style={{ fontSize: 16, fontWeight: 600, color: C.text, margin: '0 0 8px' }}>
+          Las reseñas llegan pronto
+        </p>
+        <p style={{ fontSize: 13, color: C.muted, maxWidth: 320, lineHeight: 1.6 }}>
+          Tus pacientes podrán dejar reseñas verificadas en tu perfil público. Esta sección estará disponible en la próxima actualización.
+        </p>
+      </div>
     </div>
   );
 }

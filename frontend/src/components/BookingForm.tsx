@@ -8,35 +8,19 @@ interface BookingFormProps {
   profileId: string;
   serviceId: string;
   serviceName: string;
+  primaryColor?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 14px',
-  background: 'rgba(255,255,255,0.06)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: 10,
-  color: 'white',
-  fontSize: 14,
-  outline: 'none',
-  transition: 'border-color 0.2s',
-  boxSizing: 'border-box',
-  fontFamily: 'inherit',
-};
+function hexToDark(hex: string, amount: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgb(${Math.round(r * amount)},${Math.round(g * amount)},${Math.round(b * amount)})`;
+}
 
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: 12,
-  fontWeight: 600,
-  color: 'rgba(255,255,255,0.5)',
-  marginBottom: 6,
-  textTransform: 'uppercase',
-  letterSpacing: '0.06em',
-};
-
-export default function BookingForm({ profileId, serviceId, serviceName, onClose, onSuccess }: BookingFormProps) {
+export default function BookingForm({ profileId, serviceId, serviceName, primaryColor = '#2dd4bf', onClose, onSuccess }: BookingFormProps) {
   const [form, setForm] = useState({
     clientName: '',
     clientEmail: '',
@@ -52,6 +36,36 @@ export default function BookingForm({ profileId, serviceId, serviceName, onClose
   const [slots, setSlots] = useState<string[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState('');
+
+  const modalBg    = hexToDark(primaryColor, 0.14);      // very dark tinted bg
+  const borderCol  = `${primaryColor}22`;                // 13% opacity border
+  const focusCol   = `${primaryColor}66`;                // 40% focus ring
+  const accentMid  = hexToDark(primaryColor, 0.45);      // medium dark for hover
+  const serviceCol = hexToDark(primaryColor, 1.6 > 1 ? 1 : 1.6); // lighter tint fallback
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '10px 14px',
+    background: 'rgba(255,255,255,0.06)',
+    border: `1px solid ${borderCol}`,
+    borderRadius: 10,
+    color: 'white',
+    fontSize: 14,
+    outline: 'none',
+    transition: 'border-color 0.2s',
+    boxSizing: 'border-box',
+    fontFamily: 'inherit',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: 12,
+    fontWeight: 600,
+    color: 'rgba(255,255,255,0.5)',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+  };
 
   useEffect(() => {
     if (!form.date) { setSlots([]); setSlotsError(''); return; }
@@ -103,151 +117,148 @@ export default function BookingForm({ profileId, serviceId, serviceName, onClose
       onClick={onClose}
     >
       <div
-        style={{ background: 'rgba(12,9,28,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, maxWidth: 440, width: '100%', padding: 28, overflowY: 'auto', maxHeight: '92vh' }}
+        style={{ background: modalBg, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', border: `1px solid ${borderCol}`, borderRadius: 20, maxWidth: 440, width: '100%', maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, flexShrink: 0, padding: 28, paddingBottom: 0 }}>
           <div>
             <h3 style={{ color: 'white', fontWeight: 700, fontSize: 18, margin: 0 }}>Reservar</h3>
-            <p style={{ color: 'rgba(167,139,250,0.85)', fontSize: 13, margin: '4px 0 0' }}>{serviceName}</p>
+            <p style={{ color: primaryColor, fontSize: 13, margin: '4px 0 0', opacity: 0.85 }}>{serviceName}</p>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: '4px 7px', lineHeight: 1 }}>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${borderCol}`, borderRadius: 8, color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: '4px 7px', lineHeight: 1 }}>
             <X size={14} />
           </button>
         </div>
 
-        {error && (
-          <div style={{ marginBottom: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, color: '#fca5a5', fontSize: 13 }}>
-            {error}
-          </div>
-        )}
+        <div style={{ overflowY: 'auto', padding: 28, paddingTop: 20, flex: 1 }}>
+          {error && (
+            <div style={{ marginBottom: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, color: '#fca5a5', fontSize: 13 }}>
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div>
-            <label style={labelStyle}>Nombre</label>
-            <input
-              type="text" required value={form.clientName}
-              onChange={e => setForm(f => ({ ...f, clientName: e.target.value }))}
-              style={inputStyle}
-              onFocus={e => (e.target.style.borderColor = 'rgba(107,99,255,0.5)')}
-              onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
-            />
-          </div>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label style={labelStyle}>Nombre</label>
+              <input
+                type="text" required value={form.clientName}
+                onChange={e => setForm(f => ({ ...f, clientName: e.target.value }))}
+                style={inputStyle}
+                onFocus={e => (e.target.style.borderColor = focusCol)}
+                onBlur={e => (e.target.style.borderColor = borderCol)}
+              />
+            </div>
 
-          <div>
-            <label style={labelStyle}>Email</label>
-            <input
-              type="email" required value={form.clientEmail}
-              onChange={e => setForm(f => ({ ...f, clientEmail: e.target.value }))}
-              style={inputStyle}
-              onFocus={e => (e.target.style.borderColor = 'rgba(107,99,255,0.5)')}
-              onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
-            />
-          </div>
+            <div>
+              <label style={labelStyle}>Email</label>
+              <input
+                type="email" required value={form.clientEmail}
+                onChange={e => setForm(f => ({ ...f, clientEmail: e.target.value }))}
+                style={inputStyle}
+                onFocus={e => (e.target.style.borderColor = focusCol)}
+                onBlur={e => (e.target.style.borderColor = borderCol)}
+              />
+            </div>
 
-          <div>
-            <PhoneInput
-              label="Teléfono WhatsApp"
-              optional
-              value={form.clientPhone}
-              onChange={handlePhoneChange}
-              error={phoneError}
-              isDark
-            />
-          </div>
+            <div>
+              <PhoneInput
+                label="Teléfono WhatsApp"
+                optional
+                value={form.clientPhone}
+                onChange={handlePhoneChange}
+                error={phoneError}
+                isDark
+              />
+            </div>
 
-          <div>
-            <label style={labelStyle}>Fecha</label>
-            <input
-              type="date" required value={form.date}
-              onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-              min={new Date().toISOString().split('T')[0]}
-              style={{ ...inputStyle, colorScheme: 'dark' }}
-              onFocus={e => (e.target.style.borderColor = 'rgba(107,99,255,0.5)')}
-              onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
-            />
-          </div>
+            <div>
+              <label style={labelStyle}>Fecha</label>
+              <input
+                type="date" required value={form.date}
+                onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                min={new Date().toISOString().split('T')[0]}
+                style={{ ...inputStyle, colorScheme: 'dark' }}
+                onFocus={e => (e.target.style.borderColor = focusCol)}
+                onBlur={e => (e.target.style.borderColor = borderCol)}
+              />
+            </div>
 
-          {/* Time slots */}
-          <div>
-            <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 5 }}>
-              <Clock size={11} />
-              Horario
-            </label>
+            {/* Time slots */}
+            <div>
+              <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <Clock size={11} />
+                Horario
+              </label>
 
-            {!form.date && (
-              <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: 13, margin: 0, padding: '10px 0' }}>
-                Selecciona una fecha para ver horarios disponibles
-              </p>
-            )}
+              {!form.date && (
+                <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: 13, margin: 0, padding: '10px 0' }}>
+                  Selecciona una fecha para ver horarios disponibles
+                </p>
+              )}
 
-            {form.date && slotsLoading && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.35)', fontSize: 13, padding: '10px 0' }}>
-                <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} />
-                Cargando horarios...
-              </div>
-            )}
+              {form.date && slotsLoading && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.35)', fontSize: 13, padding: '10px 0' }}>
+                  <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} />
+                  Cargando horarios...
+                </div>
+              )}
 
-            {form.date && !slotsLoading && slotsError && (
-              <p style={{ color: 'rgba(251,191,36,0.75)', fontSize: 13, margin: 0, padding: '8px 0' }}>{slotsError}</p>
-            )}
+              {form.date && !slotsLoading && slotsError && (
+                <p style={{ color: 'rgba(251,191,36,0.75)', fontSize: 13, margin: 0, padding: '8px 0' }}>{slotsError}</p>
+              )}
 
-            {form.date && !slotsLoading && slots.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, maxHeight: 152, overflowY: 'auto' }}>
-                {slots.map(slot => (
-                  <button
-                    key={slot} type="button"
-                    onClick={() => setForm(f => ({ ...f, startTime: slot }))}
-                    style={{
-                      padding: '6px 4px',
-                      fontSize: 12,
-                      fontWeight: 500,
-                      borderRadius: 8,
-                      border: '1px solid',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s',
-                      fontFamily: 'inherit',
-                      ...(form.startTime === slot
-                        ? { background: 'linear-gradient(135deg, #6b63ff, #9333ea)', color: 'white', borderColor: 'transparent' }
-                        : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.65)', borderColor: 'rgba(255,255,255,0.09)' }
-                      ),
-                    }}
-                  >
-                    {slot}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+              {form.date && !slotsLoading && slots.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, maxHeight: 152, overflowY: 'auto' }}>
+                  {slots.map(slot => (
+                    <button
+                      key={slot} type="button"
+                      onClick={() => setForm(f => ({ ...f, startTime: slot }))}
+                      style={{
+                        padding: '6px 4px', fontSize: 12, fontWeight: 500,
+                        borderRadius: 8, border: '1px solid', cursor: 'pointer',
+                        transition: 'all 0.15s', fontFamily: 'inherit',
+                        ...(form.startTime === slot
+                          ? { background: primaryColor, color: 'white', borderColor: 'transparent', boxShadow: `0 2px 8px ${primaryColor}55` }
+                          : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.65)', borderColor: borderCol }
+                        ),
+                      }}
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-          <div>
-            <label style={labelStyle}>Notas (opcional)</label>
-            <textarea
-              value={form.notes}
-              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-              rows={2} maxLength={500}
-              style={{ ...inputStyle, resize: 'none' }}
-              onFocus={e => (e.target.style.borderColor = 'rgba(107,99,255,0.5)')}
-              onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
-            />
-          </div>
+            <div>
+              <label style={labelStyle}>Notas (opcional)</label>
+              <textarea
+                value={form.notes}
+                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                rows={2} maxLength={500}
+                style={{ ...inputStyle, resize: 'none' }}
+                onFocus={e => (e.target.style.borderColor = focusCol)}
+                onBlur={e => (e.target.style.borderColor = borderCol)}
+              />
+            </div>
 
-          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-            <button
-              type="button" onClick={onClose}
-              style={{ flex: 1, padding: '11px 0', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: 'rgba(255,255,255,0.6)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit" disabled={loading || !form.startTime || !!phoneError}
-              style={{ flex: 1, padding: '11px 0', background: 'linear-gradient(135deg, #6b63ff, #9333ea)', border: 'none', borderRadius: 12, color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: (loading || !form.startTime || !!phoneError) ? 0.45 : 1, transition: 'opacity 0.2s', fontFamily: 'inherit' }}
-            >
-              {loading ? 'Reservando...' : 'Confirmar'}
-            </button>
-          </div>
-        </form>
+            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+              <button
+                type="button" onClick={onClose}
+                style={{ flex: 1, padding: '11px 0', background: 'rgba(255,255,255,0.05)', border: `1px solid ${borderCol}`, borderRadius: 12, color: 'rgba(255,255,255,0.6)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit" disabled={loading || !form.startTime || !!phoneError}
+                style={{ flex: 1, padding: '11px 0', background: primaryColor, border: 'none', borderRadius: 12, color: 'white', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: (loading || !form.startTime || !!phoneError) ? 0.45 : 1, transition: 'opacity 0.2s', fontFamily: 'inherit', boxShadow: `0 4px 16px ${primaryColor}44` }}
+              >
+                {loading ? 'Reservando...' : 'Confirmar'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>,
     document.body

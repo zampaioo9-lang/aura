@@ -1,5 +1,5 @@
 .explorar-root {
-  font-family: 'Sora', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -13,10 +13,10 @@
   100% { opacity: 1; }
 }
 
-/* ── Search bar glow pulse ── */
+/* ── Search bar glow pulse — teal ── */
 @keyframes ex-glow {
-  0%,100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.12), 0 8px 40px rgba(0,0,0,0.6); }
-  50%      { box-shadow: 0 0 0 1px rgba(167,139,250,0.45), 0 8px 60px rgba(107,99,255,0.3), 0 0 80px rgba(107,99,255,0.12); }
+  0%,100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.10), 0 8px 40px rgba(0,0,0,0.6); }
+  50%      { box-shadow: 0 0 0 1px rgba(45,212,191,0.40), 0 8px 60px rgba(45,212,191,0.20), 0 0 80px rgba(45,212,191,0.10); }
 }
 
 /* ── Loader ── */
@@ -35,7 +35,7 @@
 /* ── Search bar ── */
 .ex-search-bar { animation: ex-glow 4s ease-in-out infinite; }
 .ex-btn-search  { transition: filter 0.2s ease; }
-.ex-btn-search:hover { filter: brightness(1.2); }
+.ex-btn-search:hover { filter: brightness(1.15); }
 
 /* ── Cards ── */
 .ex-card {
@@ -47,18 +47,18 @@
 .ex-card:hover {
   transform: translateY(-10px) !important;
   box-shadow: 0 24px 60px rgba(0,0,0,0.7),
-              0 0 0 1px rgba(167,139,250,0.45),
-              0 0 40px rgba(107,99,255,0.15) !important;
-  background: rgba(255,255,255,0.1) !important;
+              0 0 0 1px rgba(45,212,191,0.40),
+              0 0 40px rgba(45,212,191,0.12) !important;
+  background: rgba(255,255,255,0.08) !important;
 }
-.ex-card-pro:hover { border-color: rgba(167,139,250,0.7) !important; }
+.ex-card-pro:hover { border-color: rgba(45,212,191,0.65) !important; }
 
 /* ── Pills ── */
 .ex-pill { transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease; }
 .ex-pill:hover {
-  border-color: rgba(167,139,250,0.5) !important;
-  color: #c4b5fd !important;
-  background: rgba(107,99,255,0.14) !important;
+  border-color: rgba(45,212,191,0.50) !important;
+  color: #2dd4bf !important;
+  background: rgba(45,212,191,0.12) !important;
 }
 
 /* ── Spinner ── */
@@ -68,7 +68,7 @@
 input::placeholder { color: rgba(255,255,255,0.3); }
 input:focus { outline: none; }
 
-/* ── Search bar — mobile: ambos campos en una línea ── */
+/* ── Search bar — mobile ── */
 @media (max-width: 640px) {
   .ex-sf-profession { flex: 1.5; }
   .ex-sf-profession input { padding: 16px 8px 16px 14px !important; font-size: 14px !important; }

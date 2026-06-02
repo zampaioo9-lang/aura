@@ -8,16 +8,70 @@ const VIDEO_URL =
   'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_105406_16f4600d-7a92-4292-b96e-b19156c7830a.mp4';
 
 const THERAPEUTIC_APPROACHES = [
-  'Cognitivo-conductual (TCC)', 'Psicoanalítico', 'Psicodinámico', 'Sistémico',
-  'Humanista', 'Gestalt', 'EMDR', 'Mindfulness / ACT', 'Narrativo',
-  'Integrativo', 'Breve estratégico', 'Logoterapia', 'Existencial',
+  // Enfoques cognitivos y conductuales
+  'Cognitivo-conductual (TCC)',
+  'Mindfulness / ACT',
+  'Terapia de aceptación y compromiso',
+  'Terapia esquemática',
+  // Psicodinámicos y analíticos
+  'Psicoanalítico',
+  'Psicodinámico',
+  'Psicología del self',
+  // Humanistas y existenciales
+  'Humanista',
+  'Gestalt',
+  'Existencial',
+  'Logoterapia',
+  'Psicología positiva',
+  // Sistémicos y relacionales
+  'Sistémico',
+  'Narrativo',
+  'Terapia breve centrada en soluciones (TBCS)',
+  'Breve estratégico',
+  'Constelaciones familiares',
+  // Especialidades
+  'Terapia de pareja',
+  'Terapia familiar',
+  'Terapia infantil',
+  'Terapia de juego',
+  // Otros
+  'EMDR',
+  'Integrativo',
+  'Hipnosis ericksoniana',
+  'Psicodrama',
+  'Otro',
 ];
 
 const PROBLEMATICS = [
-  'Ansiedad', 'Depresión', 'Estrés', 'Trauma / PTSD', 'Duelo',
-  'Problemas de pareja', 'Familia y crianza', 'Autoestima',
-  'Trastornos alimenticios', 'Fobias / TOC', 'Adicciones',
-  'TDAH / Neurodivergencia', 'Orientación sexual / Diversidad',
+  // Salud mental general
+  'Ansiedad',
+  'Depresión',
+  'Estrés',
+  'Burnout / agotamiento',
+  'Trauma / PTSD',
+  'Duelo',
+  'Fobias / TOC',
+  'Autoestima',
+  'Problemas de sueño',
+  'Adicciones',
+  'Trastornos alimenticios',
+  'TDAH / Neurodivergencia',
+  // Pareja y familia
+  'Problemas de pareja',
+  'Infidelidad',
+  'Comunicación en pareja',
+  'Celos y desconfianza',
+  'Crisis de pareja',
+  'Pérdida del deseo',
+  'Divorcio / separación',
+  'Violencia de género',
+  'Familia y crianza',
+  // Identidad y desarrollo
+  'Orientación sexual / Diversidad',
+  'Identidad y propósito',
+  'Soledad / aislamiento',
+  'Duelo gestacional / infertilidad',
+  'Otro',
 ];
 
 interface DirectoryProfile {
@@ -38,8 +92,7 @@ interface DirectoryProfile {
 }
 
 const POPULAR_PROFESSIONS = [
-  'Psicólogo/a', 'Psicoterapeuta', 'Barbero/a', 'Nutricionista',
-  'Entrenador/a Personal', 'Estilista', 'Coach de Vida', 'Fisioterapeuta',
+  'Psicólogo/a', 'Psicoterapeuta', 'Terapeuta de pareja', 'Psiquiatra', 'Neuropsicólogo/a',
 ];
 
 const MODALITY_LABEL: Record<string, string> = {
@@ -126,15 +179,15 @@ export default function Explorar() {
 
   const pillStyle = (active: boolean): React.CSSProperties => ({
     padding: '5px 12px', borderRadius: 20, cursor: 'pointer', fontSize: 12,
-    border: `1px solid ${active ? 'rgba(167,139,250,0.65)' : 'rgba(255,255,255,0.15)'}`,
-    background: active ? 'rgba(107,99,255,0.28)' : 'rgba(0,0,0,0.3)',
-    color: active ? '#c4b5fd' : 'rgba(255,255,255,0.5)',
+    border: `1px solid ${active ? 'rgba(45,212,191,0.65)' : 'rgba(255,255,255,0.15)'}`,
+    background: active ? 'rgba(45,212,191,0.18)' : 'rgba(0,0,0,0.3)',
+    color: active ? '#2dd4bf' : 'rgba(255,255,255,0.5)',
     fontFamily: 'inherit', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
     transition: 'all 0.15s',
   });
 
   return (
-    <div className="explorar-root" style={{ minHeight: '100vh', background: '#06030f' }}>
+    <div className="explorar-root" style={{ minHeight: '100vh', background: '#0c0c0c' }}>
 
       {/* ══ HERO ══ */}
       <section style={{
@@ -150,8 +203,13 @@ export default function Explorar() {
 
         <div style={{
           position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
-          background: 'linear-gradient(to bottom, rgba(6,3,15,0.55) 0%, rgba(6,3,15,0.35) 40%, rgba(6,3,15,0.75) 100%)',
+          background: 'linear-gradient(to bottom, rgba(12,12,12,0.65) 0%, rgba(12,12,12,0.30) 40%, rgba(12,12,12,0.80) 100%)',
         }} />
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none',
+          background: 'radial-gradient(ellipse at 50% 60%, rgba(20,94,82,0.75) 0%, rgba(13,60,53,0.45) 50%, transparent 75%)',
+          mixBlendMode: 'multiply',
+        } as React.CSSProperties} />
 
         <div style={{
           position: 'relative', zIndex: 2, width: '100%', maxWidth: 860,
@@ -170,20 +228,20 @@ export default function Explorar() {
             letterSpacing: '0.14em', textTransform: 'uppercase',
             marginBottom: 16, fontWeight: 500,
           }}>
-            {profiles.length > 0 ? `${profiles.length} profesionales disponibles` : 'Directorio de profesionales verificados'}
+            {profiles.length > 0 ? `${profiles.length} psicólogos disponibles` : 'Directorio de psicólogos verificados'}
           </p>
 
           <h1 className="ex-a3" style={{
             color: '#ffffff', fontSize: 'clamp(2.4rem, 7vw, 5rem)',
             fontWeight: 700, lineHeight: 1.0, letterSpacing: '-0.03em', margin: '0 0 32px',
           }}>
-            Encuentra al profesional<br />
+            Encuentra al psicólogo<br />
             <span style={{
-              background: 'linear-gradient(90deg, #a78bfa 0%, #c084fc 40%, #818cf8 80%, #a78bfa 100%)',
+              background: 'linear-gradient(90deg, #2dd4bf 0%, #a7f3d0 40%, #2dd4bf 80%, #0d9488 100%)',
               backgroundSize: '200% auto',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
             }}>
-              que necesitas.
+              que necesitas
             </span>
           </h1>
 
@@ -226,7 +284,7 @@ export default function Explorar() {
                 className="ex-sf-city"
                 style={{
                   padding: '0 18px', border: 'none', background: 'transparent',
-                  color: activeFilterCount > 0 ? '#a78bfa' : 'rgba(255,255,255,0.4)',
+                  color: activeFilterCount > 0 ? '#2dd4bf' : 'rgba(255,255,255,0.4)',
                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
                   fontSize: 13, fontFamily: 'inherit', flexShrink: 0, whiteSpace: 'nowrap',
                 }}>
@@ -238,7 +296,7 @@ export default function Explorar() {
 
               <button type="submit" className="ex-btn-search" style={{
                 padding: '0 28px', border: 'none', flexShrink: 0,
-                background: 'linear-gradient(135deg, #6b63ff 0%, #9333ea 100%)',
+                background: 'linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%)',
                 color: '#fff', fontSize: 14, fontWeight: 600,
                 cursor: 'pointer', fontFamily: 'inherit',
                 display: 'flex', alignItems: 'center', gap: 8,
@@ -258,10 +316,11 @@ export default function Explorar() {
               borderRadius: 14, padding: '20px 24px',
               backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
               textAlign: 'left',
+              maxHeight: '55vh', overflowY: 'auto',
             }}>
               {/* Modalidad */}
               <div style={{ marginBottom: 18 }}>
-                <p style={{ color: 'rgba(180,165,220,0.55)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>
+                <p style={{ color: 'rgba(45,212,191,0.55)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>
                   Modalidad
                 </p>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -277,7 +336,7 @@ export default function Explorar() {
 
               {/* Enfoque terapéutico */}
               <div style={{ marginBottom: 18 }}>
-                <p style={{ color: 'rgba(180,165,220,0.55)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>
+                <p style={{ color: 'rgba(45,212,191,0.55)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>
                   Enfoque terapéutico
                 </p>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -293,7 +352,7 @@ export default function Explorar() {
 
               {/* Problemática */}
               <div>
-                <p style={{ color: 'rgba(180,165,220,0.55)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>
+                <p style={{ color: 'rgba(45,212,191,0.55)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>
                   ¿Qué estás viviendo?
                 </p>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -314,7 +373,7 @@ export default function Explorar() {
                   onClick={() => { setSearchParams(buildParams()); setShowFilters(false); }}
                   style={{
                     padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                    background: 'linear-gradient(135deg, #6b63ff 0%, #9333ea 100%)',
+                    background: 'linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%)',
                     color: '#fff', fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
                   }}>
                   Aplicar filtros
@@ -329,12 +388,12 @@ export default function Explorar() {
               {activeTApproach && (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
-                  background: 'rgba(107,99,255,0.22)', border: '1px solid rgba(139,115,255,0.4)',
+                  background: 'rgba(45,212,191,0.15)', border: '1px solid rgba(45,212,191,0.35)',
                   borderRadius: 20, padding: '4px 10px',
-                  color: '#c4b5fd', fontSize: 11,
+                  color: '#2dd4bf', fontSize: 11,
                 }}>
                   {activeTApproach}
-                  <button onClick={() => clearFilter('therapeuticApproach')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c4b5fd', padding: 0, display: 'flex' }}>
+                  <button onClick={() => clearFilter('therapeuticApproach')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2dd4bf', padding: 0, display: 'flex' }}>
                     <X size={11} />
                   </button>
                 </span>
@@ -342,12 +401,12 @@ export default function Explorar() {
               {activeProblematic && (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
-                  background: 'rgba(107,99,255,0.22)', border: '1px solid rgba(139,115,255,0.4)',
+                  background: 'rgba(45,212,191,0.15)', border: '1px solid rgba(45,212,191,0.35)',
                   borderRadius: 20, padding: '4px 10px',
-                  color: '#c4b5fd', fontSize: 11,
+                  color: '#2dd4bf', fontSize: 11,
                 }}>
                   {activeProblematic}
-                  <button onClick={() => clearFilter('problematic')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c4b5fd', padding: 0, display: 'flex' }}>
+                  <button onClick={() => clearFilter('problematic')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2dd4bf', padding: 0, display: 'flex' }}>
                     <X size={11} />
                   </button>
                 </span>
@@ -355,12 +414,12 @@ export default function Explorar() {
               {activeModality && (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
-                  background: 'rgba(107,99,255,0.22)', border: '1px solid rgba(139,115,255,0.4)',
+                  background: 'rgba(45,212,191,0.15)', border: '1px solid rgba(45,212,191,0.35)',
                   borderRadius: 20, padding: '4px 10px',
-                  color: '#c4b5fd', fontSize: 11,
+                  color: '#2dd4bf', fontSize: 11,
                 }}>
                   {MODALITY_LABEL[activeModality]}
-                  <button onClick={() => clearFilter('modality')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c4b5fd', padding: 0, display: 'flex' }}>
+                  <button onClick={() => clearFilter('modality')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2dd4bf', padding: 0, display: 'flex' }}>
                     <X size={11} />
                   </button>
                 </span>
@@ -382,30 +441,30 @@ export default function Explorar() {
 
       {/* ══ GRID DE RESULTADOS ══ */}
       <div style={{
-        background: 'linear-gradient(to bottom, rgba(6,3,15,0) 0%, rgba(10,6,22,0.98) 6%, rgba(10,6,22,1) 100%)',
+        background: 'linear-gradient(to bottom, rgba(12,12,12,0) 0%, rgba(12,12,12,0.98) 6%, rgba(12,12,12,1) 100%)',
         paddingBottom: 100,
       }}>
         <div className="ex-a6" style={{ maxWidth: 980, margin: '0 auto', padding: '52px 24px 0' }}>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
-            <div style={{ flex: 1, height: 1, background: 'rgba(167,139,250,0.12)' }} />
+            <div style={{ flex: 1, height: 1, background: 'rgba(45,212,191,0.12)' }} />
             <p style={{
               color: 'rgba(180,165,220,0.5)', fontSize: 11,
               letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap',
             }}>
               {loading ? 'Buscando...' : `${profiles.length} profesionales`}
             </p>
-            <div style={{ flex: 1, height: 1, background: 'rgba(167,139,250,0.12)' }} />
+            <div style={{ flex: 1, height: 1, background: 'rgba(45,212,191,0.12)' }} />
           </div>
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: 80 }}>
               <div className="ex-spinner" style={{
                 width: 34, height: 34, margin: '0 auto 16px',
-                border: '3px solid rgba(107,99,255,0.15)',
-                borderTopColor: '#9b87f5', borderRadius: '50%',
+                border: '3px solid rgba(45,212,191,0.15)',
+                borderTopColor: '#2dd4bf', borderRadius: '50%',
               }} />
-              <p style={{ color: 'rgba(167,139,250,0.45)', fontSize: 14 }}>Buscando profesionales...</p>
+              <p style={{ color: 'rgba(45,212,191,0.45)', fontSize: 14 }}>Buscando profesionales...</p>
             </div>
           ) : profiles.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 80 }}>
@@ -429,8 +488,8 @@ export default function Explorar() {
                     className={`ex-card${profile.isPro ? ' ex-card-pro' : ''}`}
                     style={{
                       flex: 1,
-                      background: profile.isPro ? 'rgba(107,99,255,0.08)' : 'rgba(255,255,255,0.06)',
-                      border: `1px solid ${profile.isPro ? 'rgba(139,115,255,0.35)' : 'rgba(255,255,255,0.11)'}`,
+                      background: profile.isPro ? 'rgba(45,212,191,0.06)' : 'rgba(255,255,255,0.05)',
+                      border: `1px solid ${profile.isPro ? 'rgba(45,212,191,0.35)' : 'rgba(45,212,191,0.12)'}`,
                       borderRadius: 14, padding: '18px 20px', cursor: 'pointer',
                       display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 14,
                       backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
@@ -444,9 +503,9 @@ export default function Explorar() {
                       ) : (
                         <div style={{
                           width: 46, height: 46, borderRadius: '50%',
-                          background: 'rgba(107,99,255,0.22)',
+                          background: 'rgba(45,212,191,0.15)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: '#a78bfa', fontSize: 17, fontWeight: 600, flexShrink: 0,
+                          color: '#2dd4bf', fontSize: 17, fontWeight: 600, flexShrink: 0,
                         }}>
                           {profile.title?.[0] ?? '?'}
                         </div>
@@ -462,9 +521,9 @@ export default function Explorar() {
                           {profile.isPro && (
                             <span style={{
                               display: 'inline-flex', alignItems: 'center', gap: 3,
-                              background: 'rgba(107,99,255,0.18)', border: '1px solid rgba(107,99,255,0.38)',
+                              background: 'rgba(45,212,191,0.15)', border: '1px solid rgba(45,212,191,0.35)',
                               borderRadius: 20, padding: '2px 7px',
-                              color: '#a78bfa', fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+                              color: '#2dd4bf', fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
                             }}>
                               <Zap size={8} /> PRO
                             </span>
@@ -502,9 +561,9 @@ export default function Explorar() {
                       {profile.therapeuticApproaches && profile.therapeuticApproaches.length > 0
                         ? profile.therapeuticApproaches.slice(0, 3).map(a => (
                           <span key={a} style={{
-                            background: 'rgba(107,99,255,0.1)', border: '1px solid rgba(107,99,255,0.2)',
+                            background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.20)',
                             borderRadius: 6, padding: '3px 9px',
-                            color: 'rgba(196,181,253,0.7)', fontSize: 11,
+                            color: 'rgba(45,212,191,0.8)', fontSize: 11,
                           }}>
                             {a}
                           </span>
@@ -524,7 +583,7 @@ export default function Explorar() {
                     {/* Precio */}
                     {profile.pricePerSession != null && (
                       <p style={{ color: 'rgba(180,165,220,0.5)', fontSize: 12, margin: 0 }}>
-                        desde <span style={{ color: '#c4b5fd', fontWeight: 600 }}>
+                        desde <span style={{ color: '#2dd4bf', fontWeight: 600 }}>
                           {profile.sessionCurrency ?? 'MXN'} {Number(profile.pricePerSession).toLocaleString()}
                         </span> / sesión
                       </p>
