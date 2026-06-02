@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Check, Zap, ArrowRight, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
+import { CITIES_BY_COUNTRY } from '../lib/cities';
 import './Landing.css';
 
 const HERO_VIDEO =
@@ -504,7 +505,7 @@ export default function Landing() {
             {/* País */}
             <select
               className="landing-search-select"
-              value={searchCountry} onChange={e => setSearchCountry(e.target.value)}
+              value={searchCountry} onChange={e => { setSearchCountry(e.target.value); setSearchCity(''); }}
               style={{
                 width: '100%', padding: '10px 12px',
                 background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(45,212,191,0.2)',
@@ -518,16 +519,34 @@ export default function Landing() {
               ))}
             </select>
 
-            {/* Ciudad */}
-            <input
-              type="text" placeholder="Ciudad (opcional)"
-              value={searchCity} onChange={e => setSearchCity(e.target.value)}
-              style={{
-                width: '100%', padding: '10px 12px', boxSizing: 'border-box',
-                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(45,212,191,0.2)',
-                borderRadius: 8, color: '#fff', fontSize: 13, outline: 'none', fontFamily: 'inherit',
-              }}
-            />
+            {/* Ciudad — select si el país tiene lista, input si no */}
+            {searchCountry && (CITIES_BY_COUNTRY[searchCountry]?.length ?? 0) > 0 ? (
+              <select
+                className="landing-search-select"
+                value={searchCity} onChange={e => setSearchCity(e.target.value)}
+                style={{
+                  width: '100%', padding: '10px 12px',
+                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(45,212,191,0.2)',
+                  borderRadius: 8, color: searchCity ? '#fff' : 'rgba(255,255,255,0.4)',
+                  fontSize: 13, fontFamily: 'inherit', cursor: 'pointer',
+                }}
+              >
+                <option value="">Ciudad (todas)</option>
+                {CITIES_BY_COUNTRY[searchCountry].map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text" placeholder={searchCountry ? 'Ciudad (escribe el nombre)' : 'Ciudad (opcional)'}
+                value={searchCity} onChange={e => setSearchCity(e.target.value)}
+                style={{
+                  width: '100%', padding: '10px 12px', boxSizing: 'border-box',
+                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(45,212,191,0.2)',
+                  borderRadius: 8, color: '#fff', fontSize: 13, outline: 'none', fontFamily: 'inherit',
+                }}
+              />
+            )}
 
             <button type="submit" style={{
               background: 'linear-gradient(135deg, #2dd4bf, #0d9488)', color: '#fff',
