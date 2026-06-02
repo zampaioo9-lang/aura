@@ -103,6 +103,7 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
   const approachesRef = useRef<HTMLDivElement>(null);
   const [openProfession, setOpenProfession] = useState(false);
   const professionRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 600);
 
   const isProfessional = primaryProfile !== null;
 
@@ -145,6 +146,12 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 600);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
   }, []);
 
   const toggleApproach = (a: string) =>
@@ -259,9 +266,9 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
         </nav>
       )}
 
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 24px 32px', paddingTop: asTab ? 4 : 80, display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: D.text, margin: 0 }}>Configuración de cuenta</h1>
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: `${asTab ? 4 : 80}px ${isMobile ? 12 : 24}px 32px`, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 10 : 0 }}>
+          <h1 style={{ fontSize: isMobile ? 18 : 22, fontWeight: 700, color: D.text, margin: 0 }}>Configuración de cuenta</h1>
           {asTab && saveBtn}
         </div>
 
@@ -269,7 +276,7 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
         {success && <div style={{ padding: 12, background: 'rgba(45,212,191,0.1)', border: '1px solid rgba(45,212,191,0.3)', color: '#2dd4bf', fontSize: 13, borderRadius: 10 }}>{success}</div>}
 
         {/* ── Información personal ── */}
-        <section style={{ background: D.card, borderRadius: 14, border: `1px solid ${D.border}`, padding: 24, display: 'flex', flexDirection: 'column', gap: 16, boxShadow: D.shadow, backdropFilter: 'blur(12px)' }}>
+        <section style={{ background: D.card, borderRadius: 14, border: `1px solid ${D.border}`, padding: isMobile ? 14 : 24, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: D.shadow, backdropFilter: 'blur(12px)' }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: D.text, margin: 0 }}>Información personal</h2>
           <div>
             <label style={labelStyle}>Nombre <span style={{ color: '#f87171' }}>*</span></label>
@@ -297,7 +304,7 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
         </section>
 
         {/* ── Cuenta ── */}
-        <section style={{ background: D.card, borderRadius: 14, border: `1px solid ${D.border}`, padding: 24, display: 'flex', flexDirection: 'column', gap: 16, boxShadow: D.shadow, backdropFilter: 'blur(12px)' }}>
+        <section style={{ background: D.card, borderRadius: 14, border: `1px solid ${D.border}`, padding: isMobile ? 14 : 24, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: D.shadow, backdropFilter: 'blur(12px)' }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: D.text, margin: 0 }}>Cuenta</h2>
           <div>
             <label style={labelStyle}>Correo electrónico <span style={{ color: '#f87171' }}>*</span></label>
@@ -330,7 +337,7 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
         </section>
 
         {/* ── Perfil Profesional ── */}
-        <section style={{ background: D.card, borderRadius: 14, border: `1px solid ${D.border}`, padding: 24, display: 'flex', flexDirection: 'column', gap: 16, boxShadow: D.shadow, backdropFilter: 'blur(12px)' }}>
+        <section style={{ background: D.card, borderRadius: 14, border: `1px solid ${D.border}`, padding: isMobile ? 14 : 24, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: D.shadow, backdropFilter: 'blur(12px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 style={{ fontSize: 15, fontWeight: 700, color: D.text, margin: 0 }}>Perfil Profesional</h2>
             {!isProfessional && (
@@ -477,7 +484,7 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
           </div>
 
           {/* Especialidad + Años */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
             <div>
               <label style={labelStyle}>Especialidad</label>
               <input value={specialty} onChange={e => setSpecialty(e.target.value)} disabled={!isProfessional}
@@ -547,7 +554,7 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
         </section>
 
         {/* ── Redes sociales ── */}
-        <section style={{ background: D.card, borderRadius: 14, border: `1px solid ${D.border}`, padding: 24, display: 'flex', flexDirection: 'column', gap: 16, boxShadow: D.shadow, backdropFilter: 'blur(12px)' }}>
+        <section style={{ background: D.card, borderRadius: 14, border: `1px solid ${D.border}`, padding: isMobile ? 14 : 24, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: D.shadow, backdropFilter: 'blur(12px)' }}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: D.text, margin: 0 }}>Redes sociales</h2>
           {SOCIAL_NETWORKS.map(({ key, label, Icon, color, placeholder }) => (
             <div key={key}>

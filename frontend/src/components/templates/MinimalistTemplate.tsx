@@ -156,7 +156,7 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
         </div>
 
         {/* Profile header */}
-        <div style={{ background: sideGradient, padding: '52px 28px 36px', margin: '0 12px', borderRadius: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+        <div style={{ background: sideGradient, padding: '48px 20px 32px', margin: '0 10px', borderRadius: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           {profile.avatar ? (
             <img src={profile.avatar} alt={displayName} style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,0.45)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', marginBottom: 16 }} />
           ) : (
@@ -202,14 +202,14 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
 
           {whatsappUrl && (
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(37,211,102,0.88)', color: 'white', padding: '7px 16px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
-              <MessageCircle size={13} /> WhatsApp
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#25D366', color: 'white', padding: '8px 18px', borderRadius: 20, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+              <MessageCircle size={14} /> WhatsApp Business
             </a>
           )}
         </div>
 
         {/* Mobile content */}
-        <div style={{ padding: '24px 16px 64px' }}>
+        <div style={{ padding: '20px 14px 72px' }}>
 
           {/* Sesión info mobile */}
           {(profile.modality || profile.pricePerSession != null) && (
@@ -272,7 +272,7 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
           {activeServices.length > 0 && (
             <section style={{ marginBottom: 32 }}>
               <SectionLabel>Servicios</SectionLabel>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth < 360 ? '1fr' : '1fr 1fr', gap: 10, marginTop: 14 }}>
                 {activeServices.map((s: any) => (
                   <BoardServiceCard key={s.id} service={s} onBook={onBook} C={C} mobile />
                 ))}
