@@ -179,7 +179,7 @@ export default function AvailabilityDashboard() {
 
       {/* Delete confirmation */}
       {deleteConfirm && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 pb-24">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4" style={{ paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px) + 16px)' }}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-2">Eliminar horario</h3>
             <p className="text-sm text-slate-500 mb-5">

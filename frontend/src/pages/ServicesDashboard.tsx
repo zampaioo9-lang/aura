@@ -261,7 +261,7 @@ export default function ServicesDashboard() {
 
       {/* Delete Confirmation */}
       {deleteTarget && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-24">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px) + 16px)' }}>
           <div className="absolute inset-0 bg-black/50" onClick={() => setDeleteTarget(null)} />
           <div className="relative bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl">
             <h3 className="text-lg font-semibold text-slate-900 mb-2">Eliminar servicio</h3>

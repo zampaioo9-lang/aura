@@ -56,11 +56,11 @@ export default function TimeSlotPicker({ isOpen, onClose, onSave, editingSlot, d
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4 bg-black/40"
-      style={{ paddingBottom: 'max(80px, env(safe-area-inset-bottom, 80px))' }}
+      className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center sm:p-4 bg-black/40"
+      style={{ paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-t-[20px] sm:rounded-2xl shadow-xl w-full sm:max-w-md p-6" style={{ maxHeight: 'calc(100dvh - 90px)', overflowY: 'auto' }}>
+      <div className="bg-white rounded-t-[20px] sm:rounded-2xl shadow-xl w-full sm:max-w-md p-6" style={{ maxHeight: 'calc(100dvh - 72px - env(safe-area-inset-bottom, 0px) - 24px)', overflowY: 'auto' }}>
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-semibold text-slate-900">
             {editingSlot ? 'Editar Horario' : 'Nuevo Horario'}

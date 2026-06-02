@@ -124,13 +124,13 @@ export default function NewBookingModal({ slot, services, C, onClose, onCreated,
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
-      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', paddingBottom: 'max(80px, env(safe-area-inset-bottom, 80px))' }}
+      className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center sm:p-4"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         className="w-full sm:max-w-md rounded-t-[20px] sm:rounded-2xl overflow-hidden"
-        style={{ background: C.cardBg, border: `1px solid ${C.border}`, maxHeight: 'calc(100dvh - 90px)', display: 'flex', flexDirection: 'column' }}
+        style={{ background: C.cardBg, border: `1px solid ${C.border}`, maxHeight: 'calc(100dvh - 72px - env(safe-area-inset-bottom, 0px) - 24px)', display: 'flex', flexDirection: 'column' }}
       >
         {/* Header */}
         <div
