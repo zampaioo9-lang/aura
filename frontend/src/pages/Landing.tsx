@@ -42,6 +42,14 @@ export default function Landing() {
   const [searchProf, setSearchProf] = useState('');
   const [searchCity, setSearchCity] = useState('');
   const [loadingStripe, setLoadingStripe] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
 
   useEffect(() => {
@@ -110,49 +118,78 @@ export default function Landing() {
         {/* ── NAVBAR ── */}
         <header style={{
           position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20,
-          height: 60,
           background: 'rgba(12,12,12,0.12)',
           backdropFilter: 'blur(20px) saturate(180%)',
           WebkitBackdropFilter: 'blur(20px) saturate(180%)',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
-          padding: '0 48px',
-          display: 'flex', alignItems: 'center',
         }}>
+          <div style={{ height: 60, padding: isMobile ? '0 20px' : '0 48px', display: 'flex', alignItems: 'center' }}>
           {/* Logo */}
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
             <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#9b87f5', boxShadow: '0 0 10px rgba(155,135,245,0.9), 0 0 20px rgba(155,135,245,0.4)', flexShrink: 0 }} />
             <span style={{ color: '#fff', fontSize: 17, fontWeight: 700, letterSpacing: '-0.02em' }}>Aliax</span>
           </Link>
 
-          {/* Nav links — centered */}
-          <nav style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: 36 }}>
-            {[['Explorar', '/explorar'], ['Cómo funciona', '#como-funciona'], ['Precios', '#precios']].map(([label, href]) => (
-              <a
-                key={label} href={href}
-                style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 500, textDecoration: 'none', transition: 'color 0.15s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.65)')}
-              >{label}</a>
-            ))}
-          </nav>
+          {/* Nav links — desktop only */}
+          {!isMobile && (
+            <nav style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: 36 }}>
+              {[['Explorar', '/explorar'], ['Cómo funciona', '#como-funciona'], ['Precios', '#precios']].map(([label, href]) => (
+                <a key={label} href={href}
+                  style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 500, textDecoration: 'none', transition: 'color 0.15s' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.65)')}
+                >{label}</a>
+              ))}
+            </nav>
+          )}
 
-          {/* Right buttons */}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-            <Link to="/login" style={{
-              color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 500,
-              padding: '8px 16px', borderRadius: 999, textDecoration: 'none',
-            }}>Entrar</Link>
-            <Link to={user ? '/dashboard' : '/register'} style={{
-              color: '#fff', fontSize: 13, fontWeight: 600,
-              padding: '9px 20px', borderRadius: 999, textDecoration: 'none',
-              background: 'rgba(255,255,255,0.12)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-            }}>
-              {user ? 'Dashboard' : 'Crear perfil gratis'}
-            </Link>
+          {/* Right side */}
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+            {isMobile ? (
+              /* Mobile: Entrar + hamburger */
+              <>
+                <Link to="/login" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: 500, padding: '8px 14px', borderRadius: 999, textDecoration: 'none' }}>Entrar</Link>
+                <button
+                  onClick={() => setMenuOpen(o => !o)}
+                  style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, color: 'white', cursor: 'pointer', padding: '6px 10px', fontSize: 16, lineHeight: 1 }}
+                >
+                  {menuOpen ? '✕' : '☰'}
+                </button>
+              </>
+            ) : (
+              /* Desktop: Entrar + CTA */
+              <>
+                <Link to="/login" style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 500, padding: '8px 16px', borderRadius: 999, textDecoration: 'none' }}>Entrar</Link>
+                <Link to={user ? '/dashboard' : '/register'} style={{
+                  color: '#fff', fontSize: 13, fontWeight: 600, padding: '9px 20px', borderRadius: 999, textDecoration: 'none',
+                  background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)',
+                  backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+                }}>
+                  {user ? 'Dashboard' : 'Crear perfil gratis'}
+                </Link>
+              </>
+            )}
           </div>
+          </div>
+
+          {/* Mobile dropdown menu */}
+          {isMobile && menuOpen && (
+            <div style={{
+              background: 'rgba(12,12,12,0.97)', backdropFilter: 'blur(20px)',
+              borderTop: '1px solid rgba(255,255,255,0.08)',
+              padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2,
+            }}>
+              {[['Explorar', '/explorar'], ['Cómo funciona', '#como-funciona'], ['Precios', '#precios']].map(([label, href]) => (
+                <a key={label} href={href} onClick={() => setMenuOpen(false)}
+                  style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, fontWeight: 500, padding: '12px 4px', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                >{label}</a>
+              ))}
+              <Link to={user ? '/dashboard' : '/register'} onClick={() => setMenuOpen(false)}
+                style={{ display: 'block', marginTop: 12, textAlign: 'center', color: '#fff', fontSize: 14, fontWeight: 600, padding: '12px 20px', borderRadius: 999, textDecoration: 'none', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }}>
+                {user ? 'Dashboard' : 'Crear perfil gratis'}
+              </Link>
+            </div>
+          )}
         </header>
 
         {/* ── HERO CONTENT — Centered ── */}
