@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Calendar, Clock, User, Mail, Phone, FileText, Briefcase } from 'lucide-react';
 import api from '../../api/client';
 import { useToast } from '../Toast';
@@ -121,7 +122,7 @@ export default function NewBookingModal({ slot, services, C, onClose, onCreated,
     gap: 4,
   } as React.CSSProperties;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
       style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', paddingBottom: 'max(80px, env(safe-area-inset-bottom, 80px))' }}
@@ -279,6 +280,7 @@ export default function NewBookingModal({ slot, services, C, onClose, onCreated,
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

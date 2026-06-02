@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Search, AlertTriangle } from 'lucide-react';
 import { useServices, type Service } from '../hooks/useServices';
@@ -259,7 +260,7 @@ export default function ServicesDashboard() {
       />
 
       {/* Delete Confirmation */}
-      {deleteTarget && (
+      {deleteTarget && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-24">
           <div className="absolute inset-0 bg-black/50" onClick={() => setDeleteTarget(null)} />
           <div className="relative bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl">
@@ -279,7 +280,8 @@ export default function ServicesDashboard() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

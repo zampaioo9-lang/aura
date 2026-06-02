@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { useAvailability } from '../hooks/useAvailability';
@@ -177,7 +178,7 @@ export default function AvailabilityDashboard() {
       />
 
       {/* Delete confirmation */}
-      {deleteConfirm && (
+      {deleteConfirm && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 pb-24">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-2">Eliminar horario</h3>
@@ -199,7 +200,8 @@ export default function AvailabilityDashboard() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

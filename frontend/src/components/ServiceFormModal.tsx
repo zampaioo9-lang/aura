@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import ServiceForm from './ServiceForm';
 import type { Service } from '../hooks/useServices';
@@ -32,7 +33,7 @@ export default function ServiceFormModal({ isOpen, onClose, service, mode, onSub
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
       style={{ paddingBottom: 'max(80px, env(safe-area-inset-bottom, 80px))' }}
@@ -73,6 +74,7 @@ export default function ServiceFormModal({ isOpen, onClose, service, mode, onSub
           />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

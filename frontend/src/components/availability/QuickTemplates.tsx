@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Briefcase, Sun, Coffee, Moon } from 'lucide-react';
 
 interface QuickTemplatesProps {
@@ -63,7 +64,7 @@ export default function QuickTemplates({ isOpen, onClose, onApply }: QuickTempla
     }
   };
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4 bg-black/40"
       style={{ paddingBottom: 'max(80px, env(safe-area-inset-bottom, 80px))' }}
@@ -107,6 +108,7 @@ export default function QuickTemplates({ isOpen, onClose, onApply }: QuickTempla
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
