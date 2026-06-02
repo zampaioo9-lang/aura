@@ -21,12 +21,6 @@ export default function ServiceFormModal({ isOpen, onClose, service, mode, onSub
     return () => document.removeEventListener('keydown', handleKey);
   }, [isOpen, onClose]);
 
-  useEffect(() => {
-    if (isOpen) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = '';
-    return () => { document.body.style.overflow = ''; };
-  }, [isOpen]);
-
   if (!isOpen) return null;
 
   return createPortal(
@@ -37,7 +31,7 @@ export default function ServiceFormModal({ isOpen, onClose, service, mode, onSub
         onClick={onClose}
       />
 
-      {/* Modal card — bottom anchored above tab bar */}
+      {/* Modal — stops 80px above viewport bottom (tab bar = 72px) */}
       <div
         role="dialog"
         aria-modal="true"
@@ -45,9 +39,9 @@ export default function ServiceFormModal({ isOpen, onClose, service, mode, onSub
           position: 'fixed',
           left: 0,
           right: 0,
-          bottom: 'calc(72px + env(safe-area-inset-bottom, 0px))',
+          bottom: 80,
           zIndex: 9999,
-          maxHeight: 'calc(100dvh - 96px)',
+          maxHeight: 'calc(100svh - 100px)',
           borderRadius: '20px 20px 0 0',
           background: 'white',
           boxShadow: '0 -4px 40px rgba(0,0,0,0.18)',
@@ -56,7 +50,6 @@ export default function ServiceFormModal({ isOpen, onClose, service, mode, onSub
           overflow: 'hidden',
         }}
       >
-        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 16px', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
           <h3 style={{ fontSize: 16, fontWeight: 600, color: '#0f172a', margin: 0 }}>
             {mode === 'create' ? 'Nuevo Servicio' : 'Editar Servicio'}
@@ -70,7 +63,6 @@ export default function ServiceFormModal({ isOpen, onClose, service, mode, onSub
           </button>
         </div>
 
-        {/* Scrollable form */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
           <ServiceForm
             onSubmit={onSubmit}
