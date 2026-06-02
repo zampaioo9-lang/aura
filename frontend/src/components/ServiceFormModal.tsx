@@ -13,8 +13,6 @@ interface ServiceFormModalProps {
   loading?: boolean;
 }
 
-const TAB_BAR_H = 72;
-
 export default function ServiceFormModal({ isOpen, onClose, service, mode, onSubmit, loading }: ServiceFormModalProps) {
   useEffect(() => {
     if (!isOpen) return;
@@ -32,36 +30,58 @@ export default function ServiceFormModal({ isOpen, onClose, service, mode, onSub
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true"
-      style={{ paddingBottom: `calc(${TAB_BAR_H}px + env(safe-area-inset-bottom, 0px))` }}>
+    <>
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/50 transition-opacity" onClick={onClose} />
+      <div
+        style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(0,0,0,0.5)' }}
+        onClick={onClose}
+      />
 
-      {/* Modal */}
-      <div className="relative bg-white w-full sm:max-w-lg sm:rounded-2xl animate-slide-in overflow-hidden"
+      {/* Modal card — bottom anchored above tab bar */}
+      <div
+        role="dialog"
+        aria-modal="true"
         style={{
-          boxShadow: '0 8px 40px rgba(0,0,0,0.35)',
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 'calc(72px + env(safe-area-inset-bottom, 0px))',
+          zIndex: 9999,
+          maxHeight: 'calc(100dvh - 96px)',
           borderRadius: '20px 20px 0 0',
-          maxHeight: `calc(100dvh - ${TAB_BAR_H}px - env(safe-area-inset-bottom, 0px) - 24px)`,
-          display: 'flex', flexDirection: 'column',
-        }}>
-        <div className="flex items-center justify-between p-5 border-b border-slate-200 flex-shrink-0">
-          <h3 className="text-lg font-semibold text-slate-900">
+          background: 'white',
+          boxShadow: '0 -4px 40px rgba(0,0,0,0.18)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 16px', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 600, color: '#0f172a', margin: 0 }}>
             {mode === 'create' ? 'Nuevo Servicio' : 'Editar Servicio'}
           </h3>
-          <button onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
-            aria-label="Cerrar">
-            <X className="h-5 w-5" />
+          <button
+            onClick={onClose}
+            style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center' }}
+            aria-label="Cerrar"
+          >
+            <X size={20} />
           </button>
         </div>
-        <div className="overflow-y-auto flex-1">
-          <div className="p-5">
-            <ServiceForm onSubmit={onSubmit} initialData={service} mode={mode} loading={loading} onCancel={onClose} />
-          </div>
+
+        {/* Scrollable form */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+          <ServiceForm
+            onSubmit={onSubmit}
+            initialData={service}
+            mode={mode}
+            loading={loading}
+            onCancel={onClose}
+          />
         </div>
       </div>
-    </div>,
+    </>,
     document.body
   );
 }
