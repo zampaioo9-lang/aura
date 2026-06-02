@@ -511,7 +511,7 @@ export default function Dashboard() {
               <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
                 Apariencia
               </span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', justifyContent: 'center', maxWidth: 200 }}>
+              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 6, alignItems: 'center', justifyContent: 'center' }}>
                 {ACCENT_THEMES.map(t => t.pro ? (
                   <ProGate key={t.id} isPro={isPro} display="inline-block" compact>
                     <button
@@ -563,7 +563,7 @@ export default function Dashboard() {
             top: 60, left: 0, right: 0, bottom: 0,
             zIndex: 2,
             overflowY: 'auto',
-            background: C.mainBg,
+            background: boardBg,
             transition: 'opacity 0.35s ease, transform 0.35s ease',
             opacity: mobileSection === 'perfil' ? 0 : 1,
             pointerEvents: mobileSection === 'perfil' ? 'none' : 'auto',
