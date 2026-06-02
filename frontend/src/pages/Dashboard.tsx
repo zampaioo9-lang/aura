@@ -556,15 +556,15 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ── LAYER 2: Content (revealed when tab bar moves up) ── */}
+        {/* ── LAYER 2: Content ── */}
         <div
           style={{
             position: 'absolute',
-            top: 60, left: 0, right: 0, bottom: 0,
+            top: 0, left: 0, right: 0, bottom: 72,
             zIndex: 2,
             overflowY: 'auto',
             background: shellBg,
-            transition: 'opacity 0.35s ease, transform 0.35s ease',
+            transition: 'opacity 0.25s ease',
             opacity: mobileSection === 'perfil' ? 0 : 1,
             pointerEvents: mobileSection === 'perfil' ? 'none' : 'auto',
           }}
@@ -593,22 +593,20 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ── LAYER 3: Tab bar — slides from bottom → top on navigation ── */}
+        {/* ── LAYER 3: Tab bar — fijo en la parte inferior ── */}
         <div
           style={{
             position: 'absolute',
-            left: 0, right: 0,
+            left: 0, right: 0, bottom: 0,
             height: 72,
             zIndex: 20,
             display: 'flex',
             background: C.isDark
-              ? 'rgba(24, 24, 31, 0.6)'
-              : 'rgba(255, 255, 255, 0.55)',
+              ? 'rgba(24, 24, 31, 0.75)'
+              : 'rgba(255, 255, 255, 0.75)',
             backdropFilter: 'blur(18px)',
             WebkitBackdropFilter: 'blur(18px)',
             borderTop: `1px solid ${C.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-            transition: 'top 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
-            top: mobileSection === 'perfil' ? 'calc(100% - 72px)' : '0px',
           }}
         >
           {/* Perfil tab */}
