@@ -10,10 +10,9 @@ interface Props {
   value: string;        // YYYY-MM-DD
   onChange: (v: string) => void;
   min?: string;         // YYYY-MM-DD
-  isDark?: boolean;
 }
 
-export default function DatePickerField({ label, value, onChange, min, isDark = true }: Props) {
+export default function DatePickerField({ label, value, onChange, min }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 

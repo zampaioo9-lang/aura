@@ -40,8 +40,6 @@ export default function BookingForm({ profileId, serviceId, serviceName, primary
   const modalBg    = hexToDark(primaryColor, 0.14);      // very dark tinted bg
   const borderCol  = `${primaryColor}22`;                // 13% opacity border
   const focusCol   = `${primaryColor}66`;                // 40% focus ring
-  const accentMid  = hexToDark(primaryColor, 0.45);      // medium dark for hover
-  const serviceCol = hexToDark(primaryColor, 1.6 > 1 ? 1 : 1.6); // lighter tint fallback
 
   const inputStyle: React.CSSProperties = {
     width: '100%',

@@ -1,11 +1,11 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import {
   Plus, LogOut, Calendar, Clock,
   CalendarDays, Facebook, Instagram, Linkedin, MessageCircle,
-  Home, Star, Briefcase, Pencil, Search, ChevronRight, Camera,
+  Home, Star, Briefcase, Pencil, Camera,
   Sun, Moon, Copy, ExternalLink,
 } from 'lucide-react';
 import { SchedulingPanel } from './SchedulingConfig';
@@ -13,8 +13,6 @@ import AccountSettings from './AccountSettings';
 import ProGate from '../components/ProGate';
 import { useUpload } from '../hooks/useUpload';
 import { formatCurrency } from '../lib/utils';
-import { PROFESSION_CATEGORIES } from '../lib/professions';
-import BookingForm from '../components/BookingForm';
 import ProfessionalCalendar from '../components/dashboard/ProfessionalCalendar';
 
 const SOCIAL_ICONS = [

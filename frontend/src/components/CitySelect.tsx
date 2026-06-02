@@ -10,7 +10,6 @@ interface CitySelectProps {
   className?: string;
 }
 
-const OTHER = '__otra__';
 
 const ACCENT_MAP: Record<string, string> = {
   profesional: '#9333ea', bold: '#deb607', elegante: '#3e99c9',
