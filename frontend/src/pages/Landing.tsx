@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Check, Zap, ArrowRight, MapPin, Search } from 'lucide-react';
+import { Check, Zap, ArrowRight, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import './Landing.css';
@@ -41,6 +41,7 @@ export default function Landing() {
   const [profiles, setProfiles] = useState<DirectoryProfile[]>([]);
   const [searchProf, setSearchProf] = useState('');
   const [searchCity, setSearchCity] = useState('');
+  const [searchCountry, setSearchCountry] = useState('');
   const [loadingStripe, setLoadingStripe] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -63,6 +64,7 @@ export default function Landing() {
     const params = new URLSearchParams();
     if (searchProf) params.set('profession', searchProf);
     if (searchCity) params.set('city', searchCity);
+    if (searchCountry) params.set('country', searchCountry);
     navigate(`/explorar?${params}`);
   };
 
@@ -466,38 +468,70 @@ export default function Landing() {
             </h2>
           </div>
 
+          <style>{`
+            .landing-search-select option { background: #1a1a2e; color: #fff; }
+            .landing-search-select:focus { border-color: rgba(45,212,191,0.6) !important; outline: none; }
+          `}</style>
           <form onSubmit={handleSearch} style={{
-            display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 10, maxWidth: 560, margin: '0 auto 32px',
+            display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 480, margin: '0 auto 32px',
             background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(45,212,191,0.2)',
-            borderRadius: 14, padding: 10,
+            borderRadius: 14, padding: 12,
           }}>
-            <div style={{ position: 'relative', flex: 2 }}>
-              <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(45,212,191,0.5)' }} />
-              <input
-                type="text" placeholder="Enfoque o profesión"
-                value={searchProf} onChange={e => setSearchProf(e.target.value)}
-                style={{
-                  width: '100%', paddingLeft: 34, paddingRight: 12, paddingTop: 10, paddingBottom: 10,
-                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(45,212,191,0.2)',
-                  borderRadius: 8, color: '#fff', fontSize: 13, outline: 'none', fontFamily: 'inherit',
-                }}
-              />
-            </div>
-            <div style={{ position: 'relative', flex: 1 }}>
-              <MapPin size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(45,212,191,0.5)' }} />
-              <input
-                type="text" placeholder="Ciudad"
-                value={searchCity} onChange={e => setSearchCity(e.target.value)}
-                style={{
-                  width: '100%', paddingLeft: 34, paddingRight: 12, paddingTop: 10, paddingBottom: 10,
-                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(45,212,191,0.2)',
-                  borderRadius: 8, color: '#fff', fontSize: 13, outline: 'none', fontFamily: 'inherit',
-                }}
-              />
-            </div>
+            {/* Enfoque o profesión */}
+            <select
+              className="landing-search-select"
+              value={searchProf} onChange={e => setSearchProf(e.target.value)}
+              style={{
+                width: '100%', padding: '10px 12px',
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(45,212,191,0.2)',
+                borderRadius: 8, color: searchProf ? '#fff' : 'rgba(255,255,255,0.4)',
+                fontSize: 13, fontFamily: 'inherit', cursor: 'pointer',
+              }}
+            >
+              <option value="">Enfoque o profesión</option>
+              <optgroup label="Profesiones">
+                {['Psicólogo/a','Psicoterapeuta','Psiquiatra','Trabajador/a social','Neuropsicólogo/a'].map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Enfoques terapéuticos">
+                {['Cognitivo-conductual (TCC)','Mindfulness / ACT','Terapia de aceptación y compromiso','Terapia esquemática','Psicoanalítico','Psicodinámico','Humanista','Gestalt','Existencial','Logoterapia','Sistémico','Narrativo','Terapia breve centrada en soluciones (TBCS)','Terapia de pareja','Terapia familiar','Terapia infantil','EMDR','Integrativo','Hipnosis ericksoniana'].map(a => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </optgroup>
+            </select>
+
+            {/* País */}
+            <select
+              className="landing-search-select"
+              value={searchCountry} onChange={e => setSearchCountry(e.target.value)}
+              style={{
+                width: '100%', padding: '10px 12px',
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(45,212,191,0.2)',
+                borderRadius: 8, color: searchCountry ? '#fff' : 'rgba(255,255,255,0.4)',
+                fontSize: 13, fontFamily: 'inherit', cursor: 'pointer',
+              }}
+            >
+              <option value="">País</option>
+              {['México','Argentina','Colombia','Chile','España','Perú','Venezuela','Ecuador','Guatemala','Bolivia','Cuba','Rep. Dominicana','Honduras','El Salvador','Costa Rica','Uruguay','Panamá','Paraguay','Nicaragua','Estados Unidos','Canadá'].map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+
+            {/* Ciudad */}
+            <input
+              type="text" placeholder="Ciudad (opcional)"
+              value={searchCity} onChange={e => setSearchCity(e.target.value)}
+              style={{
+                width: '100%', padding: '10px 12px', boxSizing: 'border-box',
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(45,212,191,0.2)',
+                borderRadius: 8, color: '#fff', fontSize: 13, outline: 'none', fontFamily: 'inherit',
+              }}
+            />
+
             <button type="submit" style={{
               background: 'linear-gradient(135deg, #2dd4bf, #0d9488)', color: '#fff',
-              fontSize: 13, fontWeight: 700, padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              fontSize: 14, fontWeight: 700, padding: '12px', borderRadius: 8, border: 'none', cursor: 'pointer',
             }}>Buscar</button>
           </form>
 
