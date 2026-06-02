@@ -353,7 +353,7 @@ export default function Landing() {
                       borderRadius: m.dir === 'in' ? '4px 14px 14px 14px' : '14px 4px 14px 14px',
                       background: m.dir === 'in' ? 'rgba(255,255,255,0.08)' : 'rgba(37,211,102,0.15)',
                       color: m.dir === 'in' ? 'rgba(255,255,255,0.65)' : 'rgba(134,239,172,0.8)',
-                      fontSize: 11, lineHeight: 1.5, maxWidth: 220,
+                      fontSize: 13, lineHeight: 1.5, maxWidth: 220,
                     }}>{m.text}</div>
                   </div>
                 ))}
@@ -363,7 +363,7 @@ export default function Landing() {
             <div style={{
               marginTop: 12, padding: '10px 12px',
               background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.14)',
-              borderRadius: 8, fontSize: 11, color: 'rgba(239,68,68,0.65)', lineHeight: 1.5,
+              borderRadius: 8, fontSize: 12, color: 'rgba(239,68,68,0.65)', lineHeight: 1.5,
             }}>
               ⏱ Cada nuevo paciente son 20–30 minutos de coordinación antes de la primera sesión.
             </div>
@@ -389,14 +389,14 @@ export default function Landing() {
                   fontSize: 14, fontWeight: 700,
                 }}>LM</div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#ede8ff' }}>Dra. Laura Mendoza</div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Psicoterapeuta · Ciudad de México</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#ede8ff' }}>Dra. Laura Mendoza</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Psicoterapeuta · Ciudad de México</div>
                 </div>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 10 }}>
                 {['TCC', 'Humanista', 'Ansiedad', 'Duelo'].map(t => (
                   <span key={t} style={{
-                    fontSize: 9, padding: '2px 8px', borderRadius: 20,
+                    fontSize: 11, padding: '3px 10px', borderRadius: 20,
                     background: 'rgba(45,212,191,0.10)', border: '1px solid rgba(45,212,191,0.25)',
                     color: '#2dd4bf',
                   }}>{t}</span>
@@ -404,7 +404,7 @@ export default function Landing() {
               </div>
               <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                 {['🖥 Híbrida', '💰 MXN 900 · 50 min', '📋 Cédula 8734521'].map(i => (
-                  <span key={i} style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>{i}</span>
+                  <span key={i} style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{i}</span>
                 ))}
               </div>
             </div>
@@ -412,7 +412,7 @@ export default function Landing() {
             <div style={{
               padding: '10px 12px', background: 'rgba(45,212,191,0.07)',
               border: '1px solid rgba(45,212,191,0.2)', borderRadius: 8,
-              fontSize: 11, color: 'rgba(45,212,191,0.75)', lineHeight: 1.5,
+              fontSize: 13, color: 'rgba(45,212,191,0.75)', lineHeight: 1.5,
             }}>
               ✓ El paciente llega sabiendo tu enfoque, precio y formación. Escribe solo cuando está listo para agendar.
             </div>
