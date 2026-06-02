@@ -54,8 +54,12 @@ export default function TimeSlotPicker({ isOpen, onClose, onSave, editingSlot, d
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4 bg-black/40"
+      style={{ paddingBottom: 'max(80px, env(safe-area-inset-bottom, 80px))' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-t-[20px] sm:rounded-2xl shadow-xl w-full sm:max-w-md p-6" style={{ maxHeight: 'calc(100dvh - 90px)', overflowY: 'auto' }}>
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-semibold text-slate-900">
             {editingSlot ? 'Editar Horario' : 'Nuevo Horario'}

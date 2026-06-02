@@ -33,12 +33,24 @@ export default function ServiceFormModal({ isOpen, onClose, service, mode, onSub
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
+      style={{ paddingBottom: 'max(80px, env(safe-area-inset-bottom, 80px))' }}
+      role="dialog" aria-modal="true"
+    >
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/50 transition-opacity" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl max-w-lg w-full animate-slide-in overflow-hidden" style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.35)', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+      <div
+        className="relative bg-white w-full sm:max-w-lg sm:rounded-2xl animate-slide-in overflow-hidden"
+        style={{
+          boxShadow: '0 8px 40px rgba(0,0,0,0.35)',
+          maxHeight: 'calc(100dvh - 90px)',
+          borderRadius: '20px 20px 0 0',
+          display: 'flex', flexDirection: 'column',
+        }}
+      >
         <div className="flex items-center justify-between p-5 border-b border-slate-200 flex-shrink-0">
           <h3 className="text-lg font-semibold text-slate-900">
             {mode === 'create' ? 'Nuevo Servicio' : 'Editar Servicio'}
@@ -51,7 +63,7 @@ export default function ServiceFormModal({ isOpen, onClose, service, mode, onSub
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="p-5 overflow-y-auto">
+        <div className="p-5 overflow-y-auto flex-1">
           <ServiceForm
             onSubmit={onSubmit}
             initialData={service}

@@ -178,8 +178,8 @@ export default function AvailabilityDashboard() {
 
       {/* Delete confirmation */}
       {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 pb-24">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-2">Eliminar horario</h3>
             <p className="text-sm text-slate-500 mb-5">
               Estas seguro de eliminar este horario? Esta accion no se puede deshacer.

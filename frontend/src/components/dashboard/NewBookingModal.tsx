@@ -123,13 +123,13 @@ export default function NewBookingModal({ slot, services, C, onClose, onCreated,
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', paddingBottom: 'max(80px, env(safe-area-inset-bottom, 80px))' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="w-full max-w-md rounded-2xl overflow-hidden"
-        style={{ background: C.cardBg, border: `1px solid ${C.border}` }}
+        className="w-full sm:max-w-md rounded-t-[20px] sm:rounded-2xl overflow-hidden"
+        style={{ background: C.cardBg, border: `1px solid ${C.border}`, maxHeight: 'calc(100dvh - 90px)', display: 'flex', flexDirection: 'column' }}
       >
         {/* Header */}
         <div
@@ -147,7 +147,7 @@ export default function NewBookingModal({ slot, services, C, onClose, onCreated,
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 flex-1 overflow-y-auto">
 
           {/* Date + Time row */}
           <div className="grid grid-cols-2 gap-3">
