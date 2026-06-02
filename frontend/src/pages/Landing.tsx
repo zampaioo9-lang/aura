@@ -291,12 +291,12 @@ export default function Landing() {
       {/* ══════════════════════════════════════════════
           2. ANTES / CON ALIAX
       ══════════════════════════════════════════════ */}
-      <section style={{ maxWidth: 1160, margin: '0 auto', padding: '80px 32px' }}>
+      <section style={{ maxWidth: 1160, margin: '0 auto', padding: isMobile ? '48px 16px' : '80px 32px' }}>
         <p style={{ fontSize: 10, color: 'rgba(45,212,191,0.55)', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 10 }}>
           ¿Te suena familiar?
         </p>
-        <h2 style={{ fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: 800, letterSpacing: '-0.025em', margin: '0 0 8px', lineHeight: 1.15 }}>
-          Estudiaste años para hacer terapia<br />
+        <h2 style={{ fontSize: 'clamp(24px, 4vw, 40px)', fontWeight: 800, letterSpacing: '-0.025em', margin: '0 0 8px', lineHeight: 1.15 }}>
+          Estudiaste años para hacer terapia{isMobile ? ' ' : <br />}
           <span style={{ color: '#2dd4bf', fontStyle: 'italic', fontWeight: 700 }}>No para administrarla</span>
         </h2>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', marginBottom: 32 }}>
@@ -304,10 +304,10 @@ export default function Landing() {
         </p>
 
         <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2,
+          display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 16 : 2,
         }}>
           {/* ANTES */}
-          <div style={{ padding: '44px 40px', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ padding: isMobile ? '24px 16px' : '44px 40px', borderRight: isMobile ? 'none' : '1px solid rgba(255,255,255,0.05)', borderBottom: isMobile ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
             <span style={{
               display: 'inline-block', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em',
               color: 'rgba(239,68,68,0.7)', border: '1px solid rgba(239,68,68,0.2)',
@@ -370,7 +370,7 @@ export default function Landing() {
           </div>
 
           {/* CON ALIAX */}
-          <div style={{ padding: '44px 40px' }}>
+          <div style={{ padding: isMobile ? '24px 16px' : '44px 40px' }}>
             <span style={{
               display: 'inline-block', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em',
               color: 'rgba(45,212,191,0.8)', border: '1px solid rgba(45,212,191,0.25)',
@@ -423,15 +423,15 @@ export default function Landing() {
       {/* ══════════════════════════════════════════════
           3. CÓMO FUNCIONA
       ══════════════════════════════════════════════ */}
-      <section id="como-funciona" style={{ maxWidth: 980, margin: '0 auto', padding: '0 32px 80px' }}>
+      <section id="como-funciona" style={{ maxWidth: 980, margin: '0 auto', padding: isMobile ? '0 16px 48px' : '0 32px 80px' }}>
         <p style={{ fontSize: 10, color: 'rgba(45,212,191,0.55)', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 10 }}>
           Así funciona
         </p>
-        <h2 style={{ fontSize: 'clamp(24px, 3.5vw, 36px)', fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 40px', lineHeight: 1.15 }}>
-          En 3 pasos, pacientes<br />encontrándote en Google
+        <h2 style={{ fontSize: 'clamp(22px, 3.5vw, 36px)', fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 28px', lineHeight: 1.15 }}>
+          En 3 pasos, pacientes{isMobile ? ' ' : <br />}encontrándote en Google
         </h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
           {[
             { n: '01', title: 'Crea tu perfil', text: 'Completa tu enfoque terapéutico, problemáticas, precio, cédula y modalidad. Listo en 5 minutos.' },
             { n: '02', title: 'Apareces en búsquedas', text: 'Pacientes que buscan "psicólogo TCC Monterrey" o "terapeuta de duelo online" te encuentran directamente.' },
@@ -467,7 +467,7 @@ export default function Landing() {
           </div>
 
           <form onSubmit={handleSearch} style={{
-            display: 'flex', gap: 10, maxWidth: 560, margin: '0 auto 32px',
+            display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 10, maxWidth: 560, margin: '0 auto 32px',
             background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(45,212,191,0.2)',
             borderRadius: 14, padding: 10,
           }}>
@@ -571,7 +571,7 @@ export default function Landing() {
       {/* ══════════════════════════════════════════════
           5. PRECIOS
       ══════════════════════════════════════════════ */}
-      <section id="precios" style={{ maxWidth: 900, margin: '0 auto', padding: '80px 32px' }}>
+      <section id="precios" style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '48px 16px' : '80px 32px' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <p style={{ fontSize: 10, color: 'rgba(45,212,191,0.55)', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 10 }}>Planes</p>
           <h2 style={{ fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: 800, letterSpacing: '-0.025em', margin: '0 0 8px' }}>
@@ -580,7 +580,7 @@ export default function Landing() {
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)' }}>Sin tarjeta. Sin trial de 14 días. El plan gratuito es para siempre.</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
 
           {/* FREE */}
           <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: '28px 24px' }}>
@@ -657,7 +657,8 @@ export default function Landing() {
 
         {/* Cupón */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 16, marginTop: 20,
+          display: 'flex', flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'flex-start' : 'center', gap: 12, marginTop: 20,
           background: 'rgba(45,212,191,0.06)', border: '1px solid rgba(45,212,191,0.2)',
           borderRadius: 14, padding: '16px 20px',
         }}>
