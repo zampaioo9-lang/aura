@@ -505,20 +505,6 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
     finally { setTogglingId(null); }
   };
 
-  const handleModalSubmit = async (data: any) => {
-    setModalLoading(true);
-    try {
-      if (modalMode === 'create') {
-        await createService({ ...data, profileId });
-        toast('Servicio creado');
-      } else if (editingService) {
-        await updateService(editingService.id, data);
-        toast('Servicio actualizado');
-      }
-      setModalOpen(false);
-    } catch (err: any) { toast(err.message || 'Error', 'error'); }
-    finally { setModalLoading(false); }
-  };
 
   const openCreate = () => {
     if (stats && stats.active >= stats.limit) {
