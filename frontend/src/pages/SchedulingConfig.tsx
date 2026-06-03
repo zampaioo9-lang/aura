@@ -16,12 +16,17 @@ import { useServices, type Service } from '../hooks/useServices';
 import ImageUpload from '../components/ImageUpload';
 import QuickTemplates from '../components/availability/QuickTemplates';
 
-const SVC_CURRENCIES = ['EUR','USD','MXN','COP','ARS','CLP','PEN'] as const;
-const SVC_DURATIONS = [
-  { value: 15, label: '15 min' }, { value: 30, label: '30 min' },
-  { value: 45, label: '45 min' }, { value: 60, label: '1 hora' },
-  { value: 90, label: '1h 30min' }, { value: 120, label: '2 horas' },
-  { value: 180, label: '3 horas' }, { value: 240, label: '4 horas' },
+const SVC_CURRENCY_OPTIONS = [
+  { value: 'EUR', label: '€ EUR' }, { value: 'USD', label: '$ USD' },
+  { value: 'MXN', label: '$ MXN' }, { value: 'COP', label: '$ COP' },
+  { value: 'ARS', label: '$ ARS' }, { value: 'CLP', label: '$ CLP' },
+  { value: 'PEN', label: 'S/ PEN' },
+];
+const SVC_DURATION_OPTIONS = [
+  { value: '15', label: '15 min' }, { value: '30', label: '30 min' },
+  { value: '45', label: '45 min' }, { value: '60', label: '1 hora' },
+  { value: '90', label: '1h 30min' }, { value: '120', label: '2 horas' },
+  { value: '180', label: '3 horas' }, { value: '240', label: '4 horas' },
 ];
 
 // ── Google Fonts ─────────────────────────────────────────────────────
@@ -608,17 +613,21 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
                 </div>
                 <div>
                   <label style={lbl}>Moneda</label>
-                  <select value={formData.currency} onChange={e => setField('currency', e.target.value)} style={inp}>
-                    {SVC_CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <CustomSelect
+                    value={formData.currency}
+                    onChange={v => setField('currency', v)}
+                    options={SVC_CURRENCY_OPTIONS}
+                  />
                 </div>
               </div>
 
               <div>
                 <label style={lbl}>Duración *</label>
-                <select value={formData.durationMinutes} onChange={e => setField('durationMinutes', Number(e.target.value))} style={inp}>
-                  {SVC_DURATIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-                </select>
+                <CustomSelect
+                  value={String(formData.durationMinutes)}
+                  onChange={v => setField('durationMinutes', Number(v))}
+                  options={SVC_DURATION_OPTIONS}
+                />
               </div>
 
               {formError && <p style={{ color: '#ff6584', fontSize: 13, margin: 0 }}>{formError}</p>}
