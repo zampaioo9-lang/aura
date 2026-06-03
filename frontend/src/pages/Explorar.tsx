@@ -101,6 +101,24 @@ const MODALITY_LABEL: Record<string, string> = {
   hibrida: 'Híbrida',
 };
 
+const COUNTRIES_CITIES: Record<string, string[]> = {
+  'México':            ['CDMX', 'Guadalajara', 'Monterrey', 'Puebla', 'Tijuana', 'Cancún', 'Mérida', 'Querétaro', 'León', 'San Luis Potosí'],
+  'España':            ['Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Bilbao', 'Zaragoza', 'Málaga', 'Murcia', 'Alicante', 'Valladolid'],
+  'Argentina':         ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'Tucumán', 'La Plata', 'Mar del Plata'],
+  'Colombia':          ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena', 'Bucaramanga', 'Pereira'],
+  'Chile':             ['Santiago', 'Valparaíso', 'Concepción', 'La Serena', 'Antofagasta', 'Temuco'],
+  'Perú':              ['Lima', 'Arequipa', 'Trujillo', 'Chiclayo', 'Cusco', 'Piura'],
+  'Ecuador':           ['Quito', 'Guayaquil', 'Cuenca', 'Manta', 'Ambato'],
+  'Venezuela':         ['Caracas', 'Maracaibo', 'Valencia', 'Barquisimeto', 'Maturín'],
+  'Uruguay':           ['Montevideo', 'Punta del Este', 'Salto', 'Colonia del Sacramento'],
+  'Costa Rica':        ['San José', 'Alajuela', 'Cartago', 'Heredia', 'Liberia'],
+  'Guatemala':         ['Guatemala City', 'Quetzaltenango', 'Escuintla'],
+  'Bolivia':           ['La Paz', 'Santa Cruz', 'Cochabamba', 'Oruro', 'Sucre'],
+  'Paraguay':          ['Asunción', 'Ciudad del Este', 'Encarnación'],
+  'Rep. Dominicana':   ['Santo Domingo', 'Santiago', 'La Romana', 'San Pedro de Macorís'],
+  'Panamá':            ['Ciudad de Panamá', 'Colón', 'David'],
+};
+
 export default function Explorar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [profiles, setProfiles] = useState<DirectoryProfile[]>([]);
@@ -109,11 +127,13 @@ export default function Explorar() {
 
   const profession         = searchParams.get('profession')         || '';
   const city               = searchParams.get('city')               || '';
+  const activeCountry      = searchParams.get('country')            || '';
   const activeTApproach    = searchParams.get('therapeuticApproach') || '';
   const activeProblematic  = searchParams.get('problematic')        || '';
   const activeModality     = searchParams.get('modality')           || '';
 
   const [searchProfession,   setSearchProfession]   = useState(profession);
+  const [searchCountry,      setSearchCountry]      = useState(activeCountry);
   const [searchCity,         setSearchCity]         = useState(city);
   const [therapeuticApproach, setTherapeuticApproach] = useState(activeTApproach);
   const [problematic,        setProblematic]        = useState(activeProblematic);
@@ -121,11 +141,12 @@ export default function Explorar() {
 
   useEffect(() => {
     setSearchProfession(profession);
+    setSearchCountry(activeCountry);
     setSearchCity(city);
     setTherapeuticApproach(activeTApproach);
     setProblematic(activeProblematic);
     setModality(activeModality);
-  }, [profession, city, activeTApproach, activeProblematic, activeModality]);
+  }, [profession, activeCountry, city, activeTApproach, activeProblematic, activeModality]);
 
   const fetchDirectory = useCallback(async (params: Record<string, string>) => {
     setLoading(true);
@@ -143,16 +164,17 @@ export default function Explorar() {
   }, []);
 
   useEffect(() => {
-    fetchDirectory({ profession, city, therapeuticApproach: activeTApproach, problematic: activeProblematic, modality: activeModality });
-  }, [profession, city, activeTApproach, activeProblematic, activeModality, fetchDirectory]);
+    fetchDirectory({ profession, country: activeCountry, city, therapeuticApproach: activeTApproach, problematic: activeProblematic, modality: activeModality });
+  }, [profession, activeCountry, city, activeTApproach, activeProblematic, activeModality, fetchDirectory]);
 
   const buildParams = (overrides: Record<string, string> = {}) => {
     const base: Record<string, string> = {};
-    if (searchProfession)   base.profession          = searchProfession;
-    if (searchCity)         base.city                = searchCity;
-    if (therapeuticApproach) base.therapeuticApproach = therapeuticApproach;
-    if (problematic)        base.problematic         = problematic;
-    if (modality)           base.modality            = modality;
+    if (searchProfession)    base.profession           = searchProfession;
+    if (searchCountry)       base.country              = searchCountry;
+    if (searchCity)          base.city                 = searchCity;
+    if (therapeuticApproach) base.therapeuticApproach  = therapeuticApproach;
+    if (problematic)         base.problematic          = problematic;
+    if (modality)            base.modality             = modality;
     return { ...base, ...overrides };
   };
 
@@ -265,16 +287,50 @@ export default function Explorar() {
 
               <div className="ex-sf-sep" style={{ width: 1, background: 'rgba(255,255,255,0.08)', margin: '14px 0', flexShrink: 0 }} />
 
-              <div className="ex-sf-city" style={{ flex: 1, display: 'flex', alignItems: 'center', minWidth: 160, position: 'relative' }}>
+              {/* País */}
+              <div className="ex-sf-city" style={{ flex: 1, display: 'flex', alignItems: 'center', minWidth: 130, position: 'relative' }}>
                 <MapPin size={15} color="rgba(255,255,255,0.35)"
-                  style={{ position: 'absolute', left: 18, pointerEvents: 'none', flexShrink: 0 }} />
-                <input type="text" placeholder="Ciudad"
-                  value={searchCity} onChange={e => setSearchCity(e.target.value)}
+                  style={{ position: 'absolute', left: 14, pointerEvents: 'none', flexShrink: 0, zIndex: 1 }} />
+                <select
+                  value={searchCountry}
+                  onChange={e => { setSearchCountry(e.target.value); setSearchCity(''); }}
                   style={{
-                    width: '100%', padding: '20px 16px 20px 44px',
+                    width: '100%', padding: '20px 12px 20px 38px',
                     background: 'transparent', border: 'none',
-                    color: '#ffffff', fontSize: 15, fontFamily: 'inherit',
-                  }} />
+                    color: searchCountry ? '#ffffff' : 'rgba(255,255,255,0.45)',
+                    fontSize: 15, fontFamily: 'inherit', cursor: 'pointer',
+                    appearance: 'none', WebkitAppearance: 'none',
+                  }}
+                >
+                  <option value="" style={{ background: '#0a1a18' }}>País</option>
+                  {Object.keys(COUNTRIES_CITIES).map(c => (
+                    <option key={c} value={c} style={{ background: '#0a1a18', color: '#fff' }}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="ex-sf-sep" style={{ width: 1, background: 'rgba(255,255,255,0.08)', margin: '14px 0', flexShrink: 0 }} />
+
+              {/* Ciudad */}
+              <div className="ex-sf-city" style={{ flex: 1, display: 'flex', alignItems: 'center', minWidth: 120, position: 'relative' }}>
+                <select
+                  value={searchCity}
+                  onChange={e => setSearchCity(e.target.value)}
+                  disabled={!searchCountry}
+                  style={{
+                    width: '100%', padding: '20px 12px',
+                    background: 'transparent', border: 'none',
+                    color: searchCity ? '#ffffff' : 'rgba(255,255,255,0.45)',
+                    fontSize: 15, fontFamily: 'inherit', cursor: searchCountry ? 'pointer' : 'default',
+                    appearance: 'none', WebkitAppearance: 'none',
+                    opacity: searchCountry ? 1 : 0.5,
+                  }}
+                >
+                  <option value="" style={{ background: '#0a1a18' }}>Ciudad</option>
+                  {(searchCountry ? COUNTRIES_CITIES[searchCountry] : []).map(c => (
+                    <option key={c} value={c} style={{ background: '#0a1a18', color: '#fff' }}>{c}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="ex-sf-sep" style={{ width: 1, background: 'rgba(255,255,255,0.08)', margin: '14px 0', flexShrink: 0 }} />
