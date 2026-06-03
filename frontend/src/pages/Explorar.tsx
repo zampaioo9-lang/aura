@@ -114,13 +114,18 @@ function SearchSelect({ value, onChange, options, placeholder, icon }: {
   const dropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const h = (e: MouseEvent) => {
+    const onMouse = (e: MouseEvent) => {
       if (btnRef.current?.contains(e.target as Node)) return;
       if (dropRef.current?.contains(e.target as Node)) return;
       setOpen(false);
     };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
+    const onScroll = () => setOpen(false);
+    document.addEventListener('mousedown', onMouse);
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', onMouse);
+      window.removeEventListener('scroll', onScroll, true);
+    };
   }, []);
 
   const handleOpen = () => {
