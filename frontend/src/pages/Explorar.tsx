@@ -119,7 +119,10 @@ function SearchSelect({ value, onChange, options, placeholder, icon }: {
       if (dropRef.current?.contains(e.target as Node)) return;
       setOpen(false);
     };
-    const onScroll = () => setOpen(false);
+    const onScroll = (e: Event) => {
+      if (dropRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
+    };
     document.addEventListener('mousedown', onMouse);
     window.addEventListener('scroll', onScroll, true);
     return () => {
