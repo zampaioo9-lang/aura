@@ -944,19 +944,19 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
           boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={{ color: '#f0ebff', fontSize: 16, fontWeight: 600, margin: 0 }}>Resumen de reservas</h3>
+            <h3 style={{ color: C.text, fontSize: 16, fontWeight: 600, margin: 0 }}>Resumen de reservas</h3>
             {!isPro && (
               <Link to="/pricing" style={{
-                fontSize: 12, color: '#a78bfa', textDecoration: 'none',
-                background: 'rgba(107,99,255,0.15)',
-                border: '1px solid rgba(107,99,255,0.3)',
+                fontSize: 12, color: C.accent, textDecoration: 'none',
+                background: C.accentLight,
+                border: `1px solid ${C.accent}44`,
                 borderRadius: 20, padding: '3px 10px',
               }}>
                 Ver todo con Pro →
               </Link>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6, marginBottom: 16 }}>
             {[
               { label: 'Pendientes', value: analytics.byStatus.PENDING, color: '#f59e0b' },
               { label: 'Confirmadas', value: analytics.byStatus.CONFIRMED, color: '#3b82f6' },
@@ -964,31 +964,31 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
               { label: 'Canceladas', value: analytics.byStatus.CANCELLED, color: '#ef4444' },
             ].map(({ label, value, color }) => (
               <div key={label} style={{
-                background: 'rgba(255,255,255,0.03)', borderRadius: 10,
-                padding: '12px 8px', textAlign: 'center',
+                background: 'rgba(255,255,255,0.05)', borderRadius: 10,
+                padding: '10px 4px', textAlign: 'center', overflow: 'hidden',
               }}>
-                <div style={{ color, fontSize: 24, fontWeight: 700 }}>{value}</div>
-                <div style={{ color: '#6b6b80', fontSize: 11 }}>{label}</div>
+                <div style={{ color, fontSize: 22, fontWeight: 700 }}>{value}</div>
+                <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>{label}</div>
               </div>
             ))}
           </div>
           {analytics.byService.length > 0 && (
             <div>
-              <p style={{ color: '#9d95b5', fontSize: 13, margin: '0 0 8px' }}>Servicios más solicitados:</p>
+              <p style={{ color: C.muted, fontSize: 13, margin: '0 0 8px' }}>Servicios más solicitados:</p>
               {analytics.byService.slice(0, 3).map((s: any) => (
                 <div key={s.name} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                  padding: '6px 0', borderBottom: `1px solid ${C.border}`,
                 }}>
-                  <span style={{ color: '#cdc0e0', fontSize: 13 }}>{s.name}</span>
-                  <span style={{ color: '#9d95b5', fontSize: 12 }}>{s.count} × ${s.revenue.toFixed(0)} {s.currency}</span>
+                  <span style={{ color: C.text, fontSize: 13 }}>{s.name}</span>
+                  <span style={{ color: C.muted, fontSize: 12 }}>{s.count} × ${s.revenue.toFixed(0)} {s.currency}</span>
                 </div>
               ))}
             </div>
           )}
           {!isPro && (
-            <p style={{ color: '#6b6b80', fontSize: 12, marginTop: 12, textAlign: 'center' }}>
-              Mostrando últimas 10 reservas. <Link to="/pricing" style={{ color: '#a78bfa' }}>Activa Pro</Link> para ver historial completo y tendencias.
+            <p style={{ color: C.muted, fontSize: 12, marginTop: 12, textAlign: 'center' }}>
+              Mostrando últimas 10 reservas. <Link to="/pricing" style={{ color: C.accent }}>Activa Pro</Link> para ver historial completo y tendencias.
             </p>
           )}
         </div>
