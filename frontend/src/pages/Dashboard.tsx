@@ -96,11 +96,11 @@ const ACCENT_THEMES = [
   },
   {
     id: 'bold', label: 'Bold', pro: false,
-    accent: 'rgb(222,182,7)',
-    accentDark:  'rgba(222,182,7,0.15)',
-    accentLight: 'rgba(222,182,7,0.08)',
-    darkGradient:  'linear-gradient(160deg, #3d2f00 0%, #7a5f00 100%)',
-    lightGradient: 'linear-gradient(160deg, #deb607 0%, #f59e0b 100%)',
+    accent: 'rgb(250,204,21)',
+    accentDark:  'rgba(250,204,21,0.15)',
+    accentLight: 'rgba(250,204,21,0.08)',
+    darkGradient:  'linear-gradient(160deg, #3d2f00 0%, #92650a 100%)',
+    lightGradient: 'linear-gradient(160deg, #facc15 0%, #fde047 100%)',
   },
   {
     id: 'elegante', label: 'Elegante', pro: true,
