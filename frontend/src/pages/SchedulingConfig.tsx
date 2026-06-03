@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, X, Plus, Power, Sparkles, GripVertical, Pencil, CalendarDays, Layers, Ban, Settings2, Bell } from 'lucide-react';
+import { ArrowLeft, X, Plus, Power, Sparkles, GripVertical, Pencil, CalendarDays, Layers, Ban, Settings2, Bell, ChevronRight } from 'lucide-react';
 import DatePickerField from '../components/DatePickerField';
 import CustomSelect from '../components/CustomSelect';
 import api from '../api/client';
@@ -1250,13 +1250,14 @@ export function SchedulingPanel({ theme }: { theme: 'dark' | 'light' }) {
         .sc-aside-wrap { position: relative; }
         .sc-aside-fade {
           display: none;
-          position: absolute; right: 0; top: 0; bottom: 0; width: 48px;
-          background: linear-gradient(to right, transparent, var(--sc-side));
+          position: absolute; right: 0; top: 0; bottom: 0; width: 56px;
+          background: linear-gradient(to right, transparent, rgba(0,0,0,0.45));
           pointer-events: none;
           transition: opacity 0.2s;
+          align-items: center; justify-content: flex-end; padding-right: 6px;
         }
         @media (max-width: 767px) {
-          .sc-aside-fade { display: block; }
+          .sc-aside-fade { display: flex; }
         }
       `}</style>
 
@@ -1285,7 +1286,9 @@ export function SchedulingPanel({ theme }: { theme: 'dark' | 'light' }) {
           </button>
         ))}
       </aside>
-      <div className="sc-aside-fade" style={{ opacity: showFade ? 1 : 0 }} />
+      <div className="sc-aside-fade" style={{ opacity: showFade ? 1 : 0 }}>
+        <ChevronRight size={16} style={{ color: 'rgba(255,255,255,0.8)', flexShrink: 0 }} />
+      </div>
       </div>
 
       <main className="sc-panel-main">
