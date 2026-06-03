@@ -13,7 +13,7 @@ import {
   type ScheduleBlock, type ServiceAvailabilitySlot,
 } from '../types/availability';
 import { useServices, type Service } from '../hooks/useServices';
-import ServiceFormModal from '../components/ServiceFormModal';
+import ServiceForm from '../components/ServiceForm';
 import QuickTemplates from '../components/availability/QuickTemplates';
 
 // ── Google Fonts ─────────────────────────────────────────────────────
