@@ -70,12 +70,37 @@ input:focus { outline: none; }
 
 /* ── Search bar — mobile ── */
 @media (max-width: 640px) {
-  .ex-sf-profession { flex: 1.5; }
-  .ex-sf-profession input { padding: 16px 8px 16px 14px !important; font-size: 14px !important; }
-  .ex-sf-sep { margin: 10px 0 !important; }
-  .ex-sf-city { min-width: 0 !important; flex: 1; }
-  .ex-sf-city input { padding: 16px 8px 16px 34px !important; font-size: 14px !important; }
-  .ex-sf-pin { left: 11px !important; }
-  .ex-btn-search { padding: 0 14px !important; gap: 0 !important; }
-  .ex-btn-search-label { display: none; }
+  .ex-search-bar {
+    flex-direction: column !important;
+    border-radius: 16px !important;
+  }
+  /* separadores horizontales en mobile */
+  .ex-sf-sep {
+    width: auto !important;
+    height: 1px !important;
+    margin: 0 16px !important;
+  }
+  /* cada campo ocupa el ancho completo */
+  .ex-sf-profession,
+  .ex-sf-city {
+    flex: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  /* botones de Filtros y Buscar: fila al fondo */
+  .ex-search-bar > button {
+    flex: 1;
+  }
+  .ex-btn-search {
+    border-radius: 0 0 14px 14px !important;
+    padding: 14px 20px !important;
+    justify-content: center !important;
+  }
+  .ex-btn-search-label { display: inline !important; }
+  /* reducir padding interno de los SearchSelect en mobile */
+  .ex-sf-profession button,
+  .ex-sf-city button {
+    padding: 14px 16px !important;
+    font-size: 14px !important;
+  }
 }
