@@ -32,18 +32,113 @@ model User {
 }
 
 model Client {
-  id        String   @id @default(cuid())
-  userId    String
-  name      String
-  email     String
-  phone     String?
-  notes     String?
-  createdAt DateTime @default(now())
+  id               String    @id @default(cuid())
+  userId           String
+  name             String
+  email            String?
+  phone            String?
+  notes            String?
+  // Campos demográficos para historia clínica
+  birthDate        DateTime?
+  gender           String?
+  maritalStatus    String?
+  education        String?
+  occupation       String?
+  city             String?
+  country          String?
+  emergencyContact String?
+  referralSource   String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinicalHistory ClinicalHistory?
+  sessionNotes    SessionNote[]
 
-  @@unique([userId, email])
   @@index([userId])
+}
+
+model ClinicalHistory {
+  id       String @id @default(cuid())
+  clientId String @unique
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  // Paso 2: Motivo de consulta
+  chiefComplaint     String?
+  symptomDuration    String?
+  triggerFactors     String?
+
+  // Paso 3: Historia del problema actual
+  currentProblem     String?
+  onsetCourse        String?
+  currentSymptoms    String?
+  previousTreatments String?
+
+  // Paso 4: Antecedentes personales
+  medicalHistory     String?
+  psychiatricHistory String?
+  currentMedication  String?
+  hospitalizations   String?
+  substanceUse       String?
+
+  // Paso 5: Antecedentes familiares
+  familyComposition  String?
+  familyRelations    String?
+  familyPsychHistory String?
+  familyEvents       String?
+
+  // Paso 6: Historia biográfica
+  childhoodHistory    String?
+  schoolHistory       String?
+  workHistory         String?
+  relationshipHistory String?
+  traumaticEvents     String?
+
+  // Paso 7: Examen del estado mental
+  appearance String?
+  mood       String?
+  affect     String?
+  thought    String?
+  perception String?
+  memory     String?
+  attention  String?
+  judgment   String?
+  insight    String?
+
+  // Paso 8: Impresión diagnóstica
+  provisionalDiagnosis  String?
+  diagnosticCode        String?
+  differentialDiagnosis String?
+
+  // Paso 9: Plan de tratamiento
+  therapeuticGoals    String?
+  therapeuticApproach String?
+  sessionFrequency    String?
+  estimatedDuration   String?
+  referrals           String?
+
+  completedSteps Int[]    @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([clientId])
+}
+
+model SessionNote {
+  id            String   @id @default(cuid())
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  sessionNumber Int
+  sessionDate   DateTime
+  summary       String?
+  topics        String?
+  homework      String?
+  observations  String?
+  nextPlan      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([clientId])
 }
 
 model Profile {
