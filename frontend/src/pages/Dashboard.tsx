@@ -936,11 +936,12 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
       )}
       {analytics && (
         <div style={{
-          background: 'rgba(255,255,255,0.06)',
-          border: '1px solid rgba(255,255,255,0.12)',
+          background: 'rgba(0,0,0,0.28)',
+          border: '1px solid rgba(255,255,255,0.14)',
           borderRadius: 16, padding: 20, marginTop: 16,
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <h3 style={{ color: '#f0ebff', fontSize: 16, fontWeight: 600, margin: 0 }}>Resumen de reservas</h3>
@@ -1076,10 +1077,11 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
       {profiles.length > 0 && (
         <div style={{
           marginTop: 16, borderRadius: 16, padding: 16,
-          background: C.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.6)',
-          border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`,
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
+          background: C.isDark ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.75)',
+          border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.08)'}`,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
         }}>
           <p className="text-sm font-medium mb-2" style={{ color: C.muted }}>Comparte este link con tus clientes</p>
           <div className="flex flex-col gap-2">
