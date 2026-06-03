@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Search, MapPin, Zap, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
 import api from '../api/client';
@@ -108,17 +109,68 @@ function SearchSelect({ value, onChange, options, placeholder, icon }: {
   options: string[]; placeholder: string; icon?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const h = (e: MouseEvent) => {
+      if (btnRef.current?.contains(e.target as Node)) return;
+      if (dropRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
+    };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
+  const handleOpen = () => {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setCoords({ top: r.bottom + 8, left: r.left, width: Math.max(r.width, 200) });
+    }
+    setOpen(o => !o);
+  };
+
+  const dropdown = open ? createPortal(
+    <div ref={dropRef} style={{
+      position: 'fixed', top: coords.top, left: coords.left, width: coords.width,
+      background: 'rgba(6,4,16,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+      border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
+      zIndex: 99999, maxHeight: 300, overflowY: 'auto',
+      boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
+    }}>
+      {value && (
+        <button type="button" onClick={() => { onChange(''); setOpen(false); }} style={{
+          width: '100%', textAlign: 'left', padding: '10px 16px',
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          color: 'rgba(255,255,255,0.35)', fontSize: 13, fontFamily: 'inherit',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}>
+          Limpiar selección
+        </button>
+      )}
+      {options.map(opt => (
+        <button key={opt} type="button" onClick={() => { onChange(opt); setOpen(false); }} style={{
+          width: '100%', textAlign: 'left', padding: '11px 16px',
+          background: opt === value ? 'rgba(45,212,191,0.12)' : 'transparent',
+          border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14,
+          color: opt === value ? '#2dd4bf' : 'rgba(255,255,255,0.8)',
+          borderLeft: `3px solid ${opt === value ? '#2dd4bf' : 'transparent'}`,
+          display: 'block',
+        }}
+        onMouseEnter={e => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)'; }}
+        onMouseLeave={e => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>,
+    document.body
+  ) : null;
+
   return (
-    <div ref={ref} style={{ position: 'relative', flex: 1, minWidth: 0 }}>
-      <button type="button" onClick={() => setOpen(o => !o)} style={{
+    <div style={{ position: 'relative', width: '100%' }}>
+      <button ref={btnRef} type="button" onClick={handleOpen} style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: 8,
         padding: '20px 16px', background: 'transparent', border: 'none',
         color: value ? '#fff' : 'rgba(255,255,255,0.4)', fontSize: 15,
@@ -130,43 +182,7 @@ function SearchSelect({ value, onChange, options, placeholder, icon }: {
         </span>
         <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.4, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
       </button>
-
-      {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0,
-          background: 'rgba(8,5,20,0.96)', backdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
-          zIndex: 9999, overflow: 'hidden',
-          maxHeight: 280, overflowY: 'auto',
-          boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
-        }}>
-          {value && (
-            <button type="button" onClick={() => { onChange(''); setOpen(false); }} style={{
-              width: '100%', textAlign: 'left', padding: '10px 16px',
-              background: 'transparent', border: 'none', cursor: 'pointer',
-              color: 'rgba(255,255,255,0.35)', fontSize: 13, fontFamily: 'inherit',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
-            }}>
-              Limpiar selección
-            </button>
-          )}
-          {options.map(opt => (
-            <button key={opt} type="button" onClick={() => { onChange(opt); setOpen(false); }} style={{
-              width: '100%', textAlign: 'left', padding: '11px 16px',
-              background: opt === value ? 'rgba(45,212,191,0.12)' : 'transparent',
-              border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14,
-              color: opt === value ? '#2dd4bf' : 'rgba(255,255,255,0.8)',
-              borderLeft: `3px solid ${opt === value ? '#2dd4bf' : 'transparent'}`,
-              transition: 'background .1s',
-            }}
-            onMouseEnter={e => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)'; }}
-            onMouseLeave={e => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      )}
+      {dropdown}
     </div>
   );
 }
