@@ -520,7 +520,7 @@ export default function Dashboard() {
                       style={{
                         width: 22, height: 22, borderRadius: '50%',
                         background: t.accent,
-                        border: `3px solid ${accentId === t.id ? 'white' : 'transparent'}`,
+                        border: `3px solid ${accentId === t.id ? 'white' : 'rgba(255,255,255,0.35)'}`,
                         outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
                         outlineOffset: '2px', cursor: 'pointer',
                         display: 'block',
@@ -535,7 +535,7 @@ export default function Dashboard() {
                     style={{
                       width: 22, height: 22, borderRadius: '50%',
                       background: t.accent,
-                      border: `3px solid ${accentId === t.id ? 'white' : 'transparent'}`,
+                      border: `3px solid ${accentId === t.id ? 'white' : 'rgba(255,255,255,0.35)'}`,
                       outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
                       outlineOffset: '2px', cursor: 'pointer',
                     }}
@@ -791,7 +791,7 @@ export default function Dashboard() {
                   <ProGate key={t.id} isPro={isPro ?? false} display="inline-block" compact>
                     <button title={t.label} onClick={() => setAccentId(t.id)} style={{
                       width: 20, height: 20, borderRadius: '50%', background: t.accent,
-                      border: `3px solid ${accentId === t.id ? (C.isDark ? 'white' : '#333') : 'transparent'}`,
+                      border: `3px solid ${accentId === t.id ? (C.isDark ? 'white' : '#333') : 'rgba(0,0,0,0.25)'}`,
                       outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
                       outlineOffset: '2px', cursor: 'pointer', display: 'block',
                     }} />
@@ -799,7 +799,7 @@ export default function Dashboard() {
                 ) : (
                   <button key={t.id} title={t.label} onClick={() => setAccentId(t.id)} style={{
                     width: 20, height: 20, borderRadius: '50%', background: t.accent,
-                    border: `3px solid ${accentId === t.id ? (C.isDark ? 'white' : '#333') : 'transparent'}`,
+                    border: `3px solid ${accentId === t.id ? (C.isDark ? 'white' : '#333') : 'rgba(0,0,0,0.25)'}`,
                     outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
                     outlineOffset: '2px', cursor: 'pointer',
                   }} />
