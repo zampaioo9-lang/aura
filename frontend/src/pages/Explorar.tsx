@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, MapPin, Zap, SlidersHorizontal, X } from 'lucide-react';
+import { Search, MapPin, Zap, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
 import api from '../api/client';
 import './Explorar.css';
 
@@ -101,8 +101,78 @@ const MODALITY_LABEL: Record<string, string> = {
   hibrida: 'Híbrida',
 };
 
+const PROFESSIONS = ['Psicólogo/a', 'Psiquiatra', 'Psicoterapeuta', 'Terapeuta de Parejas', 'Neuropsicólogo/a', 'Trabajador/a Social'];
+
+function SearchSelect({ value, onChange, options, placeholder, icon }: {
+  value: string; onChange: (v: string) => void;
+  options: string[]; placeholder: string; icon?: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+      <button type="button" onClick={() => setOpen(o => !o)} style={{
+        width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+        padding: '20px 16px', background: 'transparent', border: 'none',
+        color: value ? '#fff' : 'rgba(255,255,255,0.4)', fontSize: 15,
+        fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left',
+      }}>
+        {icon && <span style={{ flexShrink: 0 }}>{icon}</span>}
+        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {value || placeholder}
+        </span>
+        <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.4, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0,
+          background: 'rgba(8,5,20,0.96)', backdropFilter: 'blur(24px)',
+          border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
+          zIndex: 9999, overflow: 'hidden',
+          maxHeight: 280, overflowY: 'auto',
+          boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+        }}>
+          {value && (
+            <button type="button" onClick={() => { onChange(''); setOpen(false); }} style={{
+              width: '100%', textAlign: 'left', padding: '10px 16px',
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: 'rgba(255,255,255,0.35)', fontSize: 13, fontFamily: 'inherit',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              Limpiar selección
+            </button>
+          )}
+          {options.map(opt => (
+            <button key={opt} type="button" onClick={() => { onChange(opt); setOpen(false); }} style={{
+              width: '100%', textAlign: 'left', padding: '11px 16px',
+              background: opt === value ? 'rgba(45,212,191,0.12)' : 'transparent',
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14,
+              color: opt === value ? '#2dd4bf' : 'rgba(255,255,255,0.8)',
+              borderLeft: `3px solid ${opt === value ? '#2dd4bf' : 'transparent'}`,
+              transition: 'background .1s',
+            }}
+            onMouseEnter={e => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)'; }}
+            onMouseLeave={e => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const COUNTRIES_CITIES: Record<string, string[]> = {
-  'México':            ['CDMX', 'Guadalajara', 'Monterrey', 'Puebla', 'Tijuana', 'Cancún', 'Mérida', 'Querétaro', 'León', 'San Luis Potosí'],
+  'México':            ['CDMX', 'Guadalajara', 'Monterrey', 'Puebla', 'Tijuana', 'Cancún', 'Mérida', 'Querétaro', 'León', 'San Luis Potosí', 'Chihuahua', 'Hermosillo', 'Aguascalientes', 'Saltillo', 'Mexicali', 'Morelia', 'Toluca', 'Veracruz', 'Culiacán', 'Villahermosa', 'Torreón', 'Acapulco', 'Oaxaca', 'Tuxtla Gutiérrez'],
   'España':            ['Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Bilbao', 'Zaragoza', 'Málaga', 'Murcia', 'Alicante', 'Valladolid'],
   'Argentina':         ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'Tucumán', 'La Plata', 'Mar del Plata'],
   'Colombia':          ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena', 'Bucaramanga', 'Pereira'],
@@ -275,62 +345,37 @@ export default function Explorar() {
               border: '1px solid rgba(255,255,255,0.14)',
               backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
             }}>
-              <div className="ex-sf-profession" style={{ flex: 2, display: 'flex', alignItems: 'center' }}>
-                <input type="text" placeholder="Profesión"
-                  value={searchProfession} onChange={e => setSearchProfession(e.target.value)}
-                  style={{
-                    width: '100%', padding: '20px 16px 20px 20px',
-                    background: 'transparent', border: 'none',
-                    color: '#ffffff', fontSize: 15, fontFamily: 'inherit',
-                  }} />
+              <div className="ex-sf-profession" style={{ flex: 2, minWidth: 0, overflow: 'visible' }}>
+                <SearchSelect
+                  value={searchProfession}
+                  onChange={setSearchProfession}
+                  options={PROFESSIONS}
+                  placeholder="Profesión"
+                  icon={<Zap size={14} color="rgba(255,255,255,0.35)" />}
+                />
               </div>
 
               <div className="ex-sf-sep" style={{ width: 1, background: 'rgba(255,255,255,0.08)', margin: '14px 0', flexShrink: 0 }} />
 
-              {/* País */}
-              <div className="ex-sf-city" style={{ flex: 1, display: 'flex', alignItems: 'center', minWidth: 130, position: 'relative' }}>
-                <MapPin size={15} color="rgba(255,255,255,0.35)"
-                  style={{ position: 'absolute', left: 14, pointerEvents: 'none', flexShrink: 0, zIndex: 1 }} />
-                <select
+              <div className="ex-sf-city" style={{ flex: 1, minWidth: 0, overflow: 'visible' }}>
+                <SearchSelect
                   value={searchCountry}
-                  onChange={e => { setSearchCountry(e.target.value); setSearchCity(''); }}
-                  style={{
-                    width: '100%', padding: '20px 12px 20px 38px',
-                    background: 'transparent', border: 'none',
-                    color: searchCountry ? '#ffffff' : 'rgba(255,255,255,0.45)',
-                    fontSize: 15, fontFamily: 'inherit', cursor: 'pointer',
-                    appearance: 'none', WebkitAppearance: 'none',
-                  }}
-                >
-                  <option value="" style={{ background: '#0a1a18' }}>País</option>
-                  {Object.keys(COUNTRIES_CITIES).map(c => (
-                    <option key={c} value={c} style={{ background: '#0a1a18', color: '#fff' }}>{c}</option>
-                  ))}
-                </select>
+                  onChange={v => { setSearchCountry(v); setSearchCity(''); }}
+                  options={Object.keys(COUNTRIES_CITIES)}
+                  placeholder="País"
+                  icon={<MapPin size={14} color="rgba(255,255,255,0.35)" />}
+                />
               </div>
 
               <div className="ex-sf-sep" style={{ width: 1, background: 'rgba(255,255,255,0.08)', margin: '14px 0', flexShrink: 0 }} />
 
-              {/* Ciudad */}
-              <div className="ex-sf-city" style={{ flex: 1, display: 'flex', alignItems: 'center', minWidth: 120, position: 'relative' }}>
-                <select
+              <div className="ex-sf-city" style={{ flex: 1, minWidth: 0, overflow: 'visible', opacity: searchCountry ? 1 : 0.45, pointerEvents: searchCountry ? 'auto' : 'none' }}>
+                <SearchSelect
                   value={searchCity}
-                  onChange={e => setSearchCity(e.target.value)}
-                  disabled={!searchCountry}
-                  style={{
-                    width: '100%', padding: '20px 12px',
-                    background: 'transparent', border: 'none',
-                    color: searchCity ? '#ffffff' : 'rgba(255,255,255,0.45)',
-                    fontSize: 15, fontFamily: 'inherit', cursor: searchCountry ? 'pointer' : 'default',
-                    appearance: 'none', WebkitAppearance: 'none',
-                    opacity: searchCountry ? 1 : 0.5,
-                  }}
-                >
-                  <option value="" style={{ background: '#0a1a18' }}>Ciudad</option>
-                  {(searchCountry ? COUNTRIES_CITIES[searchCountry] : []).map(c => (
-                    <option key={c} value={c} style={{ background: '#0a1a18', color: '#fff' }}>{c}</option>
-                  ))}
-                </select>
+                  onChange={setSearchCity}
+                  options={searchCountry ? COUNTRIES_CITIES[searchCountry] : []}
+                  placeholder="Ciudad"
+                />
               </div>
 
               <div className="ex-sf-sep" style={{ width: 1, background: 'rgba(255,255,255,0.08)', margin: '14px 0', flexShrink: 0 }} />
