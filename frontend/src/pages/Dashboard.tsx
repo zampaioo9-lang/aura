@@ -936,9 +936,11 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
       )}
       {analytics && (
         <div style={{
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(255,255,255,0.06)',
+          border: '1px solid rgba(255,255,255,0.12)',
           borderRadius: 16, padding: 20, marginTop: 16,
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <h3 style={{ color: '#f0ebff', fontSize: 16, fontWeight: 600, margin: 0 }}>Resumen de reservas</h3>
@@ -1072,7 +1074,13 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
       <p className="mb-6" style={{ color: C.muted }}>Aquí tienes un resumen de tu actividad.</p>
       {statsGrid}
       {profiles.length > 0 && (
-        <div style={{ marginTop: 16 }}>
+        <div style={{
+          marginTop: 16, borderRadius: 16, padding: 16,
+          background: C.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.6)',
+          border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}`,
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        }}>
           <p className="text-sm font-medium mb-2" style={{ color: C.muted }}>Comparte este link con tus clientes</p>
           <div className="flex flex-col gap-2">
             {profiles.map(p => (
