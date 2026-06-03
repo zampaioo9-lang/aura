@@ -555,6 +555,22 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
         ))}
       </div>
 
+      {/* Formulario inline crear/editar (mismo patrón que Nuevo Bloqueo) */}
+      {modalOpen && (
+        <div style={{ background: 'rgba(45,212,191,0.06)', border: '1px dashed rgba(45,212,191,0.4)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
+          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, color: 'var(--sc-text)', marginBottom: 16 }}>
+            {modalMode === 'create' ? 'Nuevo servicio' : 'Editar servicio'}
+          </div>
+          <ServiceForm
+            onSubmit={handleModalSubmit}
+            initialData={editingService}
+            mode={modalMode}
+            loading={modalLoading}
+            onCancel={() => setModalOpen(false)}
+          />
+        </div>
+      )}
+
       {/* Lista */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
         {filtered.length === 0 && (
@@ -690,15 +706,6 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
         </ProGate>
       )}
 
-      {/* Modal crear/editar servicio */}
-      <ServiceFormModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        mode={modalMode}
-        service={editingService}
-        onSubmit={handleModalSubmit}
-        loading={modalLoading}
-      />
     </>
   );
 }
