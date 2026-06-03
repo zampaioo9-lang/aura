@@ -13,8 +13,16 @@ import {
   type ScheduleBlock, type ServiceAvailabilitySlot,
 } from '../types/availability';
 import { useServices, type Service } from '../hooks/useServices';
-import ServiceForm from '../components/ServiceForm';
+import ImageUpload from '../components/ImageUpload';
 import QuickTemplates from '../components/availability/QuickTemplates';
+
+const SVC_CURRENCIES = ['EUR','USD','MXN','COP','ARS','CLP','PEN'] as const;
+const SVC_DURATIONS = [
+  { value: 15, label: '15 min' }, { value: 30, label: '30 min' },
+  { value: 45, label: '45 min' }, { value: 60, label: '1 hora' },
+  { value: 90, label: '1h 30min' }, { value: 120, label: '2 horas' },
+  { value: 180, label: '3 horas' }, { value: 240, label: '4 horas' },
+];
 
 // ── Google Fonts ─────────────────────────────────────────────────────
 const FONT_LINK = document.createElement('link');
@@ -392,6 +400,35 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
+  const [formData, setFormData] = useState({ name: '', description: '', price: '0', currency: 'EUR', durationMinutes: 60 });
+  const [formImage, setFormImage] = useState('');
+  const [formError, setFormError] = useState('');
+  const setField = (k: string, v: any) => { setFormData(f => ({ ...f, [k]: v })); setFormError(''); };
+
+  useEffect(() => {
+    if (modalOpen && editingService) {
+      setFormData({ name: editingService.name, description: editingService.description || '', price: String(editingService.price), currency: editingService.currency, durationMinutes: editingService.durationMinutes });
+      setFormImage(editingService.image || '');
+    } else if (modalOpen) {
+      setFormData({ name: '', description: '', price: '0', currency: 'EUR', durationMinutes: 60 });
+      setFormImage('');
+    }
+    setFormError('');
+  }, [modalOpen, editingService]);
+
+  const handleInlineSubmit = async () => {
+    if (formData.name.trim().length < 3) { setFormError('El nombre debe tener al menos 3 caracteres.'); return; }
+    const price = parseFloat(formData.price);
+    if (isNaN(price) || price < 0) { setFormError('El precio no puede ser negativo.'); return; }
+    setModalLoading(true);
+    try {
+      const payload = { name: formData.name.trim(), description: formData.description.trim() || undefined, price, currency: formData.currency, durationMinutes: formData.durationMinutes, image: formImage || undefined, profileId };
+      if (modalMode === 'create') { await createService(payload); toast('Servicio creado'); }
+      else if (editingService) { await updateService(editingService.id, payload); toast('Servicio actualizado'); }
+      setModalOpen(false);
+    } catch (err: any) { setFormError(err.response?.data?.error || err.message || 'Error al guardar'); }
+    finally { setModalLoading(false); }
+  };
 
   // Horarios por servicio
   const [selectedSvc, setSelectedSvc] = useState<Service | null>(null);
@@ -555,21 +592,61 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
         ))}
       </div>
 
-      {/* Formulario inline crear/editar (mismo patrón que Nuevo Bloqueo) */}
-      {modalOpen && (
-        <div style={{ background: 'rgba(45,212,191,0.06)', border: '1px dashed rgba(45,212,191,0.4)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
-          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, color: 'var(--sc-text)', marginBottom: 16 }}>
-            {modalMode === 'create' ? 'Nuevo servicio' : 'Editar servicio'}
+      {/* Formulario inline crear/editar */}
+      {modalOpen && (() => {
+        const inp: React.CSSProperties = { background: 'var(--sc-inner)', border: '1px solid var(--sc-border)', borderRadius: 8, padding: '9px 12px', color: 'var(--sc-text)', fontFamily: 'DM Sans', fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' };
+        const lbl: React.CSSProperties = { fontSize: 11, color: 'var(--sc-muted)', textTransform: 'uppercase', letterSpacing: '0.7px', fontWeight: 600, display: 'block', marginBottom: 5 };
+        return (
+          <div style={{ background: 'rgba(45,212,191,0.06)', border: '1px dashed rgba(45,212,191,0.4)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, color: 'var(--sc-text)', marginBottom: 14 }}>
+              {modalMode === 'create' ? 'Nuevo servicio' : 'Editar servicio'}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={lbl}>Nombre *</label>
+                <input value={formData.name} onChange={e => setField('name', e.target.value)} placeholder="Ej: Consulta Psicológica" style={inp} />
+              </div>
+
+              <div>
+                <label style={lbl}>Descripción</label>
+                <textarea value={formData.description} onChange={e => setField('description', e.target.value)} rows={2} maxLength={500} placeholder="Describe tu servicio..." style={{ ...inp, resize: 'vertical' }} />
+              </div>
+
+              <ImageUpload value={formImage} onChange={setFormImage} label="Imagen del servicio" />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={lbl}>Precio *</label>
+                  <input type="number" min="0" step="0.01" value={formData.price} onChange={e => setField('price', e.target.value)} style={inp} />
+                </div>
+                <div>
+                  <label style={lbl}>Moneda</label>
+                  <select value={formData.currency} onChange={e => setField('currency', e.target.value)} style={inp}>
+                    {SVC_CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={lbl}>Duración *</label>
+                <select value={formData.durationMinutes} onChange={e => setField('durationMinutes', Number(e.target.value))} style={inp}>
+                  {SVC_DURATIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                </select>
+              </div>
+
+              {formError && <p style={{ color: '#ff6584', fontSize: 13, margin: 0 }}>{formError}</p>}
+
+              <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
+                <BtnPrimary onClick={handleInlineSubmit} disabled={modalLoading}>
+                  {modalLoading ? 'Guardando...' : modalMode === 'create' ? 'Crear servicio' : 'Guardar cambios'}
+                </BtnPrimary>
+                <BtnGhost small onClick={() => setModalOpen(false)}>Cancelar</BtnGhost>
+              </div>
+            </div>
           </div>
-          <ServiceForm
-            onSubmit={handleModalSubmit}
-            initialData={editingService}
-            mode={modalMode}
-            loading={modalLoading}
-            onCancel={() => setModalOpen(false)}
-          />
-        </div>
-      )}
+        );
+      })()}
 
       {/* Lista */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
