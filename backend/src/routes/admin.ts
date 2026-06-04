@@ -111,6 +111,8 @@ router.get('/users', async (req, res, next) => {
           paypalSubscriptionId: true,
           stripeHasDiscount: true,
           welcomeEmailSentAt: true,
+          blocked: true,
+          featureOverrides: true,
           profiles: {
             select: {
               id: true,
@@ -147,6 +149,77 @@ router.delete('/users/:id', async (req: any, res, next) => {
     await prisma.user.delete({ where: { id } });
 
     res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/admin/users/:id/block
+router.patch('/users/:id/block', async (req: any, res, next) => {
+  try {
+    const { id } = req.params;
+    const { blocked } = req.body as { blocked: boolean };
+
+    if (typeof blocked !== 'boolean') {
+      return res.status(400).json({ error: 'El campo blocked debe ser boolean' });
+    }
+
+    const target = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, isAdmin: true },
+    });
+    if (!target) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (target.isAdmin) return res.status(403).json({ error: 'No se puede bloquear a un administrador' });
+    if (target.id === req.userId) return res.status(403).json({ error: 'No puedes bloquearte a ti mismo' });
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { blocked },
+      select: { id: true, blocked: true },
+    });
+
+    res.json({ ok: true, blocked: updated.blocked });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/admin/users/:id/features
+router.patch('/users/:id/features', async (req: any, res, next) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body as Record<string, boolean>;
+
+    const VALID_KEYS = [
+      'historia_clinica', 'terapia_pareja', 'templates_premium',
+      'pacientes', 'analytics', 'agenda', 'colores_premium',
+    ];
+
+    for (const [key, val] of Object.entries(updates)) {
+      if (!VALID_KEYS.includes(key)) {
+        return res.status(400).json({ error: `Key inválida: ${key}` });
+      }
+      if (typeof val !== 'boolean') {
+        return res.status(400).json({ error: `El valor de ${key} debe ser boolean` });
+      }
+    }
+
+    const target = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, featureOverrides: true },
+    });
+    if (!target) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const existing = (target.featureOverrides as Record<string, boolean>) || {};
+    const merged = { ...existing, ...updates };
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { featureOverrides: merged },
+      select: { id: true, featureOverrides: true },
+    });
+
+    res.json({ ok: true, featureOverrides: updated.featureOverrides });
   } catch (err) {
     next(err);
   }
