@@ -25,6 +25,8 @@ model User {
   stripeHasDiscount    Boolean   @default(false)
   paypalSubscriptionId String?
   welcomeEmailSentAt   DateTime?
+  blocked              Boolean   @default(false)
+  featureOverrides     Json      @default("{}")
   createdAt            DateTime  @default(now())
   profiles             Profile[]
   professionalBookings Booking[] @relation("ProfessionalBookings")
@@ -51,9 +53,10 @@ model Client {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt @default(now())
 
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clinicalHistory ClinicalHistory?
-  sessionNotes    SessionNote[]
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinicalHistory       ClinicalHistory?
+  clinicalHistoryCouple ClinicalHistoryCouple?
+  sessionNotes          SessionNote[]
 
   @@index([userId])
 }
@@ -116,6 +119,79 @@ model ClinicalHistory {
   sessionFrequency    String?
   estimatedDuration   String?
   referrals           String?
+
+  completedSteps Int[]    @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([clientId])
+}
+
+model ClinicalHistoryCouple {
+  id       String @id @default(cuid())
+  clientId String @unique
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  // Paso 1: Datos de la pareja
+  p1Name             String?
+  p1Age              String?
+  p1Occupation       String?
+  p1Education        String?
+  p2Name             String?
+  p2Age              String?
+  p2Occupation       String?
+  p2Education        String?
+  relationshipStatus String?
+  timeTogether       String?
+  children           String?
+
+  // Paso 2: Motivo de consulta
+  chiefComplaint      String?
+  whoInitiated        String?
+  problemDuration     String?
+  therapyExpectations String?
+
+  // Paso 3: Historia de la relación
+  howTheyMet        String?
+  courtshipHistory  String?
+  significantEvents String?
+  crisisPoints      String?
+
+  // Paso 4: Dinámica de conflicto
+  mainConflictTopics  String?
+  communicationStyle  String?
+  negativeCycle       String?
+  conflictResolution  String?
+
+  // Paso 5: Intimidad y conexión
+  emotionalIntimacy  String?
+  sexualLife         String?
+  positiveConnection String?
+
+  // Paso 6: Historia familiar y transgeneracional
+  p1FamilyModel     String?
+  p2FamilyModel     String?
+  transgenerational String?
+
+  // Paso 7: Recursos y tentativas previas
+  previousTherapy  String?
+  solutionAttempts String?
+  coupleStrengths  String?
+
+  // Paso 8: Evaluación y factores de riesgo
+  p1Commitment     String?
+  p2Commitment     String?
+  violenceRisk     String?
+  infidelityHistory String?
+  substanceUse     String?
+  individualMH     String?
+
+  // Paso 9: Plan terapéutico
+  therapeuticGoals    String?
+  therapeuticApproach String?
+  sessionModality     String?
+  sessionFrequency    String?
+  estimatedDuration   String?
 
   completedSteps Int[]    @default([])
   createdAt      DateTime @default(now())
