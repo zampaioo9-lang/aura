@@ -13,6 +13,8 @@ interface User {
   plan?: string | null;
   planInterval?: string | null;
   planExpiresAt?: string | null;
+  blocked?: boolean;
+  featureOverrides?: Record<string, boolean>;
 }
 
 interface UpdateAccountData {
@@ -28,6 +30,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isPro: boolean;
+  featureOverrides: Record<string, boolean>;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
   logout: () => void;
@@ -103,8 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false;
   })();
 
+  const featureOverrides = (user?.featureOverrides ?? {}) as Record<string, boolean>;
+
   return (
-    <AuthContext.Provider value={{ user, token, isPro, login, register, logout, updateAccount, refreshUser, loading }}>
+    <AuthContext.Provider value={{ user, token, isPro, featureOverrides, login, register, logout, updateAccount, refreshUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
