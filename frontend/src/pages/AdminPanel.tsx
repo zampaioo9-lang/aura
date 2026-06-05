@@ -34,6 +34,8 @@ interface UserRow {
   paypalSubscriptionId: string | null;
   stripeHasDiscount: boolean;
   welcomeEmailSentAt: string | null;
+  blocked: boolean;
+  featureOverrides: Record<string, boolean>;
   _count: { profiles: number; professionalBookings: number };
   profiles: {
     id: string;
@@ -121,6 +123,78 @@ export default function AdminPanel() {
   const [nlResult, setNlResult] = useState<{ ok: boolean; broadcastId?: string; error?: string } | null>(null);
   const [syncingAudience, setSyncingAudience] = useState(false);
   const [syncResult, setSyncResult] = useState<{ ok: boolean; added?: number; total?: number; error?: string } | null>(null);
+  const [updatingPermissions, setUpdatingPermissions] = useState<string | null>(null);
+  const [updatingBlock, setUpdatingBlock] = useState<string | null>(null);
+
+  const FEATURE_LABELS: { key: string; label: string }[] = [
+    { key: 'historia_clinica',  label: 'Historia Clínica' },
+    { key: 'terapia_pareja',    label: 'Terapia de Pareja' },
+    { key: 'pacientes',         label: 'Pacientes' },
+    { key: 'analytics',         label: 'Analytics' },
+    { key: 'agenda',            label: 'Agenda' },
+    { key: 'templates_premium', label: 'Templates Premium' },
+    { key: 'colores_premium',   label: 'Colores Premium' },
+  ];
+
+  const handleToggleFeature = async (userId: string, key: string, value: boolean) => {
+    setUpdatingPermissions(userId);
+    try {
+      await api.patch(`/admin/users/${userId}/features`, { [key]: value });
+      setUsers(prev => prev.map(u =>
+        u.id === userId
+          ? { ...u, featureOverrides: { ...u.featureOverrides, [key]: value } }
+          : u
+      ));
+    } catch (err) {
+      console.error('Error actualizando feature:', err);
+    } finally {
+      setUpdatingPermissions(null);
+    }
+  };
+
+  const handleToggleBlock = async (userId: string, blocked: boolean) => {
+    setUpdatingBlock(userId);
+    try {
+      await api.patch(`/admin/users/${userId}/block`, { blocked });
+      setUsers(prev => prev.map(u =>
+        u.id === userId ? { ...u, blocked } : u
+      ));
+    } catch (err) {
+      console.error('Error bloqueando usuario:', err);
+    } finally {
+      setUpdatingBlock(null);
+    }
+  };
+
+  const handleGrantAll = async (userId: string) => {
+    const allTrue = Object.fromEntries(FEATURE_LABELS.map(f => [f.key, true]));
+    setUpdatingPermissions(userId);
+    try {
+      await api.patch(`/admin/users/${userId}/features`, allTrue);
+      setUsers(prev => prev.map(u =>
+        u.id === userId ? { ...u, featureOverrides: allTrue } : u
+      ));
+    } catch (err) {
+      console.error('Error:', err);
+    } finally {
+      setUpdatingPermissions(null);
+    }
+  };
+
+  const handleRevokeAll = async (userId: string) => {
+    const allFalse = Object.fromEntries(FEATURE_LABELS.map(f => [f.key, false]));
+    setUpdatingPermissions(userId);
+    try {
+      await api.patch(`/admin/users/${userId}/features`, allFalse);
+      setUsers(prev => prev.map(u =>
+        u.id === userId ? { ...u, featureOverrides: allFalse } : u
+      ));
+    } catch (err) {
+      console.error('Error:', err);
+    } finally {
+      setUpdatingPermissions(null);
+    }
+  };
 
   const toggleDark = () => {
     const next = !dark;
@@ -754,6 +828,88 @@ export default function AdminPanel() {
                                 </button>
                               )}
                             </div>
+
+                            {/* ── Control de Acceso ── */}
+                            {!u.isAdmin && (
+                              <div className="rounded-lg px-4 py-3 mt-3"
+                                style={{ background: C.subCard, border: `1px solid ${C.cardBorder}` }}>
+                                <p className="text-xs font-bold mb-3" style={{ color: C.text, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                                  Control de Acceso
+                                </p>
+
+                                {/* Blocked banner */}
+                                {u.blocked && (
+                                  <div className="flex items-center justify-between mb-3 px-3 py-2 rounded-lg"
+                                    style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                                    <span className="text-xs font-semibold" style={{ color: '#f87171' }}>🔴 CUENTA BLOQUEADA</span>
+                                    <button
+                                      disabled={updatingBlock === u.id}
+                                      onClick={() => handleToggleBlock(u.id, false)}
+                                      className="px-3 py-1 text-xs font-semibold rounded-md transition-colors"
+                                      style={{ background: '#22c55e', color: '#fff', border: 'none', cursor: 'pointer', opacity: updatingBlock === u.id ? 0.6 : 1 }}
+                                    >
+                                      {updatingBlock === u.id ? '...' : 'Desbloquear'}
+                                    </button>
+                                  </div>
+                                )}
+
+                                {/* Module checkboxes */}
+                                <p className="text-xs mb-2" style={{ color: C.textFaint, fontWeight: 600, letterSpacing: '0.04em' }}>Módulos habilitados individualmente</p>
+                                <div className="grid grid-cols-2 gap-1.5 mb-3">
+                                  {FEATURE_LABELS.map(({ key, label }) => {
+                                    const enabled = u.featureOverrides?.[key] === true;
+                                    const busy = updatingPermissions === u.id;
+                                    return (
+                                      <label key={key} className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-all"
+                                        style={{
+                                          background: enabled ? 'rgba(34,197,94,0.08)' : C.inputBg,
+                                          border: `1px solid ${enabled ? 'rgba(34,197,94,0.35)' : C.inputBorder}`,
+                                          opacity: busy ? 0.6 : 1,
+                                        }}>
+                                        <input
+                                          type="checkbox"
+                                          checked={enabled}
+                                          disabled={busy}
+                                          onChange={e => handleToggleFeature(u.id, key, e.target.checked)}
+                                          style={{ accentColor: '#22c55e', width: 13, height: 13, cursor: 'pointer' }}
+                                        />
+                                        <span className="text-xs" style={{ color: C.text }}>{label}</span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Quick actions */}
+                                <div className="flex gap-2 flex-wrap">
+                                  <button
+                                    disabled={updatingPermissions === u.id}
+                                    onClick={() => handleGrantAll(u.id)}
+                                    className="px-3 py-1 text-xs font-semibold rounded-md transition-colors disabled:opacity-50"
+                                    style={{ background: '#22c55e', color: '#fff', border: 'none', cursor: 'pointer' }}
+                                  >
+                                    Dar todo Pro
+                                  </button>
+                                  <button
+                                    disabled={updatingPermissions === u.id}
+                                    onClick={() => handleRevokeAll(u.id)}
+                                    className="px-3 py-1 text-xs rounded-md transition-colors disabled:opacity-50"
+                                    style={{ background: C.inputBg, color: C.textMuted, border: `1px solid ${C.inputBorder}`, cursor: 'pointer' }}
+                                  >
+                                    Quitar todo
+                                  </button>
+                                  {!u.blocked && (
+                                    <button
+                                      disabled={updatingBlock === u.id}
+                                      onClick={() => handleToggleBlock(u.id, true)}
+                                      className="px-3 py-1 text-xs rounded-md transition-colors disabled:opacity-50"
+                                      style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)', cursor: 'pointer' }}
+                                    >
+                                      {updatingBlock === u.id ? '...' : 'Bloquear cuenta'}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            )}
 
                             {/* Delete user */}
                             {!u.isAdmin && (
