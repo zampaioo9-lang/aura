@@ -89,6 +89,8 @@ interface DirectoryProfile {
   sessionCurrency?: string;
   therapeuticApproaches?: string[];
   isPro: boolean;
+  averageRating?: number | null;
+  reviewCount?: number;
   services: { id: string; name: string; price: number; currency: string }[];
 }
 
