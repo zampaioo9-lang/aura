@@ -1182,6 +1182,8 @@ const THEME_LIGHT = { main: 'transparent', side: 'rgba(255,255,255,0.72)', inner
 // ════════════════════════════════════════════════════════════════════
 export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; accent?: string }) {
   const { isPro } = useAuth();
+  const canAgendaPanel = useFeature('agenda');
+  const effectiveIsPro = isPro || canAgendaPanel;
   const [tab, setTab]               = useState<Tab>('availability');
   const [profiles, setProfiles]     = useState<Profile[]>([]);
   const [selectedProfileId, setSel] = useState('');
