@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Michroma&display=swap');
 @import "tailwindcss";
 
 html, body, #root {
@@ -8,6 +9,8 @@ html, body, #root {
   --font-display: 'Bebas Neue', sans-serif;
   --font-body: 'Urbanist', sans-serif;
   --font-hero: 'Bebas Neue', sans-serif;
+  --font-manrope: 'Manrope', sans-serif;
+  --font-michroma: 'Michroma', sans-serif;
 
   --color-aura-950: #080414;
   --color-aura-900: #0e0920;
@@ -122,4 +125,26 @@ body {
     width: 100vw;
     height: 100vh;
   }
+}
+
+@keyframes avatarFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.marquee-container {
+  display: flex;
+  overflow: hidden;
+  width: 100%;
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  flex-wrap: nowrap;
+  animation: marquee-scroll linear infinite;
+  will-change: transform;
 }
