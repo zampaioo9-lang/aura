@@ -596,7 +596,9 @@ export default function Dashboard() {
             )}
             <div className="mt-10 text-center" style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
               <Link to="/pricing" className="text-xs" style={{ color: C.muted }}>Ver planes</Link>
-              <a href="https://github.com/zampaioo9-lang/aura/tree/master/docs/manual" target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: C.muted }}>Manual</a>
+              {user?.isAdmin && (
+                <a href="https://github.com/zampaioo9-lang/aura/tree/master/docs/manual" target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: C.muted }}>Manual</a>
+              )}
             </div>
           </div>
         </div>
@@ -812,13 +814,15 @@ export default function Dashboard() {
             >
               Ver planes
             </Link>
-            <a href="https://github.com/zampaioo9-lang/aura/tree/master/docs/manual" target="_blank" rel="noopener noreferrer"
-              style={{ fontSize: 14, color: C.muted, textDecoration: 'none', padding: '7px 10px', borderRadius: 8 }}
-              onMouseEnter={e => (e.currentTarget.style.color = C.text)}
-              onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
-            >
-              Manual
-            </a>
+            {user?.isAdmin && (
+              <a href="https://github.com/zampaioo9-lang/aura/tree/master/docs/manual" target="_blank" rel="noopener noreferrer"
+                style={{ fontSize: 14, color: C.muted, textDecoration: 'none', padding: '7px 10px', borderRadius: 8 }}
+                onMouseEnter={e => (e.currentTarget.style.color = C.text)}
+                onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+              >
+                Manual
+              </a>
+            )}
             <button
               onClick={() => { logout(); navigate('/'); }}
               style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', padding: '7px 10px', borderRadius: 8, textAlign: 'left' }}
