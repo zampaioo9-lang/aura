@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, Facebook, Instagram, Linkedin, MessageCircle, Moon, Sun, ArrowLeft, MapPin, Star, Banknote, GraduationCap, Shield, BookOpen, Globe } from 'lucide-react';
 import { formatPrice, formatDuration, formatTime } from '../../lib/utils';
+import api from '../../api/client';
 
 interface TemplateProps {
   profile: any;
@@ -189,10 +190,9 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
 
   useEffect(() => {
     if (!profile.id) return;
-    fetch(`${import.meta.env.VITE_API_URL || ''}/api/reviews/profile/${profile.id}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.isPro) setReviewData(data);
+    api.get(`/reviews/profile/${profile.id}`)
+      .then(res => {
+        if (res.data.isPro) setReviewData(res.data);
       })
       .catch(() => {});
   }, [profile.id]);
