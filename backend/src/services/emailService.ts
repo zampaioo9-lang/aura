@@ -379,4 +379,28 @@ export const emailTemplates = {
       )}
     `),
   }),
+
+  // Al cliente: solicitud de reseña post-cita
+  reviewRequest: (data: {
+    clientName: string;
+    clientEmail: string;
+    professionalName: string;
+    reviewUrl: string;
+  }) => ({
+    to: data.clientEmail,
+    subject: `¿Cómo fue tu sesión con ${data.professionalName}? — Aliax`,
+    html: baseTemplate('Deja tu reseña', `
+      ${heading(`Hola ${data.clientName}`)}
+      ${subtext(`Tu opinión sobre tu sesión con <strong>${data.professionalName}</strong> ayuda a otros a encontrar el apoyo que necesitan.`)}
+
+      <div style="margin-top:20px;padding:16px;background:#f0fdfa;border-radius:8px;border:1px solid #99f6e4;">
+        <p style="margin:0 0 6px;color:#0f766e;font-size:13px;font-weight:600;">Solo toma 1 minuto</p>
+        <p style="margin:0;color:#18181b;font-size:14px;line-height:1.5;">Elige una calificación de 1 a 5 estrellas y, si quieres, escribe un comentario breve sobre tu experiencia.</p>
+      </div>
+
+      ${ctaButton('Dejar mi reseña', data.reviewUrl)}
+
+      <p style="margin-top:20px;color:#a1a1aa;font-size:12px;line-height:1.5;">Este enlace es de uso único y expira en 7 días. Si ya dejaste tu reseña o no deseas hacerlo, simplemente ignora este mensaje.</p>
+    `),
+  }),
 };
