@@ -891,6 +891,87 @@ function DashNavRow({ icon, isActive, C, onClick, children }: { icon: React.Reac
   );
 }
 
+/* ── Mock data for blurred chart (Free users) ── */
+const MOCK_PER_DAY: Record<string, number> = (() => {
+  const vals = [1,0,2,3,1,0,2,1,4,2,0,1,3,2,1,0,2,3,1,2,0,1,2,1,3,0,2,1,3,2];
+  const out: Record<string, number> = {};
+  for (let i = 0; i < 30; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - (29 - i));
+    out[d.toISOString().split('T')[0]] = vals[i];
+  }
+  return out;
+})();
+
+/* ── Bar chart SVG ── */
+function BarChartSVG({ perDay, accent, muted }: {
+  perDay: Record<string, number>;
+  accent: string;
+  muted: string;
+}) {
+  const [hovered, setHovered] = useState<{ date: string; count: number; idx: number } | null>(null);
+  const entries = Object.entries(perDay).sort(([a], [b]) => a.localeCompare(b)).slice(-30);
+
+  if (entries.length === 0) return (
+    <div style={{ color: muted, fontSize: 12, textAlign: 'center', padding: '16px 0' }}>
+      Sin reservas en los últimos 30 días.
+    </div>
+  );
+
+  const maxVal = Math.max(...entries.map(([, v]) => v), 1);
+  const BAR_W = 8, GAP = 3, CHART_H = 70, LABEL_H = 14;
+  const totalW = entries.length * (BAR_W + GAP) - GAP;
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {hovered && (
+        <div style={{
+          position: 'absolute',
+          bottom: LABEL_H + 6,
+          left: `${((hovered.idx * (BAR_W + GAP) + BAR_W / 2) / totalW) * 100}%`,
+          transform: 'translateX(-50%)',
+          background: 'rgba(0,0,0,0.82)', color: '#fff',
+          fontSize: 11, padding: '3px 8px', borderRadius: 6,
+          pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10,
+        }}>
+          {new Date(hovered.date + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}: {hovered.count} {hovered.count === 1 ? 'reserva' : 'reservas'}
+        </div>
+      )}
+      <svg
+        viewBox={`0 0 ${totalW} ${CHART_H + LABEL_H}`}
+        style={{ width: '100%', height: CHART_H + LABEL_H, display: 'block', overflow: 'visible' }}
+        onMouseLeave={() => setHovered(null)}
+      >
+        {entries.map(([date, count], i) => {
+          const barH = Math.max((count / maxVal) * CHART_H, count > 0 ? 3 : 1);
+          const x = i * (BAR_W + GAP);
+          const isHov = hovered?.date === date;
+          return (
+            <rect
+              key={date} x={x} y={CHART_H - barH}
+              width={BAR_W} height={barH} rx={2}
+              fill={accent} opacity={isHov ? 1 : 0.5}
+              style={{ cursor: 'default', transition: 'opacity 0.1s' }}
+              onMouseEnter={() => setHovered({ date, count, idx: i })}
+            />
+          );
+        })}
+        <line x1={0} y1={CHART_H} x2={totalW} y2={CHART_H} stroke={muted} strokeOpacity={0.2} strokeWidth={1} />
+        {entries.map(([date], i) => {
+          if (i % 5 !== 0 && i !== entries.length - 1) return null;
+          const x = i * (BAR_W + GAP) + BAR_W / 2;
+          const d = new Date(date + 'T12:00:00');
+          return (
+            <text key={date} x={x} y={CHART_H + LABEL_H - 2} textAnchor="middle" fontSize={7} fill={muted}>
+              {d.getDate()}/{d.getMonth() + 1}
+            </text>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 /* ────────────────── Tab: Inicio ────────────────── */
 function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError, isPro, twoCol = false }: {
   profiles: Profile[];
@@ -926,7 +1007,7 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
     <>
       {analyticsError && (
         <div style={{ color: '#6b6b80', fontSize: 13, textAlign: 'center', padding: 16 }}>
-          No se pudo cargar el resumen de reservas.
+          No se pudo cargar Analytics.
         </div>
       )}
       {analytics && (
@@ -938,20 +1019,30 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
           WebkitBackdropFilter: 'blur(20px)',
           boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
         }}>
+          {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={{ color: C.text, fontSize: 16, fontWeight: 600, margin: 0 }}>Resumen de reservas</h3>
-            {!isPro && (
-              <Link to="/pricing" style={{
-                fontSize: 12, color: C.accent, textDecoration: 'none',
-                background: C.accentLight,
-                border: `1px solid ${C.accent}44`,
-                borderRadius: 20, padding: '3px 10px',
-              }}>
-                Ver todo con Pro →
-              </Link>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h3 style={{ color: C.text, fontSize: 18, fontWeight: 700, margin: 0 }}>Analytics</h3>
+              {isPro ? (
+                <span style={{
+                  fontSize: 11, fontWeight: 600, color: '#10b981',
+                  background: 'rgba(16,185,129,0.15)',
+                  border: '1px solid rgba(16,185,129,0.3)',
+                  borderRadius: 20, padding: '2px 8px',
+                }}>Pro</span>
+              ) : (
+                <Link to="/pricing" style={{
+                  fontSize: 11, color: C.accent, textDecoration: 'none',
+                  background: C.accentLight, border: `1px solid ${C.accent}44`,
+                  borderRadius: 20, padding: '2px 8px',
+                }}>Ver todo con Pro →</Link>
+              )}
+            </div>
+            <span style={{ color: C.muted, fontSize: 12 }}>Últimos 30 días</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6, marginBottom: 16 }}>
+
+          {/* Status counters */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6, marginBottom: 20 }}>
             {[
               { label: 'Pendientes', value: analytics.byStatus.PENDING, color: '#f59e0b' },
               { label: 'Confirmadas', value: analytics.byStatus.CONFIRMED, color: '#3b82f6' },
@@ -960,30 +1051,62 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
             ].map(({ label, value, color }) => (
               <div key={label} style={{
                 background: 'rgba(255,255,255,0.05)', borderRadius: 10,
-                padding: '10px 4px', textAlign: 'center', overflow: 'hidden',
+                padding: '10px 4px', textAlign: 'center',
               }}>
                 <div style={{ color, fontSize: 22, fontWeight: 700 }}>{value}</div>
                 <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>{label}</div>
               </div>
             ))}
           </div>
+
+          {/* Bar chart */}
+          <div style={{ marginBottom: analytics.byService.length > 0 ? 20 : 0 }}>
+            <p style={{ color: C.muted, fontSize: 12, margin: '0 0 8px' }}>Reservas por día</p>
+            {isPro && analytics.perDay ? (
+              <BarChartSVG perDay={analytics.perDay} accent={C.accent} muted={C.muted} />
+            ) : (
+              <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden' }}>
+                <div style={{ filter: 'blur(3px)', pointerEvents: 'none', opacity: 0.6 }}>
+                  <BarChartSVG perDay={MOCK_PER_DAY} accent={C.accent} muted={C.muted} />
+                </div>
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(0,0,0,0.5)', borderRadius: 10, gap: 6,
+                }}>
+                  <span style={{ fontSize: 20 }}>🔒</span>
+                  <Link to="/pricing" style={{ color: C.accent, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+                    Activa Pro para ver tendencias
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Services */}
           {analytics.byService.length > 0 && (
             <div>
-              <p style={{ color: C.muted, fontSize: 13, margin: '0 0 8px' }}>Servicios más solicitados:</p>
-              {analytics.byService.slice(0, 3).map((s: any) => (
-                <div key={s.name} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '6px 0', borderBottom: `1px solid ${C.border}`,
-                }}>
-                  <span style={{ color: C.text, fontSize: 13 }}>{s.name}</span>
-                  <span style={{ color: C.muted, fontSize: 12 }}>{s.count} × ${s.revenue.toFixed(0)} {s.currency}</span>
-                </div>
-              ))}
+              <p style={{ color: C.muted, fontSize: 12, margin: '0 0 10px' }}>Servicios más solicitados</p>
+              {analytics.byService.slice(0, 3).map((s: any, i: number, arr: any[]) => {
+                const pct = arr[0].count > 0 ? (s.count / arr[0].count) * 100 : 0;
+                return (
+                  <div key={s.name} style={{ marginBottom: i < 2 ? 12 : 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                      <span style={{ color: C.text, fontSize: 13 }}>{s.name}</span>
+                      <span style={{ color: C.muted, fontSize: 12 }}>{s.count} sesiones · ${s.revenue.toLocaleString()} {s.currency}</span>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 4, height: 4 }}>
+                      <div style={{ height: 4, borderRadius: 4, background: C.accent, width: `${pct}%`, transition: 'width 0.6s ease' }} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
+
           {!isPro && (
-            <p style={{ color: C.muted, fontSize: 12, marginTop: 12, textAlign: 'center' }}>
-              Mostrando últimas 10 reservas. <Link to="/pricing" style={{ color: C.accent }}>Activa Pro</Link> para ver historial completo y tendencias.
+            <p style={{ color: C.muted, fontSize: 12, marginTop: 14, textAlign: 'center' }}>
+              Mostrando últimas 10 reservas. <Link to="/pricing" style={{ color: C.accent }}>Activa Pro</Link> para ver historial completo.
             </p>
           )}
         </div>
