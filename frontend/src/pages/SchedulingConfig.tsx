@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, createContext, useContext, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, X, Plus, Power, Sparkles, GripVertical, Pencil, CalendarDays, Layers, Ban, Settings2, Bell, ChevronRight } from 'lucide-react';
 import DatePickerField from '../components/DatePickerField';
@@ -6,6 +6,7 @@ import CustomSelect from '../components/CustomSelect';
 import api from '../api/client';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../context/AuthContext';
+import { useFeature } from '../hooks/useFeature';
 import ProGate from '../components/ProGate';
 import {
   DAY_NAMES_SHORT, TIMEZONES, LANGUAGES,
@@ -51,6 +52,10 @@ function genTimeOpts() {
 const TIME_OPTS = genTimeOpts();
 const SERVICE_COLORS = ['#2dd4bf', '#ff6584', '#43d9ad', '#f6c90e', '#ff8c42', '#a8ff78', '#ff61d2'];
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+// ── Theme context ─────────────────────────────────────────────────────
+const SCCtx = createContext<{ isDark: boolean; accent: string }>({ isDark: false, accent: 'rgb(45,212,191)' });
+const useSC = () => useContext(SCCtx);
 
 // ── Sub-components ───────────────────────────────────────────────────
 function Dot({ color }: { color: string }) {
@@ -133,6 +138,7 @@ function FormSelect({ label, value, onChange, options }: {
   label: string; value: string | number; onChange: (v: string) => void;
   options: { value: string | number; label: string }[];
 }) {
+  const { isDark, accent } = useSC();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--sc-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{label}</label>
@@ -140,19 +146,19 @@ function FormSelect({ label, value, onChange, options }: {
         value={String(value)}
         onChange={onChange}
         options={options.map(o => ({ value: String(o.value), label: o.label }))}
+        dark={isDark}
+        accent={accent}
       />
     </div>
   );
 }
 
 function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { isDark, accent } = useSC();
   return (
-    <select value={value} onChange={e => onChange(e.target.value)} style={{
-      background: 'var(--sc-inner)', border: '1px solid var(--sc-border)', borderRadius: 8, padding: '8px 12px',
-      color: 'var(--sc-text)', fontFamily: 'DM Sans, sans-serif', fontSize: 13, outline: 'none', width: 130,
-    }}>
-      {TIME_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
+    <div style={{ width: 130 }}>
+      <CustomSelect value={value} onChange={onChange} options={TIME_OPTS} dark={isDark} accent={accent} />
+    </div>
   );
 }
 
@@ -399,6 +405,7 @@ type SvcFilter = 'active' | 'inactive' | 'all';
 
 function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?: boolean }) {
   const { toast } = useToast();
+  const sc = useSC();
   const { services, stats, loading, createService, updateService, toggleService } = useServices();
   const [filter, setFilter] = useState<SvcFilter>('active');
   const [modalOpen, setModalOpen] = useState(false);
@@ -617,6 +624,8 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
                     value={formData.currency}
                     onChange={v => setField('currency', v)}
                     options={SVC_CURRENCY_OPTIONS}
+                    dark={sc.isDark}
+                    accent={sc.accent}
                   />
                 </div>
               </div>
@@ -627,6 +636,8 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
                   value={String(formData.durationMinutes)}
                   onChange={v => setField('durationMinutes', Number(v))}
                   options={SVC_DURATION_OPTIONS}
+                  dark={sc.isDark}
+                  accent={sc.accent}
                 />
               </div>
 
@@ -732,7 +743,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
 
       {/* Editor de horarios del servicio seleccionado */}
       {selectedSvc && (
-        <ProGate isPro={isPro}>
+        <ProGate isPro={effectiveIsPro}>
         <Card>
           <CardHeader dot={colorMap[selectedSvc.id]} title={`Horario: ${selectedSvc.name}`} />
           <p style={{ fontSize: 12, color: 'var(--sc-muted)', marginBottom: 12 }}>Días disponibles para este servicio</p>
@@ -787,6 +798,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
 // ════════════════════════════════════════════════════════════════════
 function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: boolean }) {
   const { toast } = useToast();
+  const sc = useSC();
   const [blocks, setBlocks] = useState<ScheduleBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -865,12 +877,16 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
               value={form.startDate}
               min={new Date().toISOString().split('T')[0]}
               onChange={v => setForm(f => ({ ...f, startDate: v, endDate: v }))}
+              isDark={sc.isDark}
+              accent={sc.accent}
             />
             <DatePickerField
               label="Fecha fin"
               value={form.endDate}
               min={form.startDate}
               onChange={v => setForm(f => ({ ...f, endDate: v }))}
+              isDark={sc.isDark}
+              accent={sc.accent}
             />
             <div style={{ gridColumn: '1/-1', display: 'flex', flexDirection: 'column', gap: 6 }}>
               <label style={{ fontSize: 12, color: 'var(--sc-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 500 }}>Tipo</label>
@@ -883,6 +899,8 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
                   { value: 'personal',   label: '🏠 Personal' },
                   { value: 'otro',       label: '🔧 Otro' },
                 ]}
+                dark={sc.isDark}
+                accent={sc.accent}
               />
             </div>
           </div>
@@ -932,7 +950,7 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
       </div>
 
       <SectionDivider label="Bloqueos recurrentes" />
-      <ProGate isPro={isPro}>
+      <ProGate isPro={effectiveIsPro}>
         <Card>
           <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, marginBottom: 12, color: 'var(--sc-text)' }}>Bloqueos semanales fijos</div>
           <p style={{ color: 'var(--sc-muted)', fontSize: 14, marginBottom: 14 }}>Configura horarios que siempre estarán bloqueados independientemente de tu disponibilidad base.</p>
@@ -1017,25 +1035,25 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
       {/* Comportamiento del sistema */}
       <Card>
         <CardHeader dot="#43d9ad" title="Comportamiento del sistema" />
-        <ProGate isPro={isPro}>
+        <ProGate isPro={effectiveIsPro}>
           <ToggleRow label="Confirmación automática" desc="Las reservas se confirman sin revisión manual" on={settings.autoConfirm} onChange={() => upd('autoConfirm', !settings.autoConfirm)} />
         </ProGate>
-        <ProGate isPro={isPro}>
+        <ProGate isPro={effectiveIsPro}>
           <ToggleRow label="Lista de espera" desc="Los clientes pueden unirse a lista de espera si no hay slots" on={toggles.waitlist} onChange={() => setToggles(t => ({ ...t, waitlist: !t.waitlist }))} />
         </ProGate>
-        <ProGate isPro={isPro}>
+        <ProGate isPro={effectiveIsPro}>
           <ToggleRow label="Múltiples reservas por slot" desc="Permite solapamiento de citas (requiere recursos separados)" on={toggles.multiplePerSlot} onChange={() => setToggles(t => ({ ...t, multiplePerSlot: !t.multiplePerSlot }))} />
         </ProGate>
         <ToggleRow label="Permitir cancelaciones" desc="Los clientes pueden cancelar por sí mismos" on={toggles.allowCancel} onChange={() => setToggles(t => ({ ...t, allowCancel: !t.allowCancel }))} />
         <div style={{ borderBottom: 'none' }}>
-          <ProGate isPro={isPro}>
+          <ProGate isPro={effectiveIsPro}>
             <ToggleRow label="Pago requerido al reservar" desc="El cliente debe pagar antes de confirmar la cita" on={toggles.requirePayment} onChange={() => setToggles(t => ({ ...t, requirePayment: !t.requirePayment }))} />
           </ProGate>
         </div>
       </Card>
 
       {/* Límites por cliente */}
-      <ProGate isPro={isPro}>
+      <ProGate isPro={effectiveIsPro}>
         <Card>
           <CardHeader dot="#ff6584" title="Límites por cliente" />
           <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -1116,11 +1134,11 @@ function TabNotificaciones({ isPro = false }: { isPro?: boolean }) {
         <CardHeader dot="#2dd4bf" title="Recordatorios automáticos al cliente" />
         <ToggleRow label="Confirmación de reserva" desc="Inmediato tras reservar" on={reminders.confirmacion} onChange={() => tog(reminders, setReminders, 'confirmacion')} />
         <ToggleRow label="Recordatorio previo 24h" desc="24 horas antes de la cita" on={reminders.recordatorio24h} onChange={() => tog(reminders, setReminders, 'recordatorio24h')} />
-        <ProGate isPro={isPro}>
+        <ProGate isPro={effectiveIsPro}>
           <ToggleRow label="Recordatorio previo 1h" desc="1 hora antes de la cita" on={reminders.recordatorio1h} onChange={() => tog(reminders, setReminders, 'recordatorio1h')} />
         </ProGate>
         <ToggleRow label="Aviso de cancelación" desc="Al cancelar la cita" on={reminders.cancelacion} onChange={() => tog(reminders, setReminders, 'cancelacion')} />
-        <ProGate isPro={isPro}>
+        <ProGate isPro={effectiveIsPro}>
           <ToggleRow label="Solicitud de feedback" desc="2 horas después de la cita" on={reminders.feedback} onChange={() => tog(reminders, setReminders, 'feedback')} />
         </ProGate>
       </Card>
@@ -1130,10 +1148,10 @@ function TabNotificaciones({ isPro = false }: { isPro?: boolean }) {
         <CardHeader dot="#f6c90e" title="Notificaciones al profesional" />
         <ToggleRow label="Nueva reserva recibida" on={profNotifs.nuevaReserva} onChange={() => tog(profNotifs, setProfNotifs, 'nuevaReserva')} />
         <ToggleRow label="Cancelación de reserva" on={profNotifs.cancelacion} onChange={() => tog(profNotifs, setProfNotifs, 'cancelacion')} />
-        <ProGate isPro={isPro}>
+        <ProGate isPro={effectiveIsPro}>
           <ToggleRow label="Reagendamiento" on={profNotifs.reagendamiento} onChange={() => tog(profNotifs, setProfNotifs, 'reagendamiento')} />
         </ProGate>
-        <ProGate isPro={isPro}>
+        <ProGate isPro={effectiveIsPro}>
           <ToggleRow label="Nuevo cliente en lista de espera" on={profNotifs.listaEspera} onChange={() => tog(profNotifs, setProfNotifs, 'listaEspera')} />
         </ProGate>
       </Card>
@@ -1162,7 +1180,7 @@ const THEME_LIGHT = { main: 'transparent', side: 'rgba(255,255,255,0.72)', inner
 // ════════════════════════════════════════════════════════════════════
 // EMBEDDED PANEL — para incrustar en Dashboard como pestaña
 // ════════════════════════════════════════════════════════════════════
-export function SchedulingPanel({ theme }: { theme: 'dark' | 'light' }) {
+export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; accent?: string }) {
   const { isPro } = useAuth();
   const [tab, setTab]               = useState<Tab>('availability');
   const [profiles, setProfiles]     = useState<Profile[]>([]);
@@ -1195,7 +1213,10 @@ export function SchedulingPanel({ theme }: { theme: 'dark' | 'light' }) {
     </div>
   );
 
+  const ctxAccent = accent ?? 'rgb(45,212,191)';
+
   return (
+    <SCCtx.Provider value={{ isDark: theme === 'dark', accent: ctxAccent }}>
     <div className="sc-panel" style={{
       color: T.text, fontFamily: 'DM Sans, sans-serif',
       '--sc-main': T.main, '--sc-side': T.side, '--sc-inner': T.inner,
@@ -1311,11 +1332,14 @@ export function SchedulingPanel({ theme }: { theme: 'dark' | 'light' }) {
         )}
       </main>
     </div>
+    </SCCtx.Provider>
   );
 }
 
 export default function SchedulingConfig() {
   const { isPro } = useAuth();
+  const canAgenda = useFeature('agenda');
+  const effectiveIsPro = isPro || canAgenda;
   const [tab, setTab]                 = useState<Tab>('availability');
   const [profiles, setProfiles]       = useState<Profile[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState('');

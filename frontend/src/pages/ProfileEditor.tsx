@@ -10,15 +10,19 @@ import PhoneInput from '../components/PhoneInput';
 import { PROFESSION_CATEGORIES } from '../lib/professions';
 import { useAuth } from '../context/AuthContext';
 import ProGate from '../components/ProGate';
+import { useFeature } from '../hooks/useFeature';
 
 const MENTAL_HEALTH_PROFESSIONS = new Set(
   PROFESSION_CATEGORIES.find(c => c.category === 'Salud Mental')?.professions ?? []
 );
 
 const THERAPEUTIC_APPROACHES = [
-  'Cognitivo-conductual (TCC)', 'Psicoanalítico', 'Psicodinámico', 'Sistémico',
-  'Humanista', 'Gestalt', 'EMDR', 'Mindfulness / ACT', 'Narrativo',
-  'Integrativo', 'Breve estratégico', 'Logoterapia', 'Existencial',
+  'Cognitivo-conductual (TCC)', 'TBCS (Breve Centrada en Soluciones)', 'TRE (Racional Emotiva)',
+  'ACT (Aceptación y Compromiso)', 'DBT (Dialéctico-Conductual)', 'EMDR',
+  'Psicoanalítico', 'Psicodinámico', 'Humanista', 'Gestalt',
+  'Sistémico', 'Narrativo', 'Mindfulness / MBCT', 'Terapia de Esquemas',
+  'EFT (Enfocada en las Emociones)', 'Logoterapia', 'Existencial',
+  'Breve estratégico', 'Integrativo',
 ];
 
 const PROBLEMATICS = [
@@ -49,18 +53,29 @@ function ChipSelect({ label, options, value, onChange }: {
     onChange(value.includes(opt) ? value.filter(x => x !== opt) : [...value, opt]);
   return (
     <div>
-      <label className="block text-sm font-medium text-slate-700 mb-2">{label}</label>
+      <label className="block text-sm font-semibold text-slate-700 mb-2">{label}</label>
       <div className="flex flex-wrap gap-2">
-        {options.map(opt => (
-          <button key={opt} type="button" onClick={() => toggle(opt)}
-            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-              value.includes(opt)
-                ? 'bg-indigo-600 border-indigo-600 text-white'
-                : 'bg-white border-slate-300 text-slate-600 hover:border-indigo-300'
-            }`}>
-            {opt}
-          </button>
-        ))}
+        {options.map(opt => {
+          const sel = value.includes(opt);
+          return (
+            <button key={opt} type="button" onClick={() => toggle(opt)}
+              style={{
+                padding: '6px 14px', borderRadius: 20, fontSize: 13,
+                border: `1.5px solid ${sel ? '#0d9488' : '#cbd5e1'}`,
+                background: sel ? 'linear-gradient(135deg, #2dd4bf, #0d9488)' : '#fff',
+                color: sel ? '#fff' : '#475569',
+                fontWeight: sel ? 600 : 400,
+                cursor: 'pointer',
+                transition: 'all .15s',
+                boxShadow: sel ? '0 2px 8px rgba(45,212,191,0.3)' : 'none',
+              }}
+              onMouseEnter={e => { if (!sel) { (e.currentTarget as HTMLElement).style.borderColor = '#2dd4bf'; (e.currentTarget as HTMLElement).style.color = '#0d9488'; } }}
+              onMouseLeave={e => { if (!sel) { (e.currentTarget as HTMLElement).style.borderColor = '#cbd5e1'; (e.currentTarget as HTMLElement).style.color = '#475569'; } }}
+            >
+              {opt}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -73,11 +88,12 @@ const SOCIAL_NETWORKS = [
 ] as const;
 
 const COLOR_OPTIONS: { hex: string; label: string; pro: boolean }[] = [
-  { hex: '#9333ea', label: 'Clásico',   pro: false },
-  { hex: '#1D9E75', label: 'Saludable', pro: false },
-  { hex: '#2563eb', label: 'Confianza', pro: true },
-  { hex: '#e11d48', label: 'Energía',   pro: true },
-  { hex: '#d97706', label: 'Cálido',    pro: true },
+  { hex: '#2dd4bf', label: 'Aguamarina', pro: false },
+  { hex: '#9333ea', label: 'Clásico',    pro: true },
+  { hex: '#1D9E75', label: 'Saludable',  pro: true },
+  { hex: '#2563eb', label: 'Confianza',  pro: true },
+  { hex: '#e11d48', label: 'Energía',    pro: true },
+  { hex: '#d97706', label: 'Cálido',     pro: true },
 ];
 
 
@@ -85,6 +101,7 @@ export default function ProfileEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isPro } = useAuth();
+  const canTemplates = useFeature('templates_premium');
   const isNew = !id;
   const [originalSlug, setOriginalSlug] = useState('');
 
@@ -225,14 +242,14 @@ export default function ProfileEditor() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Nombre / Titulo <span className="text-red-500">*</span></label>
                 <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Profesión <span className="text-red-500">*</span></label>
                 <select
                   value={form.profession}
                   onChange={e => setForm(f => ({ ...f, profession: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
                   required
                 >
                   <option value="">Selecciona una profesión</option>
@@ -251,7 +268,7 @@ export default function ProfileEditor() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Especialidad</label>
                 <input value={form.specialty} onChange={e => setForm(f => ({ ...f, specialty: e.target.value }))}
                   placeholder="Ej: Dermatología clínica"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Años de experiencia</label>
@@ -260,7 +277,7 @@ export default function ProfileEditor() {
                   value={form.yearsExperience}
                   onChange={e => setForm(f => ({ ...f, yearsExperience: e.target.value === '' ? '' : parseInt(e.target.value) }))}
                   placeholder="Ej: 8"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
               </div>
             </div>
             <CountrySelect
@@ -285,7 +302,7 @@ export default function ProfileEditor() {
                 Bio <span className="text-slate-400 font-normal">({form.bio.length}/500)</span>
               </label>
               <textarea value={form.bio} onChange={e => setForm(f => ({ ...f, bio: e.target.value }))} rows={3} maxLength={500}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none" />
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none resize-none" />
             </div>
             <div
               className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
@@ -332,7 +349,7 @@ export default function ProfileEditor() {
                 </button>
               );
               return pro ? (
-                <ProGate key={hex} isPro={isPro ?? false} display="inline-flex" compact>
+                <ProGate key={hex} isPro={(isPro ?? false) || canTemplates} display="inline-flex" compact>
                   {btn}
                 </ProGate>
               ) : (
@@ -344,8 +361,8 @@ export default function ProfileEditor() {
 
         {/* Perfil terapéutico — solo salud mental */}
         {isMentalHealth && (
-          <section className="bg-white rounded-xl border border-indigo-100 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-1">Perfil terapéutico</h3>
+          <section className="bg-white rounded-xl border border-teal-100 p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-1" style={{ color: '#0d9488' }}>Perfil terapéutico</h3>
             <p className="text-sm text-slate-500 mb-6">Esta información ayuda a los pacientes a encontrarte según sus necesidades</p>
             <div className="space-y-6">
 
@@ -372,11 +389,15 @@ export default function ProfileEditor() {
                   ].map(m => (
                     <button key={m.value} type="button"
                       onClick={() => setForm(f => ({ ...f, modality: m.value }))}
-                      className={`px-4 py-2 rounded-lg text-sm border transition-colors ${
-                        form.modality === m.value
-                          ? 'bg-indigo-600 border-indigo-600 text-white'
-                          : 'bg-white border-slate-300 text-slate-600 hover:border-indigo-300'
-                      }`}>
+                      style={{
+                        padding: '8px 20px', borderRadius: 8, fontSize: 14,
+                        border: `1.5px solid ${form.modality === m.value ? '#0d9488' : '#cbd5e1'}`,
+                        background: form.modality === m.value ? 'linear-gradient(135deg, #2dd4bf, #0d9488)' : '#fff',
+                        color: form.modality === m.value ? '#fff' : '#475569',
+                        fontWeight: form.modality === m.value ? 600 : 400,
+                        cursor: 'pointer', transition: 'all .15s',
+                        boxShadow: form.modality === m.value ? '0 2px 8px rgba(45,212,191,0.3)' : 'none',
+                      }}>
                       {m.label}
                     </button>
                   ))}
@@ -390,13 +411,13 @@ export default function ProfileEditor() {
                   <input type="number" min={0} value={form.pricePerSession}
                     onChange={e => setForm(f => ({ ...f, pricePerSession: e.target.value === '' ? '' : parseFloat(e.target.value) }))}
                     placeholder="Ej: 800"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Moneda</label>
                   <select value={form.sessionCurrency}
                     onChange={e => setForm(f => ({ ...f, sessionCurrency: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
                     {['MXN', 'USD', 'ARS', 'COP', 'CLP', 'PEN', 'EUR'].map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
@@ -409,7 +430,7 @@ export default function ProfileEditor() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Duración de sesión</label>
                 <select value={form.sessionDurationMinutes}
                   onChange={e => setForm(f => ({ ...f, sessionDurationMinutes: parseInt(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
                   <option value={45}>45 minutos</option>
                   <option value={50}>50 minutos</option>
                   <option value={60}>60 minutos</option>
@@ -424,13 +445,13 @@ export default function ProfileEditor() {
                   <input value={form.cedula}
                     onChange={e => setForm(f => ({ ...f, cedula: e.target.value }))}
                     placeholder="Ej: 12345678"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Grado académico</label>
                   <select value={form.degree}
                     onChange={e => setForm(f => ({ ...f, degree: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
                     <option value="">Selecciona</option>
                     <option value="licenciatura">Licenciatura</option>
                     <option value="especializacion">Especialización</option>
@@ -446,7 +467,7 @@ export default function ProfileEditor() {
                 <input value={form.university}
                   onChange={e => setForm(f => ({ ...f, university: e.target.value }))}
                   placeholder="Ej: UNAM, UAG, UdeG..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none" />
               </div>
 
               <ChipSelect label="Idiomas en que atiende" options={LANGUAGES}
@@ -462,7 +483,7 @@ export default function ProfileEditor() {
                   onChange={e => setForm(f => ({ ...f, workingStyle: e.target.value }))}
                   rows={4} maxLength={1000}
                   placeholder="Describe tu estilo terapéutico, cómo es una primera sesión, qué pueden esperar tus pacientes..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none" />
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none resize-none" />
               </div>
 
               {/* Acepta factura */}
@@ -492,7 +513,7 @@ export default function ProfileEditor() {
                 <input
                   value={(form.socialLinks as Record<string, string>)[key] || ''}
                   onChange={e => setForm(f => ({ ...f, socialLinks: { ...f.socialLinks, [key]: e.target.value } }))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none text-sm"
                   placeholder={placeholder}
                   type="url"
                 />

@@ -1,19 +1,22 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useFeature } from '../hooks/useFeature';
 import api from '../api/client';
 import {
   Plus, LogOut, Calendar, Clock,
   CalendarDays, Facebook, Instagram, Linkedin, MessageCircle,
   Home, Star, Briefcase, Pencil, Camera,
-  Sun, Moon, Copy, ExternalLink,
+  Sun, Moon, Copy, ExternalLink, Users,
 } from 'lucide-react';
 import { SchedulingPanel } from './SchedulingConfig';
 import AccountSettings from './AccountSettings';
 import ProGate from '../components/ProGate';
+import Pacientes from './Pacientes';
 import { useUpload } from '../hooks/useUpload';
 import { formatCurrency } from '../lib/utils';
 import ProfessionalCalendar from '../components/dashboard/ProfessionalCalendar';
+import NewBookingModal from '../components/dashboard/NewBookingModal';
 
 const SOCIAL_ICONS = [
   { key: 'facebook',  Icon: Facebook,      color: '#1877F2' },
@@ -67,7 +70,7 @@ interface ClientBooking {
   profile: { title: string; slug: string };
 }
 
-type Tab = 'inicio' | 'citas' | 'resenas' | 'agenda' | 'cuenta';
+type Tab = 'inicio' | 'citas' | 'resenas' | 'agenda' | 'cuenta' | 'pacientes';
 type MobileSection = 'perfil' | Tab;
 
 interface Colors {
@@ -87,6 +90,14 @@ interface Colors {
 
 const ACCENT_THEMES = [
   {
+    id: 'aguamarina', label: 'Aguamarina', pro: false,
+    accent: 'rgb(45,212,191)',
+    accentDark:  'rgba(45,212,191,0.15)',
+    accentLight: 'rgba(45,212,191,0.08)',
+    darkGradient:  'linear-gradient(160deg, #052e2a 0%, #0d9488 100%)',
+    lightGradient: 'linear-gradient(160deg, #2dd4bf 0%, #5eead4 100%)',
+  },
+  {
     id: 'profesional', label: 'Profesional', pro: false,
     accent: 'rgb(147,51,234)',
     accentDark:  'rgba(147,51,234,0.15)',
@@ -95,7 +106,7 @@ const ACCENT_THEMES = [
     lightGradient: 'linear-gradient(160deg, #9333ea 0%, #c084fc 100%)',
   },
   {
-    id: 'bold', label: 'Bold', pro: false,
+    id: 'bold', label: 'Bold', pro: true,
     accent: 'rgb(253,224,71)',
     accentDark:  'rgba(253,224,71,0.15)',
     accentLight: 'rgba(253,224,71,0.08)',
@@ -111,7 +122,7 @@ const ACCENT_THEMES = [
     lightGradient: 'linear-gradient(160deg, #3e99c9 0%, #60c4f0 100%)',
   },
   {
-    id: 'creative', label: 'Creative', pro: true,
+    id: 'creative', label: 'Creative', pro: false,
     accent: 'rgb(217,72,240)',
     accentDark:  'rgba(217,72,240,0.15)',
     accentLight: 'rgba(217,72,240,0.08)',
@@ -127,15 +138,7 @@ const ACCENT_THEMES = [
     lightGradient: 'linear-gradient(160deg, #0a2420 0%, #0f3530 100%)',
   },
   {
-    id: 'aguamarina', label: 'Aguamarina', pro: false,
-    accent: 'rgb(45,212,191)',
-    accentDark:  'rgba(45,212,191,0.15)',
-    accentLight: 'rgba(45,212,191,0.08)',
-    darkGradient:  'linear-gradient(160deg, #052e2a 0%, #0d9488 100%)',
-    lightGradient: 'linear-gradient(160deg, #2dd4bf 0%, #5eead4 100%)',
-  },
-  {
-    id: 'nocturno', label: 'Nocturno', pro: false,
+    id: 'nocturno', label: 'Nocturno', pro: true,
     accent: 'rgb(88,28,155)',
     accentDark:  'rgba(88,28,155,0.18)',
     accentLight: 'rgba(88,28,155,0.10)',
@@ -176,6 +179,8 @@ const LIGHT: Colors = {
 
 export default function Dashboard() {
   const { user, logout, isPro } = useAuth();
+  const canColoresPremium = useFeature('colores_premium');
+  const canPacientes = useFeature('pacientes');
   const navigate = useNavigate();
   const { uploadImage, uploading: uploadingAvatar } = useUpload();
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -195,7 +200,7 @@ export default function Dashboard() {
     () => (localStorage.getItem('aliax_theme') as 'dark' | 'light') || 'dark'
   );
   const [accentId, setAccentId] = useState<string>(
-    () => localStorage.getItem('aliax_accent') || 'profesional'
+    () => localStorage.getItem('aliax_accent') || 'aguamarina'
   );
 
   const [analytics, setAnalytics] = useState<any>(null);
@@ -207,7 +212,7 @@ export default function Dashboard() {
   // Si no es Pro y tiene un color Pro seleccionado, resetear al primero gratis
   useEffect(() => {
     const current = ACCENT_THEMES.find(t => t.id === accentId);
-    if (current?.pro && !isPro) setAccentId('profesional');
+    if (current?.pro && !isPro && !canColoresPremium) setAccentId('aguamarina');
   }, [isPro, accentId]);
 
   const accentTheme = ACCENT_THEMES.find(t => t.id === accentId) ?? ACCENT_THEMES[0];
@@ -272,12 +277,14 @@ export default function Dashboard() {
   const socialLinks   = (user?.socialLinks || {}) as Record<string, string>;
   const hasSocial     = SOCIAL_ICONS.some(({ key }) => !!socialLinks[key]);
   const isProfessional = profiles.length > 0;
+  const isPairTherapist = profiles.some(p => p.profession === 'Terapeuta de Parejas');
 
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: 'inicio',   label: 'Inicio',           icon: <Home className="h-4 w-4" /> },
-    { id: 'citas',    label: 'Mis Citas',         icon: <Calendar className="h-4 w-4" /> },
-    { id: 'resenas',  label: 'Reseñas',            icon: <Star className="h-4 w-4" /> },
-    { id: 'agenda',   label: 'Configurar Agenda', icon: <CalendarDays className="h-4 w-4" /> },
+    { id: 'inicio',     label: 'Inicio',           icon: <Home className="h-4 w-4" /> },
+    { id: 'citas',      label: 'Mis Citas',         icon: <Calendar className="h-4 w-4" /> },
+    { id: 'resenas',    label: 'Reseñas',            icon: <Star className="h-4 w-4" /> },
+    { id: 'agenda',     label: 'Configurar Agenda', icon: <CalendarDays className="h-4 w-4" /> },
+    { id: 'pacientes',  label: 'Pacientes',          icon: <Users className="h-4 w-4" /> },
   ];
 
   /* gradient for mobile profile card and dark shell */
@@ -291,7 +298,7 @@ export default function Dashboard() {
   const _am = accentTheme.accent.match(/rgb\((\d+),(\d+),(\d+)\)/);
   const [_r, _g, _b] = _am ? [_am[1], _am[2], _am[3]] : ['147', '51', '234'];
   const boardBg = theme === 'dark'
-    ? `linear-gradient(160deg, rgba(${_r},${_g},${_b},0.30) 0%, rgba(${Math.round(Number(_r)*0.25)},${Math.round(Number(_g)*0.25)},${Math.round(Number(_b)*0.25)},0.98) 100%)`
+    ? `linear-gradient(160deg, rgba(${_r},${_g},${_b},0.10) 0%, rgba(6,4,14,0.97) 100%)`
     : C.tabsBg;
 
   return (
@@ -513,20 +520,17 @@ export default function Dashboard() {
               </span>
               <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 6, alignItems: 'center', justifyContent: 'center' }}>
                 {ACCENT_THEMES.map(t => t.pro ? (
-                  <ProGate key={t.id} isPro={isPro} display="inline-block" compact>
-                    <button
-                      title={t.label}
-                      onClick={() => setAccentId(t.id)}
-                      style={{
-                        width: 22, height: 22, borderRadius: '50%',
-                        background: t.accent,
-                        border: `3px solid ${accentId === t.id ? 'white' : 'rgba(255,255,255,0.35)'}`,
-                        outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
-                        outlineOffset: '2px', cursor: 'pointer',
-                        display: 'block',
-                      }}
-                    />
-                  </ProGate>
+                  <div key={t.id} title={`${t.label} (Pro)`} style={{ position: 'relative', width: 22, height: 22, flexShrink: 0 }}>
+                    <div style={{
+                      width: 22, height: 22, borderRadius: '50%',
+                      background: t.accent, opacity: 0.38,
+                      border: '3px solid rgba(255,255,255,0.2)',
+                    }} />
+                    <div style={{
+                      position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 9, color: 'white',
+                    }}>🔒</div>
+                  </div>
                 ) : (
                   <button
                     key={t.id}
@@ -586,7 +590,10 @@ export default function Dashboard() {
             )}
             {mobileSection === 'resenas' && <TabResenas C={C} />}
             {mobileSection === 'agenda' && <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />}
-            {mobileSection === 'cuenta' && <AccountSettings asTab tabIsDark={C.isDark} />}
+            {mobileSection === 'cuenta' && <AccountSettings asTab tabIsDark={C.isDark} onProfileSaved={() => api.get('/profiles').then(r => setProfiles(r.data))} />}
+            {mobileSection === 'pacientes' && (
+              <Pacientes C={C} isPairTherapist={isPairTherapist} isPro={(isPro ?? false) || canPacientes} />
+            )}
             <div className="mt-10 text-center">
               <Link to="/pricing" className="text-xs" style={{ color: C.muted }}>Ver planes</Link>
             </div>
@@ -640,10 +647,10 @@ export default function Dashboard() {
 
           {/* Other tabs */}
           {([
-            { section: 'inicio'   as const, label: 'Inicio',   icon: <Home className="h-6 w-6" /> },
-            { section: 'citas'    as const, label: 'Citas',    icon: <Calendar className="h-6 w-6" /> },
-            { section: 'resenas' as const, label: 'Reseñas', icon: <Star className="h-6 w-6" /> },
-            { section: 'agenda'   as const, label: 'Agenda',   icon: <CalendarDays className="h-6 w-6" /> },
+            { section: 'inicio'    as const, label: 'Inicio',    icon: <Home className="h-6 w-6" /> },
+            { section: 'citas'     as const, label: 'Citas',     icon: <Calendar className="h-6 w-6" /> },
+            { section: 'agenda'    as const, label: 'Agenda',    icon: <CalendarDays className="h-6 w-6" /> },
+            { section: 'pacientes' as const, label: 'Pacientes', icon: <Users className="h-6 w-6" /> },
           ]).map(({ section, label, icon }) => {
             const isActive = mobileSection === section;
             return (
@@ -665,8 +672,8 @@ export default function Dashboard() {
             );
           })}
 
-          {/* +Añadir Perfil */}
-          {profiles.length === 0 ? (
+          {/* +Crear Perfil — solo si no tiene ninguno */}
+          {profiles.length === 0 && (
             <Link
               to="/profile/new"
               className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors"
@@ -675,16 +682,6 @@ export default function Dashboard() {
               <Plus className="h-6 w-6" />
               <span style={{ fontSize: 10, fontWeight: 500, lineHeight: 1 }}>+Perfil</span>
             </Link>
-          ) : (
-            <ProGate isPro={isPro ?? false} display="flex">
-              <div
-                className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors"
-                style={{ color: C.muted }}
-              >
-                <Plus className="h-6 w-6" />
-                <span style={{ fontSize: 10, fontWeight: 500, lineHeight: 1 }}>+Perfil</span>
-              </div>
-            </ProGate>
           )}
         </div>
       </div>
@@ -758,7 +755,7 @@ export default function Dashboard() {
           {/* "Mi perfil" */}
           <DashSection label="Mi perfil">
             <DashNavRow icon={<Pencil className="h-4 w-4" />} isActive={activeTab === 'cuenta'} C={C} onClick={() => setActiveTab('cuenta')}>
-              Editar perfil
+              Mi cuenta
             </DashNavRow>
             {profiles.length > 0 && (
               <a href={`/${profiles[0].slug}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
@@ -767,43 +764,38 @@ export default function Dashboard() {
                 </DashNavRow>
               </a>
             )}
-            {profiles.length === 0 ? (
-              <Link to="/profile/new" style={{ textDecoration: 'none' }}>
-                <DashNavRow icon={<Plus className="h-4 w-4" />} isActive={false} C={C} onClick={() => {}}>
-                  Crear perfil
-                </DashNavRow>
-              </Link>
-            ) : (
-              <ProGate isPro={isPro ?? false}>
-                <DashNavRow icon={<Plus className="h-4 w-4" />} isActive={false} C={C} onClick={() => {}}>
-                  Añadir perfil
-                </DashNavRow>
-              </ProGate>
-            )}
           </DashSection>
 
           {/* "Preferencias" */}
           <DashSection label="Preferencias">
             <div style={{ padding: '4px 12px 8px' }}>
               <span style={{ fontSize: 12, color: C.muted, display: 'block', marginBottom: 8 }}>Color</span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-                {ACCENT_THEMES.map(t => t.pro ? (
-                  <ProGate key={t.id} isPro={isPro ?? false} display="inline-block" compact>
-                    <button title={t.label} onClick={() => setAccentId(t.id)} style={{
-                      width: 20, height: 20, borderRadius: '50%', background: t.accent,
-                      border: `3px solid ${accentId === t.id ? (C.isDark ? 'white' : '#333') : 'rgba(0,0,0,0.25)'}`,
+              <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 6 }}>
+                {ACCENT_THEMES.map(t => {
+                  const isLocked = t.pro && !canColoresPremium;
+                  return isLocked ? (
+                    <div key={t.id} title={`${t.label} — Pro`} style={{ position: 'relative', width: 20, height: 20, flexShrink: 0 }}>
+                      <div style={{
+                        width: 20, height: 20, borderRadius: '50%',
+                        background: t.accent,
+                        border: `2px solid ${C.isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.18)'}`,
+                      }} />
+                      <span style={{
+                        position: 'absolute', bottom: -3, right: -3,
+                        fontSize: 8, lineHeight: 1,
+                        background: C.isDark ? '#1a1a2e' : '#fff',
+                        borderRadius: '50%', padding: '1px',
+                      }}>🔒</span>
+                    </div>
+                  ) : (
+                    <button key={t.id} title={t.label} onClick={() => setAccentId(t.id)} style={{
+                      width: 20, height: 20, flexShrink: 0, borderRadius: '50%', background: t.accent,
+                      border: `2px solid ${accentId === t.id ? (C.isDark ? 'white' : '#333') : 'rgba(0,0,0,0.25)'}`,
                       outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
-                      outlineOffset: '2px', cursor: 'pointer', display: 'block',
+                      outlineOffset: '2px', cursor: 'pointer',
                     }} />
-                  </ProGate>
-                ) : (
-                  <button key={t.id} title={t.label} onClick={() => setAccentId(t.id)} style={{
-                    width: 20, height: 20, borderRadius: '50%', background: t.accent,
-                    border: `3px solid ${accentId === t.id ? (C.isDark ? 'white' : '#333') : 'rgba(0,0,0,0.25)'}`,
-                    outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
-                    outlineOffset: '2px', cursor: 'pointer',
-                  }} />
-                ))}
+                  );
+                })}
               </div>
             </div>
           </DashSection>
@@ -852,7 +844,10 @@ export default function Dashboard() {
             )}
             {activeTab === 'resenas' && <TabResenas C={C} />}
             {activeTab === 'agenda'   && <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />}
-            {activeTab === 'cuenta'   && <AccountSettings asTab tabIsDark={C.isDark} />}
+            {activeTab === 'cuenta'   && <AccountSettings asTab tabIsDark={C.isDark} onProfileSaved={() => api.get('/profiles').then(r => setProfiles(r.data))} />}
+            {activeTab === 'pacientes' && (
+              <Pacientes C={C} isPairTherapist={isPairTherapist} isPro={(isPro ?? false) || canPacientes} />
+            )}
           </div>
         </main>
       </div>
@@ -1004,6 +999,35 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
           Hola, {userName?.split(' ')[0] ?? 'bienvenido'} 👋
         </h2>
         <p style={{ color: C.muted, marginBottom: 24 }}>Aquí tienes un resumen de tu actividad.</p>
+
+        {/* CTA para usuarios sin perfil */}
+        {profiles.length === 0 && (
+          <div style={{
+            background: C.isDark ? `rgba(${_r},${_g},${_b},0.10)` : C.accentLight,
+            border: `1.5px dashed ${C.accent}66`,
+            borderRadius: 16, padding: '28px 24px', marginBottom: 28, textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 36, marginBottom: 10 }}>🏥</div>
+            <h3 style={{ color: C.text, fontWeight: 700, fontSize: 18, margin: '0 0 8px' }}>
+              Crea tu perfil profesional
+            </h3>
+            <p style={{ color: C.muted, fontSize: 13, margin: '0 0 20px' }}>
+              Tu página pública donde los pacientes pueden encontrarte y agendar contigo.
+            </p>
+            <Link
+              to="/profile/new"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '11px 24px', borderRadius: 10, textDecoration: 'none',
+                background: `linear-gradient(135deg, rgb(${_r},${_g},${_b}), rgba(${_r},${_g},${_b},0.75))`,
+                color: '#fff', fontWeight: 600, fontSize: 14,
+              }}
+            >
+              <Plus className="h-4 w-4" /> Crear mi perfil
+            </Link>
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: 40, alignItems: 'flex-start' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           {statsGrid}
@@ -1143,16 +1167,20 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
   C: Colors;
 }) {
   const [view, setView] = useState<'pro' | 'client'>('pro');
-  const [citasView, setCitasView] = useState<'lista' | 'calendario'>(() =>
-    (localStorage.getItem('aliax_citas_view') as 'lista' | 'calendario') || 'lista'
-  );
+  const [citasView, setCitasView] = useState<'lista' | 'calendario'>('calendario');
+  const [services, setServices] = useState<any[]>([]);
+  const [modalSlot, setModalSlot] = useState<{ date: string; time: string } | null>(null);
+
+  useEffect(() => {
+    api.get('/services/me').then(r => setServices(r.data.services ?? r.data)).catch(() => {});
+  }, []);
 
   function handleCitasViewChange(v: 'lista' | 'calendario') {
     setCitasView(v);
-    localStorage.setItem('aliax_citas_view', v);
   }
 
   const hasActiveProfile = profiles.length > 0;
+  const today = new Date().toISOString().split('T')[0];
 
   const cancelClientBooking = async (id: string) => {
     const ok = window.confirm('¿Cancelar esta reserva?');
@@ -1213,31 +1241,42 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
 
   return (
     <div className={citasView === 'calendario' ? 'w-full' : 'max-w-2xl'}>
-      {/* Row: pro/client switcher + lista/calendario toggle */}
+      {/* Row: pro/client switcher + lista/calendario toggle + +Crear Cita */}
       <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
         <ViewSwitcher view={view} onChange={setView} clientCount={clientBookings.length} proCount={totalBookings} C={C} />
-        {hasActiveProfile && (
-          <div
-            className="flex rounded-lg p-0.5"
-            style={{ background: C.isDark ? 'rgba(255,255,255,0.08)' : 'rgb(240,237,250)' }}
-          >
-            {([
-              { id: 'lista' as const, label: 'Lista', icon: <CalendarDays className="h-3.5 w-3.5" /> },
-              { id: 'calendario' as const, label: 'Calendario', icon: <Calendar className="h-3.5 w-3.5" /> },
-            ]).map(({ id, label, icon }) => (
-              <button
-                key={id}
-                onClick={() => handleCitasViewChange(id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
-                style={citasView === id
-                  ? { background: C.isDark ? 'rgba(255,255,255,0.12)' : 'white', color: C.text }
-                  : { background: 'transparent', color: C.muted }}
-              >
-                {icon}{label}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {hasActiveProfile && (
+            <div
+              className="flex rounded-lg p-0.5"
+              style={{ background: C.isDark ? 'rgba(255,255,255,0.08)' : 'rgb(240,237,250)' }}
+            >
+              {([
+                { id: 'lista' as const, label: 'Lista', icon: <CalendarDays className="h-3.5 w-3.5" /> },
+                { id: 'calendario' as const, label: 'Calendario', icon: <Calendar className="h-3.5 w-3.5" /> },
+              ]).map(({ id, label, icon }) => (
+                <button
+                  key={id}
+                  onClick={() => handleCitasViewChange(id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                  style={citasView === id
+                    ? { background: C.isDark ? 'rgba(255,255,255,0.12)' : 'white', color: C.text }
+                    : { background: 'transparent', color: C.muted }}
+                >
+                  {icon}{label}
+                </button>
+              ))}
+            </div>
+          )}
+          {hasActiveProfile && citasView === 'lista' && (
+            <button
+              onClick={() => setModalSlot({ date: today, time: '09:00' })}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
+              style={{ background: C.accent, color: '#fff' }}
+            >
+              <Plus className="h-3.5 w-3.5" /> Crear cita
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Calendario view */}
@@ -1280,6 +1319,17 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
             )}
           </div>
         )
+      )}
+
+      {modalSlot && (
+        <NewBookingModal
+          slot={modalSlot}
+          services={services.filter((s: any) => s.isActive)}
+          profiles={profiles}
+          C={C}
+          onClose={() => setModalSlot(null)}
+          onCreated={() => { setModalSlot(null); window.location.reload(); }}
+        />
       )}
     </div>
   );
@@ -1432,5 +1482,5 @@ function TabAgenda({ theme, profiles, C, isPro }: { theme: 'dark' | 'light'; pro
       </div>
     );
   }
-  return <SchedulingPanel theme={theme} />;
+  return <SchedulingPanel theme={theme} accent={C.accent} />;
 }
