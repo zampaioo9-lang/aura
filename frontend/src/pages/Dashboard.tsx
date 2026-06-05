@@ -1612,7 +1612,7 @@ function TabResenas({ C, isPro }: { C: Colors; isPro: boolean }) {
           <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(45,212,191,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
             <Star style={{ width: 24, height: 24, color: '#2dd4bf' }} />
           </div>
-          <p style={{ fontSize: 16, fontWeight: 600, color: C.text, margin: '0 0 8px' }}>Aún no tienes reseñas</p>
+          <p style={{ fontSize: 16, fontWeight: 600, color: C.text, margin: '0 0 8px' }}>Aún no hay reseñas registradas</p>
           <p style={{ fontSize: 13, color: C.muted, maxWidth: 320, lineHeight: 1.6 }}>
             Cuando marques una cita como completada, tu paciente recibirá un email para dejar su reseña.
           </p>
