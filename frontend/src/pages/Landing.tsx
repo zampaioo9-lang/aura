@@ -9,7 +9,7 @@ import SecondScreen from '../components/landing/SecondScreen';
 const c01 = (v: number) => Math.max(0, Math.min(1, v));
 
 export default function Landing() {
-  const { scrollProgress, lerpedProgress, activeSection, navigateTo } = useLandingScroll();
+  const { scrollProgress, lerpedProgress, navigateTo } = useLandingScroll();
 
   // First screen blur as second screen rises
   const sp = c01((lerpedProgress - 1.15) / 0.50);
