@@ -109,6 +109,63 @@ const DEGREE_LABEL: Record<string, string> = {
   doctorado: 'Doctorado',
 };
 
+function ReviewsSection({
+  reviews,
+  averageRating,
+  reviewCount,
+  C,
+}: {
+  reviews: { id: string; rating: number; comment: string | null; clientName: string; createdAt: string }[];
+  averageRating: number;
+  reviewCount: number;
+  C: ReturnType<typeof buildTheme>['dark'];
+}) {
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? reviews : reviews.slice(0, 5);
+
+  return (
+    <div style={{ padding: '40px 0 8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+        <Star fill={C.accent} color={C.accent} size={18} />
+        <span style={{ fontSize: 18, fontWeight: 700, color: C.text }}>{averageRating}</span>
+        <span style={{ fontSize: 13, color: C.muted }}>({reviewCount} reseña{reviewCount !== 1 ? 's' : ''})</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {visible.map(r => (
+          <div key={r.id} style={{
+            padding: '14px 18px',
+            background: C.card,
+            border: `1px solid ${C.border}`,
+            borderRadius: 12,
+          }}>
+            <div style={{ display: 'flex', gap: 2, marginBottom: 6 }}>
+              {[1,2,3,4,5].map(n => (
+                <Star key={n} size={13} fill={n <= r.rating ? C.accent : 'none'} color={n <= r.rating ? C.accent : C.muted} strokeWidth={1.5} />
+              ))}
+            </div>
+            {r.comment && (
+              <p style={{ fontSize: 13, color: C.text, margin: '0 0 6px', lineHeight: 1.6 }}>{r.comment}</p>
+            )}
+            <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>{r.clientName}</p>
+          </div>
+        ))}
+      </div>
+      {reviews.length > 5 && (
+        <button
+          onClick={() => setShowAll(v => !v)}
+          style={{
+            marginTop: 12, background: 'none', border: `1px solid ${C.border}`,
+            color: C.muted, borderRadius: 8, padding: '8px 16px',
+            fontSize: 13, cursor: 'pointer', width: '100%',
+          }}
+        >
+          {showAll ? 'Ver menos' : `Ver ${reviews.length - 5} más`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
   const [darkMode, setDarkMode] = useState(true);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -122,6 +179,22 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
   }, []);
+
+  const [reviewData, setReviewData] = useState<{
+    reviews: { id: string; rating: number; comment: string | null; clientName: string; createdAt: string }[];
+    averageRating: number | null;
+    reviewCount: number;
+  }>({ reviews: [], averageRating: null, reviewCount: 0 });
+
+  useEffect(() => {
+    if (!profile.id) return;
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/reviews/profile/${profile.id}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.isPro && data.reviewCount > 0) setReviewData(data);
+      })
+      .catch(() => {});
+  }, [profile.id]);
 
   const activeServices = (profile.services || []).filter((s: any) => s.isActive !== false);
   const socialLinks = (profile.user?.socialLinks || profile.socialLinks || {}) as Record<string, string>;
@@ -286,6 +359,18 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
               <div style={{ marginTop: 14 }}>
                 <AvailabilityWidget activeDays={activeDays} byDay={byDay} C={C} />
               </div>
+            </section>
+          )}
+
+          {reviewData.reviewCount > 0 && reviewData.averageRating !== null && (
+            <section>
+              <SectionLabel>Reseñas</SectionLabel>
+              <ReviewsSection
+                reviews={reviewData.reviews}
+                averageRating={reviewData.averageRating}
+                reviewCount={reviewData.reviewCount}
+                C={C}
+              />
             </section>
           )}
 
@@ -584,6 +669,18 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
           {activeServices.length === 0 && activeDays.length === 0 && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.muted, fontSize: 15, minHeight: 200 }}>
               No hay servicios disponibles aún.
+            </div>
+          )}
+
+          {reviewData.reviewCount > 0 && reviewData.averageRating !== null && (
+            <div>
+              <SectionLabel>Reseñas</SectionLabel>
+              <ReviewsSection
+                reviews={reviewData.reviews}
+                averageRating={reviewData.averageRating}
+                reviewCount={reviewData.reviewCount}
+                C={C}
+              />
             </div>
           )}
         </div>

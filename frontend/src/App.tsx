@@ -21,6 +21,7 @@ import PaymentSuccess from './pages/PaymentSuccess';
 import PayPalReturn from './pages/PayPalReturn';
 import Explorar from './pages/Explorar';
 import PsicologosDirectory from './pages/PsicologosDirectory';
+import ReviewPage from './pages/ReviewPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -44,7 +45,7 @@ function App() {
             <Route path="/dashboard/availability" element={<ProtectedRoute><AvailabilityDashboard /></ProtectedRoute>} />
             <Route path="/dashboard/scheduling" element={<ProtectedRoute><SchedulingConfig /></ProtectedRoute>} />
             <Route path="/profile/edit/:id" element={<ProtectedRoute><ProfileEditor /></ProtectedRoute>} />
-            <Route path="/profile/new" element={<ProtectedRoute><ProfileEditor /></ProtectedRoute>} />
+            <Route path="/profile/new" element={<ProtectedRoute><ProfileCreate /></ProtectedRoute>} />
             <Route path="/profile/create" element={<ProtectedRoute><ProfileCreate /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
             <Route path="/account" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
@@ -60,6 +61,7 @@ function App() {
             <Route path="/psicologos/:countryCode/:citySlug" element={<PsicologosDirectory />} />
             <Route path="/psicologos/:countryCode/:citySlug/:approach" element={<PsicologosDirectory />} />
             <Route path="/book/:slug" element={<BookingPage />} />
+            <Route path="/review/:token" element={<ReviewPage />} />
             <Route path="/:slug" element={<PublicProfile />} />
           </Routes>
         </ToastProvider>

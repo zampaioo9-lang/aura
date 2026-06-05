@@ -588,7 +588,7 @@ export default function Dashboard() {
                 C={C}
               />
             )}
-            {mobileSection === 'resenas' && <TabResenas C={C} />}
+            {mobileSection === 'resenas' && <TabResenas C={C} isPro={isPro ?? false} />}
             {mobileSection === 'agenda' && <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />}
             {mobileSection === 'cuenta' && <AccountSettings asTab tabIsDark={C.isDark} onProfileSaved={() => api.get('/profiles').then(r => setProfiles(r.data))} />}
             {mobileSection === 'pacientes' && (
@@ -854,7 +854,7 @@ export default function Dashboard() {
                 C={C}
               />
             )}
-            {activeTab === 'resenas' && <TabResenas C={C} />}
+            {activeTab === 'resenas' && <TabResenas C={C} isPro={isPro ?? false} />}
             {activeTab === 'agenda'   && <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />}
             {activeTab === 'cuenta'   && <AccountSettings asTab tabIsDark={C.isDark} onProfileSaved={() => api.get('/profiles').then(r => setProfiles(r.data))} />}
             {activeTab === 'pacientes' && (
@@ -1524,34 +1524,143 @@ function ProBookingCard({ booking: b, children, C }: { booking: Booking; childre
 
 /* ────────────────── Tab: Reseñas ────────────────── */
 
-function TabResenas({ C }: { C: Colors }) {
+function TabResenas({ C, isPro }: { C: Colors; isPro: boolean }) {
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [averageRating, setAverageRating] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [toggling, setToggling] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isPro) { setLoading(false); return; }
+    api.get('/reviews/mine')
+      .then(res => {
+        setReviews(res.data.reviews);
+        setAverageRating(res.data.averageRating);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [isPro]);
+
+  const toggleVisibility = async (id: string) => {
+    setToggling(id);
+    try {
+      const res = await api.put(`/reviews/${id}/visibility`);
+      setReviews(prev => prev.map(r => r.id === id ? { ...r, isVisible: res.data.isVisible } : r));
+    } catch {}
+    setToggling(null);
+  };
+
+  if (!isPro) {
+    return (
+      <div style={{ maxWidth: 560 }}>
+        <h2 className="text-xl font-bold mb-1" style={{ color: C.text }}>Reseñas</h2>
+        <p className="text-sm mb-8" style={{ color: C.muted }}>Lo que dicen tus pacientes sobre ti.</p>
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: '56px 32px', textAlign: 'center',
+          background: C.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.7)',
+          backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+          border: `1px solid ${C.isDark ? 'rgba(45,212,191,0.12)' : 'rgba(45,212,191,0.2)'}`,
+          borderRadius: 16,
+        }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(45,212,191,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+            <Star style={{ width: 24, height: 24, color: '#2dd4bf' }} />
+          </div>
+          <p style={{ fontSize: 16, fontWeight: 600, color: C.text, margin: '0 0 8px' }}>Reseñas verificadas — Plan Pro</p>
+          <p style={{ fontSize: 13, color: C.muted, maxWidth: 320, lineHeight: 1.6 }}>
+            Con el plan Pro, tus pacientes reciben un email al completar su cita para dejar una reseña verificada en tu perfil.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: 560 }}>
       <h2 className="text-xl font-bold mb-1" style={{ color: C.text }}>Reseñas</h2>
       <p className="text-sm mb-8" style={{ color: C.muted }}>Lo que dicen tus pacientes sobre ti.</p>
 
-      <div style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '56px 32px', textAlign: 'center',
-        background: C.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.7)',
-        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        border: `1px solid ${C.isDark ? 'rgba(45,212,191,0.12)' : 'rgba(45,212,191,0.2)'}`,
-        borderRadius: 16,
-      }}>
+      {averageRating !== null && (
         <div style={{
-          width: 56, height: 56, borderRadius: '50%',
-          background: 'rgba(45,212,191,0.12)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          marginBottom: 16,
+          display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24,
+          padding: '16px 20px',
+          background: C.isDark ? 'rgba(45,212,191,0.08)' : 'rgba(45,212,191,0.06)',
+          border: `1px solid ${C.isDark ? 'rgba(45,212,191,0.18)' : 'rgba(45,212,191,0.2)'}`,
+          borderRadius: 12,
         }}>
-          <Star style={{ width: 24, height: 24, color: '#2dd4bf' }} />
+          <Star fill="#2dd4bf" color="#2dd4bf" size={24} />
+          <div>
+            <span style={{ fontSize: 22, fontWeight: 700, color: C.text }}>{averageRating}</span>
+            <span style={{ fontSize: 13, color: C.muted, marginLeft: 6 }}>
+              ({reviews.filter(r => r.isVisible).length} reseña{reviews.filter(r => r.isVisible).length !== 1 ? 's' : ''} visible{reviews.filter(r => r.isVisible).length !== 1 ? 's' : ''})
+            </span>
+          </div>
         </div>
-        <p style={{ fontSize: 16, fontWeight: 600, color: C.text, margin: '0 0 8px' }}>
-          Las reseñas llegan pronto
-        </p>
-        <p style={{ fontSize: 13, color: C.muted, maxWidth: 320, lineHeight: 1.6 }}>
-          Tus pacientes podrán dejar reseñas verificadas en tu perfil público. Esta sección estará disponible en la próxima actualización.
-        </p>
+      )}
+
+      {loading && <p style={{ color: C.muted, fontSize: 14 }}>Cargando…</p>}
+
+      {!loading && reviews.length === 0 && (
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: '56px 32px', textAlign: 'center',
+          background: C.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.7)',
+          backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+          border: `1px solid ${C.isDark ? 'rgba(45,212,191,0.12)' : 'rgba(45,212,191,0.2)'}`,
+          borderRadius: 16,
+        }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(45,212,191,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+            <Star style={{ width: 24, height: 24, color: '#2dd4bf' }} />
+          </div>
+          <p style={{ fontSize: 16, fontWeight: 600, color: C.text, margin: '0 0 8px' }}>Aún no tienes reseñas</p>
+          <p style={{ fontSize: 13, color: C.muted, maxWidth: 320, lineHeight: 1.6 }}>
+            Cuando marques una cita como completada, tu paciente recibirá un email para dejar su reseña.
+          </p>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {reviews.map(r => (
+          <div key={r.id} style={{
+            padding: '16px 20px',
+            background: C.isDark ? 'rgba(255,255,255,0.04)' : '#fff',
+            border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.08)' : '#f0f0f0'}`,
+            borderRadius: 12,
+            opacity: r.isVisible ? 1 : 0.5,
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <div>
+                <div style={{ display: 'flex', gap: 2, marginBottom: 4 }}>
+                  {[1,2,3,4,5].map(n => (
+                    <Star key={n} size={14} fill={n <= r.rating ? '#2dd4bf' : 'none'} color={n <= r.rating ? '#2dd4bf' : '#d4d4d8'} strokeWidth={1.5} />
+                  ))}
+                </div>
+                <p style={{ fontSize: 13, fontWeight: 600, color: C.text, margin: 0 }}>{r.clientName}</p>
+                <p style={{ fontSize: 12, color: C.muted, margin: '2px 0 0' }}>
+                  {new Date(r.createdAt).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+              <button
+                onClick={() => toggleVisibility(r.id)}
+                disabled={toggling === r.id}
+                title={r.isVisible ? 'Ocultar reseña' : 'Mostrar reseña'}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: C.muted }}
+              >
+                {r.isVisible ? (
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                ) : (
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                )}
+              </button>
+            </div>
+            {r.comment && (
+              <p style={{ fontSize: 13, color: C.muted, margin: 0, lineHeight: 1.6 }}>{r.comment}</p>
+            )}
+            {!r.isVisible && (
+              <p style={{ fontSize: 11, color: '#f59e0b', margin: '8px 0 0' }}>Oculta — no visible en tu perfil público</p>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
