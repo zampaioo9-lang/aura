@@ -99,15 +99,13 @@ router.get('/profile/:profileId', async (req, res, next) => {
 
     if (!profile) throw new AppError(404, 'Perfil no encontrado');
 
-    if (!isProUser(profile.user)) {
-      return res.json({ reviews: [], averageRating: null, reviewCount: 0, isPro: false });
-    }
+    const isPro = isProUser(profile.user);
 
-    const reviews = await prisma.review.findMany({
+    const reviews = isPro ? await prisma.review.findMany({
       where: { profileId: req.params.profileId, isVisible: true },
       orderBy: { createdAt: 'desc' },
       select: { id: true, rating: true, comment: true, clientName: true, createdAt: true },
-    });
+    }) : [];
 
     const averageRating = reviews.length
       ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10
@@ -118,7 +116,7 @@ router.get('/profile/:profileId', async (req, res, next) => {
       clientName: abbreviateName(r.clientName),
     }));
 
-    res.json({ reviews: publicReviews, averageRating, reviewCount: reviews.length, isPro: true });
+    res.json({ reviews: publicReviews, averageRating, reviewCount: reviews.length, isPro });
   } catch (err) {
     next(err);
   }

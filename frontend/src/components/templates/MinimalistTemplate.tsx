@@ -187,14 +187,14 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
     reviewCount: number;
     isPro: boolean;
   }>({ reviews: [], averageRating: null, reviewCount: 0, isPro: false });
+  const [reviewsLoaded, setReviewsLoaded] = useState(false);
 
   useEffect(() => {
     if (!profile.id) return;
     api.get(`/reviews/profile/${profile.id}`)
-      .then(res => {
-        if (res.data.isPro) setReviewData(res.data);
-      })
-      .catch(() => {});
+      .then(res => { setReviewData(res.data); })
+      .catch(() => {})
+      .finally(() => setReviewsLoaded(true));
   }, [profile.id]);
 
   const activeServices = (profile.services || []).filter((s: any) => s.isActive !== false);
@@ -363,7 +363,7 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
             </section>
           )}
 
-          {reviewData.isPro && (
+          {reviewsLoaded && (
             <section>
               <SectionLabel>Reseñas</SectionLabel>
               {reviewData.reviewCount > 0 && reviewData.averageRating !== null ? (
@@ -374,7 +374,7 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
                   C={C}
                 />
               ) : (
-                <p style={{ fontSize: 13, color: C.muted, marginTop: 12 }}>Aún no hay reseñas registradas.</p>
+                <p style={{ fontSize: 13, color: C.muted, marginTop: 12 }}>Aún no se han registrado reseñas.</p>
               )}
             </section>
           )}
@@ -677,7 +677,7 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
             </div>
           )}
 
-          {reviewData.isPro && (
+          {reviewsLoaded && (
             <div>
               <SectionLabel>Reseñas</SectionLabel>
               {reviewData.reviewCount > 0 && reviewData.averageRating !== null ? (
@@ -688,7 +688,7 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
                   C={C}
                 />
               ) : (
-                <p style={{ fontSize: 13, color: C.muted, marginTop: 12 }}>Aún no hay reseñas registradas.</p>
+                <p style={{ fontSize: 13, color: C.muted, marginTop: 12 }}>Aún no se han registrado reseñas.</p>
               )}
             </div>
           )}
