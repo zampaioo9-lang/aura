@@ -204,40 +204,44 @@ export default function AdminPanel() {
 
   const C = dark
     ? {
-        page: '#0d0d1a',
-        header: '#10101f',
-        headerBorder: '#1e1e3a',
-        card: '#14142a',
-        cardBorder: '#2a2a4a',
-        text: '#e8e8f8',
-        textMuted: '#8888aa',
-        textFaint: '#555577',
-        tableHdr: '#111128',
-        tableRow: '#1c1c35',
-        tableRowAlt: '#191930',
-        tableRowHover: '#22223f',
-        expandedBg: '#181830',
-        inputBg: '#1c1c35',
-        inputBorder: '#2a2a4a',
-        subCard: '#0d0d1a',
+        page: 'linear-gradient(160deg, #052e2a 0%, #071412 100%)',
+        header: 'rgba(5,30,26,0.95)',
+        headerBorder: 'rgba(45,212,191,0.14)',
+        card: 'rgba(45,212,191,0.05)',
+        cardBorder: 'rgba(45,212,191,0.16)',
+        text: '#e8f0f0',
+        textMuted: '#6aada8',
+        textFaint: '#3d6663',
+        tableHdr: 'rgba(45,212,191,0.07)',
+        tableRow: 'rgba(45,212,191,0.025)',
+        tableRowAlt: 'rgba(0,0,0,0.12)',
+        tableRowHover: 'rgba(45,212,191,0.08)',
+        expandedBg: 'rgba(45,212,191,0.04)',
+        inputBg: 'rgba(255,255,255,0.06)',
+        inputBorder: 'rgba(45,212,191,0.2)',
+        subCard: 'rgba(0,0,0,0.18)',
+        accent: '#2dd4bf',
+        accentLight: 'rgba(45,212,191,0.12)',
       }
     : {
-        page: '#f9fafb',
-        header: '#ffffff',
-        headerBorder: '#e5e7eb',
+        page: 'linear-gradient(160deg, #e6faf8 0%, #f0fdfa 100%)',
+        header: 'rgba(255,255,255,0.95)',
+        headerBorder: 'rgba(13,148,136,0.15)',
         card: '#ffffff',
-        cardBorder: '#e5e7eb',
-        text: '#111827',
-        textMuted: '#6b7280',
-        textFaint: '#9ca3af',
-        tableHdr: '#f9fafb',
+        cardBorder: 'rgba(13,148,136,0.18)',
+        text: '#0a1f1e',
+        textMuted: '#3d8a82',
+        textFaint: '#94a3a1',
+        tableHdr: '#f0fdfa',
         tableRow: '#ffffff',
-        tableRowAlt: '#f9fafb',
-        tableRowHover: '#f3f4f6',
-        expandedBg: '#eef2ff40',
-        inputBg: '#ffffff',
-        inputBorder: '#e5e7eb',
-        subCard: '#ffffff',
+        tableRowAlt: '#f7fffe',
+        tableRowHover: 'rgba(45,212,191,0.06)',
+        expandedBg: 'rgba(45,212,191,0.04)',
+        inputBg: '#f7fffe',
+        inputBorder: 'rgba(13,148,136,0.2)',
+        subCard: '#f0fdfa',
+        accent: '#0d9488',
+        accentLight: 'rgba(13,148,136,0.1)',
       };
 
   useEffect(() => {
@@ -350,13 +354,29 @@ export default function AdminPanel() {
   return (
     <div style={{ minHeight: '100vh', background: C.page }}>
       {/* Header */}
-      <div style={{ background: C.header, borderBottom: `1px solid ${C.headerBorder}` }}
-        className="px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold" style={{ color: C.text }}>Panel de Administración</h1>
-          <p className="text-sm" style={{ color: C.textMuted }}>Vista general de Aliax.io</p>
-        </div>
+      <div style={{
+        background: C.header,
+        borderBottom: `1px solid ${C.headerBorder}`,
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        position: 'sticky', top: 0, zIndex: 50,
+      }}
+        className="px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
+          <div style={{
+            width: 34, height: 34, borderRadius: 10,
+            background: `linear-gradient(135deg, ${C.accent}, ${C.accent}99)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: `0 0 12px ${C.accent}55`,
+          }}>
+            <Users className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h1 className="text-base font-bold" style={{ color: C.text, lineHeight: 1.2 }}>Panel de Administración</h1>
+            <p className="text-xs" style={{ color: C.textMuted }}>Aliax.io — Control total</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
           <button
             onClick={toggleDark}
             className="p-2 rounded-lg transition-colors"
@@ -367,9 +387,10 @@ export default function AdminPanel() {
           </button>
           <button
             onClick={() => navigate('/dashboard')}
-            className="text-sm text-indigo-500 hover:text-indigo-400 font-medium"
+            className="text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
+            style={{ background: C.accentLight, color: C.accent, border: `1px solid ${C.accent}44` }}
           >
-            Volver al Dashboard
+            ← Dashboard
           </button>
         </div>
       </div>
@@ -386,51 +407,51 @@ export default function AdminPanel() {
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <StatCard dark={dark} C={C}
-                icon={<Users className="w-5 h-5 text-indigo-500" />}
+                icon={<Users className="w-5 h-5" style={{ color: C.accent }} />}
                 label="Profesionales"
                 sub={`+${stats.users.newThisMonth} este mes`}
                 value={stats.users.total}
-                iconBg={dark ? 'rgba(99,102,241,0.15)' : '#eef2ff'}
+                iconBg={C.accentLight}
               />
               <StatCard dark={dark} C={C}
-                icon={<Clock className="w-5 h-5 text-yellow-500" />}
+                icon={<Clock className="w-5 h-5 text-amber-400" />}
                 label="En periodo de prueba"
                 value={stats.users.inTrial}
-                iconBg={dark ? 'rgba(234,179,8,0.15)' : '#fefce8'}
+                iconBg={dark ? 'rgba(251,191,36,0.12)' : '#fffbeb'}
               />
               <StatCard dark={dark} C={C}
-                icon={<CreditCard className="w-5 h-5 text-green-500" />}
+                icon={<CreditCard className="w-5 h-5 text-emerald-400" />}
                 label="Clientes PRO"
                 value={stats.users.paid}
-                iconBg={dark ? 'rgba(34,197,94,0.15)' : '#f0fdf4'}
+                iconBg={dark ? 'rgba(52,211,153,0.12)' : '#f0fdf4'}
               />
               <StatCard dark={dark} C={C}
-                icon={<Tag className="w-5 h-5 text-amber-500" />}
+                icon={<Tag className="w-5 h-5 text-amber-400" />}
                 label="Con código de descuento"
                 value={stats.users.withDiscount}
-                iconBg={dark ? 'rgba(245,158,11,0.15)' : '#fffbeb'}
+                iconBg={dark ? 'rgba(251,191,36,0.12)' : '#fffbeb'}
               />
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <StatCard dark={dark} C={C}
-                icon={<UserCheck className="w-5 h-5 text-sky-500" />}
+                icon={<UserCheck className="w-5 h-5" style={{ color: C.accent }} />}
                 label="Clientes únicos"
                 value={stats.clients.total}
                 sub="Personas que reservaron"
-                iconBg={dark ? 'rgba(14,165,233,0.15)' : '#f0f9ff'}
+                iconBg={C.accentLight}
               />
               <StatCard dark={dark} C={C}
-                icon={<LayoutGrid className="w-5 h-5 text-purple-500" />}
+                icon={<LayoutGrid className="w-5 h-5" style={{ color: C.accent }} />}
                 label="Perfiles publicados"
                 value={stats.profiles.total}
-                iconBg={dark ? 'rgba(168,85,247,0.15)' : '#faf5ff'}
+                iconBg={C.accentLight}
               />
               <StatCard dark={dark} C={C}
-                icon={<CalendarCheck className="w-5 h-5 text-emerald-500" />}
+                icon={<CalendarCheck className="w-5 h-5 text-emerald-400" />}
                 label="Reservas"
                 value={stats.bookings.total}
                 sub={`${stats.bookings.confirmed} confirmadas`}
-                iconBg={dark ? 'rgba(16,185,129,0.15)' : '#ecfdf5'}
+                iconBg={dark ? 'rgba(52,211,153,0.12)' : '#f0fdf4'}
               />
             </div>
           </>
@@ -461,8 +482,8 @@ export default function AdminPanel() {
         {/* Newsletter — Resend Broadcasts */}
         <div className="rounded-xl p-5" style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}>
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2" style={{ color: C.text }}>
-            <Send className="w-4 h-4 text-purple-500" />
-            Newsletter <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400">Resend Broadcasts</span>
+            <Send className="w-4 h-4 text-teal-400" />
+            Newsletter <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400">Resend Broadcasts</span>
           </h2>
           <p className="text-xs mb-4" style={{ color: C.textFaint }}>
             Envía a toda la audiencia con tracking de aperturas, clics y baja automática. Requiere <code>RESEND_AUDIENCE_ID</code> configurado.
@@ -494,7 +515,7 @@ export default function AdminPanel() {
                   placeholder="Ej: Newsletter Marzo 2026"
                   value={nlName}
                   onChange={e => setNlName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  className="w-full px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
                   style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text }}
                 />
               </div>
@@ -505,7 +526,7 @@ export default function AdminPanel() {
                   placeholder="Ej: Tu competencia ya usa IA. ¿Y tú?"
                   value={nlSubject}
                   onChange={e => { setNlSubject(e.target.value); setNlResult(null); }}
-                  className="w-full px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  className="w-full px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
                   style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text }}
                 />
               </div>
@@ -517,7 +538,7 @@ export default function AdminPanel() {
                 placeholder={'<h1>Título</h1>\n<p>Contenido...</p>\n\nResend añade el enlace de baja automáticamente.'}
                 value={nlHtml}
                 onChange={e => { setNlHtml(e.target.value); setNlResult(null); }}
-                className="w-full px-3 py-2 text-sm rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-purple-400 font-mono"
+                className="w-full px-3 py-2 text-sm rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-teal-400 font-mono"
                 style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text }}
               />
             </div>
@@ -532,7 +553,7 @@ export default function AdminPanel() {
               <button
                 onClick={handleSendNewsletter}
                 disabled={sendingNl || !nlSubject.trim() || !nlHtml.trim()}
-                className="ml-auto flex items-center gap-2 px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="ml-auto flex items-center gap-2 px-4 py-2 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-3.5 h-3.5" />
                 {sendingNl ? 'Enviando...' : 'Enviar Newsletter'}
@@ -544,7 +565,7 @@ export default function AdminPanel() {
         {/* Announcement */}
         <div className="rounded-xl p-5" style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}>
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2" style={{ color: C.text }}>
-            <Send className="w-4 h-4 text-indigo-500" />
+            <Send className="w-4 h-4 text-teal-400" />
             Enviar anuncio a usuarios
           </h2>
           <p className="text-xs mb-4" style={{ color: C.textFaint }}>
@@ -557,7 +578,7 @@ export default function AdminPanel() {
                 <select
                   value={annAudience}
                   onChange={e => setAnnAudience(e.target.value as any)}
-                  className="w-full px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="w-full px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
                   style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text, colorScheme: dark ? 'dark' : 'light' }}
                 >
                   <option value="all">Todos</option>
@@ -572,7 +593,7 @@ export default function AdminPanel() {
                   placeholder="Ej: Novedades en Aliax — Marzo 2026"
                   value={annSubject}
                   onChange={e => { setAnnSubject(e.target.value); setAnnResult(null); }}
-                  className="w-full px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  className="w-full px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
                   style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text }}
                 />
               </div>
@@ -584,7 +605,7 @@ export default function AdminPanel() {
                 placeholder="Escribe el mensaje del anuncio. Puedes usar saltos de línea."
                 value={annBody}
                 onChange={e => { setAnnBody(e.target.value); setAnnResult(null); }}
-                className="w-full px-3 py-2 text-sm rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className="w-full px-3 py-2 text-sm rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-teal-400"
                 style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text }}
               />
             </div>
@@ -599,7 +620,7 @@ export default function AdminPanel() {
               <button
                 onClick={handleSendAnnouncement}
                 disabled={sendingAnn || !annSubject.trim() || !annBody.trim()}
-                className="ml-auto flex items-center gap-2 px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="ml-auto flex items-center gap-2 px-4 py-2 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-4 h-4" />
                 {sendingAnn ? 'Enviando...' : 'Enviar anuncio'}
@@ -624,13 +645,13 @@ export default function AdminPanel() {
                   placeholder="Buscar por nombre o email..."
                   value={searchInput}
                   onChange={e => setSearchInput(e.target.value)}
-                  className="pl-9 pr-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 w-64"
+                  className="pl-9 pr-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 w-64"
                   style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text }}
                 />
               </div>
               <button
                 type="submit"
-                className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                className="px-3 py-2 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700"
               >
                 Buscar
               </button>
@@ -679,7 +700,7 @@ export default function AdminPanel() {
                         </td>
                         <td className="px-5 py-3 text-center">
                           {u._count.profiles > 0 ? (
-                            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
+                            <span className="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded-full font-medium">
                               Profesional ({u._count.profiles})
                             </span>
                           ) : (
@@ -706,7 +727,7 @@ export default function AdminPanel() {
                         </td>
                         <td className="px-5 py-3 text-center">
                           {u.isAdmin ? (
-                            <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium">Admin</span>
+                            <span className="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded-full font-medium">Admin</span>
                           ) : (
                             <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full">Usuario</span>
                           )}
@@ -810,7 +831,7 @@ export default function AdminPanel() {
                                 <button
                                   onClick={(e) => { e.stopPropagation(); handleSendWelcome(u.id); }}
                                   disabled={sendingWelcome === u.id}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors disabled:opacity-50"
                                 >
                                   <Send className="w-3.5 h-3.5" />
                                   {sendingWelcome === u.id ? 'Enviando...' : 'Enviar bienvenida'}
