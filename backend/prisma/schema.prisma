@@ -261,6 +261,7 @@ model Profile {
   availabilitySlots AvailabilitySlot[]
   scheduleBlocks    ScheduleBlock[]
   bookingSettings   BookingSettings?
+  reviews           Review[]
 
   @@index([userId])
 }
@@ -319,6 +320,8 @@ model Booking {
   service       Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   professional  User           @relation("ProfessionalBookings", fields: [professionalId], references: [id])
   notifications Notification[]
+  reviewToken   ReviewToken?
+  review        Review?
 
   @@index([profileId])
   @@index([professionalId])
@@ -435,4 +438,34 @@ model ServiceAvailability {
 
   @@index([serviceId])
   @@index([serviceId, dayOfWeek])
+}
+
+model ReviewToken {
+  id        String    @id @default(uuid())
+  bookingId String    @unique
+  token     String    @unique @default(uuid())
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  booking   Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  bookingId  String   @unique
+  profileId  String
+  rating     Int
+  comment    String?
+  clientName String
+  isVisible  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  profile    Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([profileId, isVisible])
 }
