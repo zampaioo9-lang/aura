@@ -184,14 +184,15 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
     reviews: { id: string; rating: number; comment: string | null; clientName: string; createdAt: string }[];
     averageRating: number | null;
     reviewCount: number;
-  }>({ reviews: [], averageRating: null, reviewCount: 0 });
+    isPro: boolean;
+  }>({ reviews: [], averageRating: null, reviewCount: 0, isPro: false });
 
   useEffect(() => {
     if (!profile.id) return;
     fetch(`${import.meta.env.VITE_API_URL || ''}/api/reviews/profile/${profile.id}`)
       .then(r => r.json())
       .then(data => {
-        if (data.isPro && data.reviewCount > 0) setReviewData(data);
+        if (data.isPro) setReviewData(data);
       })
       .catch(() => {});
   }, [profile.id]);
@@ -362,15 +363,19 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
             </section>
           )}
 
-          {reviewData.reviewCount > 0 && reviewData.averageRating !== null && (
+          {reviewData.isPro && (
             <section>
               <SectionLabel>Reseñas</SectionLabel>
-              <ReviewsSection
-                reviews={reviewData.reviews}
-                averageRating={reviewData.averageRating}
-                reviewCount={reviewData.reviewCount}
-                C={C}
-              />
+              {reviewData.reviewCount > 0 && reviewData.averageRating !== null ? (
+                <ReviewsSection
+                  reviews={reviewData.reviews}
+                  averageRating={reviewData.averageRating}
+                  reviewCount={reviewData.reviewCount}
+                  C={C}
+                />
+              ) : (
+                <p style={{ fontSize: 13, color: C.muted, marginTop: 12 }}>Aún no hay reseñas registradas.</p>
+              )}
             </section>
           )}
 
@@ -672,15 +677,19 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
             </div>
           )}
 
-          {reviewData.reviewCount > 0 && reviewData.averageRating !== null && (
+          {reviewData.isPro && (
             <div>
               <SectionLabel>Reseñas</SectionLabel>
-              <ReviewsSection
-                reviews={reviewData.reviews}
-                averageRating={reviewData.averageRating}
-                reviewCount={reviewData.reviewCount}
-                C={C}
-              />
+              {reviewData.reviewCount > 0 && reviewData.averageRating !== null ? (
+                <ReviewsSection
+                  reviews={reviewData.reviews}
+                  averageRating={reviewData.averageRating}
+                  reviewCount={reviewData.reviewCount}
+                  C={C}
+                />
+              ) : (
+                <p style={{ fontSize: 13, color: C.muted, marginTop: 12 }}>Aún no hay reseñas registradas.</p>
+              )}
             </div>
           )}
         </div>
