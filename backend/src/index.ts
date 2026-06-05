@@ -15,6 +15,7 @@ import scheduleBlocksRoutes from './routes/schedule-blocks';
 import serviceAvailabilityRoutes from './routes/service-availability';
 import adminRoutes from './routes/admin';
 import subscriptionRoutes from './routes/subscriptions';
+import reviewRoutes from './routes/reviews';
 import { startReminderJob } from './jobs/reminderJob';
 import { startTrialExpiryJob } from './jobs/trialExpiryJob';
 import { sendWhatsAppTemplate, templateComponents } from './services/whatsappService';
@@ -44,6 +45,7 @@ app.use('/api/schedule-blocks', scheduleBlocksRoutes);
 app.use('/api/service-availability', serviceAvailabilityRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

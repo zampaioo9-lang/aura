@@ -552,7 +552,11 @@ export async function cancelBooking(
 export async function completeBooking(bookingId: string, professionalId: string) {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    include: { profile: true },
+    include: {
+      profile: {
+        include: { user: { select: { plan: true, planExpiresAt: true, isAdmin: true } } },
+      },
+    },
   });
   if (!booking) throw new AppError(404, 'Reserva no encontrada');
   if (booking.profile.userId !== professionalId) throw new AppError(403, 'No autorizado');
@@ -563,6 +567,29 @@ export async function completeBooking(bookingId: string, professionalId: string)
     data: { status: 'COMPLETED' },
     include: { service: true, profile: { select: { title: true, slug: true } } },
   });
+
+  // Solo enviar email de reseña si el profesional tiene plan Pro
+  if (isProUser(booking.profile.user)) {
+    try {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      const reviewToken = await prisma.reviewToken.create({
+        data: { bookingId, expiresAt },
+      });
+
+      const reviewUrl = `${process.env.FRONTEND_URL || 'https://www.aliax.io'}/review/${reviewToken.token}`;
+      const tpl = emailTemplates.reviewRequest({
+        clientName: booking.clientName,
+        clientEmail: booking.clientEmail,
+        professionalName: booking.profile.title,
+        reviewUrl,
+      });
+      await sendEmail(tpl.to, tpl.subject, tpl.html);
+    } catch (emailErr) {
+      console.error('[Reviews] Error al enviar email de reseña:', emailErr);
+    }
+  }
 
   return updated;
 }

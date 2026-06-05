@@ -208,11 +208,29 @@ router.get('/directory', async (req, res, next) => {
     // Combine: Pro first, then Free, up to limitNum
     const combined = [...proProfiles, ...freeProfiles].slice(0, limitNum);
 
-    const formatted = combined.map(({ user, ...rest }) => ({
-      ...rest,
-      isPro: user.plan === 'LIFETIME' ||
-        (user.plan === 'PRO' && (!user.planExpiresAt || new Date(user.planExpiresAt) > now)),
-    }));
+    // Obtener estadísticas de reseñas para los perfiles combinados
+    const profileIds = combined.map(p => p.id);
+    const reviewStats = await prisma.review.groupBy({
+      by: ['profileId'],
+      where: { profileId: { in: profileIds }, isVisible: true },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+    const statsMap = new Map(
+      reviewStats.map(s => [s.profileId, { avg: s._avg.rating ?? 0, count: s._count.rating }])
+    );
+
+    const formatted = combined.map(({ user, ...rest }) => {
+      const stats = statsMap.get(rest.id);
+      const isPro = user.plan === 'LIFETIME' ||
+        (user.plan === 'PRO' && (!user.planExpiresAt || new Date(user.planExpiresAt) > now));
+      return {
+        ...rest,
+        isPro,
+        averageRating: (isPro && stats) ? Math.round(stats.avg * 10) / 10 : null,
+        reviewCount: (isPro && stats) ? stats.count : 0,
+      };
+    });
 
     res.json({
       profiles: formatted,
