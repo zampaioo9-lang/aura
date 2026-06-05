@@ -743,7 +743,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
 
       {/* Editor de horarios del servicio seleccionado */}
       {selectedSvc && (
-        <ProGate isPro={effectiveIsPro}>
+        <ProGate isPro={isPro}>
         <Card>
           <CardHeader dot={colorMap[selectedSvc.id]} title={`Horario: ${selectedSvc.name}`} />
           <p style={{ fontSize: 12, color: 'var(--sc-muted)', marginBottom: 12 }}>Días disponibles para este servicio</p>
@@ -950,7 +950,7 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
       </div>
 
       <SectionDivider label="Bloqueos recurrentes" />
-      <ProGate isPro={effectiveIsPro}>
+      <ProGate isPro={isPro}>
         <Card>
           <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, marginBottom: 12, color: 'var(--sc-text)' }}>Bloqueos semanales fijos</div>
           <p style={{ color: 'var(--sc-muted)', fontSize: 14, marginBottom: 14 }}>Configura horarios que siempre estarán bloqueados independientemente de tu disponibilidad base.</p>
@@ -1035,25 +1035,25 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
       {/* Comportamiento del sistema */}
       <Card>
         <CardHeader dot="#43d9ad" title="Comportamiento del sistema" />
-        <ProGate isPro={effectiveIsPro}>
+        <ProGate isPro={isPro}>
           <ToggleRow label="Confirmación automática" desc="Las reservas se confirman sin revisión manual" on={settings.autoConfirm} onChange={() => upd('autoConfirm', !settings.autoConfirm)} />
         </ProGate>
-        <ProGate isPro={effectiveIsPro}>
+        <ProGate isPro={isPro}>
           <ToggleRow label="Lista de espera" desc="Los clientes pueden unirse a lista de espera si no hay slots" on={toggles.waitlist} onChange={() => setToggles(t => ({ ...t, waitlist: !t.waitlist }))} />
         </ProGate>
-        <ProGate isPro={effectiveIsPro}>
+        <ProGate isPro={isPro}>
           <ToggleRow label="Múltiples reservas por slot" desc="Permite solapamiento de citas (requiere recursos separados)" on={toggles.multiplePerSlot} onChange={() => setToggles(t => ({ ...t, multiplePerSlot: !t.multiplePerSlot }))} />
         </ProGate>
         <ToggleRow label="Permitir cancelaciones" desc="Los clientes pueden cancelar por sí mismos" on={toggles.allowCancel} onChange={() => setToggles(t => ({ ...t, allowCancel: !t.allowCancel }))} />
         <div style={{ borderBottom: 'none' }}>
-          <ProGate isPro={effectiveIsPro}>
+          <ProGate isPro={isPro}>
             <ToggleRow label="Pago requerido al reservar" desc="El cliente debe pagar antes de confirmar la cita" on={toggles.requirePayment} onChange={() => setToggles(t => ({ ...t, requirePayment: !t.requirePayment }))} />
           </ProGate>
         </div>
       </Card>
 
       {/* Límites por cliente */}
-      <ProGate isPro={effectiveIsPro}>
+      <ProGate isPro={isPro}>
         <Card>
           <CardHeader dot="#ff6584" title="Límites por cliente" />
           <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -1134,11 +1134,11 @@ function TabNotificaciones({ isPro = false }: { isPro?: boolean }) {
         <CardHeader dot="#2dd4bf" title="Recordatorios automáticos al cliente" />
         <ToggleRow label="Confirmación de reserva" desc="Inmediato tras reservar" on={reminders.confirmacion} onChange={() => tog(reminders, setReminders, 'confirmacion')} />
         <ToggleRow label="Recordatorio previo 24h" desc="24 horas antes de la cita" on={reminders.recordatorio24h} onChange={() => tog(reminders, setReminders, 'recordatorio24h')} />
-        <ProGate isPro={effectiveIsPro}>
+        <ProGate isPro={isPro}>
           <ToggleRow label="Recordatorio previo 1h" desc="1 hora antes de la cita" on={reminders.recordatorio1h} onChange={() => tog(reminders, setReminders, 'recordatorio1h')} />
         </ProGate>
         <ToggleRow label="Aviso de cancelación" desc="Al cancelar la cita" on={reminders.cancelacion} onChange={() => tog(reminders, setReminders, 'cancelacion')} />
-        <ProGate isPro={effectiveIsPro}>
+        <ProGate isPro={isPro}>
           <ToggleRow label="Solicitud de feedback" desc="2 horas después de la cita" on={reminders.feedback} onChange={() => tog(reminders, setReminders, 'feedback')} />
         </ProGate>
       </Card>
@@ -1148,10 +1148,10 @@ function TabNotificaciones({ isPro = false }: { isPro?: boolean }) {
         <CardHeader dot="#f6c90e" title="Notificaciones al profesional" />
         <ToggleRow label="Nueva reserva recibida" on={profNotifs.nuevaReserva} onChange={() => tog(profNotifs, setProfNotifs, 'nuevaReserva')} />
         <ToggleRow label="Cancelación de reserva" on={profNotifs.cancelacion} onChange={() => tog(profNotifs, setProfNotifs, 'cancelacion')} />
-        <ProGate isPro={effectiveIsPro}>
+        <ProGate isPro={isPro}>
           <ToggleRow label="Reagendamiento" on={profNotifs.reagendamiento} onChange={() => tog(profNotifs, setProfNotifs, 'reagendamiento')} />
         </ProGate>
-        <ProGate isPro={effectiveIsPro}>
+        <ProGate isPro={isPro}>
           <ToggleRow label="Nuevo cliente en lista de espera" on={profNotifs.listaEspera} onChange={() => tog(profNotifs, setProfNotifs, 'listaEspera')} />
         </ProGate>
       </Card>
@@ -1322,10 +1322,10 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
         {selectedProfileId ? (
           <>
             {tab === 'availability'  && <TabDisponibilidad profileId={selectedProfileId} />}
-            {tab === 'services'      && <TabServicios      profileId={selectedProfileId} isPro={isPro ?? false} />}
-            {tab === 'blocks'        && <TabBloqueos       profileId={selectedProfileId} isPro={isPro ?? false} />}
-            {tab === 'rules'         && <TabReglas         profileId={selectedProfileId} isPro={isPro ?? false} />}
-            {tab === 'notifications' && <TabNotificaciones isPro={isPro ?? false} />}
+            {tab === 'services'      && <TabServicios      profileId={selectedProfileId} isPro={effectiveIsPro} />}
+            {tab === 'blocks'        && <TabBloqueos       profileId={selectedProfileId} isPro={effectiveIsPro} />}
+            {tab === 'rules'         && <TabReglas         profileId={selectedProfileId} isPro={effectiveIsPro} />}
+            {tab === 'notifications' && <TabNotificaciones isPro={effectiveIsPro} />}
           </>
         ) : (
           <p style={{ color: T.muted, fontSize: 14 }}>No tienes perfiles configurados aún.</p>
@@ -1474,10 +1474,10 @@ export default function SchedulingConfig() {
         {selectedProfileId && (
           <>
             {tab === 'availability'   && <TabDisponibilidad profileId={selectedProfileId} />}
-            {tab === 'services'       && <TabServicios      profileId={selectedProfileId} isPro={isPro ?? false} />}
-            {tab === 'blocks'         && <TabBloqueos       profileId={selectedProfileId} isPro={isPro ?? false} />}
-            {tab === 'rules'          && <TabReglas         profileId={selectedProfileId} isPro={isPro ?? false} />}
-            {tab === 'notifications'  && <TabNotificaciones isPro={isPro ?? false} />}
+            {tab === 'services'       && <TabServicios      profileId={selectedProfileId} isPro={effectiveIsPro} />}
+            {tab === 'blocks'         && <TabBloqueos       profileId={selectedProfileId} isPro={effectiveIsPro} />}
+            {tab === 'rules'          && <TabReglas         profileId={selectedProfileId} isPro={effectiveIsPro} />}
+            {tab === 'notifications'  && <TabNotificaciones isPro={effectiveIsPro} />}
           </>
         )}
       </main>
