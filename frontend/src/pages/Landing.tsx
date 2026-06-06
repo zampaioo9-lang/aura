@@ -51,7 +51,7 @@ export default function Landing() {
           </svg>
 
           {/* Hero copy — left side */}
-          <div className="absolute left-[6%] md:left-[18%] top-1/2 -translate-y-[55%] flex flex-col gap-3 z-20 pointer-events-none max-w-[48%] md:max-w-[38%]">
+          <div className="absolute left-[6%] md:left-[11%] top-1/2 -translate-y-[55%] flex flex-col gap-3 z-20 pointer-events-none max-w-[48%] md:max-w-[40%]">
             <p
               className="text-[#2dd4bf] text-[10px] sm:text-[11px] uppercase tracking-[0.25em] font-medium"
               style={{ fontFamily: 'Manrope, sans-serif' }}
@@ -62,7 +62,7 @@ export default function Landing() {
               className="text-white font-bold leading-[0.95]"
               style={{
                 fontFamily: 'Manrope, sans-serif',
-                fontSize: 'clamp(36px, 5.5vw, 80px)',
+                fontSize: 'clamp(42px, 6.8vw, 96px)',
                 letterSpacing: '-0.035em',
                 margin: '0 0 16px',
               }}
@@ -84,7 +84,7 @@ export default function Landing() {
               </span>
             </h1>
             <p
-              className="text-white/60 text-[13px] md:text-[15px] leading-relaxed hidden sm:block"
+              className="text-white/60 text-[14px] md:text-[17px] leading-relaxed hidden sm:block"
               style={{ fontFamily: 'Manrope, sans-serif', maxWidth: 380 }}
             >
               El directorio gratuito para psicólogos y psicoterapeutas en Latinoamérica.
