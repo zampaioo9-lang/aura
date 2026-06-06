@@ -40,7 +40,7 @@ export default function HeroTitle({ scrollProgress }: Props) {
     <div className="absolute bottom-[32px] md:bottom-[40px] left-[1%] right-[1%] w-[98%] pointer-events-none z-20 select-none flex justify-center">
       <div
         ref={ref}
-        className="text-[17vw] sm:text-[14vw] md:text-[9.5vw] lg:text-[8.2vw] leading-none font-normal text-white whitespace-nowrap text-center"
+        className="text-[13vw] sm:text-[11vw] md:text-[7vw] lg:text-[6vw] leading-none font-normal text-white whitespace-nowrap text-center"
         style={{ fontFamily: 'Michroma, sans-serif', letterSpacing: '-0.07em' }}
       />
     </div>
