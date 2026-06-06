@@ -51,7 +51,7 @@ export default function Landing() {
           </svg>
 
           {/* Hero copy — left side */}
-          <div className="absolute left-6 md:left-[64px] top-1/2 -translate-y-[55%] flex flex-col gap-3 z-20 pointer-events-none max-w-[48%] md:max-w-[40%]">
+          <div className="absolute left-[6%] md:left-[18%] top-1/2 -translate-y-[55%] flex flex-col gap-3 z-20 pointer-events-none max-w-[48%] md:max-w-[38%]">
             <p
               className="text-[#2dd4bf] text-[10px] sm:text-[11px] uppercase tracking-[0.25em] font-medium"
               style={{ fontFamily: 'Manrope, sans-serif' }}

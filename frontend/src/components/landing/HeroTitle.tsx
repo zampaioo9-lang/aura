@@ -12,7 +12,7 @@ export default function HeroTitle({ scrollProgress }: Props) {
     if (!el) return;
     el.innerHTML = '';
     const chars: HTMLSpanElement[] = [];
-    'ALIAX'.split('').forEach(ch => {
+    'Aliax'.split('').forEach(ch => {
       const s = document.createElement('span');
       s.className = 'char inline-block will-change-transform';
       s.textContent = ch;
@@ -40,7 +40,7 @@ export default function HeroTitle({ scrollProgress }: Props) {
     <div className="absolute bottom-[32px] md:bottom-[40px] left-[1%] right-[1%] w-[98%] pointer-events-none z-20 select-none flex justify-center">
       <div
         ref={ref}
-        className="text-[22vw] sm:text-[18vw] md:text-[12vw] lg:text-[10.4vw] leading-none font-normal uppercase text-white whitespace-nowrap text-center"
+        className="text-[17vw] sm:text-[14vw] md:text-[9.5vw] lg:text-[8.2vw] leading-none font-normal text-white whitespace-nowrap text-center"
         style={{ fontFamily: 'Michroma, sans-serif', letterSpacing: '-0.07em' }}
       />
     </div>
