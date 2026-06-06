@@ -52,7 +52,7 @@ export default function SoapTiles({ scrollProgress }: Props) {
             className="h-[44px] sm:h-[52px] md:h-[56px] rounded-2xl md:rounded-[28px] flex items-center justify-center px-6 sm:px-8 whitespace-nowrap cursor-pointer"
           >
             <span
-              className="font-semibold text-[12px] sm:text-[14px] md:text-[15px] text-[#0a1f2e]"
+              className="font-semibold text-[14px] sm:text-[14px] md:text-[15px] text-[#0a1f2e]"
               style={{ fontFamily: 'Manrope, sans-serif', letterSpacing: '-0.01em' }}>
               {tile.label}
             </span>
