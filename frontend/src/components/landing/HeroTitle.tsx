@@ -37,11 +37,11 @@ export default function HeroTitle({ scrollProgress }: Props) {
   }, [scrollProgress]);
 
   return (
-    <div className="absolute bottom-[32px] md:bottom-[40px] left-[1%] right-[1%] w-[98%] pointer-events-none z-20 select-none flex justify-center">
+    <div className="absolute bottom-[24px] md:bottom-[40px] left-[1%] right-[1%] w-[98%] pointer-events-none z-30 select-none flex justify-center">
       <div
         ref={ref}
-        className="text-[13vw] sm:text-[11vw] md:text-[7vw] lg:text-[6vw] leading-none font-normal text-white whitespace-nowrap text-center"
-        style={{ fontFamily: 'Michroma, sans-serif', letterSpacing: '-0.07em' }}
+        className="text-[18vw] sm:text-[14vw] md:text-[7vw] lg:text-[6vw] leading-none font-normal text-white whitespace-nowrap text-center"
+        style={{ fontFamily: 'Michroma, sans-serif', letterSpacing: '-0.07em', textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 // frontend/src/pages/Landing.tsx
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import { useLandingScroll } from '../hooks/useLandingScroll';
 import LandingHeader from '../components/landing/LandingHeader';
 import HeroAvatar from '../components/landing/HeroAvatar';
@@ -10,45 +10,21 @@ import SecondScreen from '../components/landing/SecondScreen';
 
 const c01 = (v: number) => Math.max(0, Math.min(1, v));
 
-const APPROACHES = ['TCC', 'Psicoanálisis', 'Humanista', 'Sistémica', 'Mindfulness', 'EMDR', 'Gestalt', 'ACT', 'Neuropsicología'];
-const COUNTRIES  = ['México', 'Colombia', 'Argentina', 'Chile', 'Perú', 'Venezuela', 'Ecuador', 'Bolivia', 'Uruguay'];
-
-const selectCls = [
-  'h-[40px] bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-3',
-  'text-white text-[12px] outline-none focus:border-[#2dd4bf] transition-colors cursor-pointer',
-  '[&>option]:bg-[#0f1a2e] [&>option]:text-white',
-].join(' ');
-
 export default function Landing() {
   const { scrollProgress, lerpedProgress, navigateTo } = useLandingScroll();
-  const navigate = useNavigate();
-  const [searchQuery,    setSearchQuery]    = useState('');
-  const [searchApproach, setSearchApproach] = useState('');
-  const [searchCountry,  setSearchCountry]  = useState('');
-  const [searchCity,     setSearchCity]     = useState('');
 
   // First screen blur as second screen rises
   const sp   = c01((lerpedProgress - 1.15) / 0.50);
   const blur = Math.sin(sp * Math.PI / 2) * 64;
 
-  // Hero copy fades out as pills appear (lerpedProgress 0.07 → 0.38)
+  // Hero copy fades out as pills appear
   const copyExit    = c01((lerpedProgress - 0.07) / 0.31);
   const copyOpacity = 1 - copyExit;
   const copyBlur    = copyExit * 10;
 
-  // Search bar appears after pills are mostly in
-  const sOp = c01((lerpedProgress - 0.28) / 0.18);
-  const sTx = (1 - sOp) * -60;
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (searchQuery)    params.set('q',        searchQuery);
-    if (searchApproach) params.set('approach', searchApproach);
-    if (searchCountry)  params.set('country',  searchCountry);
-    if (searchCity)     params.set('city',     searchCity);
-    navigate(`/explorar${params.toString() ? `?${params}` : ''}`);
-  };
+  // CTA block appears after pills are fully visible
+  const ctaOp = c01((lerpedProgress - 0.35) / 0.20);
+  const ctaTx = (1 - ctaOp) * -50;
 
   return (
     <main className="relative w-screen h-screen overflow-hidden text-white">
@@ -87,7 +63,7 @@ export default function Landing() {
 
           {/* Hero copy */}
           <div
-            className="absolute left-[5%] md:left-[11%] top-[18%] md:top-1/2 md:-translate-y-[55%] flex flex-col gap-2 md:gap-3 z-20 pointer-events-none w-[58%] md:max-w-[40%]"
+            className="absolute left-[5%] md:left-[11%] top-[14%] md:top-1/2 md:-translate-y-[55%] flex flex-col gap-2 md:gap-3 z-20 pointer-events-none w-[58%] md:max-w-[40%]"
             style={{ opacity: copyOpacity, filter: copyBlur > 0.1 ? `blur(${copyBlur}px)` : 'none' }}
           >
             <p
@@ -122,63 +98,39 @@ export default function Landing() {
           <HeroAvatar scrollProgress={Math.min(1, lerpedProgress)} />
           <SoapTiles scrollProgress={lerpedProgress} />
 
-          {/* Search bar with filters */}
-          <form
-            onSubmit={handleSearch}
-            className="hidden md:flex flex-col absolute left-[64px] z-40 gap-2"
+          {/* CTA buttons — aparecen debajo de los pills */}
+          <div
+            className="absolute left-4 md:left-[64px] z-40 flex gap-3 items-center"
             style={{
-              top: 'calc(50% + 115px)',
-              opacity: sOp,
-              transform: `translateX(${sTx}px)`,
-              pointerEvents: sOp > 0.1 ? 'auto' : 'none',
+              bottom: 'auto',
+              top: 'calc(50% + 120px)',
+              opacity: ctaOp,
+              transform: `translateX(${ctaTx}px)`,
+              pointerEvents: ctaOp > 0.1 ? 'auto' : 'none',
             }}
           >
-            {/* Row 1: text search */}
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Nombre, especialidad o palabra clave..."
-              className="w-[520px] h-[44px] bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-4 text-white text-[13px] placeholder:text-white/35 outline-none focus:border-[#2dd4bf] transition-colors"
-              style={{ fontFamily: 'Manrope, sans-serif' }}
-            />
-            {/* Row 2: filters + button */}
-            <div className="flex gap-2 items-center">
-              <select
-                value={searchApproach}
-                onChange={(e) => setSearchApproach(e.target.value)}
-                className={selectCls}
-                style={{ fontFamily: 'Manrope, sans-serif', width: 148 }}
-              >
-                <option value="">Enfoque</option>
-                {APPROACHES.map(a => <option key={a} value={a}>{a}</option>)}
-              </select>
-              <select
-                value={searchCountry}
-                onChange={(e) => setSearchCountry(e.target.value)}
-                className={selectCls}
-                style={{ fontFamily: 'Manrope, sans-serif', width: 130 }}
-              >
-                <option value="">País</option>
-                {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-              <input
-                type="text"
-                value={searchCity}
-                onChange={(e) => setSearchCity(e.target.value)}
-                placeholder="Ciudad"
-                className="h-[40px] w-[130px] bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-3 text-white text-[12px] placeholder:text-white/35 outline-none focus:border-[#2dd4bf] transition-colors"
-                style={{ fontFamily: 'Manrope, sans-serif' }}
-              />
-              <button
-                type="submit"
-                className="h-[40px] px-5 bg-[#2dd4bf] text-[#0f0a1a] text-[13px] font-semibold rounded-xl hover:bg-white transition-colors whitespace-nowrap"
-                style={{ fontFamily: 'Manrope, sans-serif' }}
-              >
-                Buscar →
-              </button>
-            </div>
-          </form>
+            <Link
+              to="/register"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl text-[13px] font-semibold text-white transition-all duration-300 hover:brightness-110"
+              style={{
+                fontFamily: 'Manrope, sans-serif',
+                background: 'linear-gradient(135deg, #2dd4bf, #0d9488)',
+                boxShadow: '0 6px 20px rgba(45,212,191,0.35)',
+              }}
+            >
+              Crear mi perfil gratis <ArrowRight size={14} />
+            </Link>
+            <Link
+              to="/explorar"
+              className="inline-flex items-center px-5 py-3 rounded-2xl text-[13px] font-medium text-white/80 border border-white/20 hover:border-[#2dd4bf] hover:text-white transition-all duration-300 backdrop-blur-sm"
+              style={{
+                fontFamily: 'Manrope, sans-serif',
+                background: 'rgba(255,255,255,0.05)',
+              }}
+            >
+              Ver directorio
+            </Link>
+          </div>
 
           <HeroTitle scrollProgress={Math.min(1, lerpedProgress)} />
         </div>
