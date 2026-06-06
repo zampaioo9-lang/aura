@@ -96,40 +96,44 @@ export default function Landing() {
           </div>
 
           <HeroAvatar scrollProgress={Math.min(1, lerpedProgress)} />
-          <SoapTiles scrollProgress={lerpedProgress} />
 
-          {/* CTA buttons — aparecen debajo de los pills */}
+          {/* Pills + CTA — single positioned column so CTA always flows below pills */}
           <div
-            className="absolute left-8 md:left-[80px] z-40 flex gap-3 items-center"
-            style={{
-              bottom: 'auto',
-              top: 'calc(50% + 120px)',
-              opacity: ctaOp,
-              transform: `translateX(${ctaTx}px)`,
-              pointerEvents: ctaOp > 0.1 ? 'auto' : 'none',
-            }}
+            className="absolute left-8 md:left-[80px] z-40 flex flex-col gap-[10px] md:gap-[12px]"
+            style={{ top: '50%', transform: 'translateY(-50%)' }}
           >
-            <Link
-              to="/register"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl text-[13px] font-semibold text-white transition-all duration-300 hover:brightness-110"
+            <SoapTiles scrollProgress={lerpedProgress} />
+            <div
+              className="flex gap-3 items-center"
               style={{
-                fontFamily: 'Manrope, sans-serif',
-                background: 'linear-gradient(135deg, #2dd4bf, #0d9488)',
-                boxShadow: '0 6px 20px rgba(45,212,191,0.35)',
+                opacity: ctaOp,
+                transform: `translateX(${ctaTx}px)`,
+                transition: 'transform 0.4s cubic-bezier(0.16,1,0.3,1)',
+                pointerEvents: ctaOp > 0.1 ? 'auto' : 'none',
               }}
             >
-              Crear mi perfil gratis <ArrowRight size={14} />
-            </Link>
-            <Link
-              to="/explorar"
-              className="inline-flex items-center px-5 py-3 rounded-2xl text-[13px] font-medium text-white/80 border border-white/20 hover:border-[#2dd4bf] hover:text-white transition-all duration-300 backdrop-blur-sm"
-              style={{
-                fontFamily: 'Manrope, sans-serif',
-                background: 'rgba(255,255,255,0.05)',
-              }}
-            >
-              Ver directorio
-            </Link>
+              <Link
+                to="/register"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl text-[13px] font-semibold text-white transition-all duration-300 hover:brightness-110"
+                style={{
+                  fontFamily: 'Manrope, sans-serif',
+                  background: 'linear-gradient(135deg, #2dd4bf, #0d9488)',
+                  boxShadow: '0 6px 20px rgba(45,212,191,0.35)',
+                }}
+              >
+                Crear mi perfil gratis <ArrowRight size={14} />
+              </Link>
+              <Link
+                to="/explorar"
+                className="inline-flex items-center px-5 py-3 rounded-2xl text-[13px] font-medium text-white/80 border border-white/20 hover:border-[#2dd4bf] hover:text-white transition-all duration-300 backdrop-blur-sm"
+                style={{
+                  fontFamily: 'Manrope, sans-serif',
+                  background: 'rgba(255,255,255,0.05)',
+                }}
+              >
+                Ver directorio
+              </Link>
+            </div>
           </div>
 
           <HeroTitle scrollProgress={Math.min(1, lerpedProgress)} />
