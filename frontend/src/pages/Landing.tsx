@@ -38,26 +38,57 @@ export default function Landing() {
             style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 70%)' }}
           />
 
+          {/* SVG noise filter for shiny headline */}
+          <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
+            <defs>
+              <filter id="aliax-noise">
+                <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" />
+                <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.35 0" />
+                <feComposite in2="SourceGraphic" operator="in" result="noise" />
+                <feBlend in="SourceGraphic" in2="noise" mode="multiply" />
+              </filter>
+            </defs>
+          </svg>
+
           {/* Hero copy — left side */}
-          <div className="absolute left-6 md:left-[64px] top-1/2 -translate-y-[55%] flex flex-col gap-3 z-20 pointer-events-none max-w-[48%] md:max-w-[38%]">
+          <div className="absolute left-6 md:left-[64px] top-1/2 -translate-y-[55%] flex flex-col gap-3 z-20 pointer-events-none max-w-[48%] md:max-w-[40%]">
             <p
               className="text-[#2dd4bf] text-[10px] sm:text-[11px] uppercase tracking-[0.25em] font-medium"
               style={{ fontFamily: 'Manrope, sans-serif' }}
             >
-              Salud Mental · México &amp; LATAM
+              Directorio · México &amp; LATAM
             </p>
-            <h2
-              className="text-white text-[24px] sm:text-[32px] md:text-[40px] font-bold leading-[1.1]"
-              style={{ fontFamily: 'Manrope, sans-serif' }}
+            <h1
+              className="text-white font-bold leading-[0.95]"
+              style={{
+                fontFamily: 'Manrope, sans-serif',
+                fontSize: 'clamp(36px, 5.5vw, 80px)',
+                letterSpacing: '-0.035em',
+                margin: '0 0 16px',
+              }}
             >
-              Tu bienestar,<br />
-              <span style={{ color: '#2dd4bf' }}>en buenas manos.</span>
-            </h2>
+              <span style={{ display: 'block' }}>Psicólogos que</span>
+              <span style={{ display: 'block' }}>ya están siendo</span>
+              <span
+                style={{
+                  display: 'block',
+                  backgroundImage: 'linear-gradient(to right, #0a1f2e 0%, #134e5e 12.5%, #a7f3d0 32.5%, #2dd4bf 50%, #134e5e 67.5%, #0a1f2e 87.5%, #0a1f2e 100%)',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                  WebkitTextFillColor: 'transparent',
+                  filter: 'url(#aliax-noise)',
+                } as React.CSSProperties}
+              >
+                encontrados
+              </span>
+            </h1>
             <p
-              className="text-white/60 text-[12px] md:text-[14px] leading-relaxed hidden sm:block"
-              style={{ fontFamily: 'Manrope, sans-serif' }}
+              className="text-white/60 text-[13px] md:text-[15px] leading-relaxed hidden sm:block"
+              style={{ fontFamily: 'Manrope, sans-serif', maxWidth: 380 }}
             >
-              Encuentra al especialista en salud mental<br className="hidden md:block" /> ideal para ti.
+              El directorio gratuito para psicólogos y psicoterapeutas en Latinoamérica.
+              Aparece por enfoque terapéutico, ciudad y modalidad.
             </p>
           </div>
 

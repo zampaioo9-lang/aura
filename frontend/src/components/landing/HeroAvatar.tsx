@@ -39,7 +39,7 @@ export default function HeroAvatar({ scrollProgress }: Props) {
           style={{
             animation: 'avatarFloat 3.5s ease-in-out infinite',
             maxWidth: 'none',
-            filter: 'drop-shadow(0 20px 60px rgba(45,212,191,0.3))',
+            mixBlendMode: 'screen',
           }}
         />
       </div>
