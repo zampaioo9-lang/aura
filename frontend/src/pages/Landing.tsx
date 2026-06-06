@@ -106,7 +106,7 @@ export default function Landing() {
 
           {/* Pills + CTA — centered on mobile, left-aligned on desktop */}
           <div
-            className="absolute z-40 flex flex-col gap-[10px] md:gap-[12px]"
+            className="absolute z-40 flex flex-col gap-[10px] md:gap-[12px] w-[74vw] md:w-auto"
             style={{
               top: '50%',
               left: isMobile ? '50%' : '80px',
@@ -125,7 +125,7 @@ export default function Landing() {
             >
               <Link
                 to="/register"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl text-[13px] font-semibold text-white transition-all duration-300 hover:brightness-110"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-[13px] font-semibold text-white transition-all duration-300 hover:brightness-110 w-full sm:w-auto"
                 style={{
                   fontFamily: 'Manrope, sans-serif',
                   background: 'linear-gradient(135deg, #2dd4bf, #0d9488)',
@@ -136,7 +136,7 @@ export default function Landing() {
               </Link>
               <Link
                 to="/explorar"
-                className="inline-flex items-center px-5 py-3 rounded-2xl text-[13px] font-medium text-white/80 border border-white/20 hover:border-[#2dd4bf] hover:text-white transition-all duration-300 backdrop-blur-sm"
+                className="inline-flex items-center justify-center px-5 py-3 rounded-2xl text-[13px] font-medium text-white/80 border border-white/20 hover:border-[#2dd4bf] hover:text-white transition-all duration-300 backdrop-blur-sm w-full sm:w-auto"
                 style={{
                   fontFamily: 'Manrope, sans-serif',
                   background: 'rgba(255,255,255,0.05)',
