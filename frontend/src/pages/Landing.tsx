@@ -21,7 +21,7 @@ export default function Landing() {
   }, []);
 
   // First screen blur as second screen rises
-  const sp   = c01((lerpedProgress - 1.15) / 0.50);
+  const sp   = c01((lerpedProgress - 0.65) / 0.25);
   const blur = Math.sin(sp * Math.PI / 2) * 64;
 
   // Hero copy fades out as pills appear

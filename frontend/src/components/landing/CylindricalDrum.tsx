@@ -62,7 +62,7 @@ const LINE_H = 32;
 const c01 = (v: number) => Math.max(0, Math.min(1, v));
 
 export default function CylindricalDrum({ scrollProgress }: Props) {
-  const targetIndex = c01((scrollProgress - 1.45) / 2.05) * (LINES.length - 1);
+  const targetIndex = c01((scrollProgress - 0.92) / 1.20) * (LINES.length - 1);
 
   return (
     <div

@@ -16,7 +16,7 @@ const SPECIALTIES = [
 ];
 
 export default function SecondScreen({ scrollProgress, lerpedProgress }: Props) {
-  const sp = c01((lerpedProgress - 1.15) / 0.50);
+  const sp = c01((lerpedProgress - 0.65) / 0.25);
   const eased = 1 - Math.pow(1 - sp, 3);
 
   return (
