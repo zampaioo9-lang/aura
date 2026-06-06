@@ -62,7 +62,7 @@ export default function Landing() {
               className="text-white font-bold"
               style={{
                 fontFamily: 'Manrope, sans-serif',
-                fontSize: 'clamp(32px, 5.4vw, 72px)',
+                fontSize: 'clamp(40px, 5.4vw, 72px)',
                 letterSpacing: '-0.035em',
                 lineHeight: 1.0,
                 margin: '0 0 8px',
