@@ -1,4 +1,5 @@
 // frontend/src/pages/Landing.tsx
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useLandingScroll } from '../hooks/useLandingScroll';
@@ -12,6 +13,12 @@ const c01 = (v: number) => Math.max(0, Math.min(1, v));
 
 export default function Landing() {
   const { scrollProgress, lerpedProgress, navigateTo } = useLandingScroll();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
 
   // First screen blur as second screen rises
   const sp   = c01((lerpedProgress - 1.15) / 0.50);
@@ -97,10 +104,14 @@ export default function Landing() {
 
           <HeroAvatar scrollProgress={Math.min(1, lerpedProgress)} />
 
-          {/* Pills + CTA — single positioned column so CTA always flows below pills */}
+          {/* Pills + CTA — centered on mobile, left-aligned on desktop */}
           <div
-            className="absolute left-8 md:left-[80px] z-40 flex flex-col gap-[10px] md:gap-[12px] w-[56vw] md:w-auto"
-            style={{ top: '50%', transform: 'translateY(-50%)' }}
+            className="absolute z-40 flex flex-col gap-[10px] md:gap-[12px]"
+            style={{
+              top: '50%',
+              left: isMobile ? '50%' : '80px',
+              transform: isMobile ? 'translate(-50%, -50%)' : 'translateY(-50%)',
+            }}
           >
             <SoapTiles scrollProgress={lerpedProgress} />
             <div

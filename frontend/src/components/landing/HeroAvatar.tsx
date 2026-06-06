@@ -1,10 +1,17 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import gsap from 'gsap';
 
 interface Props { scrollProgress: number; }
 
 export default function HeroAvatar({ scrollProgress }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -21,8 +28,9 @@ export default function HeroAvatar({ scrollProgress }: Props) {
   }, []);
 
   const exit = Math.min(1, scrollProgress);
-  const opacity = 1 - exit * 0.9;
-  const tx = exit * 80;
+  // Mobile: fade fully by scrollProgress=0.25 so pills appear on clean bg
+  const opacity = isMobile ? Math.max(0, 1 - exit / 0.25) : 1 - exit * 0.9;
+  const tx = isMobile ? 0 : exit * 80;
 
   return (
     <div
