@@ -15,6 +15,11 @@ export default function Landing() {
   const sp = c01((lerpedProgress - 1.15) / 0.50);
   const blur = Math.sin(sp * Math.PI / 2) * 64;
 
+  // Hero copy fades out as pills appear (scrollProgress 0.3 → 0.7)
+  const copyExit = c01((lerpedProgress - 0.3) / 0.4);
+  const copyOpacity = 1 - copyExit;
+  const copyBlur = copyExit * 10;
+
   return (
     <main className="relative w-screen h-screen overflow-hidden text-white">
       <div className="relative w-full h-full overflow-hidden">
@@ -50,8 +55,14 @@ export default function Landing() {
             </defs>
           </svg>
 
-          {/* Hero copy */}
-          <div className="absolute left-[5%] md:left-[11%] top-[18%] md:top-1/2 md:-translate-y-[55%] flex flex-col gap-2 md:gap-3 z-20 pointer-events-none w-[58%] md:max-w-[40%]">
+          {/* Hero copy — fades out as pills appear */}
+          <div
+            className="absolute left-[5%] md:left-[11%] top-[18%] md:top-1/2 md:-translate-y-[55%] flex flex-col gap-2 md:gap-3 z-20 pointer-events-none w-[58%] md:max-w-[40%]"
+            style={{
+              opacity: copyOpacity,
+              filter: copyBlur > 0.1 ? `blur(${copyBlur}px)` : 'none',
+            }}
+          >
             <p
               className="text-[#2dd4bf] text-[9px] md:text-[11px] uppercase tracking-[0.2em] font-medium whitespace-nowrap"
               style={{ fontFamily: 'Manrope, sans-serif' }}
