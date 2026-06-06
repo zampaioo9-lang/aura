@@ -37,7 +37,7 @@ export default function HeroTitle({ scrollProgress }: Props) {
   }, [scrollProgress]);
 
   return (
-    <div className="absolute bottom-[24px] md:bottom-[40px] left-[1%] right-[1%] w-[98%] pointer-events-none z-30 select-none flex justify-center">
+    <div className="absolute bottom-[64px] md:bottom-[40px] left-[1%] right-[1%] w-[98%] pointer-events-none z-30 select-none flex justify-center">
       <div
         ref={ref}
         className="text-[18vw] sm:text-[14vw] md:text-[7vw] lg:text-[6vw] leading-none font-normal text-white whitespace-nowrap text-center"

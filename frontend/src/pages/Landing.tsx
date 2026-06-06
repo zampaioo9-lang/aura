@@ -27,7 +27,7 @@ export default function Landing() {
   const ctaTx = (1 - ctaOp) * -50;
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden text-white">
+    <main className="relative w-screen h-dvh overflow-hidden text-white">
       <div className="relative w-full h-full overflow-hidden">
 
         {/* FIRST SCREEN */}
@@ -100,7 +100,7 @@ export default function Landing() {
 
           {/* CTA buttons — aparecen debajo de los pills */}
           <div
-            className="absolute left-4 md:left-[64px] z-40 flex gap-3 items-center"
+            className="absolute left-8 md:left-[80px] z-40 flex gap-3 items-center"
             style={{
               bottom: 'auto',
               top: 'calc(50% + 120px)',
