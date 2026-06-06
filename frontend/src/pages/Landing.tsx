@@ -99,12 +99,12 @@ export default function Landing() {
 
           {/* Pills + CTA — single positioned column so CTA always flows below pills */}
           <div
-            className="absolute left-8 md:left-[80px] z-40 flex flex-col gap-[10px] md:gap-[12px]"
+            className="absolute left-8 md:left-[80px] z-40 flex flex-col gap-[10px] md:gap-[12px] w-[56vw] md:w-auto"
             style={{ top: '50%', transform: 'translateY(-50%)' }}
           >
             <SoapTiles scrollProgress={lerpedProgress} />
             <div
-              className="flex gap-3 items-center"
+              className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center"
               style={{
                 opacity: ctaOp,
                 transform: `translateX(${ctaTx}px)`,

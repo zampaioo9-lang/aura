@@ -49,7 +49,7 @@ export default function SoapTiles({ scrollProgress }: Props) {
               background: '#2dd4bf',
               boxShadow: '0 8px 28px rgba(45,212,191,0.45), 0 2px 8px rgba(45,212,191,0.2)',
             }}
-            className="h-[44px] sm:h-[52px] md:h-[56px] rounded-2xl md:rounded-[28px] flex items-center justify-center px-5 sm:px-8 whitespace-nowrap cursor-pointer"
+            className="h-[44px] sm:h-[52px] md:h-[56px] w-full md:w-auto rounded-2xl md:rounded-[28px] flex items-center justify-center px-5 sm:px-8 whitespace-nowrap cursor-pointer"
           >
             <span
               className="font-semibold text-[12px] sm:text-[14px] md:text-[15px] text-[#0a1f2e]"
