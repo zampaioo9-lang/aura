@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react';
 interface Props { scrollProgress: number; }
 
 const TILES = [
-  { label: 'Psicólogos verificados', offset: 120 },
-  { label: 'Reserva en 2 minutos',   offset: 180 },
-  { label: 'Reseñas de pacientes',   offset: 240 },
+  { label: 'Perfil verificado gratis', offset: 120 },
+  { label: 'Aparece en búsquedas',     offset: 180 },
+  { label: 'Agenda sin comisiones',    offset: 240 },
 ];
 
 const c01 = (v: number) => Math.max(0, Math.min(1, v));
@@ -20,7 +20,7 @@ export default function SoapTiles({ scrollProgress }: Props) {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
-  const ep = c01((scrollProgress - 0.3) / 0.22);
+  const ep = c01((scrollProgress - 0.14) / 0.22);
   const baseH = isMobile ? 52 : 56;
 
   return (

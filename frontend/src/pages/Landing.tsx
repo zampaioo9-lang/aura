@@ -1,4 +1,6 @@
 // frontend/src/pages/Landing.tsx
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLandingScroll } from '../hooks/useLandingScroll';
 import LandingHeader from '../components/landing/LandingHeader';
 import HeroAvatar from '../components/landing/HeroAvatar';
@@ -10,13 +12,15 @@ const c01 = (v: number) => Math.max(0, Math.min(1, v));
 
 export default function Landing() {
   const { scrollProgress, lerpedProgress, navigateTo } = useLandingScroll();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
 
   // First screen blur as second screen rises
   const sp = c01((lerpedProgress - 1.15) / 0.50);
   const blur = Math.sin(sp * Math.PI / 2) * 64;
 
-  // Hero copy fades out as pills appear (scrollProgress 0.3 → 0.7)
-  const copyExit = c01((lerpedProgress - 0.3) / 0.4);
+  // Hero copy fades out as pills appear (lerpedProgress 0.14 → 0.45)
+  const copyExit = c01((lerpedProgress - 0.14) / 0.31);
   const copyOpacity = 1 - copyExit;
   const copyBlur = copyExit * 10;
 
@@ -96,6 +100,44 @@ export default function Landing() {
 
           <HeroAvatar scrollProgress={Math.min(1, lerpedProgress)} />
           <SoapTiles scrollProgress={lerpedProgress} />
+
+          {/* Search bar — appears below pills on desktop */}
+          {(() => {
+            const sOp = c01((lerpedProgress - 0.32) / 0.18);
+            const sTx = (1 - sOp) * -60;
+            return (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  navigate(`/explorar${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`);
+                }}
+                className="hidden md:flex absolute left-[64px] z-40 gap-2 items-center"
+                style={{
+                  top: 'calc(50% + 110px)',
+                  opacity: sOp,
+                  transform: `translateX(${sTx}px)`,
+                  pointerEvents: sOp > 0.1 ? 'auto' : 'none',
+                }}
+              >
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Busca por enfoque terapéutico o ciudad..."
+                  className="w-[300px] h-[44px] bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-4 text-white text-[13px] placeholder:text-white/35 outline-none focus:border-[#2dd4bf] transition-colors"
+                  style={{ fontFamily: 'Manrope, sans-serif' }}
+                />
+                <button
+                  type="submit"
+                  className="h-[44px] px-5 bg-[#2dd4bf] text-[#0f0a1a] text-[13px] font-semibold rounded-2xl hover:bg-white transition-colors whitespace-nowrap"
+                  style={{ fontFamily: 'Manrope, sans-serif' }}
+                >
+                  Buscar →
+                </button>
+              </form>
+            );
+          })()}
+
           <HeroTitle scrollProgress={Math.min(1, lerpedProgress)} />
         </div>
 
