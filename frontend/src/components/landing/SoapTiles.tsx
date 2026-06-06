@@ -20,7 +20,7 @@ export default function SoapTiles({ scrollProgress }: Props) {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
-  const ep = c01((scrollProgress - 0.14) / 0.22);
+  const ep = c01((scrollProgress - 0.07) / 0.22);
   const baseH = isMobile ? 52 : 56;
 
   return (
@@ -46,11 +46,13 @@ export default function SoapTiles({ scrollProgress }: Props) {
               filter: `blur(${(1 - tp) * 12}px)`,
               transition: 'transform 0.4s cubic-bezier(0.16,1,0.3,1)',
               transformOrigin: 'left center',
+              background: '#2dd4bf',
+              boxShadow: '0 8px 28px rgba(45,212,191,0.45), 0 2px 8px rgba(45,212,191,0.2)',
             }}
-            className="h-[44px] sm:h-[52px] md:h-[56px] bg-white text-black rounded-2xl md:rounded-[28px] flex items-center justify-center px-5 sm:px-8 whitespace-nowrap cursor-pointer"
+            className="h-[44px] sm:h-[52px] md:h-[56px] rounded-2xl md:rounded-[28px] flex items-center justify-center px-5 sm:px-8 whitespace-nowrap cursor-pointer"
           >
             <span
-              className="font-medium text-[11px] sm:text-[13px] md:text-[14px] tracking-tight"
+              className="font-medium text-[11px] sm:text-[13px] md:text-[14px] tracking-tight text-[#0a1f2e]"
               style={{ fontFamily: 'Michroma, sans-serif', letterSpacing: '-0.02em' }}>
               {tile.label}
             </span>

@@ -10,19 +10,45 @@ import SecondScreen from '../components/landing/SecondScreen';
 
 const c01 = (v: number) => Math.max(0, Math.min(1, v));
 
+const APPROACHES = ['TCC', 'Psicoanálisis', 'Humanista', 'Sistémica', 'Mindfulness', 'EMDR', 'Gestalt', 'ACT', 'Neuropsicología'];
+const COUNTRIES  = ['México', 'Colombia', 'Argentina', 'Chile', 'Perú', 'Venezuela', 'Ecuador', 'Bolivia', 'Uruguay'];
+
+const selectCls = [
+  'h-[40px] bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-3',
+  'text-white text-[12px] outline-none focus:border-[#2dd4bf] transition-colors cursor-pointer',
+  '[&>option]:bg-[#0f1a2e] [&>option]:text-white',
+].join(' ');
+
 export default function Landing() {
   const { scrollProgress, lerpedProgress, navigateTo } = useLandingScroll();
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery,    setSearchQuery]    = useState('');
+  const [searchApproach, setSearchApproach] = useState('');
+  const [searchCountry,  setSearchCountry]  = useState('');
+  const [searchCity,     setSearchCity]     = useState('');
 
   // First screen blur as second screen rises
-  const sp = c01((lerpedProgress - 1.15) / 0.50);
+  const sp   = c01((lerpedProgress - 1.15) / 0.50);
   const blur = Math.sin(sp * Math.PI / 2) * 64;
 
-  // Hero copy fades out as pills appear (lerpedProgress 0.14 → 0.45)
-  const copyExit = c01((lerpedProgress - 0.14) / 0.31);
+  // Hero copy fades out as pills appear (lerpedProgress 0.07 → 0.38)
+  const copyExit    = c01((lerpedProgress - 0.07) / 0.31);
   const copyOpacity = 1 - copyExit;
-  const copyBlur = copyExit * 10;
+  const copyBlur    = copyExit * 10;
+
+  // Search bar appears after pills are mostly in
+  const sOp = c01((lerpedProgress - 0.28) / 0.18);
+  const sTx = (1 - sOp) * -60;
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (searchQuery)    params.set('q',        searchQuery);
+    if (searchApproach) params.set('approach', searchApproach);
+    if (searchCountry)  params.set('country',  searchCountry);
+    if (searchCity)     params.set('city',     searchCity);
+    navigate(`/explorar${params.toString() ? `?${params}` : ''}`);
+  };
 
   return (
     <main className="relative w-screen h-screen overflow-hidden text-white">
@@ -47,7 +73,7 @@ export default function Landing() {
             style={{ background: 'radial-gradient(circle, #7c3aed 0%, transparent 70%)' }}
           />
 
-          {/* SVG noise filter for shiny headline */}
+          {/* SVG noise filter */}
           <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
             <defs>
               <filter id="aliax-noise">
@@ -59,13 +85,10 @@ export default function Landing() {
             </defs>
           </svg>
 
-          {/* Hero copy — fades out as pills appear */}
+          {/* Hero copy */}
           <div
             className="absolute left-[5%] md:left-[11%] top-[18%] md:top-1/2 md:-translate-y-[55%] flex flex-col gap-2 md:gap-3 z-20 pointer-events-none w-[58%] md:max-w-[40%]"
-            style={{
-              opacity: copyOpacity,
-              filter: copyBlur > 0.1 ? `blur(${copyBlur}px)` : 'none',
-            }}
+            style={{ opacity: copyOpacity, filter: copyBlur > 0.1 ? `blur(${copyBlur}px)` : 'none' }}
           >
             <p
               className="text-[#2dd4bf] text-[9px] md:text-[11px] uppercase tracking-[0.2em] font-medium whitespace-nowrap"
@@ -85,9 +108,7 @@ export default function Landing() {
             >
               <span style={{ display: 'block' }}>Psicólogos que</span>
               <span style={{ display: 'block' }}>ya están siendo</span>
-              <span className="text-shimmer-teal">
-                encontrados
-              </span>
+              <span className="text-shimmer-teal">encontrados</span>
             </h1>
             <p
               className="text-white/60 text-[11px] md:text-[15px] leading-relaxed hidden sm:block"
@@ -101,42 +122,63 @@ export default function Landing() {
           <HeroAvatar scrollProgress={Math.min(1, lerpedProgress)} />
           <SoapTiles scrollProgress={lerpedProgress} />
 
-          {/* Search bar — appears below pills on desktop */}
-          {(() => {
-            const sOp = c01((lerpedProgress - 0.32) / 0.18);
-            const sTx = (1 - sOp) * -60;
-            return (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  navigate(`/explorar${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`);
-                }}
-                className="hidden md:flex absolute left-[64px] z-40 gap-2 items-center"
-                style={{
-                  top: 'calc(50% + 110px)',
-                  opacity: sOp,
-                  transform: `translateX(${sTx}px)`,
-                  pointerEvents: sOp > 0.1 ? 'auto' : 'none',
-                }}
+          {/* Search bar with filters */}
+          <form
+            onSubmit={handleSearch}
+            className="hidden md:flex flex-col absolute left-[64px] z-40 gap-2"
+            style={{
+              top: 'calc(50% + 115px)',
+              opacity: sOp,
+              transform: `translateX(${sTx}px)`,
+              pointerEvents: sOp > 0.1 ? 'auto' : 'none',
+            }}
+          >
+            {/* Row 1: text search */}
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Nombre, especialidad o palabra clave..."
+              className="w-[520px] h-[44px] bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-4 text-white text-[13px] placeholder:text-white/35 outline-none focus:border-[#2dd4bf] transition-colors"
+              style={{ fontFamily: 'Manrope, sans-serif' }}
+            />
+            {/* Row 2: filters + button */}
+            <div className="flex gap-2 items-center">
+              <select
+                value={searchApproach}
+                onChange={(e) => setSearchApproach(e.target.value)}
+                className={selectCls}
+                style={{ fontFamily: 'Manrope, sans-serif', width: 148 }}
               >
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Busca por enfoque terapéutico o ciudad..."
-                  className="w-[300px] h-[44px] bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-4 text-white text-[13px] placeholder:text-white/35 outline-none focus:border-[#2dd4bf] transition-colors"
-                  style={{ fontFamily: 'Manrope, sans-serif' }}
-                />
-                <button
-                  type="submit"
-                  className="h-[44px] px-5 bg-[#2dd4bf] text-[#0f0a1a] text-[13px] font-semibold rounded-2xl hover:bg-white transition-colors whitespace-nowrap"
-                  style={{ fontFamily: 'Manrope, sans-serif' }}
-                >
-                  Buscar →
-                </button>
-              </form>
-            );
-          })()}
+                <option value="">Enfoque</option>
+                {APPROACHES.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+              <select
+                value={searchCountry}
+                onChange={(e) => setSearchCountry(e.target.value)}
+                className={selectCls}
+                style={{ fontFamily: 'Manrope, sans-serif', width: 130 }}
+              >
+                <option value="">País</option>
+                {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <input
+                type="text"
+                value={searchCity}
+                onChange={(e) => setSearchCity(e.target.value)}
+                placeholder="Ciudad"
+                className="h-[40px] w-[130px] bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-3 text-white text-[12px] placeholder:text-white/35 outline-none focus:border-[#2dd4bf] transition-colors"
+                style={{ fontFamily: 'Manrope, sans-serif' }}
+              />
+              <button
+                type="submit"
+                className="h-[40px] px-5 bg-[#2dd4bf] text-[#0f0a1a] text-[13px] font-semibold rounded-xl hover:bg-white transition-colors whitespace-nowrap"
+                style={{ fontFamily: 'Manrope, sans-serif' }}
+              >
+                Buscar →
+              </button>
+            </div>
+          </form>
 
           <HeroTitle scrollProgress={Math.min(1, lerpedProgress)} />
         </div>
