@@ -62,7 +62,7 @@ export default function Landing() {
               className="text-white font-bold"
               style={{
                 fontFamily: 'Manrope, sans-serif',
-                fontSize: 'clamp(26px, 4.8vw, 64px)',
+                fontSize: 'clamp(32px, 5.4vw, 72px)',
                 letterSpacing: '-0.035em',
                 lineHeight: 1.0,
                 margin: '0 0 8px',
@@ -70,17 +70,7 @@ export default function Landing() {
             >
               <span style={{ display: 'block' }}>Psicólogos que</span>
               <span style={{ display: 'block' }}>ya están siendo</span>
-              <span
-                style={{
-                  display: 'block',
-                  backgroundImage: 'linear-gradient(to right, #0a1f2e 0%, #134e5e 12.5%, #a7f3d0 32.5%, #2dd4bf 50%, #134e5e 67.5%, #0a1f2e 87.5%, #0a1f2e 100%)',
-                  WebkitBackgroundClip: 'text',
-                  backgroundClip: 'text',
-                  color: 'transparent',
-                  WebkitTextFillColor: 'transparent',
-                  filter: 'url(#aliax-noise)',
-                } as React.CSSProperties}
-              >
+              <span className="text-shimmer-teal">
                 encontrados
               </span>
             </h1>

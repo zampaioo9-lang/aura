@@ -141,6 +141,30 @@ body {
   overflow: hidden;
   width: 100%;
 }
+@keyframes shimmer-lr {
+  0%   { background-position: 0% center; }
+  100% { background-position: 100% center; }
+}
+.text-shimmer-teal {
+  background-image: linear-gradient(
+    90deg,
+    #0f3a47 0%,
+    #0f3a47 10%,
+    #a7f3d0 30%,
+    #2dd4bf 50%,
+    #a7f3d0 70%,
+    #0f3a47 90%,
+    #0f3a47 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-lr 2.2s ease-in-out infinite alternate;
+  display: block;
+}
+
 .marquee-track {
   display: flex;
   width: max-content;
