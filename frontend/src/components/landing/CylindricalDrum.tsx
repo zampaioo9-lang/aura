@@ -45,7 +45,7 @@ const ITEMS: DrumItem[] = [
 ];
 
 const LINE_H = 90;
-const R      = 600;
+const R      = 240;
 const c01 = (v: number) => Math.max(0, Math.min(1, v));
 
 export default function CylindricalDrum({ scrollProgress }: Props) {
@@ -53,7 +53,7 @@ export default function CylindricalDrum({ scrollProgress }: Props) {
 
   return (
     <div
-      className="absolute inset-y-0 left-0 w-full sm:w-[65%] md:w-[60%] z-30 flex flex-col items-start justify-center pointer-events-none select-none pl-6 sm:pl-12 md:pl-20 pr-4 py-16"
+      className="absolute inset-y-0 left-0 w-full sm:w-[65%] md:w-[60%] z-30 flex flex-col items-start justify-center pointer-events-none select-none pl-10 sm:pl-20 md:pl-32 pr-4 py-16"
       style={{ perspective: '1200px', perspectiveOrigin: '30% 50%' }}
     >
       <div
@@ -66,7 +66,7 @@ export default function CylindricalDrum({ scrollProgress }: Props) {
           const angleRad = ty / R;
           const angleDeg = angleRad * (180 / Math.PI);
           const tz       = Math.cos(angleRad) * R - R;
-          const scale    = 0.78 + Math.cos(angleRad) * 0.22;
+          const scale    = 0.5 + Math.cos(angleRad) * 0.5;
           const opacity  = Math.max(0, (Math.cos(angleRad) - 0.15) / 0.85);
           const blurAmt  = Math.min(6, Math.max(0, (Math.abs(diff) - 1.5) * 1.5));
 
@@ -92,28 +92,28 @@ export default function CylindricalDrum({ scrollProgress }: Props) {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                     {/* Sin Aliax */}
                     <div>
-                      <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.35)', margin: '0 0 9px', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                      <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.45)', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                         Sin Aliax
                       </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                         {BEFORE.map((text, i) => (
-                          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                            <span style={{ color: '#f87171', fontSize: 11, lineHeight: 1.4, flexShrink: 0 }}>✕</span>
-                            <span style={{ fontFamily: 'Manrope, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.4 }}>{text}</span>
+                          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
+                            <span style={{ color: '#f87171', fontSize: 13, lineHeight: 1.4, flexShrink: 0 }}>✕</span>
+                            <span style={{ fontFamily: 'Manrope, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>{text}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                     {/* Con Aliax */}
                     <div>
-                      <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: 10, fontWeight: 700, color: '#2dd4bf', margin: '0 0 9px', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                      <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: 13, fontWeight: 700, color: '#2dd4bf', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                         Con Aliax ✓
                       </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                         {AFTER.map((text, i) => (
-                          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                            <span style={{ color: '#2dd4bf', fontSize: 11, lineHeight: 1.4, flexShrink: 0 }}>✓</span>
-                            <span style={{ fontFamily: 'Manrope, sans-serif', fontSize: 12, color: '#fff', lineHeight: 1.4 }}>{text}</span>
+                          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
+                            <span style={{ color: '#2dd4bf', fontSize: 13, lineHeight: 1.4, flexShrink: 0 }}>✓</span>
+                            <span style={{ fontFamily: 'Manrope, sans-serif', fontSize: 14, color: '#fff', lineHeight: 1.4 }}>{text}</span>
                           </div>
                         ))}
                       </div>
