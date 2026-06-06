@@ -50,21 +50,22 @@ export default function Landing() {
             </defs>
           </svg>
 
-          {/* Hero copy — left side */}
-          <div className="absolute left-[6%] md:left-[11%] top-1/2 -translate-y-[55%] flex flex-col gap-3 z-20 pointer-events-none max-w-[48%] md:max-w-[40%]">
+          {/* Hero copy */}
+          <div className="absolute left-[5%] md:left-[11%] top-[18%] md:top-1/2 md:-translate-y-[55%] flex flex-col gap-2 md:gap-3 z-20 pointer-events-none w-[58%] md:max-w-[40%]">
             <p
-              className="text-[#2dd4bf] text-[10px] sm:text-[11px] uppercase tracking-[0.25em] font-medium"
+              className="text-[#2dd4bf] text-[9px] md:text-[11px] uppercase tracking-[0.2em] font-medium whitespace-nowrap"
               style={{ fontFamily: 'Manrope, sans-serif' }}
             >
               Directorio · México &amp; LATAM
             </p>
             <h1
-              className="text-white font-bold leading-[0.95]"
+              className="text-white font-bold"
               style={{
                 fontFamily: 'Manrope, sans-serif',
-                fontSize: 'clamp(28px, 3.8vw, 58px)',
+                fontSize: 'clamp(26px, 4.8vw, 64px)',
                 letterSpacing: '-0.035em',
-                margin: '0 0 16px',
+                lineHeight: 1.0,
+                margin: '0 0 8px',
               }}
             >
               <span style={{ display: 'block' }}>Psicólogos que</span>
@@ -84,8 +85,8 @@ export default function Landing() {
               </span>
             </h1>
             <p
-              className="text-white/60 text-[14px] md:text-[17px] leading-relaxed hidden sm:block"
-              style={{ fontFamily: 'Manrope, sans-serif', maxWidth: 380 }}
+              className="text-white/60 text-[11px] md:text-[15px] leading-relaxed hidden sm:block"
+              style={{ fontFamily: 'Manrope, sans-serif', maxWidth: 360 }}
             >
               El directorio gratuito para psicólogos y psicoterapeutas en Latinoamérica.
               Aparece por enfoque terapéutico, ciudad y modalidad.

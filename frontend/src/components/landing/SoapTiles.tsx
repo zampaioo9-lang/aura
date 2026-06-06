@@ -24,7 +24,7 @@ export default function SoapTiles({ scrollProgress }: Props) {
   const baseH = isMobile ? 52 : 56;
 
   return (
-    <div className="absolute left-4 md:left-[64px] top-[58%] md:top-1/2 -translate-y-1/2 flex flex-col gap-2 md:gap-[10px] z-40 pointer-events-auto">
+    <div className="hidden md:flex absolute md:left-[64px] md:top-1/2 md:-translate-y-1/2 flex-col md:gap-[10px] z-40 pointer-events-auto">
       {TILES.map((tile, i) => {
         const delay = i * 0.07;
         const tp = c01((ep - delay) / Math.max(0.01, 1 - delay));

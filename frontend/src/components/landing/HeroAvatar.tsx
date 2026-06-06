@@ -27,7 +27,7 @@ export default function HeroAvatar({ scrollProgress }: Props) {
   return (
     <div
       ref={wrapRef}
-      className="absolute right-0 bottom-0 w-full md:w-[52%] h-full pointer-events-none z-10 flex items-end justify-center md:justify-end"
+      className="absolute right-0 bottom-0 w-[55%] md:w-[52%] h-full pointer-events-none z-10 flex items-end justify-end"
       style={{ opacity, transform: `translateX(${tx}px)` }}
     >
       <div className="relative h-full w-full flex items-end justify-center overflow-hidden md:overflow-visible">
@@ -35,7 +35,7 @@ export default function HeroAvatar({ scrollProgress }: Props) {
           src="/aliax-avatar.png"
           alt="Aliax"
           draggable={false}
-          className="h-[80%] md:h-[100%] w-auto object-contain object-bottom select-none"
+          className="h-[70%] md:h-[100%] w-auto object-contain object-bottom select-none"
           style={{
             animation: 'avatarFloat 3.5s ease-in-out infinite',
             maxWidth: 'none',
