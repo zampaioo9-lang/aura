@@ -53,7 +53,7 @@ export default function CylindricalDrum({ scrollProgress }: Props) {
 
   return (
     <div
-      className="absolute inset-y-0 left-0 w-full sm:w-[65%] md:w-[60%] z-30 flex flex-col items-start justify-center pointer-events-none select-none pl-10 sm:pl-20 md:pl-32 pr-4 py-16"
+      className="hidden sm:flex absolute inset-y-0 left-0 w-full sm:w-[65%] md:w-[60%] z-30 flex-col items-start justify-center pointer-events-none select-none pl-10 sm:pl-20 md:pl-32 pr-4 py-16"
       style={{ perspective: '1200px', perspectiveOrigin: '30% 50%' }}
     >
       <div

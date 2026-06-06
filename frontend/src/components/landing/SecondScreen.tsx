@@ -15,6 +15,14 @@ const SPECIALTIES = [
   'Terapia Cognitivo-Conductual', 'Mindfulness',
 ];
 
+// Mobile preview cards — keep in sync with CylindricalDrum professionals
+const MOBILE_PROS = [
+  { name: 'Dra. Sofía Ramírez',    specialty: 'Ansiedad · TCC',     location: 'Ciudad de México', rating: 4.9, initials: 'SR', color: '#2dd4bf' },
+  { name: 'Psic. Marcos López',    specialty: 'Terapia de Pareja',  location: 'Monterrey',        rating: 4.8, initials: 'ML', color: '#7c3aed' },
+  { name: 'Dra. Valentina Castro', specialty: 'Trauma · EMDR',      location: 'Bogotá',           rating: 5.0, initials: 'VC', color: '#0d9488' },
+  { name: 'Psic. Alejandro Ríos',  specialty: 'Estrés · Burnout',   location: 'Buenos Aires',     rating: 4.7, initials: 'AR', color: '#6366f1' },
+];
+
 export default function SecondScreen({ scrollProgress, lerpedProgress }: Props) {
   const sp = c01((lerpedProgress - 0.65) / 0.25);
   const eased = 1 - Math.pow(1 - sp, 3);
@@ -36,21 +44,65 @@ export default function SecondScreen({ scrollProgress, lerpedProgress }: Props) 
       <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full opacity-10 pointer-events-none"
         style={{ background: 'radial-gradient(circle, #2dd4bf 0%, transparent 70%)' }} />
 
-      {/* Cylindrical drum */}
+      {/* Drum — desktop/tablet only */}
       <CylindricalDrum scrollProgress={scrollProgress} />
 
       {/* Right panel */}
-      <div className="absolute inset-y-0 right-0 w-full sm:w-[35%] md:w-[40%] flex flex-col items-start justify-center pr-6 sm:pr-12 md:pr-20 pl-6 sm:pl-0 z-40 pointer-events-auto">
-        <div className="flex flex-col gap-8 w-full max-w-[280px]">
+      <div className="absolute inset-0 sm:inset-y-0 sm:left-auto sm:right-0 w-full sm:w-[35%] md:w-[40%] flex flex-col items-start justify-start sm:justify-center pr-6 sm:pr-12 md:pr-20 pl-6 sm:pl-0 z-40 pointer-events-auto overflow-y-auto sm:overflow-visible pt-12 sm:pt-0 pb-20 sm:pb-0">
+        <div className="flex flex-col gap-6 sm:gap-8 w-full max-w-full sm:max-w-[280px]">
+
+          {/* Mobile-only: professional cards preview */}
+          <div className="sm:hidden flex flex-col gap-[10px] w-full">
+            {MOBILE_PROS.map(pro => (
+              <div
+                key={pro.name}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  background: 'rgba(255,255,255,0.06)',
+                  borderRadius: 14, padding: '10px 14px',
+                  border: '1px solid rgba(255,255,255,0.09)',
+                }}
+              >
+                <div style={{
+                  width: 42, height: 42, borderRadius: '50%', background: pro.color,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'Manrope, sans-serif', fontWeight: 700, fontSize: 13, color: '#0a1f2e',
+                  flexShrink: 0, position: 'relative',
+                }}>
+                  {pro.initials}
+                  <div style={{ position: 'absolute', bottom: 1, right: 1, width: 9, height: 9, borderRadius: '50%', background: '#22c55e', border: '2px solid #0f0a1a' }} />
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 700, fontSize: 13, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {pro.name} <span style={{ color: '#2dd4bf', fontSize: 11 }}>✓</span>
+                  </p>
+                  <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: 11, color: '#2dd4bf', margin: '2px 0 0' }}>{pro.specialty}</p>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.4)', margin: 0, whiteSpace: 'nowrap' }}>{pro.location}</p>
+                  <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: 12, color: '#fff', fontWeight: 600, margin: '2px 0 0' }}>★ {pro.rating}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
           {/* Stats */}
           <div className="flex flex-col gap-5">
             <div>
-              <p className="text-[#2dd4bf] text-[42px] font-bold leading-none" style={{ fontFamily: 'Michroma, sans-serif' }}>+300</p>
-              <p className="text-white/50 text-[13px] mt-1" style={{ fontFamily: 'Manrope, sans-serif' }}>especialistas disponibles</p>
+              <p className="text-[#2dd4bf] text-[34px] sm:text-[42px] font-bold leading-none" style={{ fontFamily: 'Michroma, sans-serif' }}>
+                Gratis
+              </p>
+              <p className="text-white/50 text-[13px] mt-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                Crea tu perfil de psicólogo sin costo
+              </p>
             </div>
             <div>
-              <p className="text-white text-[42px] font-bold leading-none" style={{ fontFamily: 'Michroma, sans-serif' }}>★ 4.9</p>
-              <p className="text-white/50 text-[13px] mt-1" style={{ fontFamily: 'Manrope, sans-serif' }}>calificación promedio</p>
+              <p className="text-white text-[34px] sm:text-[42px] font-bold leading-none" style={{ fontFamily: 'Michroma, sans-serif' }}>
+                Sin esperas
+              </p>
+              <p className="text-white/50 text-[13px] mt-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                Conecta con tu terapeuta desde hoy
+              </p>
             </div>
           </div>
 
