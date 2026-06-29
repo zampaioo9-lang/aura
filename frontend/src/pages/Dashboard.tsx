@@ -1055,7 +1055,7 @@ function TabInicio({ profiles, bookings, userName, C, dashStats, dashStatsError,
           Cargando…
         </div>
       )}
-      {(dashStats || isLoadingStats) && (
+      {dashStats && (
         <div style={{
           background: C.isDark ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.65)',
           border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.14)' : 'rgba(45,212,191,0.18)'}`,
