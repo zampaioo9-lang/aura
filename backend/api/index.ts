@@ -48,6 +48,7 @@ try {
   const webhookRoutes = require('../src/routes/webhooks').default;
   const aiNotesRoutes = require('../src/routes/ai-notes').default;
   const aiMatchingRoutes = require('../src/routes/ai-matching').default;
+  const analyticsRoutes = require('../src/routes/analytics').default;
   const { sendWhatsApp } = require('../src/services/whatsappService');
 
   app.use('/api/auth', authRoutes);
@@ -69,6 +70,7 @@ try {
   app.use('/api/webhooks', webhookRoutes);
   app.use('/api/ai-notes', aiNotesRoutes);
   app.use('/api/ai-matching', aiMatchingRoutes);
+  app.use('/api/analytics', analyticsRoutes);
 
   app.get('/api/test/whatsapp', async (req, res) => {
     const to = req.query.to as string;
