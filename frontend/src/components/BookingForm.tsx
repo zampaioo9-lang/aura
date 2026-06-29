@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Clock, Loader2, X } from 'lucide-react';
 import api from '../api/client';
 import PhoneInput from './PhoneInput';
+import CustomDatePicker from './CustomDatePicker';
 
 interface BookingFormProps {
   profileId: string;
@@ -172,13 +173,13 @@ export default function BookingForm({ profileId, serviceId, serviceName, primary
 
             <div>
               <label style={labelStyle}>Fecha</label>
-              <input
-                type="date" required value={form.date}
-                onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                min={new Date().toISOString().split('T')[0]}
-                style={{ ...inputStyle, colorScheme: 'dark' }}
-                onFocus={e => (e.target.style.borderColor = focusCol)}
-                onBlur={e => (e.target.style.borderColor = borderCol)}
+              <CustomDatePicker
+                value={form.date}
+                onChange={v => setForm(f => ({ ...f, date: v }))}
+                accent={hexToDark(primaryColor, 1)}
+                isDark
+                placeholder="Seleccionar fecha"
+                triggerStyle={{ ...inputStyle }}
               />
             </div>
 
