@@ -188,8 +188,9 @@ export default function Explorar() {
       const { data } = await api.post('/ai-matching/match', { answers: matchAnswers });
       setMatchResults(data.matches);
       setMatchStep(6);
-    } catch {
-      alert('No se pudo procesar el matching. Intenta de nuevo.');
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || 'No se pudo procesar el matching. Intenta de nuevo.';
+      alert(msg);
       setMatchStep(4);
     }
   };
