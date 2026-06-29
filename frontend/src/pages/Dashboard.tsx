@@ -80,6 +80,34 @@ interface Colors {
   isDark: boolean;
 }
 
+type AnalyticsPeriod = 'week' | 'month' | 'year';
+
+interface DashStats {
+  isPro: boolean;
+  period: AnalyticsPeriod;
+  income: {
+    total: number;
+    currency: string;
+    completedSessions: number;
+  };
+  clients: {
+    active: number;
+    newThisMonth: number;
+    avgSessionsPerClient: number | null;
+    retentionRate: number | null;
+  };
+  agenda: {
+    sessionsThisWeek: number;
+    slotsThisWeek: number;
+    cancelledWithNotice: number | null;
+    cancelledWithoutNotice: number | null;
+  };
+  clinical: {
+    improvedScalePercent: number | null;
+    clientsWithScale: number;
+  } | null;
+}
+
 const ACCENT_THEMES = [
   // ── Free ──
   {
@@ -197,8 +225,9 @@ export default function Dashboard() {
     () => localStorage.getItem('aliax_accent') || 'aguamarina'
   );
 
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [analyticsError, setAnalyticsError] = useState(false);
+  const [dashStats, setDashStats] = useState<DashStats | null>(null);
+  const [dashStatsError, setDashStatsError] = useState(false);
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<AnalyticsPeriod>('month');
 
   // Visited-tab sets: once mounted, tabs stay alive (hidden with display:none)
   const [visitedTabs, setVisitedTabs] = useState<Set<Tab | 'cuenta'>>(() => new Set([activeTab]));
@@ -251,10 +280,12 @@ export default function Dashboard() {
   }, [user?.email]);
 
   useEffect(() => {
-    api.get('/bookings/analytics')
-      .then(res => setAnalytics(res.data))
-      .catch(() => setAnalyticsError(true));
-  }, []);
+    setDashStats(null);
+    setDashStatsError(false);
+    api.get(`/analytics/dashboard?period=${analyticsPeriod}`)
+      .then(res => setDashStats(res.data))
+      .catch(() => setDashStatsError(true));
+  }, [analyticsPeriod]);
 
   const updateBookingStatus = async (id: string, status: string) => {
     if (status === 'CANCELLED') {
@@ -595,7 +626,7 @@ export default function Dashboard() {
           <div className="p-4 pb-8">
             {visitedMobile.has('inicio') && (
               <div style={{ display: mobileSection === 'inicio' ? undefined : 'none' }}>
-                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} analyticsError={analyticsError} isPro={isPro ?? false} onGoToAccount={() => goMobile('cuenta')} onGoToAgenda={() => goMobile('agenda')} />
+                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} dashStats={dashStats} dashStatsError={dashStatsError} analyticsPeriod={analyticsPeriod} onPeriodChange={setAnalyticsPeriod} isPro={isPro ?? false} onGoToAccount={() => goMobile('cuenta')} onGoToAgenda={() => goMobile('agenda')} />
               </div>
             )}
             {visitedMobile.has('citas') && (
@@ -881,7 +912,7 @@ export default function Dashboard() {
           <div className="flex-1 overflow-y-auto p-6">
             {visitedTabs.has('inicio') && (
               <div style={{ display: activeTab === 'inicio' ? undefined : 'none' }}>
-                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} analyticsError={analyticsError} isPro={isPro ?? false} twoCol onGoToAccount={() => goTab('cuenta')} onGoToAgenda={() => goTab('agenda')} />
+                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} dashStats={dashStats} dashStatsError={dashStatsError} analyticsPeriod={analyticsPeriod} onPeriodChange={setAnalyticsPeriod} isPro={isPro ?? false} twoCol onGoToAccount={() => goTab('cuenta')} onGoToAgenda={() => goTab('agenda')} />
               </div>
             )}
             {visitedTabs.has('citas') && (
