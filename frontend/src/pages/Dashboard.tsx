@@ -228,6 +228,7 @@ export default function Dashboard() {
   const [dashStats, setDashStats] = useState<DashStats | null>(null);
   const [dashStatsError, setDashStatsError] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<AnalyticsPeriod>('month');
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
 
   // Visited-tab sets: once mounted, tabs stay alive (hidden with display:none)
   const [visitedTabs, setVisitedTabs] = useState<Set<Tab | 'cuenta'>>(() => new Set([activeTab]));
@@ -280,11 +281,11 @@ export default function Dashboard() {
   }, [user?.email]);
 
   useEffect(() => {
-    setDashStats(null);
+    setIsLoadingStats(true);
     setDashStatsError(false);
     api.get(`/analytics/dashboard?period=${analyticsPeriod}`)
-      .then(res => setDashStats(res.data))
-      .catch(() => setDashStatsError(true));
+      .then(res => { setDashStats(res.data); setIsLoadingStats(false); })
+      .catch(() => { setDashStatsError(true); setIsLoadingStats(false); });
   }, [analyticsPeriod]);
 
   const updateBookingStatus = async (id: string, status: string) => {
@@ -626,7 +627,7 @@ export default function Dashboard() {
           <div className="p-4 pb-8">
             {visitedMobile.has('inicio') && (
               <div style={{ display: mobileSection === 'inicio' ? undefined : 'none' }}>
-                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} dashStats={dashStats} dashStatsError={dashStatsError} analyticsPeriod={analyticsPeriod} onPeriodChange={setAnalyticsPeriod} isPro={isPro ?? false} onGoToAccount={() => goMobile('cuenta')} onGoToAgenda={() => goMobile('agenda')} />
+                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} dashStats={dashStats} dashStatsError={dashStatsError} analyticsPeriod={analyticsPeriod} onPeriodChange={setAnalyticsPeriod} isLoadingStats={isLoadingStats} isPro={isPro ?? false} onGoToAccount={() => goMobile('cuenta')} onGoToAgenda={() => goMobile('agenda')} />
               </div>
             )}
             {visitedMobile.has('citas') && (
@@ -912,7 +913,7 @@ export default function Dashboard() {
           <div className="flex-1 overflow-y-auto p-6">
             {visitedTabs.has('inicio') && (
               <div style={{ display: activeTab === 'inicio' ? undefined : 'none' }}>
-                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} dashStats={dashStats} dashStatsError={dashStatsError} analyticsPeriod={analyticsPeriod} onPeriodChange={setAnalyticsPeriod} isPro={isPro ?? false} twoCol onGoToAccount={() => goTab('cuenta')} onGoToAgenda={() => goTab('agenda')} />
+                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} dashStats={dashStats} dashStatsError={dashStatsError} analyticsPeriod={analyticsPeriod} onPeriodChange={setAnalyticsPeriod} isLoadingStats={isLoadingStats} isPro={isPro ?? false} twoCol onGoToAccount={() => goTab('cuenta')} onGoToAgenda={() => goTab('agenda')} />
               </div>
             )}
             {visitedTabs.has('citas') && (
@@ -991,89 +992,8 @@ function DashNavRow({ icon, isActive, C, onClick, children }: { icon: React.Reac
   );
 }
 
-/* ── Mock data for blurred chart (Free users) ── */
-const MOCK_PER_DAY: Record<string, number> = (() => {
-  const vals = [1,0,2,3,1,0,2,1,4,2,0,1,3,2,1,0,2,3,1,2,0,1,2,1,3,0,2,1,3,2];
-  const out: Record<string, number> = {};
-  for (let i = 0; i < 30; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - (29 - i));
-    out[d.toISOString().split('T')[0]] = vals[i];
-  }
-  return out;
-})();
-
-/* ── Bar chart SVG ── */
-function BarChartSVG({ perDay, accent, muted }: {
-  perDay: Record<string, number>;
-  accent: string;
-  muted: string;
-}) {
-  const [hovered, setHovered] = useState<{ date: string; count: number; idx: number } | null>(null);
-  const entries = Object.entries(perDay).sort(([a], [b]) => a.localeCompare(b)).slice(-30);
-
-  if (entries.length === 0) return (
-    <div style={{ color: muted, fontSize: 12, textAlign: 'center', padding: '16px 0' }}>
-      Sin reservas en los últimos 30 días.
-    </div>
-  );
-
-  const maxVal = Math.max(...entries.map(([, v]) => v), 1);
-  const BAR_W = 8, GAP = 3, CHART_H = 70, LABEL_H = 14;
-  const totalW = entries.length * (BAR_W + GAP) - GAP;
-
-  return (
-    <div style={{ position: 'relative' }}>
-      {hovered && (
-        <div style={{
-          position: 'absolute',
-          bottom: LABEL_H + 6,
-          left: `${((hovered.idx * (BAR_W + GAP) + BAR_W / 2) / totalW) * 100}%`,
-          transform: 'translateX(-50%)',
-          background: 'rgba(0,0,0,0.82)', color: '#fff',
-          fontSize: 11, padding: '3px 8px', borderRadius: 6,
-          pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10,
-        }}>
-          {new Date(hovered.date + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}: {hovered.count} {hovered.count === 1 ? 'reserva' : 'reservas'}
-        </div>
-      )}
-      <svg
-        viewBox={`0 0 ${totalW} ${CHART_H + LABEL_H}`}
-        style={{ width: '100%', height: CHART_H + LABEL_H, display: 'block', overflow: 'visible' }}
-        onMouseLeave={() => setHovered(null)}
-      >
-        {entries.map(([date, count], i) => {
-          const barH = Math.max((count / maxVal) * CHART_H, count > 0 ? 3 : 1);
-          const x = i * (BAR_W + GAP);
-          const isHov = hovered?.date === date;
-          return (
-            <rect
-              key={date} x={x} y={CHART_H - barH}
-              width={BAR_W} height={barH} rx={2}
-              fill={accent} opacity={isHov ? 1 : 0.5}
-              style={{ cursor: 'default', transition: 'opacity 0.1s' }}
-              onMouseEnter={() => setHovered({ date, count, idx: i })}
-            />
-          );
-        })}
-        <line x1={0} y1={CHART_H} x2={totalW} y2={CHART_H} stroke={muted} strokeOpacity={0.2} strokeWidth={1} />
-        {entries.map(([date], i) => {
-          if (i % 5 !== 0 && i !== entries.length - 1) return null;
-          const x = i * (BAR_W + GAP) + BAR_W / 2;
-          const d = new Date(date + 'T12:00:00');
-          return (
-            <text key={date} x={x} y={CHART_H + LABEL_H - 2} textAnchor="middle" fontSize={7} fill={muted}>
-              {d.getDate()}/{d.getMonth() + 1}
-            </text>
-          );
-        })}
-      </svg>
-    </div>
-  );
-}
-
 /* ────────────────── Tab: Inicio ────────────────── */
-function TabInicio({ profiles, bookings, userName, C, dashStats, dashStatsError, analyticsPeriod, onPeriodChange, isPro, twoCol = false, onGoToAccount, onGoToAgenda }: {
+function TabInicio({ profiles, bookings, userName, C, dashStats, dashStatsError, analyticsPeriod, onPeriodChange, isLoadingStats, isPro, twoCol = false, onGoToAccount, onGoToAgenda }: {
   profiles: Profile[];
   bookings: Booking[];
   userName?: string;
@@ -1082,6 +1002,7 @@ function TabInicio({ profiles, bookings, userName, C, dashStats, dashStatsError,
   dashStatsError: boolean;
   analyticsPeriod: AnalyticsPeriod;
   onPeriodChange: (p: AnalyticsPeriod) => void;
+  isLoadingStats: boolean;
   isPro: boolean;
   twoCol?: boolean;
   onGoToAccount: () => void;
@@ -1134,7 +1055,7 @@ function TabInicio({ profiles, bookings, userName, C, dashStats, dashStatsError,
           Cargando…
         </div>
       )}
-      {dashStats && (
+      {(dashStats || isLoadingStats) && (
         <div style={{
           background: C.isDark ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.65)',
           border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.14)' : 'rgba(45,212,191,0.18)'}`,
@@ -1144,6 +1065,9 @@ function TabInicio({ profiles, bookings, userName, C, dashStats, dashStatsError,
           boxShadow: C.isDark
             ? '0 4px 24px rgba(0,0,0,0.25)'
             : '0 2px 16px rgba(45,212,191,0.10), 0 1px 4px rgba(0,0,0,0.06)',
+          opacity: isLoadingStats ? 0.6 : 1,
+          transition: 'opacity 0.2s ease',
+          pointerEvents: isLoadingStats ? 'none' : undefined,
         }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
