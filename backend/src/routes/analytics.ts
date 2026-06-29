@@ -67,7 +67,9 @@ router.get('/dashboard', authMiddleware, async (req: AuthRequest, res, next) => 
           status: 'COMPLETED',
           date: { gte: incomeStart },
         },
-        include: { service: { select: { price: true, currency: true } } },
+        select: {
+          service: { select: { price: true, currency: true } },
+        },
       }),
       prisma.booking.findMany({
         where: {
@@ -80,8 +82,10 @@ router.get('/dashboard', authMiddleware, async (req: AuthRequest, res, next) => 
       prisma.booking.findMany({
         where: {
           profileId: { in: profileIds },
-          status: { in: ['CANCELLED', 'NO_SHOW'] },
-          cancelledAt: { gte: thirtyDaysAgo },
+          OR: [
+            { status: 'CANCELLED', cancelledAt: { gte: thirtyDaysAgo } },
+            { status: 'NO_SHOW', date: { gte: thirtyDaysAgo } },
+          ],
         },
         select: { status: true, date: true, cancelledAt: true },
       }),
@@ -97,10 +101,12 @@ router.get('/dashboard', authMiddleware, async (req: AuthRequest, res, next) => 
         select: { clientId: true },
         distinct: ['clientId'],
       }),
+      // safety cap — suficiente para cualquier práctica individual
       prisma.sessionNote.findMany({
         where: { client: { userId: req.userId } },
         select: { clientId: true, noteType: true, nextPlan: true, sessionDate: true },
         orderBy: { sessionDate: 'asc' },
+        take: 2000,
       }),
       prisma.availabilitySlot.findMany({
         where: { profileId: { in: profileIds }, isActive: true },
