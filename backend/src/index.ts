@@ -18,6 +18,7 @@ import subscriptionRoutes from './routes/subscriptions';
 import reviewRoutes from './routes/reviews';
 import aiNotesRoutes from './routes/ai-notes';
 import aiMatchingRoutes from './routes/ai-matching';
+import analyticsRoutes from './routes/analytics';
 import { startReminderJob } from './jobs/reminderJob';
 import { startTrialExpiryJob } from './jobs/trialExpiryJob';
 import { sendWhatsAppTemplate, templateComponents } from './services/whatsappService';
@@ -50,6 +51,7 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/ai-notes', aiNotesRoutes);
 app.use('/api/ai-matching', aiMatchingRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
