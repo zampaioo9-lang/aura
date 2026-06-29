@@ -9,3 +9,5 @@ uploads/*
 *.log
 .vercel
 .worktrees/
+
+.env*.local

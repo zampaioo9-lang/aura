@@ -8,8 +8,7 @@ import { isProUser } from '../lib/planUtils';
 const router = Router();
 const prisma = new PrismaClient();
 const MAX_ACTIVE_SERVICES = 20;
-const MAX_IMAGES_FREE = 3;
-const MAX_IMAGES_PRO = 20;
+const MAX_IMAGES = 1; // 1 imagen por servicio para todos los planes
 
 // Helper: verify user owns the profile that owns the service
 async function verifyServiceOwnership(serviceId: string, userId: string) {
@@ -170,14 +169,8 @@ router.post('/:id/images', authMiddleware, async (req: AuthRequest, res, next) =
 
     const currentImages = service.images;
 
-    const isPro = isProUser(user!);
-    const imageLimit = isPro ? MAX_IMAGES_PRO : MAX_IMAGES_FREE;
-    if (currentImages.length >= imageLimit) {
-      const msg = !isPro
-        ? 'El plan gratuito permite máximo 3 fotos por servicio. Activa Pro para subir más.'
-        : `Has alcanzado el límite de ${MAX_IMAGES_PRO} fotos por servicio.`;
-      const code = !isPro ? 'PRO_REQUIRED' : undefined;
-      throw new AppError(403, msg, code);
+    if (currentImages.length >= MAX_IMAGES) {
+      throw new AppError(403, 'Solo se permite 1 imagen por servicio. Elimina la actual para subir otra.');
     }
 
     const updated = await prisma.service.update({

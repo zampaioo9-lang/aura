@@ -6,13 +6,7 @@ import api from '../api/client';
 import PhoneInput from '../components/PhoneInput';
 import CountrySelect from '../components/CountrySelect';
 import CitySelect from '../components/CitySelect';
-
-function hexToTint(hex: string, amount = 0.06): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgb(${Math.round(r * amount + 255 * (1 - amount))},${Math.round(g * amount + 255 * (1 - amount))},${Math.round(b * amount + 255 * (1 - amount))})`;
-}
+import { PROBLEMATICS } from '../data/problematics';
 
 function hexToDark(hex: string, amount = 0.15): string {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -21,17 +15,14 @@ function hexToDark(hex: string, amount = 0.15): string {
   return `rgb(${Math.round(r * amount)},${Math.round(g * amount)},${Math.round(b * amount)})`;
 }
 
-const DASH_ACCENT_MAP: Record<string, string> = {
-  profesional: '#9333ea',
-  bold: '#deb607',
-  elegante: '#3e99c9',
-  creative: '#d948f0',
-  carbono: '#14463f',
-  aguamarina: '#2dd4bf',
-  nocturno: '#581c9b',
-};
 
-const PROFESSIONS = ['Psicólogo/a', 'Psicoterapeuta', 'Psiquiatra', 'Trabajador/a social'];
+const PROFESSIONS = [
+  'Psicólogo/a',
+  'Psicoterapeuta',
+  'Psiquiatra',
+  'Neuropsicólogo/a',
+  'Trabajador/a Social',
+];
 
 const THERAPEUTIC_APPROACHES = [
   'Cognitivo-conductual (TCC)',
@@ -70,7 +61,7 @@ const SOCIAL_NETWORKS = [
 
 type SocialKey = 'facebook' | 'instagram' | 'linkedin';
 
-export default function AccountSettings({ asTab = false, tabIsDark = false }: { asTab?: boolean; tabIsDark?: boolean }) {
+export default function AccountSettings({ asTab = false, tabIsDark = false, accent = '#9333ea', onProfileSaved }: { asTab?: boolean; tabIsDark?: boolean; accent?: string; onProfileSaved?: () => void }) {
   const { user, updateAccount } = useAuth();
 
   const [name, setName]               = useState('');
@@ -85,11 +76,13 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [primaryProfile, setPrimaryProfile]         = useState<any>(null);
+  const [displayName, setDisplayName]               = useState('');
   const [profession, setProfession]                 = useState('');
   const [cedula, setCedula]                         = useState('');
   const [therapeuticApproaches, setTherapeuticApproaches] = useState<string[]>([]);
-  const [specialty, setSpecialty]                   = useState('');
+  const [problematics, setProblematics]             = useState<string[]>([]);
   const [yearsExperience, setYearsExperience]       = useState<string | number>('');
+  const [modality, setModality]                     = useState('');
   const [country, setCountry]                       = useState('');
   const [city, setCity]                             = useState('');
   const [published, setPublished]                   = useState(false);
@@ -98,9 +91,13 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState('');
   const [success, setSuccess] = useState('');
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [copiedShare, setCopiedShare] = useState<'link' | 'msg' | null>(null);
 
   const [openApproaches, setOpenApproaches] = useState(false);
   const approachesRef = useRef<HTMLDivElement>(null);
+  const [openProblematics, setOpenProblematics] = useState(false);
+  const problematicsRef = useRef<HTMLDivElement>(null);
   const [openProfession, setOpenProfession] = useState(false);
   const professionRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 600);
@@ -113,7 +110,8 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
     setBio(user.bio || '');
     setEmail(user.email || '');
     const links = (user.socialLinks || {}) as Record<string, string>;
-    setWaPhone(links.whatsapp || '+52');
+    // Fallback: if whatsapp not saved yet, use the phone from registration
+    setWaPhone(links.whatsapp || (user as any).phone || '+52');
     setSocialLinks({ facebook: links.facebook || '', instagram: links.instagram || '', linkedin: links.linkedin || '' });
   }, [user]);
 
@@ -122,15 +120,21 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
       const p = res.data[0] || null;
       setPrimaryProfile(p);
       if (p) {
+        setDisplayName(p.title || '');
         setProfession(p.profession || '');
         setCedula(p.cedula || '');
         setTherapeuticApproaches(p.therapeuticApproaches || []);
-        setSpecialty(p.specialty || '');
+        setProblematics(p.problematics || []);
         setYearsExperience(p.yearsExperience ?? '');
+        setModality(p.modality || '');
         setCountry(p.country || '');
         setCity(p.city || '');
         setPublished(p.published ?? false);
         setPrimaryColor(p.customization?.primaryColor || '#2dd4bf');
+        // Fallback: if user.bio is empty but profile.bio exists, use it
+        if (p.bio) setBio(prev => prev || p.bio);
+        // Fallback: if whatsapp still at default but profile has phone, use it
+        if (p.phone) setWaPhone(prev => (prev === '+52' || !prev) ? p.phone : prev);
       }
     }).catch(() => {});
   }, []);
@@ -139,6 +143,9 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
     const handler = (e: MouseEvent) => {
       if (approachesRef.current && !approachesRef.current.contains(e.target as Node)) {
         setOpenApproaches(false);
+      }
+      if (problematicsRef.current && !problematicsRef.current.contains(e.target as Node)) {
+        setOpenProblematics(false);
       }
       if (professionRef.current && !professionRef.current.contains(e.target as Node)) {
         setOpenProfession(false);
@@ -156,6 +163,9 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
 
   const toggleApproach = (a: string) =>
     setTherapeuticApproaches(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
+
+  const toggleProblematic = (p: string) =>
+    setProblematics(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
 
   const handleSave = async () => {
     if (showPassword) {
@@ -179,12 +189,14 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
 
       if (isProfessional && primaryProfile) {
         await api.put(`/profiles/${primaryProfile.id}`, {
-          title: name.trim() || undefined,
+          title: displayName.trim() || name.trim() || undefined,
+          bio: bio.trim() || undefined,
           profession: profession.trim() || undefined,
           cedula: cedula.trim() || undefined,
           therapeuticApproaches,
-          specialty: specialty.trim() || undefined,
+          problematics,
           yearsExperience: typeof yearsExperience === 'number' ? yearsExperience : undefined,
+          modality: modality || undefined,
           country: country.trim() || undefined,
           city: city.trim() || undefined,
           published,
@@ -195,6 +207,11 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
       setSuccess('Cambios guardados correctamente.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       setShowPassword(false); setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+      if (published && primaryProfile && !localStorage.getItem(`aliax_share_shown_${primaryProfile.id}`)) {
+        localStorage.setItem(`aliax_share_shown_${primaryProfile.id}`, '1');
+        setShowShareModal(true);
+      }
+      onProfileSaved?.();
     } catch (err: any) {
       setError(err.response?.data?.error || 'No se pudieron guardar los cambios.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -202,24 +219,28 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
   };
 
   const isDark = asTab ? tabIsDark : false;
-  const accentHex = DASH_ACCENT_MAP[localStorage.getItem('aliax_accent') || 'profesional'] ?? '#9333ea';
+  const _anums = accent.match(/\d+/g) ?? ['45','212','191'];
+  const [_ar, _ag, _ab] = _anums.map(Number);
+  const accentRgb = accent;
+  const accentHex = `#${_ar.toString(16).padStart(2,'0')}${_ag.toString(16).padStart(2,'0')}${_ab.toString(16).padStart(2,'0')}`;
+  const aA = (a: number) => `rgba(${_ar},${_ag},${_ab},${a})`;
 
   const D = {
-    page:    hexToTint(accentHex, 0.06),
+    page:    `rgb(${Math.round(255*0.94+_ar*0.06)},${Math.round(255*0.94+_ag*0.06)},${Math.round(255*0.94+_ab*0.06)})`,
     nav:     isDark ? 'rgba(12,12,12,0.9)' : 'rgba(255,255,255,0.9)',
-    navBorder: isDark ? 'rgba(45,212,191,0.12)' : 'rgba(13,148,136,0.15)',
+    navBorder: aA(isDark ? 0.12 : 0.15),
     card:    isDark ? 'rgba(255,255,255,0.06)' : '#ffffff',
     shadow:  isDark ? 'none' : '0 2px 16px rgba(0,0,0,0.06)',
-    border:  isDark ? 'rgba(45,212,191,0.15)' : 'rgba(13,148,136,0.18)',
-    borderInput: isDark ? 'rgba(45,212,191,0.2)' : 'rgba(13,148,136,0.25)',
+    border:  aA(isDark ? 0.15 : 0.18),
+    borderInput: aA(isDark ? 0.2 : 0.25),
     text:    isDark ? '#e8f0f0' : '#0a1f1e',
-    muted:   isDark ? '#6aada8' : '#3d8a82',
+    muted:   isDark ? `rgb(${Math.round((_ar+120)/2)},${Math.round((_ag+120)/2)},${Math.round((_ab+120)/2)})` : `rgb(${Math.round(_ar*0.4)},${Math.round(_ag*0.5)},${Math.round(_ab*0.5)})`,
     inputBg: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.8)',
     inputText: isDark ? '#e8f0f0' : '#0a1f1e',
     placeholder: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
-    divider: isDark ? 'rgba(45,212,191,0.1)' : 'rgba(13,148,136,0.1)',
+    divider: aA(0.1),
     tagBg:   isDark ? 'rgba(255,255,255,0.05)' : '#f0fafa',
-    tagText: isDark ? '#6aada8' : '#3d8a82',
+    tagText: isDark ? `rgb(${Math.round((_ar+120)/2)},${Math.round((_ag+120)/2)},${Math.round((_ab+120)/2)})` : `rgb(${Math.round(_ar*0.4)},${Math.round(_ag*0.5)},${Math.round(_ab*0.5)})`,
   };
 
   const inputStyle: CSSProperties = {
@@ -239,7 +260,7 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
   const saveBtn = (
     <button onClick={handleSave} disabled={saving} style={{
       display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px',
-      background: 'linear-gradient(135deg, #2dd4bf, #0d9488)',
+      background: accent,
       color: 'white', fontSize: 13, fontWeight: 600, borderRadius: 999, border: 'none',
       cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1,
       fontFamily: 'inherit',
@@ -249,7 +270,96 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
     </button>
   );
 
+  const shareSlug = primaryProfile?.slug ?? '';
+  const shareLink = shareSlug ? `https://aliax.io/${shareSlug}` : '';
+  const shareMessage = `Hola 👋 Te cuento que ahora puedes agendar tus citas conmigo desde mi nuevo perfil:\n\n${shareLink}\n\nAhí encuentras mis horarios disponibles y puedes reservar directamente. ¡Nos vemos!`;
+
+  const copyShare = (type: 'link' | 'msg') => {
+    navigator.clipboard.writeText(type === 'link' ? shareLink : shareMessage).then(() => {
+      setCopiedShare(type);
+      setTimeout(() => setCopiedShare(null), 2000);
+    });
+  };
+
   return (
+    <>
+    {showShareModal && shareLink && (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+      }}>
+        <div style={{
+          background: isDark ? '#0e2633' : '#ffffff',
+          border: `1.5px solid ${aA(0.35)}`,
+          borderRadius: 20, padding: 28, maxWidth: 460, width: '100%',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <div style={{ fontSize: 40, marginBottom: 8 }}>🎉</div>
+            <p style={{ color: isDark ? '#e8f0f0' : '#0a1f1e', fontWeight: 700, fontSize: 18, margin: 0 }}>
+              ¡Tu perfil está activo!
+            </p>
+            <p style={{ color: isDark ? '#6aada8' : '#3d8a82', fontSize: 13, margin: '6px 0 0' }}>
+              Comparte tu enlace para que tus pacientes puedan reservar contigo.
+            </p>
+          </div>
+
+          {/* Link row */}
+          <div style={{
+            background: aA(isDark ? 0.08 : 0.06),
+            border: `1px solid ${aA(0.25)}`,
+            borderRadius: 10, padding: '10px 14px',
+            display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14,
+          }}>
+            <span style={{ flex: 1, fontSize: 13, fontFamily: 'monospace', color: accentRgb, wordBreak: 'break-all' }}>
+              {shareLink}
+            </span>
+            <button onClick={() => copyShare('link')} style={{
+              flexShrink: 0, background: accent, color: 'white',
+              border: 'none', borderRadius: 8, padding: '6px 12px',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+            }}>
+              {copiedShare === 'link' ? '✓ Copiado' : 'Copiar enlace'}
+            </button>
+          </div>
+
+          {/* Message template */}
+          <div style={{ marginBottom: 16 }}>
+            <p style={{ color: isDark ? '#6aada8' : '#3d8a82', fontSize: 12, fontWeight: 600, margin: '0 0 6px' }}>
+              MENSAJE PARA TUS PACIENTES
+            </p>
+            <div style={{
+              background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fffe',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+              borderRadius: 10, padding: 12,
+              color: isDark ? '#b0cac8' : '#334155', fontSize: 13, lineHeight: 1.6,
+              whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+            }}>
+              {shareMessage}
+            </div>
+            <button onClick={() => copyShare('msg')} style={{
+              marginTop: 8, width: '100%',
+              background: aA(isDark ? 0.12 : 0.08),
+              border: `1px solid ${aA(0.3)}`,
+              color: accentRgb, borderRadius: 8, padding: '8px 0',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}>
+              {copiedShare === 'msg' ? '✓ Mensaje copiado' : 'Copiar mensaje'}
+            </button>
+          </div>
+
+          <button onClick={() => setShowShareModal(false)} style={{
+            width: '100%', background: 'transparent',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
+            color: isDark ? '#6aada8' : '#3d8a82', borderRadius: 10, padding: '9px 0',
+            fontSize: 13, cursor: 'pointer',
+          }}>
+            Cerrar
+          </button>
+        </div>
+      </div>
+    )}
     <div style={{ ...(asTab ? {} : { minHeight: '100vh', background: D.page }), fontFamily: "'Inter', system-ui, sans-serif" }}>
       <style>{`select option { background-color: ${isDark ? hexToDark(accentHex, 0.45) : '#ffffff'}; color: ${isDark ? '#e8f0f0' : '#334155'}; }`}</style>
       {!asTab && (
@@ -273,7 +383,7 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
         </div>
 
         {error   && <div style={{ padding: 12, background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.3)', color: '#f87171', fontSize: 13, borderRadius: 10 }}>{error}</div>}
-        {success && <div style={{ padding: 12, background: 'rgba(45,212,191,0.1)', border: '1px solid rgba(45,212,191,0.3)', color: '#2dd4bf', fontSize: 13, borderRadius: 10 }}>{success}</div>}
+        {success && <div style={{ padding: 12, background: aA(0.1), border: `1px solid ${aA(0.3)}`, color: accentRgb, fontSize: 13, borderRadius: 10 }}>{success}</div>}
 
         {/* ── Información personal ── */}
         <section style={{ background: D.card, borderRadius: 14, border: `1px solid ${D.border}`, padding: isMobile ? 14 : 24, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: D.shadow, backdropFilter: 'blur(12px)' }}>
@@ -281,22 +391,22 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
           <div>
             <label style={labelStyle}>Nombre <span style={{ color: '#f87171' }}>*</span></label>
             <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder="Tu nombre completo"
-              onFocus={e => (e.currentTarget.style.borderColor = '#2dd4bf')}
+              onFocus={e => (e.currentTarget.style.borderColor = accentRgb)}
               onBlur={e => (e.currentTarget.style.borderColor = D.borderInput)} />
           </div>
           <div>
             <label style={labelStyle}>Bio <span style={{ color: D.muted, fontWeight: 400 }}>({bio.length}/500)</span></label>
             <textarea value={bio} onChange={e => setBio(e.target.value)} maxLength={500} rows={3}
               style={{ ...inputStyle, resize: 'none' }} placeholder="Cuéntale a tus pacientes sobre ti..."
-              onFocus={e => (e.currentTarget.style.borderColor = '#2dd4bf')}
+              onFocus={e => (e.currentTarget.style.borderColor = accentRgb)}
               onBlur={e => (e.currentTarget.style.borderColor = D.borderInput)} />
           </div>
           <div>
-            <PhoneInput label="WhatsApp" required value={waPhone} onChange={setWaPhone} isDark={isDark} />
+            <PhoneInput label="WhatsApp" required value={waPhone} onChange={setWaPhone} isDark={isDark} accent={accentRgb} />
             <p style={{ marginTop: 6, fontSize: 12, color: D.muted }}>Este número recibe las notificaciones de citas por WhatsApp.</p>
             {waPhone.length > 4 && (
               <a href={`https://wa.me/${waPhone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, fontSize: 12, color: '#2dd4bf', textDecoration: 'none' }}>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, fontSize: 12, color: accentRgb, textDecoration: 'none' }}>
                 Abrir enlace <ExternalLink size={12} />
               </a>
             )}
@@ -309,12 +419,12 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
           <div>
             <label style={labelStyle}>Correo electrónico <span style={{ color: '#f87171' }}>*</span></label>
             <input value={email} onChange={e => setEmail(e.target.value)} type="email" style={inputStyle} placeholder="tu@correo.com"
-              onFocus={e => (e.currentTarget.style.borderColor = '#2dd4bf')}
+              onFocus={e => (e.currentTarget.style.borderColor = accentRgb)}
               onBlur={e => (e.currentTarget.style.borderColor = D.borderInput)} />
           </div>
           <div style={{ borderTop: `1px solid ${D.divider}`, paddingTop: 16 }}>
             <button type="button" onClick={() => setShowPassword(v => !v)}
-              style={{ fontSize: 13, fontWeight: 500, color: '#2dd4bf', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+              style={{ fontSize: 13, fontWeight: 500, color: accentRgb, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
               {showPassword ? 'Cancelar cambio de contraseña' : 'Cambiar contraseña'}
             </button>
             {showPassword && (
@@ -327,7 +437,7 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
                   <div key={label}>
                     <label style={labelStyle}>{label}</label>
                     <input value={val} onChange={e => set(e.target.value)} type="password" style={inputStyle} placeholder={ph}
-                      onFocus={e => (e.currentTarget.style.borderColor = '#2dd4bf')}
+                      onFocus={e => (e.currentTarget.style.borderColor = accentRgb)}
                       onBlur={e => (e.currentTarget.style.borderColor = D.borderInput)} />
                   </div>
                 ))}
@@ -345,6 +455,23 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
                 <Lock size={12} /> Sin perfil activo
               </span>
             )}
+          </div>
+
+          {/* Nombre profesional */}
+          <div>
+            <label style={labelStyle}>Nombre con el que quieres aparecer en tu perfil profesional</label>
+            <input
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+              disabled={!isProfessional}
+              style={{ ...inputStyle, opacity: !isProfessional ? 0.5 : 1 }}
+              placeholder="Psic. Fernanda López"
+              onFocus={e => (e.currentTarget.style.borderColor = accentRgb)}
+              onBlur={e => (e.currentTarget.style.borderColor = D.borderInput)}
+            />
+            <p style={{ marginTop: 6, fontSize: 12, color: D.muted }}>
+              Este nombre aparecerá en tu tarjeta del directorio y en tu página de reservas.
+            </p>
           </div>
 
           {/* Profesión */}
@@ -385,13 +512,13 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
                       width: '100%', display: 'flex', alignItems: 'center',
                       padding: '10px 14px', border: 'none', cursor: 'pointer', textAlign: 'left',
                       fontSize: 14, fontFamily: 'inherit',
-                      background: profession === p ? 'rgba(45,212,191,0.12)' : 'transparent',
-                      color: profession === p ? '#2dd4bf' : D.text,
-                      borderLeft: profession === p ? '3px solid #2dd4bf' : '3px solid transparent',
+                      background: profession === p ? aA(0.12) : 'transparent',
+                      color: profession === p ? accentRgb : D.text,
+                      borderLeft: profession === p ? `3px solid ${accentRgb}` : '3px solid transparent',
                       fontWeight: profession === p ? 600 : 400,
                       transition: 'all 0.1s',
                     }}
-                    onMouseEnter={e => { if (profession !== p) (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(45,212,191,0.04)'; }}
+                    onMouseEnter={e => { if (profession !== p) (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.07)' : aA(0.04); }}
                     onMouseLeave={e => { if (profession !== p) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                   >
                     {p}
@@ -409,7 +536,7 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
             </label>
             <input value={cedula} onChange={e => setCedula(e.target.value)} disabled={!isProfessional}
               placeholder="Ej. 8734521" style={{ ...inputStyle, opacity: !isProfessional ? 0.5 : 1 }}
-              onFocus={e => (e.currentTarget.style.borderColor = '#2dd4bf')}
+              onFocus={e => (e.currentTarget.style.borderColor = accentRgb)}
               onBlur={e => (e.currentTarget.style.borderColor = D.borderInput)} />
           </div>
 
@@ -457,19 +584,19 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
                         width: '100%', display: 'flex', alignItems: 'center', gap: 10,
                         padding: '9px 14px', border: 'none', cursor: 'pointer', textAlign: 'left',
                         fontSize: 13, fontFamily: 'inherit',
-                        background: active ? 'rgba(45,212,191,0.12)' : 'transparent',
-                        color: active ? '#2dd4bf' : D.text,
-                        borderLeft: active ? '3px solid #2dd4bf' : '3px solid transparent',
+                        background: active ? aA(0.12) : 'transparent',
+                        color: active ? accentRgb : D.text,
+                        borderLeft: active ? `3px solid ${accentRgb}` : '3px solid transparent',
                         fontWeight: active ? 600 : 400,
                         transition: 'all 0.1s',
                       }}
-                      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(45,212,191,0.04)'; }}
+                      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.05)' : aA(0.04); }}
                       onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                     >
                       <div style={{
                         width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-                        border: `2px solid ${active ? '#2dd4bf' : D.borderInput}`,
-                        background: active ? '#2dd4bf' : 'transparent',
+                        border: `2px solid ${active ? accentRgb : D.borderInput}`,
+                        background: active ? accentRgb : 'transparent',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         transition: 'all 0.15s',
                       }}>
@@ -483,47 +610,135 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
             )}
           </div>
 
-          {/* Especialidad + Años */}
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
-            <div>
-              <label style={labelStyle}>Especialidad</label>
-              <input value={specialty} onChange={e => setSpecialty(e.target.value)} disabled={!isProfessional}
-                placeholder="Ej: Psicología de pareja"
-                style={{ ...inputStyle, opacity: !isProfessional ? 0.5 : 1 }}
-                onFocus={e => (e.currentTarget.style.borderColor = '#2dd4bf')}
-                onBlur={e => (e.currentTarget.style.borderColor = D.borderInput)} />
-            </div>
-            <div>
-              <label style={labelStyle}>Años de experiencia</label>
-              <input type="number" min={0} max={70} value={yearsExperience}
-                onChange={e => setYearsExperience(e.target.value === '' ? '' : parseInt(e.target.value))}
-                disabled={!isProfessional} placeholder="Ej: 8"
-                style={{ ...inputStyle, opacity: !isProfessional ? 0.5 : 1 }}
-                onFocus={e => (e.currentTarget.style.borderColor = '#2dd4bf')}
-                onBlur={e => (e.currentTarget.style.borderColor = D.borderInput)} />
-            </div>
+          {/* Problemáticas que atiendes */}
+          <div ref={problematicsRef} style={{ position: 'relative' }}>
+            <label style={labelStyle}>Problemáticas que atiendes</label>
+            <button
+              type="button"
+              disabled={!isProfessional}
+              onClick={() => setOpenProblematics(o => !o)}
+              style={{
+                ...inputStyle,
+                cursor: !isProfessional ? 'not-allowed' : 'pointer',
+                opacity: !isProfessional ? 0.5 : 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                textAlign: 'left',
+              }}
+            >
+              <span style={{ color: problematics.length === 0 ? D.placeholder : D.inputText, fontSize: 14 }}>
+                {problematics.length === 0
+                  ? 'Selecciona problemáticas...'
+                  : problematics.length === 1
+                    ? problematics[0]
+                    : `${problematics.length} problemáticas seleccionadas`}
+              </span>
+              <ChevronDown size={16} style={{ flexShrink: 0, color: D.muted, transform: openProblematics ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+            </button>
+
+            {openProblematics && (
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4,
+                background: isDark ? hexToDark(accentHex, 0.45) : '#ffffff',
+                border: `1px solid ${D.borderInput}`,
+                borderRadius: 10, boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 4px 24px rgba(0,0,0,0.1)',
+                maxHeight: 280, overflowY: 'auto', zIndex: 100,
+              }}>
+                {PROBLEMATICS.map(p => {
+                  const active = problematics.includes(p);
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => toggleProblematic(p)}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '9px 14px', border: 'none', cursor: 'pointer', textAlign: 'left',
+                        fontSize: 13, fontFamily: 'inherit',
+                        background: active ? aA(0.12) : 'transparent',
+                        color: active ? accentRgb : D.text,
+                        borderLeft: active ? `3px solid ${accentRgb}` : '3px solid transparent',
+                        fontWeight: active ? 600 : 400,
+                        transition: 'all 0.1s',
+                      }}
+                      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.05)' : aA(0.04); }}
+                      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                    >
+                      <div style={{
+                        width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                        border: `2px solid ${active ? accentRgb : D.borderInput}`,
+                        background: active ? accentRgb : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'all 0.15s',
+                      }}>
+                        {active && <span style={{ color: 'white', fontSize: 10, lineHeight: 1 }}>✓</span>}
+                      </div>
+                      {p}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          <CountrySelect label="País" value={country} onChange={setCountry} isDark={isDark} />
+          {/* Años de experiencia */}
+          <div>
+            <label style={labelStyle}>Años de experiencia</label>
+            <input type="number" min={0} max={70} value={yearsExperience}
+              onChange={e => setYearsExperience(e.target.value === '' ? '' : parseInt(e.target.value))}
+              disabled={!isProfessional} placeholder="Ej: 8"
+              style={{ ...inputStyle, opacity: !isProfessional ? 0.5 : 1 }}
+              onFocus={e => (e.currentTarget.style.borderColor = accentRgb)}
+              onBlur={e => (e.currentTarget.style.borderColor = D.borderInput)} />
+          </div>
+
+          {/* Modalidad de consulta */}
+          {isProfessional && (
+            <div>
+              <label style={labelStyle}>Modalidad de consulta</label>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {[
+                  { value: 'presencial', label: 'Presencial' },
+                  { value: 'online',     label: 'En línea' },
+                  { value: 'hibrida',    label: 'Ambas' },
+                ].map(m => (
+                  <button key={m.value} type="button"
+                    onClick={() => setModality(prev => prev === m.value ? '' : m.value)}
+                    style={{
+                      padding: '8px 18px', borderRadius: 8, fontSize: 14,
+                      border: `1.5px solid ${modality === m.value ? accentRgb : D.borderInput}`,
+                      background: modality === m.value ? accentRgb : D.inputBg,
+                      color: modality === m.value ? '#fff' : D.inputText,
+                      fontWeight: modality === m.value ? 600 : 400,
+                      cursor: 'pointer', transition: 'all .15s',
+                      boxShadow: modality === m.value ? `0 2px 8px ${aA(0.3)}` : 'none',
+                    }}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <CountrySelect label="País" value={country} onChange={setCountry} isDark={isDark} accent={accentRgb} />
           <CitySelect country={country} value={city} onChange={setCity} isDark={isDark} />
 
           {isProfessional && (
             <div onClick={() => setPublished(v => !v)} style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
-              border: `2px solid ${published ? '#2dd4bf' : D.border}`,
-              background: published ? 'rgba(45,212,191,0.08)' : D.tagBg,
+              border: `2px solid ${published ? accentRgb : D.border}`,
+              background: published ? aA(0.08) : D.tagBg,
               transition: 'all 0.2s',
             }}>
               <div>
-                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: published ? '#2dd4bf' : D.text }}>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: published ? accentRgb : D.text }}>
                   {published ? '✓ Perfil publicado' : 'Perfil no publicado'}
                 </p>
                 <p style={{ margin: '2px 0 0', fontSize: 12, color: D.muted }}>
                   {published ? 'Tu perfil aparece en el directorio de Aliax' : 'Activa esto para aparecer en el directorio'}
                 </p>
               </div>
-              <div style={{ position: 'relative', width: 44, height: 24, borderRadius: 12, flexShrink: 0, background: published ? '#2dd4bf' : D.borderInput, transition: 'background 0.2s' }}>
+              <div style={{ position: 'relative', width: 44, height: 24, borderRadius: 12, flexShrink: 0, background: published ? accentRgb : D.borderInput, transition: 'background 0.2s' }}>
                 <div style={{ position: 'absolute', top: 3, width: 18, height: 18, borderRadius: '50%', background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.3)', left: published ? 23 : 3, transition: 'left 0.2s' }} />
               </div>
             </div>
@@ -539,7 +754,7 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
                   { hex: '#9333ea', label: 'Clásico' },
                   { hex: '#1D9E75', label: 'Saludable' },
                   { hex: '#2563eb', label: 'Confianza' },
-                  { hex: '#e11d48', label: 'Energía' },
+                  { hex: '#ec4899', label: 'Rosa' },
                   { hex: '#d97706', label: 'Cálido' },
                 ].map(({ hex, label }) => (
                   <button key={hex} type="button" onClick={() => setPrimaryColor(hex)}
@@ -565,19 +780,28 @@ export default function AccountSettings({ asTab = false, tabIsDark = false }: { 
               </label>
               <input value={socialLinks[key]} onChange={e => setSocialLinks(prev => ({ ...prev, [key]: e.target.value }))}
                 style={inputStyle} placeholder={placeholder} type="url"
-                onFocus={e => (e.currentTarget.style.borderColor = '#2dd4bf')}
+                onFocus={e => (e.currentTarget.style.borderColor = accentRgb)}
                 onBlur={e => (e.currentTarget.style.borderColor = D.borderInput)} />
               {socialLinks[key] && (
                 <a href={socialLinks[key].startsWith('http') ? socialLinks[key] : `https://${socialLinks[key]}`}
                   target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, fontSize: 12, color: '#2dd4bf', textDecoration: 'none' }}>
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, fontSize: 12, color: accentRgb, textDecoration: 'none' }}>
                   Abrir enlace <ExternalLink size={12} />
                 </a>
               )}
             </div>
           ))}
         </section>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 8 }}>
+          {success && <div style={{ padding: 12, background: aA(0.1), border: `1px solid ${aA(0.3)}`, color: accentRgb, fontSize: 13, borderRadius: 10 }}>{success}</div>}
+          {error && <div style={{ padding: 12, background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.3)', color: '#f87171', fontSize: 13, borderRadius: 10 }}>{error}</div>}
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            {saveBtn}
+          </div>
+        </div>
       </div>
     </div>
+    </>
   );
 }

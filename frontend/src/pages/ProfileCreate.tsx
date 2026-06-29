@@ -391,7 +391,8 @@ export default function ProfileCreate() {
 
               {/* Teléfono */}
               <div>
-                <PhoneInput label="WhatsApp / Teléfono" optional value={watch('phone') || ''} onChange={v => setValue('phone', v)} isDark={isDark} accent={accent} />
+                <PhoneInput label="WhatsApp / Teléfono" required value={watch('phone') || ''} onChange={v => setValue('phone', v)} isDark={isDark} accent={accent} />
+                {errors.phone && <p style={S.error}>{errors.phone.message}</p>}
               </div>
             </div>
           </div>

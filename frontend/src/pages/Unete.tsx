@@ -488,6 +488,7 @@ export default function Unete() {
             <Link to="/pricing" className="hover:text-white/50 transition-colors">Precios</Link>
             <Link to="/login" className="hover:text-white/50 transition-colors">Iniciar sesión</Link>
             <Link to="/register" className="hover:text-white/50 transition-colors">Registrarse</Link>
+            <Link to="/privacidad" className="hover:text-white/50 transition-colors">Privacidad</Link>
           </div>
           <p className="text-xs text-white/15">
             &copy; {new Date().getFullYear()} Aliax.io. Todos los derechos reservados.

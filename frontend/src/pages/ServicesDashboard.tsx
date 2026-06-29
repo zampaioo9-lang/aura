@@ -118,11 +118,7 @@ export default function ServicesDashboard() {
       await fetchServices();
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Error al subir imagen';
-      if (err.response?.data?.code === 'PRO_REQUIRED') {
-        toast('El plan gratuito permite máximo 3 fotos. Activa Pro en /pricing para subir más.', 'error');
-      } else {
-        toast(msg, 'error');
-      }
+      toast(msg, 'error');
     }
   };
 

@@ -95,6 +95,21 @@ router.get('/check-username/:username', async (req, res, next) => {
   }
 });
 
+function stripAccents(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+// Builds an OR that matches the value with or without accents in both directions.
+// e.g. searching "Tepic" also finds "Tepíc, Nayarit"; searching "México" also finds "Mexico".
+function fieldOR(field: string, value: string): Prisma.ProfileWhereInput {
+  const plain = stripAccents(value);
+  const variants = Array.from(new Set([value, plain]));
+  if (variants.length === 1) return { [field]: { contains: value, mode: 'insensitive' } };
+  return {
+    OR: variants.map(v => ({ [field]: { contains: v, mode: 'insensitive' } })),
+  };
+}
+
 // GET /api/profiles/directory — Public directory with filters
 router.get('/directory', async (req, res, next) => {
   try {
@@ -109,15 +124,17 @@ router.get('/directory', async (req, res, next) => {
     const limitNum = Math.min(50, parseInt(limit, 10) || 20);
     const skip = (pageNum - 1) * limitNum;
 
-    const baseWhere: Prisma.ProfileWhereInput = { published: true };
-    if (profession)           baseWhere.profession           = { contains: profession, mode: 'insensitive' };
-    if (city)                 baseWhere.city                 = { contains: city, mode: 'insensitive' };
-    if (country)              baseWhere.country              = { contains: country, mode: 'insensitive' };
-    if (modality)             baseWhere.modality             = modality;
-    if (therapeuticApproach)  baseWhere.therapeuticApproaches = { hasSome: [therapeuticApproach] };
-    if (problematic)          baseWhere.problematics         = { hasSome: [problematic] };
-    if (population)           baseWhere.populations          = { hasSome: [population] };
-    if (maxPrice)             baseWhere.pricePerSession      = { lte: parseFloat(maxPrice) };
+    const andConditions: Prisma.ProfileWhereInput[] = [{ published: true }];
+    if (profession)          andConditions.push(fieldOR('profession', profession));
+    if (city)                andConditions.push(fieldOR('city', city));
+    if (country)             andConditions.push(fieldOR('country', country));
+    if (modality)            andConditions.push({ modality });
+    if (therapeuticApproach) andConditions.push({ therapeuticApproaches: { hasSome: [therapeuticApproach] } });
+    if (problematic)         andConditions.push({ problematics: { hasSome: [problematic] } });
+    if (population)          andConditions.push({ populations: { hasSome: [population] } });
+    if (maxPrice)            andConditions.push({ pricePerSession: { lte: parseFloat(maxPrice) } });
+
+    const baseWhere: Prisma.ProfileWhereInput = { AND: andConditions };
 
     const now = new Date();
 

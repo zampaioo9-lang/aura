@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Move } from 'lucide-react';
 import type { Service } from '../hooks/useServices';
 import ImageUpload from './ImageUpload';
 
@@ -39,8 +39,127 @@ const serviceFormSchema = z.object({
 
 type ServiceFormValues = z.infer<typeof serviceFormSchema>;
 
+export function ImagePositionPicker({
+  image, position, onChange, onChangePicture, onRemove,
+}: {
+  image: string;
+  position: string;
+  onChange: (pos: string) => void;
+  onChangePicture?: () => void;
+  onRemove?: () => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const posRef = useRef({ x: 50, y: 50 });
+  const [pos, setPos] = useState(() => {
+    const parts = (position || '50% 50%').split(' ');
+    return { x: parseFloat(parts[0]) || 50, y: parseFloat(parts[1]) || 50 };
+  });
+  const [dragging, setDragging] = useState(false);
+
+  useEffect(() => {
+    const parts = (position || '50% 50%').split(' ');
+    const p = { x: parseFloat(parts[0]) || 50, y: parseFloat(parts[1]) || 50 };
+    posRef.current = p;
+    setPos(p);
+  }, [position]);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragging(true);
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startPx = posRef.current.x;
+    const startPy = posRef.current.y;
+
+    const onMove = (ev: MouseEvent) => {
+      if (!containerRef.current || !imgRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const cW = rect.width;
+      const cH = 150;
+      const nW = imgRef.current.naturalWidth || cW;
+      const nH = imgRef.current.naturalHeight || cH;
+      const scale = Math.max(cW / nW, cH / nH);
+      const overflowX = Math.max(1, nW * scale - cW);
+      const overflowY = Math.max(1, nH * scale - cH);
+      const newX = Math.max(0, Math.min(100, startPx - ((ev.clientX - startX) / overflowX) * 100));
+      const newY = Math.max(0, Math.min(100, startPy - ((ev.clientY - startY) / overflowY) * 100));
+      posRef.current = { x: newX, y: newY };
+      setPos({ x: newX, y: newY });
+      onChange(`${Math.round(newX)}% ${Math.round(newY)}%`);
+    };
+
+    const onUp = () => {
+      setDragging(false);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  };
+
+  return (
+    <div>
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.6px', textTransform: 'uppercase', color: '#64748b' }}>
+          Vista previa de la tarjeta
+        </span>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {onChangePicture && (
+            <button type="button" onClick={onChangePicture}
+              style={{ fontSize: 12, color: '#0d9488', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', fontWeight: 500 }}>
+              Cambiar foto
+            </button>
+          )}
+          {onRemove && (
+            <button type="button" onClick={onRemove}
+              style={{ fontSize: 12, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', lineHeight: 1 }}>
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Drag container — same dimensions as the public card image (max 320px × 150px) */}
+      <div
+        ref={containerRef}
+        style={{
+          height: 150, maxWidth: 320, overflow: 'hidden', borderRadius: 12, userSelect: 'none', position: 'relative',
+          cursor: dragging ? 'grabbing' : 'grab',
+          border: dragging ? '2px solid #2dd4bf' : '1.5px solid rgba(45,212,191,0.35)',
+          transition: 'border-color 0.15s',
+        }}
+        onMouseDown={handleMouseDown}
+      >
+        <img
+          ref={imgRef}
+          src={image}
+          alt=""
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${pos.x}% ${pos.y}%`, pointerEvents: 'none', userSelect: 'none', display: 'block' }}
+          draggable={false}
+        />
+        {/* Drag hint — fades during drag */}
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          opacity: dragging ? 0 : 1, transition: 'opacity 0.15s', pointerEvents: 'none',
+        }}>
+          <div style={{
+            background: 'rgba(0,0,0,0.52)', borderRadius: 8, padding: '5px 12px',
+            display: 'flex', alignItems: 'center', gap: 6, backdropFilter: 'blur(4px)',
+          }}>
+            <Move size={13} color="white" />
+            <span style={{ color: 'white', fontSize: 12, fontWeight: 500 }}>Arrastra para reencuadrar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface ServiceFormProps {
-  onSubmit: (data: ServiceFormValues & { image?: string }) => Promise<void>;
+  onSubmit: (data: ServiceFormValues & { image?: string; imagePosition?: string; sessionModality?: string }) => Promise<void>;
   initialData?: Service | null;
   mode: 'create' | 'edit';
   loading?: boolean;
@@ -56,6 +175,8 @@ const fieldBase = `
 
 export default function ServiceForm({ onSubmit, initialData, mode, loading = false, onCancel }: ServiceFormProps) {
   const [image, setImage] = useState('');
+  const [imagePosition, setImagePosition] = useState('50% 50%');
+  const [sessionModality, setSessionModality] = useState('');
 
   const {
     register,
@@ -80,11 +201,13 @@ export default function ServiceForm({ onSubmit, initialData, mode, loading = fal
         durationMinutes: initialData.durationMinutes,
       });
       setImage(initialData.image || '');
+      setImagePosition(initialData.imagePosition || '50% 50%');
+      setSessionModality(initialData.sessionModality || '');
     }
   }, [initialData, reset]);
 
   const handleFormSubmit = async (data: ServiceFormValues) => {
-    await onSubmit({ ...data, image: image || undefined });
+    await onSubmit({ ...data, image: image || undefined, imagePosition, sessionModality: sessionModality || undefined });
   };
 
   const busy = isSubmitting || loading;
@@ -117,8 +240,35 @@ export default function ServiceForm({ onSubmit, initialData, mode, loading = fal
         {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description.message}</p>}
       </div>
 
+      {/* Modalidad */}
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-2">Modalidad de atención</label>
+        <div className="flex gap-3 flex-wrap">
+          {[
+            { value: 'presencial', label: 'Presencial' },
+            { value: 'online',     label: 'En línea' },
+            { value: 'hibrida',    label: 'Ambas' },
+          ].map(m => (
+            <button key={m.value} type="button"
+              onClick={() => setSessionModality(prev => prev === m.value ? '' : m.value)}
+              style={{
+                padding: '8px 18px', borderRadius: 8, fontSize: 14,
+                border: `1.5px solid ${sessionModality === m.value ? '#0d9488' : '#cbd5e1'}`,
+                background: sessionModality === m.value ? 'linear-gradient(135deg, #2dd4bf, #0d9488)' : '#fff',
+                color: sessionModality === m.value ? '#fff' : '#475569',
+                fontWeight: sessionModality === m.value ? 600 : 400,
+                cursor: 'pointer', transition: 'all .15s',
+                boxShadow: sessionModality === m.value ? '0 2px 8px rgba(45,212,191,0.3)' : 'none',
+              }}>
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Image */}
-      <ImageUpload value={image} onChange={setImage} label="Imagen del servicio" />
+      <ImageUpload value={image} onChange={val => { setImage(val); setImagePosition('50% 50%'); }} label="Imagen del servicio" />
+      {image && <ImagePositionPicker image={image} position={imagePosition} onChange={setImagePosition} />}
 
       {/* Price + Currency */}
       <div className="grid grid-cols-2 gap-4">

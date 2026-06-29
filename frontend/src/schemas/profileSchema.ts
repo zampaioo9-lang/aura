@@ -13,7 +13,7 @@ export const profileFormSchema = z.object({
   country: z.string().max(100).optional().or(z.literal('')),
   city: z.string().max(100).optional().or(z.literal('')),
   bio: z.string().max(500, 'Maximo 500 caracteres').optional().or(z.literal('')),
-  phone: z.string().max(20).optional().or(z.literal('')),
+  phone: z.string().min(8, 'El WhatsApp es obligatorio'),
   template: z.enum(['MINIMALIST', 'BOLD', 'ELEGANT', 'CREATIVE', 'CARBONO']),
   published: z.boolean(),
   // Salud mental
@@ -35,10 +35,11 @@ export const profileFormSchema = z.object({
 export type ProfileFormData = z.infer<typeof profileFormSchema>;
 
 export const PROFESSIONS = [
-  'Medico', 'Abogado', 'Psicologo', 'Coach', 'Nutricionista',
-  'Dentista', 'Contador', 'Arquitecto', 'Disenador', 'Fotógrafo',
-  'Consultor', 'Terapeuta', 'Veterinario', 'Personal Trainer',
-  'Profesor', 'Freelancer',
+  'Psicólogo/a',
+  'Psicoterapeuta',
+  'Psiquiatra',
+  'Neuropsicólogo/a',
+  'Trabajador/a Social',
 ];
 
 export const COUNTRIES = [

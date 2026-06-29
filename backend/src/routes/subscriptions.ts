@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { createCheckoutSession, handleWebhookEvent } from '../services/stripeService';
-import { verifySubscription, resolveInterval, createPayPalOrder, capturePayPalOrder } from '../services/paypalService';
+import { verifySubscription, resolveInterval, createPayPalOrder, capturePayPalOrder, createPayPalSubscription } from '../services/paypalService';
 import { env } from '../config/env';
 
 const router = Router();
@@ -43,6 +43,24 @@ router.post('/stripe/webhook', async (req: Request, res: Response, next: NextFun
 
     await handleWebhookEvent(req.body as Buffer, sig);
     res.json({ received: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/subscriptions/paypal/subscription/create  (crea suscripción mensual/anual)
+router.post('/paypal/subscription/create', authMiddleware, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { interval } = req.body as { interval?: string };
+    const planId = interval === 'YEARLY' ? env.PAYPAL_PLAN_YEARLY : env.PAYPAL_PLAN_MONTHLY;
+    if (!planId) throw new AppError(500, 'PayPal plan not configured');
+
+    const approvalUrl = await createPayPalSubscription(
+      planId,
+      `${env.FRONTEND_URL}/payment/paypal-return`,
+      `${env.FRONTEND_URL}/pricing`,
+    );
+    res.json({ approvalUrl });
   } catch (err) {
     next(err);
   }

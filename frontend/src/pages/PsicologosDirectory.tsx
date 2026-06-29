@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { MapPin, Zap, ArrowLeft, Search } from 'lucide-react';
 import api from '../api/client';
+import SiteFooter from '../components/landing/SiteFooter';
 
 // ── Mapeos de slugs a valores reales ──────────────────────────────
 
@@ -118,7 +119,7 @@ export default function PsicologosDirectory() {
         <link rel="canonical" href={`https://www.aliax.io${window.location.pathname}`} />
       </Helmet>
 
-      <div style={{ minHeight: '100vh', background: '#06030f', color: '#e8e0f8', fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif" }}>
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1a1040 0%, #0e2633 50%, #0a1a1a 100%)', color: '#e8e0f8', fontFamily: "'Plus Jakarta Sans','DM Sans',sans-serif" }}>
 
         {/* Nav */}
         <nav style={{
@@ -345,6 +346,8 @@ export default function PsicologosDirectory() {
             })),
           })}} />
         </div>
+
+        <SiteFooter />
       </div>
     </>
   );

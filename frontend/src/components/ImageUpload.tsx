@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Loader2, Image as ImageIcon } from 'lucide-react';
 import { useUpload } from '../hooks/useUpload';
 
@@ -12,6 +12,8 @@ export default function ImageUpload({ value, onChange, label = 'Foto de perfil' 
   const { uploadImage, uploading, progress, error } = useUpload();
   const [preview, setPreview] = useState<string>(value || '');
   const [dragOver, setDragOver] = useState(false);
+
+  useEffect(() => { setPreview(value || ''); }, [value]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(async (file: File) => {
@@ -53,7 +55,7 @@ export default function ImageUpload({ value, onChange, label = 'Foto de perfil' 
       <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
 
       {preview ? (
-        <div className="relative w-32 h-32 rounded-xl overflow-hidden border border-slate-200 group">
+        <div className="relative w-32 h-32 rounded-xl overflow-hidden border border-slate-200 group cursor-pointer" onClick={() => !uploading && inputRef.current?.click()}>
           <img src={preview} alt="Preview" className="w-full h-full object-cover" />
           {uploading && (
             <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
@@ -62,14 +64,19 @@ export default function ImageUpload({ value, onChange, label = 'Foto de perfil' 
             </div>
           )}
           {!uploading && (
-            <button
-              type="button"
-              onClick={remove}
-              className="absolute top-1 right-1 p-1 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="Eliminar imagen"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
+            <>
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span className="text-white text-xs font-medium">Cambiar</span>
+              </div>
+              <button
+                type="button"
+                onClick={e => { e.stopPropagation(); remove(); }}
+                className="absolute top-1 right-1 p-1 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Eliminar imagen"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </>
           )}
         </div>
       ) : (

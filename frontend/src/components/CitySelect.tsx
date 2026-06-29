@@ -7,6 +7,7 @@ interface CitySelectProps {
   value: string;
   onChange: (value: string) => void;
   isDark?: boolean;
+  accent?: string;
   className?: string;
 }
 
@@ -21,15 +22,22 @@ function darkBg(amount = 0.45): string {
   return `rgb(${Math.round(r * amount)},${Math.round(g * amount)},${Math.round(b * amount)})`;
 }
 
-export default function CitySelect({ country, value, onChange, isDark = false, className }: CitySelectProps) {
+export default function CitySelect({ country, value, onChange, isDark = false, accent, className }: CitySelectProps) {
+  const m = accent?.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  const [ar, ag, ab] = m ? [m[1], m[2], m[3]] : ['45', '212', '191'];
   const cities = CITIES_BY_COUNTRY[country] ?? [];
   const hasCities = cities.length > 0;
 
   const [showInput, setShowInput] = useState(false);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const prevCountryRef = useRef('');
 
   useEffect(() => {
+    const prev = prevCountryRef.current;
+    prevCountryRef.current = country;
+    // Solo limpiar si el país cambió desde un valor ya establecido (usuario cambió manualmente)
+    if (!prev) return;
     onChange('');
     setShowInput(false);
     setOpen(false);
@@ -54,7 +62,7 @@ export default function CitySelect({ country, value, onChange, isDark = false, c
   const baseInput: React.CSSProperties = {
     width: '100%',
     padding: '8px 12px',
-    border: `1px solid ${isDark ? 'rgba(45,212,191,0.2)' : 'rgba(13,148,136,0.25)'}`,
+    border: `1px solid ${isDark ? `rgba(${ar},${ag},${ab},0.2)` : `rgba(${ar},${ag},${ab},0.25)`}`,
     borderRadius: 8,
     background: isDark ? 'rgba(255,255,255,0.06)' : '#ffffff',
     backdropFilter: isDark ? 'blur(8px)' : 'none',
@@ -113,7 +121,7 @@ export default function CitySelect({ country, value, onChange, isDark = false, c
         <div style={{
           position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4,
           background: dropdownBg,
-          border: `1px solid ${isDark ? 'rgba(45,212,191,0.2)' : '#e2e8f0'}`,
+          border: `1px solid ${isDark ? `rgba(${ar},${ag},${ab},0.2)` : '#e2e8f0'}`,
           borderRadius: 10, overflow: 'hidden',
           boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 4px 24px rgba(0,0,0,0.1)',
           maxHeight: 220, overflowY: 'auto', zIndex: 100,
@@ -128,13 +136,13 @@ export default function CitySelect({ country, value, onChange, isDark = false, c
                 style={{
                   width: '100%', padding: '9px 14px', border: 'none', cursor: 'pointer',
                   textAlign: 'left', fontSize: 14, fontFamily: 'inherit',
-                  background: active ? 'rgba(45,212,191,0.12)' : 'transparent',
-                  color: active ? '#2dd4bf' : textColor,
-                  borderLeft: active ? '3px solid #2dd4bf' : '3px solid transparent',
+                  background: active ? `rgba(${ar},${ag},${ab},0.12)` : 'transparent',
+                  color: active ? `rgb(${ar},${ag},${ab})` : textColor,
+                  borderLeft: active ? `3px solid rgb(${ar},${ag},${ab})` : '3px solid transparent',
                   fontWeight: active ? 600 : 400,
                   transition: 'background 0.1s',
                 }}
-                onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(45,212,191,0.04)'; }}
+                onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.07)' : `rgba(${ar},${ag},${ab},0.06)`; }}
                 onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
               >
                 {c}
@@ -147,12 +155,12 @@ export default function CitySelect({ country, value, onChange, isDark = false, c
             style={{
               width: '100%', padding: '9px 14px', border: 'none', cursor: 'pointer',
               textAlign: 'left', fontSize: 14, fontFamily: 'inherit', fontStyle: 'italic',
-              background: showInput ? 'rgba(45,212,191,0.12)' : 'transparent',
-              color: showInput ? '#2dd4bf' : mutedColor,
-              borderLeft: showInput ? '3px solid #2dd4bf' : '3px solid transparent',
+              background: showInput ? `rgba(${ar},${ag},${ab},0.12)` : 'transparent',
+              color: showInput ? `rgb(${ar},${ag},${ab})` : mutedColor,
+              borderLeft: showInput ? `3px solid rgb(${ar},${ag},${ab})` : '3px solid transparent',
               transition: 'background 0.1s',
             }}
-            onMouseEnter={e => { if (!showInput) (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(45,212,191,0.04)'; }}
+            onMouseEnter={e => { if (!showInput) (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.07)' : `rgba(${ar},${ag},${ab},0.06)`; }}
             onMouseLeave={e => { if (!showInput) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
           >
             Otra ciudad...

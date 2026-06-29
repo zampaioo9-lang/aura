@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useFeature } from '../hooks/useFeature';
@@ -14,6 +14,7 @@ import AccountSettings from './AccountSettings';
 import ProGate from '../components/ProGate';
 import Pacientes from './Pacientes';
 import { useUpload } from '../hooks/useUpload';
+import { useToast } from '../components/Toast';
 import { formatCurrency } from '../lib/utils';
 import ProfessionalCalendar from '../components/dashboard/ProfessionalCalendar';
 import NewBookingModal from '../components/dashboard/NewBookingModal';
@@ -60,15 +61,6 @@ interface Booking {
   profile: { title: string; slug: string };
 }
 
-interface ClientBooking {
-  id: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  status: string;
-  service: { name: string; price: number; currency: string; durationMinutes: number };
-  profile: { title: string; slug: string };
-}
 
 type Tab = 'inicio' | 'citas' | 'resenas' | 'agenda' | 'cuenta' | 'pacientes';
 type MobileSection = 'perfil' | Tab;
@@ -89,6 +81,7 @@ interface Colors {
 }
 
 const ACCENT_THEMES = [
+  // ── Free ──
   {
     id: 'aguamarina', label: 'Aguamarina', pro: false,
     accent: 'rgb(45,212,191)',
@@ -106,6 +99,15 @@ const ACCENT_THEMES = [
     lightGradient: 'linear-gradient(160deg, #9333ea 0%, #c084fc 100%)',
   },
   {
+    id: 'creative', label: 'Creative', pro: false,
+    accent: 'rgb(217,72,240)',
+    accentDark:  'rgba(217,72,240,0.15)',
+    accentLight: 'rgba(217,72,240,0.08)',
+    darkGradient:  'linear-gradient(160deg, #500650 0%, #9d1fa8 100%)',
+    lightGradient: 'linear-gradient(160deg, #d948f0 0%, #f472b6 100%)',
+  },
+  // ── Pro ──
+  {
     id: 'bold', label: 'Bold', pro: true,
     accent: 'rgb(253,224,71)',
     accentDark:  'rgba(253,224,71,0.15)',
@@ -120,14 +122,6 @@ const ACCENT_THEMES = [
     accentLight: 'rgba(62,153,201,0.08)',
     darkGradient:  'linear-gradient(160deg, #0c3d5e 0%, #1b6fa8 100%)',
     lightGradient: 'linear-gradient(160deg, #3e99c9 0%, #60c4f0 100%)',
-  },
-  {
-    id: 'creative', label: 'Creative', pro: false,
-    accent: 'rgb(217,72,240)',
-    accentDark:  'rgba(217,72,240,0.15)',
-    accentLight: 'rgba(217,72,240,0.08)',
-    darkGradient:  'linear-gradient(160deg, #500650 0%, #9d1fa8 100%)',
-    lightGradient: 'linear-gradient(160deg, #d948f0 0%, #f472b6 100%)',
   },
   {
     id: 'carbono', label: 'Carbono', pro: true,
@@ -178,7 +172,8 @@ const LIGHT: Colors = {
 };
 
 export default function Dashboard() {
-  const { user, logout, isPro } = useAuth();
+  const { user, logout, isPro, refreshUser } = useAuth();
+  const { toast } = useToast();
   const canColoresPremium = useFeature('colores_premium');
   const canPacientes = useFeature('pacientes');
   const navigate = useNavigate();
@@ -186,7 +181,6 @@ export default function Dashboard() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [clientBookings, setClientBookings] = useState<ClientBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>(
@@ -206,6 +200,20 @@ export default function Dashboard() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [analyticsError, setAnalyticsError] = useState(false);
 
+  // Visited-tab sets: once mounted, tabs stay alive (hidden with display:none)
+  const [visitedTabs, setVisitedTabs] = useState<Set<Tab | 'cuenta'>>(() => new Set([activeTab]));
+  const [visitedMobile, setVisitedMobile] = useState<Set<MobileSection>>(() => new Set([mobileSection]));
+
+  const goTab = useCallback((tab: Tab | 'cuenta') => {
+    setActiveTab(tab as Tab);
+    setVisitedTabs(prev => { const s = new Set(prev); s.add(tab); return s; });
+  }, []);
+
+  const goMobile = useCallback((section: MobileSection) => {
+    setMobileSection(section);
+    setVisitedMobile(prev => { const s = new Set(prev); s.add(section); return s; });
+  }, []);
+
   useEffect(() => { localStorage.setItem('aliax_theme', theme); }, [theme]);
   useEffect(() => { localStorage.setItem('aliax_accent', accentId); }, [accentId]);
 
@@ -215,21 +223,30 @@ export default function Dashboard() {
     if (current?.pro && !isPro && !canColoresPremium) setAccentId('aguamarina');
   }, [isPro, accentId]);
 
-  const accentTheme = ACCENT_THEMES.find(t => t.id === accentId) ?? ACCENT_THEMES[0];
-  const C = {
-    ...(theme === 'dark' ? DARK : LIGHT),
-    accent:      accentTheme.accent,
-    accentLight: theme === 'dark' ? accentTheme.accentDark : accentTheme.accentLight,
-  };
+  const accentTheme = useMemo(
+    () => ACCENT_THEMES.find(t => t.id === accentId) ?? ACCENT_THEMES[0],
+    [accentId]
+  );
+  const C = useMemo(() => {
+    const base = theme === 'dark' ? DARK : LIGHT;
+    const m = accentTheme.accent.match(/\d+/g) ?? ['45','212','191'];
+    const [r, g, b] = m.map(Number);
+    const muted = theme === 'dark'
+      ? `rgb(${Math.round((r+120)/2)},${Math.round((g+120)/2)},${Math.round((b+120)/2)})`
+      : `rgb(${Math.round(r*0.4)},${Math.round(g*0.5)},${Math.round(b*0.5)})`;
+    return {
+      ...base,
+      accent:      accentTheme.accent,
+      accentLight: theme === 'dark' ? accentTheme.accentDark : accentTheme.accentLight,
+      muted,
+      border: `rgba(${r},${g},${b},0.15)`,
+    };
+  }, [theme, accentTheme]);
 
   useEffect(() => {
-    const email = user?.email ?? '';
     Promise.all([
       api.get('/profiles').then(r => setProfiles(r.data)),
       api.get('/bookings').then(r => setBookings(r.data)),
-      email
-        ? api.get(`/bookings/client/${encodeURIComponent(email)}`).then(r => setClientBookings(r.data))
-        : Promise.resolve(),
     ]).finally(() => setLoading(false));
   }, [user?.email]);
 
@@ -252,23 +269,30 @@ export default function Dashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
-    const result = await uploadImage(file);
-    if (!result) return;
-    const primary = profiles[0];
-    if (primary) {
-      await api.put(`/profiles/${primary.id}`, { avatar: result.url });
-      setProfiles(prev => prev.map((p, i) => i === 0 ? { ...p, avatar: result.url } : p));
+    try {
+      const result = await uploadImage(file);
+      if (!result) { toast('Error al subir la imagen', 'error'); return; }
+      await api.patch('/auth/me', { avatar: result.url });
+      await refreshUser();
+      const primary = profiles[0];
+      if (primary) {
+        await api.put(`/profiles/${primary.id}`, { avatar: result.url });
+        setProfiles(prev => prev.map((p, i) => i === 0 ? { ...p, avatar: result.url } : p));
+      }
+      toast('Foto actualizada', 'success');
+    } catch {
+      toast('Error al guardar la foto', 'error');
     }
   };
+
+  const pendingBookings   = useMemo(() => bookings.filter(b => b.status === 'PENDING'),   [bookings]);
+  const confirmedBookings = useMemo(() => bookings.filter(b => b.status === 'CONFIRMED'), [bookings]);
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen" style={{ background: C.mainBg }}>
       <div className="animate-spin h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
     </div>
   );
-
-  const pendingBookings   = bookings.filter(b => b.status === 'PENDING');
-  const confirmedBookings = bookings.filter(b => b.status === 'CONFIRMED');
 
   const initials = (user?.name ?? '?')
     .split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
@@ -281,10 +305,10 @@ export default function Dashboard() {
 
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'inicio',     label: 'Inicio',           icon: <Home className="h-4 w-4" /> },
-    { id: 'citas',      label: 'Mis Citas',         icon: <Calendar className="h-4 w-4" /> },
-    { id: 'resenas',    label: 'Reseñas',            icon: <Star className="h-4 w-4" /> },
     { id: 'agenda',     label: 'Configurar Agenda', icon: <CalendarDays className="h-4 w-4" /> },
     { id: 'pacientes',  label: 'Pacientes',          icon: <Users className="h-4 w-4" /> },
+    { id: 'citas',      label: 'Mis Citas',         icon: <Calendar className="h-4 w-4" /> },
+    { id: 'resenas',    label: 'Reseñas',            icon: <Star className="h-4 w-4" /> },
   ];
 
   /* gradient for mobile profile card and dark shell */
@@ -292,14 +316,15 @@ export default function Dashboard() {
     ? accentTheme.darkGradient
     : accentTheme.lightGradient;
 
-  const shellBg = theme === 'dark' ? accentTheme.darkGradient : 'white';
-
-  // Board gradient — linear gradient derived from accent color
   const _am = accentTheme.accent.match(/rgb\((\d+),(\d+),(\d+)\)/);
   const [_r, _g, _b] = _am ? [_am[1], _am[2], _am[3]] : ['147', '51', '234'];
-  const boardBg = theme === 'dark'
-    ? `linear-gradient(160deg, rgba(${_r},${_g},${_b},0.10) 0%, rgba(6,4,14,0.97) 100%)`
-    : C.tabsBg;
+
+  const shellBg = theme === 'dark'
+    ? `linear-gradient(rgba(0,0,0,0.28), rgba(0,0,0,0.28)), ${accentTheme.darkGradient}`
+    : `linear-gradient(160deg, rgba(${_r},${_g},${_b},0.09) 0%, rgba(${_r},${_g},${_b},0.19) 100%), #ffffff`;
+
+  // Inner content panel background
+  const boardBg = theme === 'dark' ? accentTheme.darkGradient : 'white';
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden" style={{ background: shellBg }}>
@@ -323,18 +348,18 @@ export default function Dashboard() {
           <button
             className="p-2 rounded-lg transition-colors"
             onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-            style={{ color: C.isDark ? 'rgba(255,255,255,0.7)' : C.muted }}
+            style={{ color: C.isDark ? 'rgba(255,255,255,0.7)' : C.accent }}
             onMouseEnter={e => (e.currentTarget.style.color = C.isDark ? 'white' : C.text)}
-            onMouseLeave={e => (e.currentTarget.style.color = C.isDark ? 'rgba(255,255,255,0.7)' : C.muted)}
+            onMouseLeave={e => (e.currentTarget.style.color = C.isDark ? 'rgba(255,255,255,0.7)' : C.accent)}
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
           <button
             onClick={() => { logout(); navigate('/'); }}
             className="flex items-center gap-1.5 text-sm transition-colors px-2 py-1.5"
-            style={{ color: C.isDark ? 'rgba(255,255,255,0.7)' : C.muted }}
+            style={{ color: C.isDark ? 'rgba(255,255,255,0.7)' : C.accent }}
             onMouseEnter={e => (e.currentTarget.style.color = C.isDark ? 'white' : C.text)}
-            onMouseLeave={e => (e.currentTarget.style.color = C.isDark ? 'rgba(255,255,255,0.7)' : C.muted)}
+            onMouseLeave={e => (e.currentTarget.style.color = C.isDark ? 'rgba(255,255,255,0.7)' : C.accent)}
           >
             <LogOut className="h-4 w-4" />
             <span className="hidden md:inline">Salir</span>
@@ -411,7 +436,6 @@ export default function Dashboard() {
           {/* Gradient section — flex:1 to fill remaining height, content centered */}
           <div
             style={{
-              background: profileGradient,
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
@@ -428,7 +452,7 @@ export default function Dashboard() {
                 disabled={uploadingAvatar}
                 className="rounded-full overflow-hidden flex items-center justify-center text-3xl font-bold focus:outline-none"
                 style={{
-                  width: 128, height: 128,
+                  width: 150, height: 150,
                   background: 'rgba(255,255,255,0.18)',
                   color: 'white',
                   border: '3px solid rgba(255,255,255,0.45)',
@@ -480,14 +504,6 @@ export default function Dashboard() {
             {/* Info list */}
             <div className="flex flex-col gap-3" style={{ width: 'fit-content', marginLeft: 'auto', marginRight: 'auto', marginTop: 40 }}>
 
-              {/* Bio */}
-              {user?.bio && (
-                <div className="flex items-center gap-2">
-                  <Pencil className="h-4 w-4 shrink-0" style={{ color: 'rgba(255,255,255,0.65)' }} />
-                  <span className="text-sm" style={{ color: 'rgba(255,255,255,0.9)' }}>{user.bio}</span>
-                </div>
-              )}
-
               {/* Professional fields (paid plan = has profile) */}
               {isProfessional && (
                 <>
@@ -506,7 +522,7 @@ export default function Dashboard() {
           <div className="flex flex-col items-center gap-3 px-6 pt-4 pb-24" style={{ flexShrink: 0 }}>
             <div className="flex justify-center w-full">
               <button
-                onClick={() => setMobileSection('cuenta')}
+                onClick={() => goMobile('cuenta')}
                 className="flex items-center justify-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium"
                 style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.35)', color: 'white' }}
               >
@@ -519,32 +535,35 @@ export default function Dashboard() {
                 Apariencia
               </span>
               <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 6, alignItems: 'center', justifyContent: 'center' }}>
-                {ACCENT_THEMES.map(t => t.pro ? (
-                  <div key={t.id} title={`${t.label} (Pro)`} style={{ position: 'relative', width: 22, height: 22, flexShrink: 0 }}>
-                    <div style={{
-                      width: 22, height: 22, borderRadius: '50%',
-                      background: t.accent, opacity: 0.38,
-                      border: '3px solid rgba(255,255,255,0.2)',
-                    }} />
-                    <div style={{
-                      position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 9, color: 'white',
-                    }}>🔒</div>
-                  </div>
-                ) : (
-                  <button
-                    key={t.id}
-                    title={t.label}
-                    onClick={() => setAccentId(t.id)}
-                    style={{
-                      width: 22, height: 22, borderRadius: '50%',
-                      background: t.accent,
-                      border: `3px solid ${accentId === t.id ? 'white' : 'rgba(255,255,255,0.35)'}`,
-                      outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
-                      outlineOffset: '2px', cursor: 'pointer',
-                    }}
-                  />
-                ))}
+                {ACCENT_THEMES.map(t => {
+                  const isLocked = t.pro && !canColoresPremium;
+                  return isLocked ? (
+                    <div key={t.id} title={`${t.label} (Pro)`} style={{ position: 'relative', width: 22, height: 22, flexShrink: 0 }}>
+                      <div style={{
+                        width: 22, height: 22, borderRadius: '50%',
+                        background: t.accent, opacity: 0.38,
+                        border: '3px solid rgba(255,255,255,0.2)',
+                      }} />
+                      <div style={{
+                        position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 9, color: 'white',
+                      }}>🔒</div>
+                    </div>
+                  ) : (
+                    <button
+                      key={t.id}
+                      title={t.label}
+                      onClick={() => setAccentId(t.id)}
+                      style={{
+                        width: 22, height: 22, borderRadius: '50%',
+                        background: t.accent,
+                        border: `3px solid ${accentId === t.id ? 'white' : 'rgba(255,255,255,0.35)'}`,
+                        outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
+                        outlineOffset: '2px', cursor: 'pointer',
+                      }}
+                    />
+                  );
+                })}
               </div>
             </div>
             <button
@@ -574,25 +593,43 @@ export default function Dashboard() {
           }}
         >
           <div className="p-4 pb-8">
-            {mobileSection === 'inicio' && (
-              <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} analyticsError={analyticsError} isPro={isPro ?? false} />
+            {visitedMobile.has('inicio') && (
+              <div style={{ display: mobileSection === 'inicio' ? undefined : 'none' }}>
+                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} analyticsError={analyticsError} isPro={isPro ?? false} onGoToAccount={() => goMobile('cuenta')} onGoToAgenda={() => goMobile('agenda')} />
+              </div>
             )}
-            {mobileSection === 'citas' && (
-              <TabCitas
-                pendingBookings={pendingBookings}
-                confirmedBookings={confirmedBookings}
-                totalBookings={bookings.length}
-                updateBookingStatus={updateBookingStatus}
-                clientBookings={clientBookings}
-                profiles={profiles}
-                C={C}
-              />
+            {visitedMobile.has('citas') && (
+              <div style={{ display: mobileSection === 'citas' ? undefined : 'none' }}>
+                <TabCitas
+                  pendingBookings={pendingBookings}
+                  confirmedBookings={confirmedBookings}
+                  totalBookings={bookings.length}
+                  updateBookingStatus={updateBookingStatus}
+                  profiles={profiles}
+                  C={C}
+                  onGoToAgenda={() => goMobile('agenda')}
+                />
+              </div>
             )}
-            {mobileSection === 'resenas' && <TabResenas C={C} isPro={isPro ?? false} />}
-            {mobileSection === 'agenda' && <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />}
-            {mobileSection === 'cuenta' && <AccountSettings asTab tabIsDark={C.isDark} onProfileSaved={() => api.get('/profiles').then(r => setProfiles(r.data))} />}
-            {mobileSection === 'pacientes' && (
-              <Pacientes C={C} isPairTherapist={isPairTherapist} isPro={(isPro ?? false) || canPacientes} />
+            {visitedMobile.has('resenas') && (
+              <div style={{ display: mobileSection === 'resenas' ? undefined : 'none' }}>
+                <TabResenas C={C} isPro={isPro ?? false} />
+              </div>
+            )}
+            {visitedMobile.has('agenda') && (
+              <div style={{ display: mobileSection === 'agenda' ? undefined : 'none' }}>
+                <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />
+              </div>
+            )}
+            {visitedMobile.has('cuenta') && (
+              <div style={{ display: mobileSection === 'cuenta' ? undefined : 'none' }}>
+                <AccountSettings asTab tabIsDark={C.isDark} accent={C.accent} onProfileSaved={() => api.get('/profiles').then(r => setProfiles(r.data))} />
+              </div>
+            )}
+            {visitedMobile.has('pacientes') && (
+              <div style={{ display: mobileSection === 'pacientes' ? undefined : 'none' }}>
+                <Pacientes C={C} isPairTherapist={isPairTherapist} isPro={(isPro ?? false) || canPacientes} isActive={mobileSection === 'pacientes'} />
+              </div>
             )}
             <div className="mt-10 text-center" style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
               <Link to="/pricing" className="text-xs" style={{ color: C.muted }}>Ver planes</Link>
@@ -621,7 +658,7 @@ export default function Dashboard() {
         >
           {/* Perfil tab */}
           <button
-            onClick={() => setMobileSection('perfil')}
+            onClick={() => goMobile('perfil')}
             className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors"
             style={{ color: mobileSection === 'perfil' ? C.accent : C.muted }}
           >
@@ -659,7 +696,7 @@ export default function Dashboard() {
             return (
               <button
                 key={section}
-                onClick={() => setMobileSection(section)}
+                onClick={() => goMobile(section)}
                 className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors"
                 style={{ color: isActive ? C.accent : C.muted }}
               >
@@ -710,7 +747,7 @@ export default function Dashboard() {
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={uploadingAvatar}
                 style={{
-                  width: 52, height: 52, borderRadius: '50%', overflow: 'hidden',
+                  width: 66, height: 66, borderRadius: '50%', overflow: 'hidden',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 18, fontWeight: 700, color: C.accent,
                   background: C.accentLight, border: `2px solid ${C.border}`,
@@ -749,7 +786,7 @@ export default function Dashboard() {
           {/* "General" — main navigation */}
           <DashSection label="General">
             {TABS.map(tab => (
-              <DashNavRow key={tab.id} icon={tab.icon} isActive={activeTab === tab.id} C={C} onClick={() => setActiveTab(tab.id)}>
+              <DashNavRow key={tab.id} icon={tab.icon} isActive={activeTab === tab.id} C={C} onClick={() => goTab(tab.id)}>
                 {tab.label}
               </DashNavRow>
             ))}
@@ -757,7 +794,7 @@ export default function Dashboard() {
 
           {/* "Mi perfil" */}
           <DashSection label="Mi perfil">
-            <DashNavRow icon={<Pencil className="h-4 w-4" />} isActive={activeTab === 'cuenta'} C={C} onClick={() => setActiveTab('cuenta')}>
+            <DashNavRow icon={<Pencil className="h-4 w-4" />} isActive={activeTab === 'cuenta'} C={C} onClick={() => goTab('cuenta')}>
               Mi cuenta
             </DashNavRow>
             {profiles.length > 0 && (
@@ -836,29 +873,49 @@ export default function Dashboard() {
         </aside>
 
         {/* Content board — floating panel with rounded corners */}
-        <main className="flex-1 flex flex-col overflow-hidden" style={{
+        <main className="flex-1 flex flex-col overflow-hidden tab-content-board" style={{
           background: boardBg,
           borderRadius: 18,
           boxShadow: C.isDark ? '0 8px 40px rgba(0,0,0,0.4)' : '0 12px 48px rgba(13,148,136,0.10), 0 4px 16px rgba(13,148,136,0.06)',
         }}>
           <div className="flex-1 overflow-y-auto p-6">
-            {activeTab === 'inicio'   && <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} analyticsError={analyticsError} isPro={isPro ?? false} twoCol />}
-            {activeTab === 'citas'    && (
-              <TabCitas
-                pendingBookings={pendingBookings}
-                confirmedBookings={confirmedBookings}
-                totalBookings={bookings.length}
-                updateBookingStatus={updateBookingStatus}
-                clientBookings={clientBookings}
-                profiles={profiles}
-                C={C}
-              />
+            {visitedTabs.has('inicio') && (
+              <div style={{ display: activeTab === 'inicio' ? undefined : 'none' }}>
+                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} analytics={analytics} analyticsError={analyticsError} isPro={isPro ?? false} twoCol onGoToAccount={() => goTab('cuenta')} onGoToAgenda={() => goTab('agenda')} />
+              </div>
             )}
-            {activeTab === 'resenas' && <TabResenas C={C} isPro={isPro ?? false} />}
-            {activeTab === 'agenda'   && <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />}
-            {activeTab === 'cuenta'   && <AccountSettings asTab tabIsDark={C.isDark} onProfileSaved={() => api.get('/profiles').then(r => setProfiles(r.data))} />}
-            {activeTab === 'pacientes' && (
-              <Pacientes C={C} isPairTherapist={isPairTherapist} isPro={(isPro ?? false) || canPacientes} />
+            {visitedTabs.has('citas') && (
+              <div style={{ display: activeTab === 'citas' ? undefined : 'none' }}>
+                <TabCitas
+                  pendingBookings={pendingBookings}
+                  confirmedBookings={confirmedBookings}
+                  totalBookings={bookings.length}
+                  updateBookingStatus={updateBookingStatus}
+                  profiles={profiles}
+                  C={C}
+                  onGoToAgenda={() => goTab('agenda')}
+                />
+              </div>
+            )}
+            {visitedTabs.has('resenas') && (
+              <div style={{ display: activeTab === 'resenas' ? undefined : 'none' }}>
+                <TabResenas C={C} isPro={isPro ?? false} />
+              </div>
+            )}
+            {visitedTabs.has('agenda') && (
+              <div style={{ display: activeTab === 'agenda' ? undefined : 'none' }}>
+                <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />
+              </div>
+            )}
+            {visitedTabs.has('cuenta') && (
+              <div style={{ display: activeTab === 'cuenta' ? undefined : 'none' }}>
+                <AccountSettings asTab tabIsDark={C.isDark} accent={C.accent} onProfileSaved={() => api.get('/profiles').then(r => setProfiles(r.data))} />
+              </div>
+            )}
+            {visitedTabs.has('pacientes') && (
+              <div style={{ display: activeTab === 'pacientes' ? undefined : 'none' }}>
+                <Pacientes C={C} isPairTherapist={isPairTherapist} isPro={(isPro ?? false) || canPacientes} isActive={activeTab === 'pacientes'} />
+              </div>
             )}
           </div>
         </main>
@@ -890,10 +947,10 @@ function DashNavRow({ icon, isActive, C, onClick, children }: { icon: React.Reac
         background: isActive ? C.accent : 'transparent',
         border: 'none', cursor: 'pointer', transition: 'background .15s',
       }}
-      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = C.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'; }}
+      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = C.isDark ? 'rgba(255,255,255,0.1)' : C.accentLight; }}
       onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
     >
-      <span style={{ color: isActive ? 'white' : C.isDark ? 'rgba(255,255,255,0.6)' : C.muted, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+      <span style={{ color: isActive ? 'white' : C.isDark ? 'rgba(255,255,255,0.6)' : C.accent, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
         {icon}
       </span>
       <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 500, color: isActive ? 'white' : C.isDark ? 'rgba(255,255,255,0.85)' : C.text, lineHeight: 1 }}>
@@ -985,7 +1042,7 @@ function BarChartSVG({ perDay, accent, muted }: {
 }
 
 /* ────────────────── Tab: Inicio ────────────────── */
-function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError, isPro, twoCol = false }: {
+function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError, isPro, twoCol = false, onGoToAccount, onGoToAgenda }: {
   profiles: Profile[];
   bookings: Booking[];
   userName?: string;
@@ -994,9 +1051,26 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
   analyticsError: boolean;
   isPro: boolean;
   twoCol?: boolean;
+  onGoToAccount: () => void;
+  onGoToAgenda: () => void;
 }) {
   const totalServices = profiles.reduce((sum, p) => sum + p.services.length, 0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [agendaConfigured, setAgendaConfigured] = useState<boolean | null>(null);
+  const hasUnpublished = profiles.length > 0 && profiles.some(p => !p.published);
+
+  useEffect(() => {
+    if (profiles.length === 0) { setAgendaConfigured(false); return; }
+    api.get('/availability/me')
+      .then(res => setAgendaConfigured(Array.isArray(res.data) ? res.data.length > 0 : true))
+      .catch(() => setAgendaConfigured(true));
+  }, [profiles.length]);
+
+  const isProfileCreated  = profiles.length > 0;
+  const hasService        = totalServices > 0;
+  const isAgendaOk        = agendaConfigured === true;
+  const isPublished       = profiles.some(p => p.published);
+  const allDone           = isProfileCreated && hasService && isAgendaOk && isPublished;
   const _am = C.accent.match(/rgb\((\d+),(\d+),(\d+)\)/);
   const [_r, _g, _b] = _am ? [_am[1], _am[2], _am[3]] : ['147', '51', '234'];
   const copyUrl = (slug: string, id: string) => {
@@ -1024,12 +1098,12 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
       )}
       {analytics && (
         <div style={{
-          background: 'rgba(0,0,0,0.28)',
-          border: '1px solid rgba(255,255,255,0.14)',
+          background: C.isDark ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.65)',
+          border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.14)' : 'rgba(45,212,191,0.18)'}`,
           borderRadius: 16, padding: 20, marginTop: 16,
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
+          boxShadow: C.isDark ? '0 4px 24px rgba(0,0,0,0.25)' : '0 2px 16px rgba(45,212,191,0.10), 0 1px 4px rgba(0,0,0,0.06)',
         }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -1062,8 +1136,8 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
               { label: 'Canceladas', value: analytics.byStatus.CANCELLED, color: '#ef4444' },
             ].map(({ label, value, color }) => (
               <div key={label} style={{
-                background: 'rgba(255,255,255,0.05)', borderRadius: 10,
-                padding: '10px 4px', textAlign: 'center',
+                background: C.isDark ? 'rgba(255,255,255,0.07)' : `${color}14`,
+                borderRadius: 10, padding: '10px 4px', textAlign: 'center',
               }}>
                 <div style={{ color, fontSize: 22, fontWeight: 700 }}>{value}</div>
                 <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>{label}</div>
@@ -1126,6 +1200,110 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
     </>
   );
 
+  const onboardingChecklist = !allDone && (
+    <div style={{
+      marginBottom: 24,
+      background: C.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.85)',
+      border: `1.5px solid rgba(${_r},${_g},${_b},0.30)`,
+      borderRadius: 16, padding: '18px 20px',
+      backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+    }}>
+      <p style={{ color: C.text, fontWeight: 700, fontSize: 14, margin: '0 0 14px' }}>
+        Completa tu configuración
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {[
+          {
+            done: isProfileCreated,
+            label: 'Crea tu perfil profesional',
+            action: () => window.location.assign('/profile/new'),
+            btnLabel: 'Crear perfil',
+          },
+          {
+            done: hasService,
+            label: 'Agrega al menos un servicio',
+            action: onGoToAccount,
+            btnLabel: 'Ir a Mi cuenta',
+          },
+          {
+            done: agendaConfigured === null ? false : isAgendaOk,
+            label: 'Configura tu agenda de disponibilidad',
+            action: onGoToAgenda,
+            btnLabel: 'Ir a Agenda',
+          },
+          {
+            done: isPublished,
+            label: 'Publica tu perfil para aparecer en el directorio',
+            action: onGoToAccount,
+            btnLabel: 'Publicar',
+          },
+        ].map(({ done, label, action, btnLabel }) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: done ? `rgba(${_r},${_g},${_b},0.2)` : C.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+              border: `1.5px solid ${done ? `rgba(${_r},${_g},${_b},0.6)` : C.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'}`,
+            }}>
+              {done && <span style={{ color: `rgb(${_r},${_g},${_b})`, fontSize: 12, fontWeight: 700 }}>✓</span>}
+            </div>
+            <span style={{
+              flex: 1, fontSize: 13, color: done ? C.muted : C.text,
+              textDecoration: done ? 'line-through' : 'none', opacity: done ? 0.6 : 1,
+            }}>
+              {label}
+            </span>
+            {!done && (
+              <button onClick={action} style={{
+                flexShrink: 0, background: `rgba(${_r},${_g},${_b},0.15)`,
+                border: `1px solid rgba(${_r},${_g},${_b},0.4)`,
+                color: `rgb(${_r},${_g},${_b})`,
+                borderRadius: 8, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}>
+                {btnLabel}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const unpublishedBanner = !allDone && hasUnpublished && (
+    <div style={{
+      marginBottom: 24,
+      padding: '16px 20px',
+      background: C.isDark
+        ? `linear-gradient(135deg, rgba(${_r},${_g},${_b},0.14), rgba(${_r},${_g},${_b},0.06))`
+        : `linear-gradient(135deg, rgba(${_r},${_g},${_b},0.10), rgba(${_r},${_g},${_b},0.04))`,
+      border: `1.5px solid rgba(${_r},${_g},${_b},0.35)`,
+      borderRadius: 14,
+      display: 'flex', alignItems: 'center', gap: 14,
+      backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+    }}>
+      <span style={{ fontSize: 26, flexShrink: 0 }}>👁️</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ color: C.accent, fontWeight: 700, fontSize: 14, margin: 0 }}>
+          Tu perfil no está publicado
+        </p>
+        <p style={{ color: C.muted, fontSize: 12, margin: '3px 0 0', lineHeight: 1.4 }}>
+          Los pacientes no pueden encontrarte en el directorio. Ve a <strong style={{ color: C.text }}>Mi cuenta</strong> y activa "Publicar perfil".
+        </p>
+      </div>
+      <button
+        onClick={onGoToAccount}
+        style={{
+          background: `linear-gradient(135deg, rgb(${_r},${_g},${_b}), rgba(${_r},${_g},${_b},0.75))`,
+          color: 'white', border: 'none', borderRadius: 9,
+          padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          whiteSpace: 'nowrap', flexShrink: 0,
+        }}
+      >
+        Ir a Mi cuenta →
+      </button>
+    </div>
+  );
+
   /* ── Desktop two-column layout ── */
   if (twoCol) {
     return (
@@ -1134,6 +1312,9 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
           Hola, {userName?.split(' ')[0] ?? 'bienvenido'} 👋
         </h2>
         <p style={{ color: C.muted, marginBottom: 24 }}>Aquí tienes un resumen de tu actividad.</p>
+
+        {onboardingChecklist}
+        {unpublishedBanner}
 
         {/* CTA para usuarios sin perfil */}
         {profiles.length === 0 && (
@@ -1201,7 +1382,7 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button onClick={() => copyUrl(p.slug, p.id)} style={{
                         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                        background: C.accent, color: 'white', border: 'none', borderRadius: 8,
+                        background: `linear-gradient(135deg, ${C.accent}, #2dd4bf)`, color: 'white', border: 'none', borderRadius: 8,
                         fontSize: 12, fontWeight: 600, padding: '7px 0', cursor: 'pointer',
                       }}>
                         {copiedId === p.id ? <><span>✓</span> Copiado</> : <><Copy style={{ width: 13, height: 13 }} /> Copiar</>}
@@ -1232,6 +1413,8 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
         Hola, {userName?.split(' ')[0] ?? 'bienvenido'} 👋
       </h2>
       <p className="mb-6" style={{ color: C.muted }}>Aquí tienes un resumen de tu actividad.</p>
+      {onboardingChecklist}
+      {unpublishedBanner}
       {statsGrid}
       {profiles.length > 0 && (
         <div style={{
@@ -1284,24 +1467,23 @@ function StatCard({ label, value, sub, color, isDark, shadow }: {
 }
 
 /* ────────────────── Tab: Mis Citas ────────────────── */
-const STATUS_LABEL: Record<string, { label: string; className: string }> = {
-  PENDING:   { label: 'Pendiente',  className: 'bg-amber-100 text-amber-700' },
-  CONFIRMED: { label: 'Confirmada', className: 'bg-green-100 text-green-700' },
-  COMPLETED: { label: 'Completada', className: 'bg-slate-100 text-slate-600' },
-  CANCELLED: { label: 'Cancelada',  className: 'bg-red-100 text-red-500' },
-  NO_SHOW:   { label: 'No asistió', className: 'bg-orange-100 text-orange-600' },
-};
-
-function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBookingStatus, clientBookings, profiles, C }: {
+function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBookingStatus, profiles, C, onGoToAgenda }: {
   pendingBookings: Booking[];
   confirmedBookings: Booking[];
   totalBookings: number;
   updateBookingStatus: (id: string, status: string) => void;
-  clientBookings: ClientBooking[];
   profiles: Profile[];
   C: Colors;
+  onGoToAgenda: () => void;
 }) {
-  const [view, setView] = useState<'pro' | 'client'>('pro');
+  const [agendaConfigured, setAgendaConfigured] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (profiles.length === 0) return;
+    api.get('/availability/me')
+      .then(res => setAgendaConfigured(Array.isArray(res.data) ? res.data.length > 0 : true))
+      .catch(() => setAgendaConfigured(true));
+  }, [profiles.length]);
   const [citasView, setCitasView] = useState<'lista' | 'calendario'>('calendario');
   const [services, setServices] = useState<any[]>([]);
   const [modalSlot, setModalSlot] = useState<{ date: string; time: string } | null>(null);
@@ -1317,68 +1499,47 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
   const hasActiveProfile = profiles.length > 0;
   const today = new Date().toISOString().split('T')[0];
 
-  const cancelClientBooking = async (id: string) => {
-    const ok = window.confirm('¿Cancelar esta reserva?');
-    if (!ok) return;
-    await api.put(`/bookings/${id}/cancel`, {});
-    window.location.reload();
-  };
-
-  if (view === 'client') {
-    return (
-      <div className="max-w-2xl">
-        <ViewSwitcher view={view} onChange={setView} clientCount={clientBookings.length} proCount={totalBookings} C={C} />
-        {clientBookings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16" style={{ color: C.muted }}>
-            <Calendar className="h-12 w-12 mb-3 opacity-40" />
-            <p className="text-base font-medium">No tienes reservas como cliente</p>
-            <p className="text-sm mt-1">Ve a Explorar para reservar con un profesional.</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {clientBookings.map(b => {
-              const st = STATUS_LABEL[b.status] ?? { label: b.status, className: 'bg-slate-100 text-slate-500' };
-              const canCancel = b.status === 'PENDING' || b.status === 'CONFIRMED';
-              return (
-                <div key={b.id} className="rounded-xl p-4 flex items-center justify-between"
-                  style={{
-                    background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.72)',
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
-                    border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.9)'}`,
-                    boxShadow: C.isDark ? 'none' : '0 2px 12px rgba(0,0,0,0.06)',
-                  }}>
-                  <div>
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <p className="font-medium" style={{ color: C.text }}>{b.profile.title}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${st.className}`}>{st.label}</span>
-                    </div>
-                    <p className="text-sm" style={{ color: C.muted }}>{b.service.name} &middot; {formatCurrency(b.service.price, b.service.currency)}</p>
-                    <p className="text-sm flex items-center gap-1 mt-0.5" style={{ color: C.muted }}>
-                      <Clock className="h-3.5 w-3.5" />
-                      {new Date(b.date).toLocaleDateString()} {b.startTime} - {b.endTime}
-                    </p>
-                  </div>
-                  {canCancel && (
-                    <button onClick={() => cancelClientBooking(b.id)}
-                      className="text-sm px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors">
-                      Cancelar
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
     <div className={citasView === 'calendario' ? 'w-full' : 'max-w-2xl'}>
-      {/* Row: pro/client switcher + lista/calendario toggle + +Crear Cita */}
+
+      {/* ── Banner: agenda no configurada ── */}
+      {profiles.length > 0 && agendaConfigured === false && (
+        <div style={{
+          marginBottom: 20,
+          padding: '16px 20px',
+          background: C.isDark
+            ? 'linear-gradient(135deg, rgba(245,158,11,0.14), rgba(234,88,12,0.10))'
+            : 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(254,243,199,0.9))',
+          border: '1.5px solid rgba(245,158,11,0.45)',
+          borderRadius: 14,
+          display: 'flex', alignItems: 'center', gap: 14,
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        }}>
+          <span style={{ fontSize: 26, flexShrink: 0 }}>📅</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ color: '#d97706', fontWeight: 700, fontSize: 14, margin: 0 }}>
+              Tu agenda no está configurada
+            </p>
+            <p style={{ color: C.muted, fontSize: 12, margin: '3px 0 0', lineHeight: 1.4 }}>
+              Define tus horarios de disponibilidad para que tus pacientes puedan agendar contigo.
+            </p>
+          </div>
+          <button
+            onClick={onGoToAgenda}
+            style={{
+              background: '#f59e0b', color: 'white', border: 'none', borderRadius: 9,
+              padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              whiteSpace: 'nowrap', flexShrink: 0,
+            }}
+          >
+            Configurar →
+          </button>
+        </div>
+      )}
+
+      {/* Row: lista/calendario toggle + +Crear Cita */}
       <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
-        <ViewSwitcher view={view} onChange={setView} clientCount={clientBookings.length} proCount={totalBookings} C={C} />
         <div className="flex items-center gap-2 flex-wrap">
           {hasActiveProfile && (
             <div
@@ -1406,7 +1567,7 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
             <button
               onClick={() => setModalSlot({ date: today, time: '09:00' })}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
-              style={{ background: C.accent, color: '#fff' }}
+              style={{ background: `linear-gradient(135deg, ${C.accent}, #2dd4bf)`, color: '#fff' }}
             >
               <Plus className="h-3.5 w-3.5" /> Crear cita
             </button>
@@ -1433,7 +1594,7 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
                 <div className="space-y-2">
                   {pendingBookings.map(b => (
                     <ProBookingCard key={b.id} booking={b} C={C}>
-                      <button onClick={() => updateBookingStatus(b.id, 'CONFIRMED')} style={{ background: 'linear-gradient(135deg, #2dd4bf, #0d9488)', color: '#fff' }} className="text-sm px-3 py-1.5 rounded-lg transition-colors">Confirmar</button>
+                      <button onClick={() => updateBookingStatus(b.id, 'CONFIRMED')} style={{ background: `linear-gradient(135deg, ${C.accent}, #2dd4bf)`, color: '#fff' }} className="text-sm px-3 py-1.5 rounded-lg transition-colors">Confirmar</button>
                       <button onClick={() => updateBookingStatus(b.id, 'CANCELLED')} className="text-sm px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors">Cancelar</button>
                     </ProBookingCard>
                   ))}
@@ -1447,6 +1608,7 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
                   {confirmedBookings.map(b => (
                     <ProBookingCard key={b.id} booking={b} C={C}>
                       <button onClick={() => updateBookingStatus(b.id, 'COMPLETED')} style={{ background: 'rgba(45,212,191,0.12)', color: '#0d9488', border: '1px solid rgba(45,212,191,0.25)' }} className="text-sm px-3 py-1.5 rounded-lg transition-colors">Completar</button>
+                      <button onClick={() => updateBookingStatus(b.id, 'CANCELLED')} className="text-sm px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors">Cancelar</button>
                     </ProBookingCard>
                   ))}
                 </div>
@@ -1470,34 +1632,6 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
   );
 }
 
-function ViewSwitcher({ view, onChange, proCount, clientCount, C }: {
-  view: 'pro' | 'client'; onChange: (v: 'pro' | 'client') => void;
-  proCount: number; clientCount: number; C: Colors;
-}) {
-  return (
-    <div className="flex rounded-lg p-0.5 mb-5 w-fit"
-      style={{ background: C.isDark ? 'rgba(255,255,255,0.08)' : 'rgb(240,237,250)' }}>
-      {([
-        { id: 'pro' as const, label: 'Como profesional', count: proCount },
-        { id: 'client' as const, label: 'Como cliente', count: clientCount },
-      ]).map(({ id, label, count }) => (
-        <button key={id} onClick={() => onChange(id)}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors"
-          style={view === id
-            ? { background: C.isDark ? 'rgba(255,255,255,0.12)' : 'white', color: C.text }
-            : { background: 'transparent', color: C.muted }}>
-          {label}
-          <span className="text-xs px-1.5 py-0.5 rounded-full"
-            style={view === id
-              ? { background: C.accentLight, color: C.accent }
-              : { background: 'rgba(128,128,128,0.15)', color: C.muted }}>
-            {count}
-          </span>
-        </button>
-      ))}
-    </div>
-  );
-}
 
 function ProBookingCard({ booking: b, children, C }: { booking: Booking; children: React.ReactNode; C: Colors }) {
   return (
@@ -1697,7 +1831,13 @@ function TabAgenda({ theme, profiles, C, isPro }: { theme: 'dark' | 'light'; pro
             { icon: '📅', label: 'Disponibilidad', desc: 'Define tus días y horarios de atención' },
             { icon: '🗂️', label: 'Servicios', desc: 'Crea y administra tu catálogo de servicios' },
           ].map(({ icon, label, desc }) => (
-            <div key={label} style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px' }}>
+            <div key={label} style={{
+              background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.72)',
+              border: `1px solid ${C.border}`,
+              borderRadius: 12, padding: '14px 16px',
+              backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+              boxShadow: C.isDark ? 'none' : '0 2px 10px rgba(0,0,0,0.05)',
+            }}>
               <span style={{ fontSize: 22 }}>{icon}</span>
               <p style={{ color: C.text, fontWeight: 600, fontSize: 13, margin: '8px 0 4px' }}>{label}</p>
               <p style={{ color: C.muted, fontSize: 12, margin: 0, lineHeight: 1.4 }}>{desc}</p>
@@ -1715,7 +1855,13 @@ function TabAgenda({ theme, profiles, C, isPro }: { theme: 'dark' | 'light'; pro
             { icon: '🔔', label: 'Notificaciones Pro', desc: 'Recordatorios, feedback y reagendamiento automático' },
           ].map(({ icon, label, desc }) => (
             <ProGate key={label} isPro={isPro}>
-              <div style={{ background: C.cardBg, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px', height: '100%', boxSizing: 'border-box' }}>
+              <div style={{
+                background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.72)',
+                border: `1px solid ${C.border}`,
+                borderRadius: 12, padding: '14px 16px', height: '100%', boxSizing: 'border-box',
+                backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                boxShadow: C.isDark ? 'none' : '0 2px 10px rgba(0,0,0,0.05)',
+              }}>
                 <span style={{ fontSize: 22 }}>{icon}</span>
                 <p style={{ color: C.text, fontWeight: 600, fontSize: 13, margin: '8px 0 4px' }}>{label}</p>
                 <p style={{ color: C.muted, fontSize: 12, margin: 0, lineHeight: 1.4 }}>{desc}</p>

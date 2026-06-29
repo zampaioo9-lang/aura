@@ -37,7 +37,6 @@ router.post('/register', async (req, res, next) => {
     const welcomeTpl = emailTemplates.welcome({
       userName: user.name,
       userEmail: user.email,
-      hasProfile: false,
     });
     sendEmail(welcomeTpl.to, welcomeTpl.subject, welcomeTpl.html).then(async (result) => {
       if (result.success) {
@@ -84,7 +83,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
-      select: { id: true, email: true, name: true, phone: true, bio: true, socialLinks: true, isAdmin: true, createdAt: true, trialEndsAt: true, plan: true, planInterval: true, planExpiresAt: true, blocked: true, featureOverrides: true },
+      select: { id: true, email: true, name: true, phone: true, bio: true, avatar: true, socialLinks: true, isAdmin: true, createdAt: true, trialEndsAt: true, plan: true, planInterval: true, planExpiresAt: true, blocked: true, featureOverrides: true },
     });
     if (!user) throw new AppError(404, 'User not found');
     res.json(user);
@@ -101,6 +100,7 @@ router.patch('/me', authMiddleware, async (req: AuthRequest, res, next) => {
       bio:             z.string().max(500).optional(),
       email:           z.string().email().optional(),
       phone:           z.string().max(20).optional(),
+      avatar:          z.string().url().optional(),
       socialLinks:     z.record(z.string()).optional(),
       currentPassword: z.string().optional(),
       newPassword:     z.string().min(6).optional(),
@@ -114,6 +114,7 @@ router.patch('/me', authMiddleware, async (req: AuthRequest, res, next) => {
     if (body.name        !== undefined) updateData.name        = body.name;
     if (body.bio         !== undefined) updateData.bio         = body.bio;
     if (body.phone       !== undefined) updateData.phone       = body.phone;
+    if (body.avatar      !== undefined) updateData.avatar      = body.avatar;
     if (body.socialLinks !== undefined) updateData.socialLinks = body.socialLinks;
 
     // Email change
@@ -134,7 +135,7 @@ router.patch('/me', authMiddleware, async (req: AuthRequest, res, next) => {
     const user = await prisma.user.update({
       where: { id: req.userId },
       data: updateData,
-      select: { id: true, email: true, name: true, phone: true, bio: true, socialLinks: true, isAdmin: true, trialEndsAt: true, plan: true, planInterval: true, planExpiresAt: true },
+      select: { id: true, email: true, name: true, phone: true, bio: true, avatar: true, socialLinks: true, isAdmin: true, trialEndsAt: true, plan: true, planInterval: true, planExpiresAt: true },
     });
     res.json(user);
   } catch (err) {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, Search } from 'lucide-react';
 
 const COUNTRIES = [
@@ -41,9 +42,7 @@ function parsePhone(value: string): { dialCode: string; number: string } {
   const clean = value.replace(/\s/g, '');
   const sorted = [...COUNTRIES].sort((a, b) => b.code.length - a.code.length);
   for (const c of sorted) {
-    if (clean.startsWith(c.code)) {
-      return { dialCode: c.code, number: clean.slice(c.code.length) };
-    }
+    if (clean.startsWith(c.code)) return { dialCode: c.code, number: clean.slice(c.code.length) };
   }
   return { dialCode: '+52', number: value };
 }
@@ -57,6 +56,7 @@ interface PhoneInputProps {
   error?: string;
   placeholder?: string;
   isDark?: boolean;
+  accent?: string;
 }
 
 export default function PhoneInput({
@@ -68,12 +68,15 @@ export default function PhoneInput({
   error,
   placeholder = '55 1234 5678',
   isDark = false,
+  accent,
 }: PhoneInputProps) {
   const [dialCode, setDialCode] = useState('+52');
   const [number, setNumber] = useState('');
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const ref = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const parsed = parsePhone(value);
@@ -83,7 +86,10 @@ export default function PhoneInput({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (
+        btnRef.current && !btnRef.current.contains(e.target as Node) &&
+        dropRef.current && !dropRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
         setSearch('');
       }
@@ -91,6 +97,17 @@ export default function PhoneInput({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  const handleOpen = () => {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - r.bottom;
+      const top = spaceBelow >= 300 ? r.bottom + 4 : r.top - 300 - 4;
+      setCoords({ top, left: r.left });
+    }
+    setOpen(o => !o);
+    setSearch('');
+  };
 
   const handleDialChange = (code: string) => {
     setDialCode(code);
@@ -112,6 +129,94 @@ export default function PhoneInput({
       )
     : COUNTRIES;
 
+  // Derive accent tokens
+  const m = accent?.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  const [ar, ag, ab] = m ? [+m[1], +m[2], +m[3]] : [45, 212, 191];
+  const accentMain = `rgb(${ar},${ag},${ab})`;
+  const accentBgDark = `rgba(${ar},${ag},${ab},0.15)`;
+  const accentBgLight = `rgba(${ar},${ag},${ab},0.1)`;
+
+  // Input field shared styles
+  const fieldBorder = `1px solid ${error ? '#f87171' : isDark ? `rgba(${ar},${ag},${ab},0.2)` : '#cbd5e1'}`;
+  const fieldBg = isDark ? 'rgba(255,255,255,0.06)' : '#ffffff';
+  const fieldColor = isDark ? '#f1f0f5' : '#0f172a';
+
+  const dropdown = open ? createPortal(
+    <div
+      ref={dropRef}
+      style={{
+        position: 'fixed',
+        top: coords.top,
+        left: coords.left,
+        width: 288,
+        zIndex: 99999,
+        background: isDark
+          ? `linear-gradient(145deg, rgb(${Math.round(ar * 0.12)},${Math.round(ag * 0.12)},${Math.round(ab * 0.12)}) 0%, rgb(${Math.round(ar * 0.05)},${Math.round(ag * 0.05)},${Math.round(ab * 0.05)}) 100%)`
+          : '#ffffff',
+        border: `1px solid ${isDark ? `rgba(${ar},${ag},${ab},0.2)` : '#e2e8f0'}`,
+        borderRadius: 12,
+        boxShadow: isDark ? '0 16px 48px rgba(0,0,0,0.6)' : '0 8px 32px rgba(0,0,0,0.15)',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Search */}
+      <div style={{ padding: 8, borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9'}` }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px',
+          background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+          borderRadius: 8,
+        }}>
+          <Search size={14} style={{ color: isDark ? '#6b7280' : '#94a3b8', flexShrink: 0 }} />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar país..."
+            autoFocus
+            style={{
+              flex: 1, background: 'transparent', outline: 'none', border: 'none',
+              fontSize: 13, fontFamily: 'DM Sans, sans-serif',
+              color: isDark ? '#e8e8e8' : '#374151',
+            }}
+          />
+        </div>
+      </div>
+      {/* List */}
+      <div style={{ maxHeight: 224, overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: `rgba(${ar},${ag},${ab},0.4) transparent` }}>
+        {filtered.length === 0 ? (
+          <p style={{ fontSize: 13, color: isDark ? '#6b7280' : '#94a3b8', textAlign: 'center', padding: '16px 0' }}>Sin resultados</p>
+        ) : (
+          filtered.map(c => {
+            const isActive = dialCode === c.code && selectedCountry.name === c.name;
+            return (
+              <button
+                key={c.flag + c.name}
+                type="button"
+                onClick={() => handleDialChange(c.code)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '10px 16px', border: 'none', cursor: 'pointer',
+                  background: isActive ? (isDark ? accentBgDark : accentBgLight) : 'transparent',
+                  color: isActive ? accentMain : isDark ? '#d0d0d0' : '#374151',
+                  fontSize: 13, textAlign: 'left', fontFamily: 'DM Sans, sans-serif',
+                  fontWeight: isActive ? 600 : 400,
+                  transition: 'background .1s',
+                }}
+                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc'; }}
+                onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              >
+                <span style={{ fontSize: 18, lineHeight: 1 }}>{c.flag}</span>
+                <span style={{ flex: 1 }}>{c.name}</span>
+                <span style={{ fontSize: 11, fontFamily: 'monospace', opacity: 0.55 }}>{c.code}</span>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>,
+    document.body
+  ) : null;
+
   return (
     <div>
       {label && (
@@ -121,29 +226,30 @@ export default function PhoneInput({
           {optional && <span style={{ color: isDark ? '#6b7280' : '#94a3b8', fontWeight: 400 }}>(opcional)</span>}
         </label>
       )}
-      <div ref={ref} className="relative flex gap-2">
-        {/* Selector de país */}
+      <div style={{ display: 'flex', gap: 8, position: 'relative' }}>
+        {/* Country selector button */}
         <button
+          ref={btnRef}
           type="button"
-          onClick={() => setOpen(o => !o)}
+          onClick={handleOpen}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '8px 12px',
-            border: `1px solid ${isDark ? 'rgba(45,212,191,0.2)' : '#cbd5e1'}`,
+            border: fieldBorder,
             borderRadius: 8,
-            background: isDark ? 'rgba(45,212,191,0.06)' : '#ffffff',
-            backdropFilter: isDark ? 'blur(8px)' : 'none',
-            WebkitBackdropFilter: isDark ? 'blur(8px)' : 'none',
-            color: isDark ? '#f1f0f5' : '#334155',
+            background: fieldBg,
+            color: fieldColor,
             fontSize: 14, cursor: 'pointer', flexShrink: 0, outline: 'none',
+            fontFamily: 'DM Sans, sans-serif',
+            transition: 'border-color .15s',
           }}
         >
-          <span className="text-base leading-none">{selectedCountry.flag}</span>
+          <span style={{ fontSize: 18, lineHeight: 1 }}>{selectedCountry.flag}</span>
           <span style={{ fontWeight: 500 }}>{dialCode}</span>
-          <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} style={{ color: isDark ? '#9ca3af' : '#94a3b8' }} />
+          <ChevronDown size={13} style={{ color: isDark ? '#9ca3af' : '#94a3b8', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
         </button>
 
-        {/* Input número */}
+        {/* Number input */}
         <input
           type="tel"
           value={number}
@@ -151,58 +257,18 @@ export default function PhoneInput({
           placeholder={placeholder}
           style={{
             flex: 1, padding: '8px 12px',
-            border: `1px solid ${error ? '#f87171' : isDark ? 'rgba(45,212,191,0.2)' : '#cbd5e1'}`,
+            border: fieldBorder,
             borderRadius: 8,
-            background: isDark ? 'rgba(45,212,191,0.06)' : '#ffffff',
-            backdropFilter: isDark ? 'blur(8px)' : 'none',
-            WebkitBackdropFilter: isDark ? 'blur(8px)' : 'none',
-            color: isDark ? '#f1f0f5' : '#0f172a',
+            background: fieldBg,
+            color: fieldColor,
             fontSize: 14, outline: 'none',
+            fontFamily: 'DM Sans, sans-serif',
           }}
         />
 
-        {/* Dropdown */}
-        {open && (
-          <div className="absolute top-full left-0 mt-1 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
-            <div className="p-2 border-b border-slate-100">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg">
-                <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder="Buscar país..."
-                  className="flex-1 bg-transparent text-sm outline-none text-slate-700 placeholder-slate-400"
-                  autoFocus
-                />
-              </div>
-            </div>
-            <div className="max-h-56 overflow-y-auto">
-              {filtered.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-4">Sin resultados</p>
-              ) : (
-                filtered.map(c => (
-                  <button
-                    key={c.flag + c.name}
-                    type="button"
-                    onClick={() => handleDialChange(c.code)}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-indigo-50 transition-colors ${
-                      dialCode === c.code && selectedCountry.name === c.name
-                        ? 'bg-indigo-50 text-indigo-700 font-medium'
-                        : 'text-slate-700'
-                    }`}
-                  >
-                    <span className="text-base leading-none">{c.flag}</span>
-                    <span className="flex-1">{c.name}</span>
-                    <span className="text-slate-400 text-xs font-mono">{c.code}</span>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        )}
+        {dropdown}
       </div>
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+      {error && <p style={{ fontSize: 12, color: '#ef4444', marginTop: 4 }}>{error}</p>}
     </div>
   );
 }

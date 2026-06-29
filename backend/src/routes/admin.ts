@@ -4,6 +4,7 @@ import { authMiddleware } from '../middleware/auth';
 import { adminMiddleware } from '../middleware/adminAuth';
 import { sendEmail, emailTemplates } from '../services/emailService';
 import { sendBroadcast, getBroadcasts, addContact } from '../services/audienceService';
+import { sendWhatsApp } from '../services/whatsappService';
 import { env } from '../config/env';
 
 const router = Router();
@@ -225,6 +226,33 @@ router.patch('/users/:id/features', async (req: any, res, next) => {
   }
 });
 
+// PATCH /api/admin/users/:id/grant-pro
+router.patch('/users/:id/grant-pro', async (req: any, res, next) => {
+  try {
+    const { id } = req.params;
+    const { months } = req.body as { months?: number };
+
+    if (!months || typeof months !== 'number' || months < 1 || months > 24) {
+      return res.status(400).json({ error: 'months debe ser un número entre 1 y 24' });
+    }
+
+    const target = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+    if (!target) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const planExpiresAt = new Date(Date.now() + months * 30 * 24 * 60 * 60 * 1000);
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { plan: 'PRO', planInterval: 'MONTHLY', planExpiresAt },
+      select: { id: true, plan: true, planInterval: true, planExpiresAt: true },
+    });
+
+    res.json({ ok: true, planExpiresAt: updated.planExpiresAt });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/admin/users/:id/welcome-email
 router.post('/users/:id/welcome-email', async (req, res, next) => {
   try {
@@ -239,7 +267,6 @@ router.post('/users/:id/welcome-email', async (req, res, next) => {
     const tpl = emailTemplates.welcome({
       userName: user.name,
       userEmail: user.email,
-      hasProfile: user._count.profiles > 0,
     });
 
     const result = await sendEmail(tpl.to, tpl.subject, tpl.html);
@@ -288,23 +315,106 @@ router.get('/bookings', async (req, res, next) => {
   }
 });
 
+// GET /api/admin/announcement-logs
+router.get('/announcement-logs', async (req, res, next) => {
+  try {
+    const logs = await prisma.$queryRaw<any[]>`
+      SELECT id, subject, audience, "sentCount", "failCount", recipients, "sentAt"
+      FROM "AnnouncementLog"
+      ORDER BY "sentAt" DESC
+      LIMIT 50
+    `;
+    res.json(logs);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/admin/notify-expiring-pro
+router.post('/notify-expiring-pro', async (req: any, res, next) => {
+  try {
+    const { daysAhead } = req.body as { daysAhead?: number };
+    if (!daysAhead || typeof daysAhead !== 'number' || daysAhead < 1 || daysAhead > 90) {
+      return res.status(400).json({ error: 'daysAhead debe ser entre 1 y 90' });
+    }
+
+    const windowStart = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000);
+    windowStart.setHours(0, 0, 0, 0);
+    const windowEnd = new Date(windowStart);
+    windowEnd.setHours(23, 59, 59, 999);
+
+    const users = await prisma.user.findMany({
+      where: {
+        plan: 'PRO',
+        planExpiresAt: { gte: windowStart, lte: windowEnd },
+      },
+      select: { id: true, name: true, email: true, phone: true, socialLinks: true, planExpiresAt: true },
+    });
+
+    let sent = 0;
+    let failed = 0;
+    const results: { name: string; email: string; whatsapp: boolean; email_sent: boolean }[] = [];
+
+    for (const user of users) {
+      const socialLinks = (user.socialLinks as Record<string, string>) || {};
+      const whatsappPhone = socialLinks.whatsapp || user.phone;
+      const expiryDate = new Date(user.planExpiresAt!).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+
+      let waSent = false;
+      let emailSent = false;
+
+      if (whatsappPhone) {
+        const msg =
+          `Hola ${user.name} 👋\n\n` +
+          `Te recordamos que tu plan *Aliax Pro* vence el *${expiryDate}* (en ${daysAhead} día${daysAhead !== 1 ? 's' : ''}).\n\n` +
+          `Para seguir disfrutando de todas las funciones, recuerda renovar tu plan antes de que venza.\n\n` +
+          `👉 https://www.aliax.io/pricing`;
+        const r = await sendWhatsApp(whatsappPhone, msg);
+        waSent = r.success;
+      }
+
+      const html = `
+        <p>Hola <strong>${user.name}</strong>,</p>
+        <p>Te recordamos que tu plan <strong>Aliax Pro</strong> vence el <strong>${expiryDate}</strong> (en ${daysAhead} día${daysAhead !== 1 ? 's' : ''}).</p>
+        <p>Para continuar disfrutando de todas las funciones, recuerda renovar tu plan antes de que venza.</p>
+        <p style="margin-top:24px">
+          <a href="https://www.aliax.io/pricing" style="background:#0d9488;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">
+            Renovar mi plan
+          </a>
+        </p>
+      `;
+      const emailResult = await sendEmail(user.email, `Tu plan Aliax Pro vence en ${daysAhead} día${daysAhead !== 1 ? 's' : ''}`, html);
+      emailSent = emailResult.success;
+
+      if (waSent || emailSent) sent++; else failed++;
+      results.push({ name: user.name, email: user.email, whatsapp: waSent, email_sent: emailSent });
+    }
+
+    res.json({ ok: true, sent, failed, total: users.length, results });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/admin/send-announcement  (quick plain-text, one-by-one — kept for backwards compat)
 router.post('/send-announcement', async (req, res, next) => {
   try {
-    const { subject, body, audience = 'all' } = req.body as {
+    const { subject, body, audience = 'all', userId } = req.body as {
       subject: string;
       body: string;
-      audience?: 'all' | 'pro' | 'trial';
+      audience?: 'all' | 'pro' | 'free' | 'trial';
+      userId?: string;
     };
 
     if (!subject?.trim() || !body?.trim()) {
       return res.status(400).json({ error: 'Asunto y cuerpo son requeridos' });
     }
 
-    const where =
-      audience === 'pro'   ? { plan: 'PRO' } :
-      audience === 'trial' ? { trialEndsAt: { not: null as any }, plan: null } :
-      {};
+    const where = userId
+      ? { id: userId }
+      : audience === 'pro'   ? { plan: 'PRO' }
+      : audience === 'free' || audience === 'trial' ? { plan: null as any }
+      : {};
 
     const users = await prisma.user.findMany({
       where,
@@ -313,6 +423,7 @@ router.post('/send-announcement', async (req, res, next) => {
 
     let sent = 0;
     let failed = 0;
+    const recipients: { name: string; email: string; ok: boolean; emailId?: string; opened: boolean }[] = [];
     for (const user of users) {
       const tpl = emailTemplates.announcement({
         userName: user.name,
@@ -321,11 +432,18 @@ router.post('/send-announcement', async (req, res, next) => {
         body,
       });
       const result = await sendEmail(tpl.to, tpl.subject, tpl.html);
-      if (result.success) sent++;
-      else failed++;
+      if (result.success) sent++; else failed++;
+      recipients.push({ name: user.name, email: user.email, ok: result.success, emailId: result.id, opened: false });
+      await new Promise((resolve) => setTimeout(resolve, 400)); // respeta rate limit de Resend (2 req/s)
     }
 
-    res.json({ ok: true, sent, failed, total: users.length });
+    const audienceStr = userId ? `usuario:${userId}` : audience;
+    await prisma.$executeRaw`
+      INSERT INTO "AnnouncementLog" (id, subject, audience, "sentCount", "failCount", recipients, "sentAt")
+      VALUES (gen_random_uuid(), ${subject}, ${audienceStr}, ${sent}, ${failed}, ${JSON.stringify(recipients)}::jsonb, NOW())
+    `;
+
+    res.json({ ok: true, sent, failed, total: users.length, recipients });
   } catch (err) {
     next(err);
   }

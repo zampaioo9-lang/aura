@@ -18,7 +18,8 @@ export const PROFESSION_CATEGORIES: ProfessionCategory[] = [
   {
     category: 'Salud Mental',
     professions: [
-      'Psicólogo/a', 'Psicoterapeuta', 'Coach de Vida', 'Coach Ejecutivo',
+      'Psicólogo/a', 'Psicoterapeuta', 'Neuropsicólogo/a', 'Terapeuta de Parejas',
+      'Coach de Vida', 'Coach Ejecutivo',
       'Coach Nutricional', 'Terapeuta Holístico/a', 'Terapeuta Ocupacional',
       'Consejero/a Familiar', 'Terapeuta',
     ],

@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 import PhoneInput from '../components/PhoneInput';
+import CustomSelect from '../components/CustomSelect';
+import SiteFooter from '../components/landing/SiteFooter';
 
 const PROFESSIONS = [
   'Psicólogo/a',
@@ -11,8 +13,10 @@ const PROFESSIONS = [
   'Terapeuta familiar',
   'Psiquiatra',
   'Neuropsicólogo/a',
-  'Coach terapéutico/a',
+  'Trabajador/a Social',
 ];
+
+const PROFESSION_OPTIONS = PROFESSIONS.map(p => ({ value: p, label: p }));
 
 const inp: React.CSSProperties = {
   width: '100%', padding: '11px 14px',
@@ -39,9 +43,13 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (phone.replace(/\D/g, '').length < 8) {
+      setError('El número de WhatsApp es obligatorio');
+      return;
+    }
     setLoading(true);
     try {
-      await register(name, email, password, phone || undefined);
+      await register(name, email, password, phone);
       // Pre-fill ProfileCreate with data collected here
       localStorage.setItem('aliax_register_prefill', JSON.stringify({ profession, cedula }));
       navigate('/dashboard');
@@ -54,7 +62,7 @@ export default function Register() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#0c0c0c', color: '#fff',
+      minHeight: '100vh', background: 'linear-gradient(135deg, #1a1040 0%, #0e2633 50%, #0a1a1a 100%)', color: '#fff',
       fontFamily: "'Inter', system-ui, sans-serif",
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '32px 16px', position: 'relative', overflow: 'hidden',
@@ -117,7 +125,7 @@ export default function Register() {
 
             <div>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
-                Nombre completo
+                Nombre completo <span style={{ color: '#f87171' }}>*</span>
               </label>
               <input
                 type="text" value={name} onChange={e => setName(e.target.value)} required
@@ -132,22 +140,29 @@ export default function Register() {
               <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
                 Profesión
               </label>
-              <select
-                value={profession} onChange={e => setProfession(e.target.value)} required
-                style={{
-                  ...inp,
-                  appearance: 'none', WebkitAppearance: 'none',
-                  cursor: 'pointer',
+              <CustomSelect
+                value={profession}
+                onChange={setProfession}
+                options={PROFESSION_OPTIONS}
+                placeholder="Selecciona tu profesión"
+                dark
+                accent="rgb(45,212,191)"
+                triggerStyle={{
+                  width: '100%',
+                  padding: '11px 14px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${profession ? 'rgba(45,212,191,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                  borderRadius: 10,
                   color: profession ? '#fff' : 'rgba(255,255,255,0.3)',
+                  fontSize: 14,
+                  fontFamily: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  boxSizing: 'border-box' as const,
                 }}
-                onFocus={e => (e.currentTarget.style.borderColor = 'rgba(45,212,191,0.5)')}
-                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
-              >
-                <option value="" disabled style={{ background: '#1a1a1a' }}>Selecciona tu profesión</option>
-                {PROFESSIONS.map(p => (
-                  <option key={p} value={p} style={{ background: '#1a1a1a' }}>{p}</option>
-                ))}
-              </select>
+              />
             </div>
 
             <div>
@@ -166,7 +181,7 @@ export default function Register() {
 
             <div>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
-                Email
+                Email <span style={{ color: '#f87171' }}>*</span>
               </label>
               <input
                 type="email" value={email} onChange={e => setEmail(e.target.value)} required
@@ -178,7 +193,7 @@ export default function Register() {
 
             <div>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
-                Contraseña
+                Contraseña <span style={{ color: '#f87171' }}>*</span>
               </label>
               <div style={{ position: 'relative' }}>
                 <input
@@ -190,7 +205,7 @@ export default function Register() {
                   onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
                 />
                 <button type="button" tabIndex={-1} onClick={() => setShowPwd(v => !v)}
-                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: 0, display: 'flex' }}>
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, display: 'flex' }}>
                   {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
@@ -199,7 +214,7 @@ export default function Register() {
             <div>
               <PhoneInput
                 label="WhatsApp / Teléfono"
-                optional
+                required
                 value={phone}
                 onChange={setPhone}
                 isDark
@@ -235,6 +250,10 @@ export default function Register() {
             </Link>
           </p>
         </div>
+      </div>
+
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+        <SiteFooter />
       </div>
     </div>
   );

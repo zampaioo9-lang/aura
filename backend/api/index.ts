@@ -5,8 +5,18 @@ import cors from 'cors';
 const app = express();
 app.use(cors());
 
-// Raw body for Stripe webhook — must come BEFORE express.json()
+// Raw body for webhooks — must come BEFORE express.json()
 app.use('/api/subscriptions/stripe/webhook', express.raw({ type: 'application/json' }));
+app.use('/api/webhooks/resend', (req, _res, next) => {
+  let data = Buffer.alloc(0);
+  req.on('data', (chunk: Buffer) => { data = Buffer.concat([data, chunk]); });
+  req.on('end', () => {
+    (req as any).rawBody = data;
+    (req as any)._body = true; // prevent express.json() from re-reading the stream
+    try { req.body = JSON.parse(data.toString() || '{}'); } catch { req.body = {}; }
+    next();
+  });
+});
 
 app.use(express.json());
 
@@ -31,6 +41,13 @@ try {
   const serviceAvailabilityRoutes = require('../src/routes/service-availability').default;
   const adminRoutes = require('../src/routes/admin').default;
   const subscriptionRoutes = require('../src/routes/subscriptions').default;
+  const clientsRoutes = require('../src/routes/clients').default;
+  const clinicalHistoryRoutes = require('../src/routes/clinical-history').default;
+  const sessionNotesRoutes = require('../src/routes/session-notes').default;
+  const clinicalHistoryCoupleRoutes = require('../src/routes/clinical-history-couple').default;
+  const webhookRoutes = require('../src/routes/webhooks').default;
+  const aiNotesRoutes = require('../src/routes/ai-notes').default;
+  const aiMatchingRoutes = require('../src/routes/ai-matching').default;
   const { sendWhatsApp } = require('../src/services/whatsappService');
 
   app.use('/api/auth', authRoutes);
@@ -45,6 +62,13 @@ try {
   app.use('/api/service-availability', serviceAvailabilityRoutes);
   app.use('/api/admin', adminRoutes);
   app.use('/api/subscriptions', subscriptionRoutes);
+  app.use('/api/clients', clientsRoutes);
+  app.use('/api/clinical-history', clinicalHistoryRoutes);
+  app.use('/api/session-notes', sessionNotesRoutes);
+  app.use('/api/clinical-history-couple', clinicalHistoryCoupleRoutes);
+  app.use('/api/webhooks', webhookRoutes);
+  app.use('/api/ai-notes', aiNotesRoutes);
+  app.use('/api/ai-matching', aiMatchingRoutes);
 
   app.get('/api/test/whatsapp', async (req, res) => {
     const to = req.query.to as string;

@@ -28,4 +28,5 @@ export const env = {
   RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || 'Aliax <notificaciones@aliax.io>',
   RESEND_AUDIENCE_ID: process.env.RESEND_AUDIENCE_ID || '',
+  RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET || '',
 };

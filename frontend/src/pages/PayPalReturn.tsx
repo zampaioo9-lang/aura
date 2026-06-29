@@ -14,16 +14,24 @@ export default function PayPalReturn() {
     if (called.current) return;
     called.current = true;
 
+    const subscriptionId = params.get('subscription_id');
     const orderId = params.get('token');
-    if (!orderId) {
-      navigate('/pricing');
-      return;
-    }
 
-    api.post('/subscriptions/paypal/order/capture', { orderId })
-      .then(() => refreshUser())
-      .then(() => navigate('/payment/success'))
-      .catch(() => navigate('/pricing'));
+    if (subscriptionId) {
+      // Suscripción recurrente (mensual/anual)
+      api.post('/subscriptions/paypal/capture', { subscriptionId })
+        .then(() => refreshUser())
+        .then(() => navigate('/payment/success'))
+        .catch(() => navigate('/pricing'));
+    } else if (orderId) {
+      // Pago único (Lifetime)
+      api.post('/subscriptions/paypal/order/capture', { orderId })
+        .then(() => refreshUser())
+        .then(() => navigate('/payment/success'))
+        .catch(() => navigate('/pricing'));
+    } else {
+      navigate('/pricing');
+    }
   }, []);
 
   return (

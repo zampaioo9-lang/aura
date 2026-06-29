@@ -16,6 +16,8 @@ import serviceAvailabilityRoutes from './routes/service-availability';
 import adminRoutes from './routes/admin';
 import subscriptionRoutes from './routes/subscriptions';
 import reviewRoutes from './routes/reviews';
+import aiNotesRoutes from './routes/ai-notes';
+import aiMatchingRoutes from './routes/ai-matching';
 import { startReminderJob } from './jobs/reminderJob';
 import { startTrialExpiryJob } from './jobs/trialExpiryJob';
 import { sendWhatsAppTemplate, templateComponents } from './services/whatsappService';
@@ -46,6 +48,8 @@ app.use('/api/service-availability', serviceAvailabilityRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/ai-notes', aiNotesRoutes);
+app.use('/api/ai-matching', aiMatchingRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

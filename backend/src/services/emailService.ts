@@ -39,7 +39,7 @@ function baseTemplate(title: string, content: string): string {
 
           <!-- Header -->
           <tr>
-            <td style="background:#0e0920;padding:24px 32px;">
+            <td style="background:#4c1d95;background:linear-gradient(135deg,#4c1d95 0%,#0d9488 100%);padding:24px 32px;">
               <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">Aliax</span>
             </td>
           </tr>
@@ -98,7 +98,7 @@ function badge(text: string, color: string): string {
 function ctaButton(text: string, url: string): string {
   return `
   <div style="margin-top:24px;">
-    <a href="${url}" style="display:inline-block;padding:12px 24px;background:#9333ea;color:#ffffff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">${text}</a>
+    <a href="${url}" style="display:inline-block;padding:12px 24px;background:#0d9488;background:linear-gradient(135deg,#7c3aed 0%,#0d9488 100%);color:#ffffff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">${text}</a>
   </div>`;
 }
 
@@ -298,7 +298,6 @@ export const emailTemplates = {
   welcome: (data: {
     userName: string;
     userEmail: string;
-    hasProfile: boolean;
   }) => ({
     to: data.userEmail,
     subject: '¡Bienvenido a Aliax! 🎉',
@@ -311,21 +310,16 @@ export const emailTemplates = {
         <p style="margin:0;color:#18181b;font-size:15px;">Gestiona tus citas, servicios y clientes sin costo. Cuando quieras más funciones, puedes actualizar a Pro.</p>
       </div>
 
-      ${!data.hasProfile ? `
-      <div style="margin-top:24px;padding:20px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;">
-        <p style="margin:0 0 6px;color:#92400e;font-size:15px;font-weight:600;">¿Eres profesional?</p>
-        <p style="margin:0 0 12px;color:#78716c;font-size:14px;line-height:1.5;">Crea tu perfil profesional en minutos y comienza a recibir reservas de tus clientes. Configura tus servicios, horarios y muestra tu experiencia.</p>
-        ${ctaButton('Crear mi perfil profesional', 'https://www.aliax.io/dashboard/profile')}
-      </div>
-      ` : ''}
-
       <div style="margin-top:24px;">
-        <p style="margin:0 0 8px;color:#18181b;font-size:15px;font-weight:600;">¿Qué puedes hacer en Aliax?</p>
+        <p style="margin:0 0 12px;color:#18181b;font-size:15px;font-weight:600;">¿Qué puedes hacer en Aliax?</p>
         <table width="100%" cellpadding="0" cellspacing="0">
-          <tr><td style="padding:6px 0;color:#52525b;font-size:14px;">✦ Crear tu perfil profesional con tu marca personal</td></tr>
-          <tr><td style="padding:6px 0;color:#52525b;font-size:14px;">✦ Configurar tus servicios y precios</td></tr>
-          <tr><td style="padding:6px 0;color:#52525b;font-size:14px;">✦ Gestionar citas y reservas en un solo lugar</td></tr>
-          <tr><td style="padding:6px 0;color:#52525b;font-size:14px;">✦ Recibir notificaciones automáticas por email</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Tu perfil público en el directorio</strong> — nuevos pacientes te encuentran por enfoque terapéutico</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Agenda inteligente:</strong> tus clientes reservan citas solos, 24/7, sin que tú intervengas</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Historia clínica digital</strong> por paciente — organizada, accesible y siempre contigo</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Notas de evolución del paciente</strong>, basadas en el esquema oficial SOAP y esquema Diamante para TBCS</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Tu enlace personalizado</strong> — compártelo con tus clientes y recibe reservas al instante</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Servicios, precios y modalidades</strong> — presencial, online o ambas</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Notificaciones automáticas</strong> de citas a ti y a tus pacientes</td></tr>
         </table>
       </div>
 
@@ -345,7 +339,7 @@ export const emailTemplates = {
     to: data.userEmail,
     subject: data.subject,
     html: baseTemplate(data.subject, `
-      ${heading(`Hola ${data.userName} 👋`)}
+      <h1 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#0d9488;background:linear-gradient(135deg,#7c3aed,#0d9488);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Hola ${data.userName} 👋</h1>
       <div style="margin-top:16px;color:#52525b;font-size:15px;line-height:1.7;">
         ${data.body.replace(/\n/g, '<br>')}
       </div>

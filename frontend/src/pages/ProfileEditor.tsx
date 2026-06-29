@@ -8,6 +8,7 @@ import UsernameInput from '../components/UsernameInput';
 import ImageUpload from '../components/ImageUpload';
 import PhoneInput from '../components/PhoneInput';
 import { PROFESSION_CATEGORIES } from '../lib/professions';
+import { PROBLEMATICS } from '../data/problematics';
 import { useAuth } from '../context/AuthContext';
 import ProGate from '../components/ProGate';
 import { useFeature } from '../hooks/useFeature';
@@ -23,14 +24,6 @@ const THERAPEUTIC_APPROACHES = [
   'Sistémico', 'Narrativo', 'Mindfulness / MBCT', 'Terapia de Esquemas',
   'EFT (Enfocada en las Emociones)', 'Logoterapia', 'Existencial',
   'Breve estratégico', 'Integrativo',
-];
-
-const PROBLEMATICS = [
-  'Ansiedad', 'Depresión', 'Estrés', 'Trauma / PTSD', 'Duelo',
-  'Problemas de pareja', 'Familia y crianza', 'Autoestima', 'Identidad',
-  'Trastornos alimenticios', 'Fobias / TOC', 'Adicciones',
-  'TDAH / Neurodivergencia', 'Orientación sexual / Diversidad',
-  'Adultos mayores', 'Manejo de emociones',
 ];
 
 const POPULATIONS = [
@@ -184,6 +177,10 @@ export default function ProfileEditor() {
   }, [id]);
 
   const handleSave = async () => {
+    if (form.phone.replace(/\D/g, '').length < 8) {
+      setError('El WhatsApp Business es obligatorio');
+      return;
+    }
     setSaving(true);
     setError('');
     setSuccess('');
@@ -293,6 +290,7 @@ export default function ProfileEditor() {
             <div>
               <PhoneInput
                 label="WhatsApp Business"
+                required
                 value={form.phone}
                 onChange={v => setForm(f => ({ ...f, phone: v }))}
               />

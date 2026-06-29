@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import LandingHeader from '../components/landing/LandingHeader';
+import SiteFooter from '../components/landing/SiteFooter';
 
 const inp: React.CSSProperties = {
   width: '100%', padding: '11px 14px',
@@ -37,11 +39,12 @@ export default function Login() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#0c0c0c', color: '#fff',
+      minHeight: '100vh', background: 'linear-gradient(135deg, #1a1040 0%, #0e2633 50%, #0a1a1a 100%)', color: '#fff',
       fontFamily: "'Inter', system-ui, sans-serif",
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '24px 16px', position: 'relative', overflow: 'hidden',
     }}>
+      <LandingHeader />
       {/* Teal glow orb */}
       <div style={{
         position: 'absolute', top: '-15%', left: '50%', transform: 'translateX(-50%)',
@@ -109,7 +112,7 @@ export default function Login() {
                   onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
                 />
                 <button type="button" tabIndex={-1} onClick={() => setShowPwd(v => !v)}
-                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: 0, display: 'flex' }}>
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, display: 'flex' }}>
                   {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
@@ -137,6 +140,10 @@ export default function Login() {
             </Link>
           </p>
         </div>
+      </div>
+
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+        <SiteFooter />
       </div>
     </div>
   );

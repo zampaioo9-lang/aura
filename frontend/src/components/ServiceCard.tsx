@@ -16,7 +16,7 @@ interface ServiceCardProps {
 }
 
 export default function ServiceCard({
-  service, showActions = false, onEdit, onDelete, onToggle, onBook, onAddImage, onRemoveImage, isPro, variant = 'default',
+  service, showActions = false, onEdit, onDelete, onToggle, onBook, onAddImage, onRemoveImage, variant = 'default',
 }: ServiceCardProps) {
   return (
     <div className={`bg-white rounded-xl border transition-all hover:shadow-md overflow-hidden ${
@@ -50,28 +50,30 @@ export default function ServiceCard({
                   >×</button>
                 </div>
               ))}
-              {/* Add image button */}
-              <label style={{
-                width: 56, height: 56, borderRadius: 6,
-                border: '1px dashed rgba(107,99,255,0.4)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#6b63ff', fontSize: 20,
-              }}>
-                +
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={e => {
-                    const file = e.target.files?.[0];
-                    if (file) onAddImage?.(service.id, file);
-                    e.target.value = '';
-                  }}
-                />
-              </label>
+              {/* Add image button — solo si no hay imagen aún */}
+              {(service.images || []).length < 1 && (
+                <label style={{
+                  width: 56, height: 56, borderRadius: 6,
+                  border: '1px dashed rgba(107,99,255,0.4)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: '#6b63ff', fontSize: 20,
+                }}>
+                  +
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) onAddImage?.(service.id, file);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+              )}
             </div>
             <p style={{ color: '#6b6b80', fontSize: 11, margin: 0 }}>
-              {(service.images || []).length}{!isPro && '/3'} fotos {isPro ? '(ilimitado)' : '— Pro para más'}
+              {(service.images || []).length}/1 foto por servicio
             </p>
           </div>
         )}

@@ -15,6 +15,8 @@ import {
 } from '../types/availability';
 import { useServices, type Service } from '../hooks/useServices';
 import ImageUpload from '../components/ImageUpload';
+import { ImagePositionPicker } from '../components/ServiceForm';
+import { useUpload } from '../hooks/useUpload';
 import QuickTemplates from '../components/availability/QuickTemplates';
 
 const SVC_CURRENCY_OPTIONS = [
@@ -68,7 +70,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
       onClick={onChange}
       style={{
         width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', flexShrink: 0,
-        background: on ? '#2dd4bf' : 'var(--sc-border)', position: 'relative', transition: 'background .2s',
+        background: on ? 'var(--sc-accent)' : 'var(--sc-border)', position: 'relative', transition: 'background .2s',
       }}
     >
       <span style={{
@@ -106,11 +108,12 @@ function CardHeader({ dot, title, action }: { dot: string; title: string; action
 function BtnPrimary({ onClick, children, disabled = false, small = false }: {
   onClick?: () => void; children: React.ReactNode; disabled?: boolean; small?: boolean;
 }) {
+  const { accent } = useSC();
   return (
     <button onClick={onClick} disabled={disabled} style={{
-      background: '#2dd4bf', color: 'white', border: 'none', borderRadius: 8, cursor: disabled ? 'not-allowed' : 'pointer',
+      background: accent, color: 'white', border: 'none', borderRadius: 8, cursor: disabled ? 'not-allowed' : 'pointer',
       padding: small ? '6px 12px' : '10px 20px', fontSize: small ? 13 : 14, fontFamily: 'DM Sans, sans-serif', fontWeight: 500,
-      transition: 'background .15s', opacity: disabled ? 0.6 : 1,
+      opacity: disabled ? 0.6 : 1,
     }}>{children}</button>
   );
 }
@@ -165,8 +168,8 @@ function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) 
 function DayChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button onClick={onClick} style={{
-      padding: '8px 14px', borderRadius: 20, border: `1px solid ${active ? '#2dd4bf' : 'var(--sc-border)'}`,
-      background: active ? 'rgba(45,212,191,0.18)' : 'var(--sc-inner)', color: active ? '#2dd4bf' : 'var(--sc-muted)',
+      padding: '8px 14px', borderRadius: 20, border: `1px solid ${active ? 'var(--sc-accent)' : 'var(--sc-border)'}`,
+      background: active ? 'var(--sc-accent-18)' : 'var(--sc-inner)', color: active ? 'var(--sc-accent)' : 'var(--sc-muted)',
       cursor: 'pointer', fontSize: 13, fontWeight: active ? 500 : 400, fontFamily: 'DM Sans, sans-serif',
       transition: 'all .15s',
     }}>{label}</button>
@@ -281,7 +284,7 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
     await fetchSlots();
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid rgba(45,212,191,0.3)', borderTopColor: '#2dd4bf', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   const dayHours = (day: number) => slots.filter(s => s.dayOfWeek === day && s.isActive).reduce((acc, s) => acc + (t2m(s.endTime) - t2m(s.startTime)) / 60, 0);
 
@@ -289,8 +292,8 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
     <>
       {/* Días laborables */}
       <Card>
-        <CardHeader dot="#2dd4bf" title="Días laborables" action={
-          <button onClick={() => setShowTemplates(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500, background: 'rgba(45,212,191,0.12)', color: '#2dd4bf' }}>
+        <CardHeader dot="var(--sc-accent)" title="Días laborables" action={
+          <button onClick={() => setShowTemplates(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500, background: 'var(--sc-accent-12)', color: 'var(--sc-accent)' }}>
             <Sparkles size={13} /> Aplicar plantilla
           </button>
         } />
@@ -309,7 +312,7 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
               {DAY_ORDER.filter(d => activeDays.includes(d)).map(d => (
                 <button key={d} onClick={() => setSelectedDay(d)} style={{
                   padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans',
-                  background: selectedDay === d ? '#2dd4bf' : 'var(--sc-inner)', color: selectedDay === d ? 'white' : 'var(--sc-muted)',
+                  background: selectedDay === d ? 'var(--sc-accent)' : 'var(--sc-inner)', color: selectedDay === d ? 'white' : 'var(--sc-muted)',
                 }}>{DAY_NAMES_SHORT[d]}</button>
               ))}
             </div>
@@ -358,9 +361,9 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
           {DAY_ORDER.map(d => {
             const h = dayHours(d);
             return (
-              <div key={d} style={{ textAlign: 'center', padding: '10px 4px', borderRadius: 8, background: h > 0 ? 'rgba(45,212,191,0.10)' : 'var(--sc-inner)', border: `1px solid ${h > 0 ? '#2dd4bf40' : 'var(--sc-border)'}` }}>
+              <div key={d} style={{ textAlign: 'center', padding: '10px 4px', borderRadius: 8, background: h > 0 ? 'var(--sc-accent-10)' : 'var(--sc-inner)', border: `1px solid ${h > 0 ? 'var(--sc-accent-25)' : 'var(--sc-border)'}` }}>
                 <div style={{ fontSize: 10, color: 'var(--sc-muted)', marginBottom: 4 }}>{DAY_NAMES_SHORT[d]}</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: h > 0 ? '#2dd4bf' : 'var(--sc-muted2)' }}>{h > 0 ? `${h.toFixed(1)}h` : '—'}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: h > 0 ? 'var(--sc-accent)' : 'var(--sc-muted2)' }}>{h > 0 ? `${h.toFixed(1)}h` : '—'}</div>
               </div>
             );
           })}
@@ -407,23 +410,36 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
   const { toast } = useToast();
   const sc = useSC();
   const { services, stats, loading, createService, updateService, toggleService } = useServices();
+  const { uploadImage } = useUpload();
+  const changePicRef = useRef<HTMLInputElement>(null);
   const [filter, setFilter] = useState<SvcFilter>('active');
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
-  const [formData, setFormData] = useState({ name: '', description: '', price: '0', currency: 'EUR', durationMinutes: 60 });
+  const [formData, setFormData] = useState({ name: '', description: '', price: '0', currency: 'EUR', durationMinutes: 60, sessionModality: '' });
   const [formImage, setFormImage] = useState('');
+  const [formImagePosition, setFormImagePosition] = useState('50% 50%');
   const [formError, setFormError] = useState('');
+
+  const handleChangePic = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    const result = await uploadImage(file);
+    if (result) { setFormImage(result.url); setFormImagePosition('50% 50%'); }
+  };
   const setField = (k: string, v: any) => { setFormData(f => ({ ...f, [k]: v })); setFormError(''); };
 
   useEffect(() => {
     if (modalOpen && editingService) {
-      setFormData({ name: editingService.name, description: editingService.description || '', price: String(editingService.price), currency: editingService.currency, durationMinutes: editingService.durationMinutes });
+      setFormData({ name: editingService.name, description: editingService.description || '', price: String(editingService.price), currency: editingService.currency, durationMinutes: editingService.durationMinutes, sessionModality: editingService.sessionModality || '' });
       setFormImage(editingService.image || '');
+      setFormImagePosition(editingService.imagePosition || '50% 50%');
     } else if (modalOpen) {
-      setFormData({ name: '', description: '', price: '0', currency: 'EUR', durationMinutes: 60 });
+      setFormData({ name: '', description: '', price: '0', currency: 'EUR', durationMinutes: 60, sessionModality: '' });
       setFormImage('');
+      setFormImagePosition('50% 50%');
     }
     setFormError('');
   }, [modalOpen, editingService]);
@@ -434,7 +450,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
     if (isNaN(price) || price < 0) { setFormError('El precio no puede ser negativo.'); return; }
     setModalLoading(true);
     try {
-      const payload = { name: formData.name.trim(), description: formData.description.trim() || undefined, price, currency: formData.currency, durationMinutes: formData.durationMinutes, image: formImage || undefined, profileId };
+      const payload = { name: formData.name.trim(), description: formData.description.trim() || undefined, price, currency: formData.currency, durationMinutes: formData.durationMinutes, sessionModality: formData.sessionModality || undefined, image: formImage || undefined, imagePosition: formImage ? formImagePosition : undefined, profileId };
       if (modalMode === 'create') { await createService(payload); toast('Servicio creado'); }
       else if (editingService) { await updateService(editingService.id, payload); toast('Servicio actualizado'); }
       setModalOpen(false);
@@ -556,7 +572,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
     setDragId(null); setDragOverId(null);
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid rgba(45,212,191,0.3)', borderTopColor: '#2dd4bf', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   const currentFranjas = selectedDay !== null ? (franjasByDay[selectedDay] ?? []) : [];
   const byProfile = services.filter(s => s.profileId === profileId);
@@ -580,9 +596,9 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
       <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
         {(['active', 'inactive', 'all'] as SvcFilter[]).map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
-            padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === f ? '#2dd4bf' : 'var(--sc-border)'}`,
-            background: filter === f ? 'rgba(45,212,191,0.15)' : 'var(--sc-inner)',
-            color: filter === f ? '#2dd4bf' : 'var(--sc-muted)',
+            padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === f ? 'var(--sc-accent)' : 'var(--sc-border)'}`,
+            background: filter === f ? 'var(--sc-accent-15)' : 'var(--sc-inner)',
+            color: filter === f ? 'var(--sc-accent)' : 'var(--sc-muted)',
             cursor: 'pointer', fontSize: 13, fontFamily: 'DM Sans', fontWeight: filter === f ? 500 : 400,
           }}>
             {f === 'active' ? 'Activos' : f === 'inactive' ? 'Inactivos' : 'Todos'}
@@ -595,7 +611,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
         const inp: React.CSSProperties = { background: 'var(--sc-inner)', border: '1px solid var(--sc-border)', borderRadius: 8, padding: '9px 12px', color: 'var(--sc-text)', fontFamily: 'DM Sans', fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' };
         const lbl: React.CSSProperties = { fontSize: 11, color: 'var(--sc-muted)', textTransform: 'uppercase', letterSpacing: '0.7px', fontWeight: 600, display: 'block', marginBottom: 5 };
         return (
-          <div style={{ background: 'rgba(45,212,191,0.06)', border: '1px dashed rgba(45,212,191,0.4)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
+          <div style={{ background: 'var(--sc-accent-06)', border: '1px dashed var(--sc-accent-40)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
             <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, color: 'var(--sc-text)', marginBottom: 14 }}>
               {modalMode === 'create' ? 'Nuevo servicio' : 'Editar servicio'}
             </div>
@@ -611,7 +627,20 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
                 <textarea value={formData.description} onChange={e => setField('description', e.target.value)} rows={2} maxLength={500} placeholder="Describe tu servicio..." style={{ ...inp, resize: 'vertical' }} />
               </div>
 
-              <ImageUpload value={formImage} onChange={setFormImage} label="Imagen del servicio" />
+              {formImage ? (
+                <>
+                  <ImagePositionPicker
+                    image={formImage}
+                    position={formImagePosition}
+                    onChange={setFormImagePosition}
+                    onChangePicture={() => changePicRef.current?.click()}
+                    onRemove={() => { setFormImage(''); setFormImagePosition('50% 50%'); }}
+                  />
+                  <input ref={changePicRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleChangePic} />
+                </>
+              ) : (
+                <ImageUpload value="" onChange={v => { setFormImage(v); setFormImagePosition('50% 50%'); }} label="Imagen del servicio" />
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
@@ -639,6 +668,31 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
                   dark={sc.isDark}
                   accent={sc.accent}
                 />
+              </div>
+
+              <div>
+                <label style={lbl}>Modalidad de atención</label>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {[
+                    { value: 'presencial', label: 'Presencial' },
+                    { value: 'online',     label: 'En línea' },
+                    { value: 'hibrida',    label: 'Ambas' },
+                  ].map(m => (
+                    <button key={m.value} type="button"
+                      onClick={() => setField('sessionModality', formData.sessionModality === m.value ? '' : m.value)}
+                      style={{
+                        padding: '7px 16px', borderRadius: 8, fontSize: 13,
+                        border: `1.5px solid ${formData.sessionModality === m.value ? 'var(--sc-accent)' : 'var(--sc-border)'}`,
+                        background: formData.sessionModality === m.value ? 'var(--sc-accent)' : 'var(--sc-inner)',
+                        color: formData.sessionModality === m.value ? '#fff' : 'var(--sc-text)',
+                        fontWeight: formData.sessionModality === m.value ? 600 : 400,
+                        cursor: 'pointer', transition: 'all .15s',
+                        boxShadow: formData.sessionModality === m.value ? '0 2px 8px var(--sc-accent-30)' : 'none',
+                      }}>
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {formError && <p style={{ color: '#ff6584', fontSize: 13, margin: 0 }}>{formError}</p>}
@@ -671,10 +725,10 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
             onDragEnd={() => { setDragId(null); setDragOverId(null); }}
             style={{
               display: 'flex', alignItems: 'center', gap: 0,
-              border: `1px solid ${dragOverId === s.id ? '#2dd4bf' : selectedSvc?.id === s.id ? '#2dd4bf' : 'var(--sc-border)'}`,
+              border: `1px solid ${dragOverId === s.id ? 'var(--sc-accent)' : selectedSvc?.id === s.id ? 'var(--sc-accent)' : 'var(--sc-border)'}`,
               borderRadius: 10, transition: 'all .15s',
               opacity: dragId === s.id ? 0.4 : s.isActive ? 1 : 0.6,
-              outline: dragOverId === s.id ? '2px dashed #2dd4bf' : 'none',
+              outline: dragOverId === s.id ? '2px dashed var(--sc-accent)' : 'none',
               outlineOffset: 2,
             }}
           >
@@ -692,7 +746,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
             {/* Content */}
             <div style={{
               flex: 1, display: 'flex', alignItems: 'center', gap: 12,
-              background: selectedSvc?.id === s.id ? 'rgba(45,212,191,0.08)' : 'var(--sc-inner)',
+              background: selectedSvc?.id === s.id ? 'var(--sc-accent-08)' : 'var(--sc-inner)',
               borderRadius: '0 10px 10px 0', padding: '12px 14px',
             }}>
               <div style={{ width: 10, height: 36, borderRadius: 5, background: colorMap[s.id], flexShrink: 0 }} />
@@ -714,9 +768,9 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
                 onClick={e => { e.stopPropagation(); openEdit(s); }}
                 style={{
                   flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5,
-                  background: 'rgba(45,212,191,0.12)', border: '1px solid rgba(45,212,191,0.3)',
+                  background: 'var(--sc-accent-12)', border: '1px solid var(--sc-accent-30)',
                   borderRadius: 8, cursor: 'pointer', padding: '6px 12px',
-                  color: '#2dd4bf', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500,
+                  color: 'var(--sc-accent)', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500,
                 }}
               >
                 <Pencil size={12} /> Editar
@@ -757,7 +811,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
               {DAY_ORDER.filter(d => activeDays.includes(d)).map(d => (
                 <button key={d} onClick={() => setSelectedDay(d)} style={{
                   padding: '4px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12,
-                  background: selectedDay === d ? '#2dd4bf' : 'var(--sc-inner)', color: selectedDay === d ? 'white' : 'var(--sc-muted)',
+                  background: selectedDay === d ? 'var(--sc-accent)' : 'var(--sc-inner)', color: selectedDay === d ? 'white' : 'var(--sc-muted)',
                 }}>{DAY_NAMES_SHORT[d]}</button>
               ))}
             </div>
@@ -850,7 +904,7 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
     return b.startDate.slice(0, 10) === b.endDate.slice(0, 10) ? s : `${s} → ${e}`;
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid rgba(45,212,191,0.3)', borderTopColor: '#2dd4bf', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   return (
     <>
@@ -940,7 +994,7 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
                   {expired ? ' · Expirado' : ''}
                 </div>
               </div>
-              <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', background: 'rgba(45,212,191,0.18)', color: '#2dd4bf' }}>
+              <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', background: 'var(--sc-accent-18)', color: 'var(--sc-accent)' }}>
                 {b.isAllDay ? 'Completo' : 'Parcial'}
               </span>
               <BtnDanger onClick={() => handleDelete(b.id)}>Eliminar</BtnDanger>
@@ -991,7 +1045,7 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
     finally { setSaving(false); }
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid rgba(45,212,191,0.3)', borderTopColor: '#2dd4bf', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   return (
     <>
@@ -1005,7 +1059,7 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
 
       {/* Ventanas de tiempo */}
       <Card>
-        <CardHeader dot="#2dd4bf" title="Ventanas de tiempo" />
+        <CardHeader dot="var(--sc-accent)" title="Ventanas de tiempo" />
         <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <FormSelect label="Antelación mínima para reservar" value={String(settings.minAdvanceHours)} onChange={v => upd('minAdvanceHours', Number(v))} options={[
             { value: '0', label: 'Inmediatamente' }, { value: '1', label: '1 hora antes' },
@@ -1044,11 +1098,8 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
         <ProGate isPro={isPro}>
           <ToggleRow label="Múltiples reservas por slot" desc="Permite solapamiento de citas (requiere recursos separados)" on={toggles.multiplePerSlot} onChange={() => setToggles(t => ({ ...t, multiplePerSlot: !t.multiplePerSlot }))} />
         </ProGate>
-        <ToggleRow label="Permitir cancelaciones" desc="Los clientes pueden cancelar por sí mismos" on={toggles.allowCancel} onChange={() => setToggles(t => ({ ...t, allowCancel: !t.allowCancel }))} />
         <div style={{ borderBottom: 'none' }}>
-          <ProGate isPro={isPro}>
-            <ToggleRow label="Pago requerido al reservar" desc="El cliente debe pagar antes de confirmar la cita" on={toggles.requirePayment} onChange={() => setToggles(t => ({ ...t, requirePayment: !t.requirePayment }))} />
-          </ProGate>
+          <ToggleRow label="Permitir cancelaciones" desc="Los clientes pueden cancelar por sí mismos" on={toggles.allowCancel} onChange={() => setToggles(t => ({ ...t, allowCancel: !t.allowCancel }))} />
         </div>
       </Card>
 
@@ -1131,7 +1182,7 @@ function TabNotificaciones({ isPro = false }: { isPro?: boolean }) {
 
       {/* Recordatorios */}
       <Card>
-        <CardHeader dot="#2dd4bf" title="Recordatorios automáticos al cliente" />
+        <CardHeader dot="var(--sc-accent)" title="Recordatorios automáticos al cliente" />
         <ToggleRow label="Confirmación de reserva" desc="Inmediato tras reservar" on={reminders.confirmacion} onChange={() => tog(reminders, setReminders, 'confirmacion')} />
         <ToggleRow label="Recordatorio previo 24h" desc="24 horas antes de la cita" on={reminders.recordatorio24h} onChange={() => tog(reminders, setReminders, 'recordatorio24h')} />
         <ProGate isPro={isPro}>
@@ -1174,8 +1225,17 @@ const PAGES: { id: Tab; icon: ReactNode; label: string }[] = [
 
 interface Profile { id: string; title: string; slug: string }
 
-const THEME_DARK  = { main: 'transparent', side: 'rgba(255,255,255,0.05)', inner: 'rgba(255,255,255,0.07)', border: 'rgba(45,212,191,0.15)', text: '#e8f0f0', muted: '#6aada8', muted2: 'rgba(45,212,191,0.2)' };
-const THEME_LIGHT = { main: 'transparent', side: 'rgba(255,255,255,0.72)', inner: 'rgba(255,255,255,0.55)', border: 'rgba(13,148,136,0.18)', text: '#0a1f1e', muted: '#3d8a82', muted2: 'rgba(13,148,136,0.15)' };
+const ACCENT_MAP: Record<string,string> = { aguamarina:'rgb(45,212,191)', nocturno:'rgb(147,51,234)', neon:'rgb(217,72,240)', dorado:'rgb(253,224,71)', ocean:'rgb(62,153,201)', bosque:'rgb(20,70,65)', cosmo:'rgb(88,28,155)' };
+function mkThemeDark(r: number, g: number, b: number) {
+  const a = (al: number) => `rgba(${r},${g},${b},${al})`;
+  const mt = `rgb(${Math.round(Math.min(r/2+90,235))},${Math.round(Math.min(g/2+100,235))},${Math.round(Math.min(b/2+100,235))})`;
+  return { main:'transparent', side:'rgba(255,255,255,0.05)', inner:'rgba(255,255,255,0.07)', border:a(0.18), text:'#e8f0f0', muted:mt, muted2:a(0.2) };
+}
+function mkThemeLight(r: number, g: number, b: number) {
+  const a = (al: number) => `rgba(${r},${g},${b},${al})`;
+  const mt = `rgb(${Math.round(r*0.4)},${Math.round(g*0.5)},${Math.round(b*0.5)})`;
+  return { main:'transparent', side:'rgba(255,255,255,0.72)', inner:'rgba(255,255,255,0.55)', border:a(0.25), text:'#0a1f1e', muted:mt, muted2:a(0.15) };
+}
 
 // ════════════════════════════════════════════════════════════════════
 // EMBEDDED PANEL — para incrustar en Dashboard como pestaña
@@ -1190,7 +1250,11 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
   const [loading, setLoading]       = useState(true);
   const [showFade, setShowFade]     = useState(true);
   const asideRef                    = useRef<HTMLElement>(null);
-  const T = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
+  const ctxAccent = accent ?? 'rgb(45,212,191)';
+  const _nums = ctxAccent.match(/\d+/g) ?? ['45','212','191'];
+  const [_r, _g, _b] = _nums.map(Number);
+  const aA = (a: number) => `rgba(${_r},${_g},${_b},${a})`;
+  const T = theme === 'dark' ? mkThemeDark(_r,_g,_b) : mkThemeLight(_r,_g,_b);
 
   useEffect(() => {
     const el = asideRef.current;
@@ -1211,11 +1275,9 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}>
-      <div style={{ width: 32, height: 32, border: '3px solid rgba(45,212,191,0.3)', borderTopColor: '#2dd4bf', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      <div style={{ width: 32, height: 32, border: `3px solid ${aA(0.3)}`, borderTopColor: ctxAccent, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
     </div>
   );
-
-  const ctxAccent = accent ?? 'rgb(45,212,191)';
 
   return (
     <SCCtx.Provider value={{ isDark: theme === 'dark', accent: ctxAccent }}>
@@ -1223,6 +1285,10 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
       color: T.text, fontFamily: 'DM Sans, sans-serif',
       '--sc-main': T.main, '--sc-side': T.side, '--sc-inner': T.inner,
       '--sc-border': T.border, '--sc-text': T.text, '--sc-muted': T.muted, '--sc-muted2': T.muted2,
+      '--sc-accent': ctxAccent,
+      '--sc-accent-06': aA(0.06), '--sc-accent-08': aA(0.08), '--sc-accent-10': aA(0.10),
+      '--sc-accent-12': aA(0.12), '--sc-accent-15': aA(0.15), '--sc-accent-18': aA(0.18),
+      '--sc-accent-25': aA(0.25), '--sc-accent-30': aA(0.30), '--sc-accent-40': aA(0.40),
     } as React.CSSProperties}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -1300,8 +1366,8 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
             onClick={() => setTab(p.id)}
             className="sc-panel-btn"
             style={{
-              color: tab === p.id ? '#2dd4bf' : T.muted,
-              background: tab === p.id ? 'rgba(45,212,191,0.15)' : 'transparent',
+              color: tab === p.id ? ctxAccent : T.muted,
+              background: tab === p.id ? aA(0.15) : 'transparent',
             }}
           >
             <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{p.icon}</span>
@@ -1347,7 +1413,11 @@ export default function SchedulingConfig() {
   const [selectedProfileId, setSelectedProfileId] = useState('');
   const [loading, setLoading]         = useState(true);
   const [theme]                       = useState<'dark'|'light'>(() => (localStorage.getItem('aliax_theme') as any) || 'dark');
-  const T = theme === 'dark' ? THEME_DARK : THEME_LIGHT;
+  const _sa = ACCENT_MAP[localStorage.getItem('aliax_accent') || ''] ?? 'rgb(45,212,191)';
+  const _sn = _sa.match(/\d+/g) ?? ['45','212','191'];
+  const [_sr, _sg, _sb] = _sn.map(Number);
+  const sA = (a: number) => `rgba(${_sr},${_sg},${_sb},${a})`;
+  const T = theme === 'dark' ? mkThemeDark(_sr,_sg,_sb) : mkThemeLight(_sr,_sg,_sb);
 
   useEffect(() => {
     api.get('/profiles').then(res => {
@@ -1359,7 +1429,7 @@ export default function SchedulingConfig() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: T.main }}>
-        <div style={{ width: 32, height: 32, border: '3px solid rgba(45,212,191,0.3)', borderTopColor: '#2dd4bf', borderRadius: '50%' }} />
+        <div style={{ width: 32, height: 32, border: `3px solid ${sA(0.3)}`, borderTopColor: _sa, borderRadius: '50%' }} />
       </div>
     );
   }
@@ -1369,6 +1439,10 @@ export default function SchedulingConfig() {
       display: 'flex', minHeight: '100vh', background: T.main, color: T.text, fontFamily: 'DM Sans, sans-serif',
       '--sc-main': T.main, '--sc-side': T.side, '--sc-inner': T.inner,
       '--sc-border': T.border, '--sc-text': T.text, '--sc-muted': T.muted, '--sc-muted2': T.muted2,
+      '--sc-accent': _sa,
+      '--sc-accent-06': sA(0.06), '--sc-accent-08': sA(0.08), '--sc-accent-10': sA(0.10),
+      '--sc-accent-12': sA(0.12), '--sc-accent-15': sA(0.15), '--sc-accent-18': sA(0.18),
+      '--sc-accent-25': sA(0.25), '--sc-accent-30': sA(0.30), '--sc-accent-40': sA(0.40),
     } as React.CSSProperties}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -1419,7 +1493,7 @@ export default function SchedulingConfig() {
       {/* ── Sidebar ─────────────────────────────────────────── */}
       <aside className="sc-aside" style={{ width: 240, background: T.side, borderRight: `1px solid ${T.border}`, padding: '28px 16px', display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
         {/* Logo */}
-        <div className="sc-aside-logo" style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#2dd4bf', padding: '0 12px 8px', letterSpacing: -0.5 }}>
+        <div className="sc-aside-logo" style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: _sa, padding: '0 12px 8px', letterSpacing: -0.5 }}>
           Aliax.io<span style={{ color: T.text }}> Pro</span>
         </div>
 
@@ -1427,8 +1501,8 @@ export default function SchedulingConfig() {
         <Link to="/dashboard?tab=agenda" className="sc-aside-back" style={{
           display: 'flex', alignItems: 'center', gap: 6, margin: '0 4px 16px',
           padding: '8px 12px', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 500,
-          background: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(45,212,191,0.08)',
-          color: '#2dd4bf', border: `1px solid ${T.border}`, transition: 'all .15s', flexShrink: 0,
+          background: theme === 'dark' ? 'rgba(255,255,255,0.06)' : sA(0.08),
+          color: _sa, border: `1px solid ${T.border}`, transition: 'all .15s', flexShrink: 0,
         }}>
           <ArrowLeft size={14} /> Volver
         </Link>
@@ -1447,8 +1521,8 @@ export default function SchedulingConfig() {
         {PAGES.map(p => (
           <button key={p.id} onClick={() => setTab(p.id)} className="sc-aside-tab" style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8,
-            cursor: 'pointer', fontSize: 14, color: tab === p.id ? '#2dd4bf' : T.muted,
-            background: tab === p.id ? 'rgba(45,212,191,0.15)' : 'transparent',
+            cursor: 'pointer', fontSize: 14, color: tab === p.id ? _sa : T.muted,
+            background: tab === p.id ? sA(0.15) : 'transparent',
             border: 'none', width: '100%', textAlign: 'left', fontFamily: 'DM Sans, sans-serif',
             transition: 'all .15s',
           }}>

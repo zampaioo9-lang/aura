@@ -108,6 +108,11 @@ export default function BookingPage() {
                   {profile.yearsExperience} años exp.
                 </span>
               )}
+              {profile.modality && (
+                <span className="bp-tag">
+                  {{ presencial: 'Presencial', online: 'En línea', hibrida: 'Presencial y en línea' }[profile.modality as string] ?? profile.modality}
+                </span>
+              )}
             </div>
           </div>
         </div>

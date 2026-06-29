@@ -81,7 +81,7 @@ router.get('/dashboard', authMiddleware, async (req: AuthRequest, res, next) => 
         where: {
           profileId: { in: profileIds },
           status: { in: ['CANCELLED', 'NO_SHOW'] },
-          updatedAt: { gte: thirtyDaysAgo },
+          cancelledAt: { gte: thirtyDaysAgo },
         },
         select: { status: true, date: true, cancelledAt: true },
       }),

@@ -1,79 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, MapPin, Zap, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
+import { Search, MapPin, Zap, SlidersHorizontal, X, ChevronDown, Sparkles, Loader2, Star } from 'lucide-react';
 import api from '../api/client';
 import './Explorar.css';
+import LandingHeader from '../components/landing/LandingHeader';
+import SiteFooter from '../components/landing/SiteFooter';
+import { PROBLEMATICS } from '../data/problematics';
 
 const VIDEO_URL =
   'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_105406_16f4600d-7a92-4292-b96e-b19156c7830a.mp4';
 
-const THERAPEUTIC_APPROACHES = [
-  // Enfoques cognitivos y conductuales
-  'Cognitivo-conductual (TCC)',
-  'Mindfulness / ACT',
-  'Terapia de aceptación y compromiso',
-  'Terapia esquemática',
-  // Psicodinámicos y analíticos
-  'Psicoanalítico',
-  'Psicodinámico',
-  'Psicología del self',
-  // Humanistas y existenciales
-  'Humanista',
-  'Gestalt',
-  'Existencial',
-  'Logoterapia',
-  'Psicología positiva',
-  // Sistémicos y relacionales
-  'Sistémico',
-  'Narrativo',
-  'Terapia breve centrada en soluciones (TBCS)',
-  'Breve estratégico',
-  'Constelaciones familiares',
-  // Especialidades
-  'Terapia de pareja',
-  'Terapia familiar',
-  'Terapia infantil',
-  'Terapia de juego',
-  // Otros
-  'EMDR',
-  'Integrativo',
-  'Hipnosis ericksoniana',
-  'Psicodrama',
-  'Otro',
-];
-
-const PROBLEMATICS = [
-  // Salud mental general
-  'Ansiedad',
-  'Depresión',
-  'Estrés',
-  'Burnout / agotamiento',
-  'Trauma / PTSD',
-  'Duelo',
-  'Fobias / TOC',
-  'Autoestima',
-  'Problemas de sueño',
-  'Adicciones',
-  'Trastornos alimenticios',
-  'TDAH / Neurodivergencia',
-  // Pareja y familia
-  'Problemas de pareja',
-  'Infidelidad',
-  'Comunicación en pareja',
-  'Celos y desconfianza',
-  'Crisis de pareja',
-  'Pérdida del deseo',
-  'Divorcio / separación',
-  'Violencia de género',
-  'Familia y crianza',
-  // Identidad y desarrollo
-  'Orientación sexual / Diversidad',
-  'Identidad y propósito',
-  'Soledad / aislamiento',
-  'Duelo gestacional / infertilidad',
-  'Otro',
-];
 
 interface DirectoryProfile {
   id: string;
@@ -198,28 +135,67 @@ function SearchSelect({ value, onChange, options, placeholder, icon }: {
 }
 
 const COUNTRIES_CITIES: Record<string, string[]> = {
-  'México':            ['CDMX', 'Guadalajara', 'Monterrey', 'Puebla', 'Tijuana', 'Cancún', 'Mérida', 'Querétaro', 'León', 'San Luis Potosí', 'Chihuahua', 'Hermosillo', 'Aguascalientes', 'Saltillo', 'Mexicali', 'Morelia', 'Toluca', 'Veracruz', 'Culiacán', 'Villahermosa', 'Torreón', 'Acapulco', 'Oaxaca', 'Tuxtla Gutiérrez'],
-  'España':            ['Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Bilbao', 'Zaragoza', 'Málaga', 'Murcia', 'Alicante', 'Valladolid'],
-  'Argentina':         ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'Tucumán', 'La Plata', 'Mar del Plata'],
-  'Colombia':          ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena', 'Bucaramanga', 'Pereira'],
-  'Chile':             ['Santiago', 'Valparaíso', 'Concepción', 'La Serena', 'Antofagasta', 'Temuco'],
-  'Perú':              ['Lima', 'Arequipa', 'Trujillo', 'Chiclayo', 'Cusco', 'Piura'],
-  'Ecuador':           ['Quito', 'Guayaquil', 'Cuenca', 'Manta', 'Ambato'],
-  'Venezuela':         ['Caracas', 'Maracaibo', 'Valencia', 'Barquisimeto', 'Maturín'],
-  'Uruguay':           ['Montevideo', 'Punta del Este', 'Salto', 'Colonia del Sacramento'],
-  'Costa Rica':        ['San José', 'Alajuela', 'Cartago', 'Heredia', 'Liberia'],
-  'Guatemala':         ['Guatemala City', 'Quetzaltenango', 'Escuintla'],
-  'Bolivia':           ['La Paz', 'Santa Cruz', 'Cochabamba', 'Oruro', 'Sucre'],
-  'Paraguay':          ['Asunción', 'Ciudad del Este', 'Encarnación'],
-  'Rep. Dominicana':   ['Santo Domingo', 'Santiago', 'La Romana', 'San Pedro de Macorís'],
-  'Panamá':            ['Ciudad de Panamá', 'Colón', 'David'],
+  'México':            ['Ciudad de México', 'CDMX', 'Guadalajara', 'Monterrey', 'Puebla', 'Tijuana', 'León', 'Ciudad Juárez', 'Mérida', 'Querétaro', 'San Luis Potosí', 'Cancún', 'Aguascalientes', 'Morelia', 'Hermosillo', 'Chihuahua', 'Saltillo', 'Culiacán', 'Torreón', 'Mexicali', 'Oaxaca', 'Toluca', 'Veracruz', 'Acapulco', 'Tuxtla Gutiérrez', 'Xalapa', 'Tepic', 'Durango', 'Zacatecas', 'Colima', 'Villahermosa', 'Campeche', 'Chetumal', 'La Paz', 'Los Cabos', 'Pachuca', 'Cuernavaca', 'Tlaxcala', 'Celaya', 'Irapuato', 'Mazatlán', 'Tampico', 'Reynosa', 'Matamoros', 'Nuevo Laredo', 'Ciudad Obregón', 'Los Mochis', 'Ensenada', 'Nogales', 'Monclova', 'Piedras Negras', 'Tapachula', 'San Cristóbal de las Casas', 'Coatzacoalcos', 'Poza Rica', 'Uruapan', 'Ecatepec', 'Nezahualcóyotl', 'Tlalnepantla', 'Naucalpan', 'Zapopan', 'San Nicolás de los Garza', 'Apodaca'],
+  'España':            ['Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Bilbao', 'Zaragoza', 'Málaga', 'Murcia', 'Alicante', 'Valladolid', 'Córdoba', 'Vigo', 'Granada', 'Pamplona', 'Santander'],
+  'Argentina':         ['Buenos Aires', 'Córdoba', 'Rosario', 'Mendoza', 'Tucumán', 'La Plata', 'Mar del Plata', 'Salta', 'Santa Fe', 'Neuquén'],
+  'Colombia':          ['Bogotá', 'Medellín', 'Cali', 'Barranquilla', 'Cartagena', 'Bucaramanga', 'Pereira', 'Manizales', 'Santa Marta', 'Ibagué'],
+  'Chile':             ['Santiago', 'Valparaíso', 'Concepción', 'La Serena', 'Antofagasta', 'Temuco', 'Rancagua', 'Arica', 'Puerto Montt', 'Viña del Mar'],
+  'Perú':              ['Lima', 'Arequipa', 'Trujillo', 'Chiclayo', 'Cusco', 'Piura', 'Iquitos', 'Huancayo', 'Tacna'],
+  'Ecuador':           ['Quito', 'Guayaquil', 'Cuenca', 'Manta', 'Ambato', 'Portoviejo', 'Loja', 'Ibarra'],
+  'Venezuela':         ['Caracas', 'Maracaibo', 'Valencia', 'Barquisimeto', 'Maturín', 'Barcelona', 'Mérida'],
+  'Uruguay':           ['Montevideo', 'Punta del Este', 'Salto', 'Colonia del Sacramento', 'Maldonado'],
+  'Costa Rica':        ['San José', 'Alajuela', 'Cartago', 'Heredia', 'Liberia', 'Pérez Zeledón'],
+  'Guatemala':         ['Ciudad de Guatemala', 'Quetzaltenango', 'Escuintla', 'Cobán', 'Antigua Guatemala'],
+  'Bolivia':           ['La Paz', 'Santa Cruz', 'Cochabamba', 'Oruro', 'Sucre', 'Potosí', 'Tarija'],
+  'Paraguay':          ['Asunción', 'Ciudad del Este', 'Encarnación', 'San Lorenzo', 'Luque'],
+  'Rep. Dominicana':   ['Santo Domingo', 'Santiago', 'La Romana', 'San Pedro de Macorís', 'Puerto Plata'],
+  'Panamá':            ['Ciudad de Panamá', 'Colón', 'David', 'Santiago', 'La Chorrera'],
+  'Honduras':          ['Tegucigalpa', 'San Pedro Sula', 'La Ceiba', 'Comayagua', 'Choluteca'],
+  'El Salvador':       ['San Salvador', 'Santa Ana', 'San Miguel', 'Soyapango', 'Usulután'],
+  'Nicaragua':         ['Managua', 'León', 'Masaya', 'Matagalpa', 'Granada'],
+  'Estados Unidos':    ['Nueva York', 'Los Ángeles', 'Chicago', 'Houston', 'Miami', 'Dallas', 'Phoenix', 'San Antonio', 'San Diego', 'Austin', 'Denver', 'Seattle', 'Boston', 'Las Vegas'],
 };
+
+const MATCH_QUESTIONS = [
+  { key: 'q1', label: '¿Qué te motiva a buscar terapia?', type: 'textarea', placeholder: 'Cuéntanos brevemente lo que te trajo aquí...' },
+  { key: 'q2', label: '¿Cómo prefieres las sesiones?', type: 'options', options: ['Presencial', 'En línea', 'Me da igual'] },
+  { key: 'q3', label: '¿La terapia es para ti, tu pareja, para ambos, tu familia o alguien más?', type: 'options', options: ['Para mí', 'Para mi pareja', 'Para ambos', 'Para mi familia', 'Para alguien más'] },
+  { key: 'q4', label: '¿Tienes preferencia de enfoque terapéutico?', type: 'textarea', placeholder: 'Ej: cognitivo-conductual, sistémico, humanista... o escribe "no sé"' },
+  { key: 'q5', label: '¿Algo más que sea importante para ti en un terapeuta?', type: 'textarea', placeholder: 'Ej: que hable inglés, experiencia con ansiedad, precio, horarios...' },
+] as const;
+
+type MatchAnswers = { q1: string; q2: string; q3: string; q4: string; q5: string };
+type MatchResult = { profileId: string; score: number; reason: string; profile: { id: string; slug: string; title: string; bio?: string; avatar?: string; city?: string; country?: string; modality?: string; therapeuticApproaches: string[] } };
 
 export default function Explorar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [profiles, setProfiles] = useState<DirectoryProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+
+  // Matching IA
+  const [showMatch, setShowMatch]       = useState(false);
+  const [matchStep, setMatchStep]       = useState(0);
+  const [matchAnswers, setMatchAnswers] = useState<MatchAnswers>({ q1: '', q2: '', q3: '', q4: '', q5: '' });
+  const [matchResults, setMatchResults] = useState<MatchResult[] | null>(null);
+
+  const openMatch = () => { setShowMatch(true); setMatchStep(0); setMatchAnswers({ q1: '', q2: '', q3: '', q4: '', q5: '' }); setMatchResults(null); };
+  const closeMatch = () => setShowMatch(false);
+
+  const handleMatchSubmit = async () => {
+    setMatchStep(5);
+    try {
+      const { data } = await api.post('/ai-matching/match', { answers: matchAnswers });
+      setMatchResults(data.matches);
+      setMatchStep(6);
+    } catch {
+      alert('No se pudo procesar el matching. Intenta de nuevo.');
+      setMatchStep(4);
+    }
+  };
+
+  const currentQ = MATCH_QUESTIONS[matchStep] as typeof MATCH_QUESTIONS[number] | undefined;
+  const currentAnswer = currentQ ? matchAnswers[currentQ.key as keyof MatchAnswers] : '';
 
   const profession         = searchParams.get('profession')         || '';
   const city               = searchParams.get('city')               || '';
@@ -305,7 +281,8 @@ export default function Explorar() {
   });
 
   return (
-    <div className="explorar-root" style={{ minHeight: '100vh', background: '#0c0c0c' }}>
+    <div className="explorar-root" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #1a1040 0%, #0e2633 50%, #0a1a1a 100%)', position: 'relative' }}>
+      <LandingHeader />
 
       {/* ══ HERO ══ */}
       <section style={{
@@ -338,7 +315,7 @@ export default function Explorar() {
             color: 'rgba(255,255,255,0.68)', textDecoration: 'none',
             fontSize: 14, letterSpacing: '0.08em',
           }}>
-            ← ALIAX.IO
+            <span style={{ fontSize: 18, fontWeight: 700 }}>←</span> ALIAX.IO
           </Link>
 
           <p className="ex-a2" style={{
@@ -417,7 +394,7 @@ export default function Explorar() {
                 }}>
                 <SlidersHorizontal size={14} />
                 <span className="ex-btn-search-label">
-                  Filtros{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+                  Problemática{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
                 </span>
               </button>
 
@@ -434,6 +411,23 @@ export default function Explorar() {
             </div>
           </form>
 
+          {/* ── Matching IA ── */}
+          <div className="ex-a4" style={{ maxWidth: 720, margin: '0 auto 12px', textAlign: 'center' }}>
+            <button onClick={openMatch} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '10px 22px', borderRadius: 30,
+              background: 'linear-gradient(135deg, rgba(139,92,246,0.25), rgba(45,212,191,0.18))',
+              border: '1px solid rgba(139,92,246,0.45)',
+              color: '#c4b5fd', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'inherit',
+              backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+              transition: 'all 0.2s',
+            }}>
+              <Sparkles size={14} />
+              Encuentra tu match ideal con IA
+            </button>
+          </div>
+
           {/* ── Panel de filtros ── */}
           {showFilters && (
             <div style={{
@@ -445,38 +439,6 @@ export default function Explorar() {
               textAlign: 'left',
               maxHeight: '55vh', overflowY: 'auto',
             }}>
-              {/* Modalidad */}
-              <div style={{ marginBottom: 18 }}>
-                <p style={{ color: 'rgba(45,212,191,0.55)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>
-                  Modalidad
-                </p>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {(['presencial', 'online', 'hibrida'] as const).map(m => (
-                    <button key={m} type="button"
-                      onClick={() => setModality(modality === m ? '' : m)}
-                      style={pillStyle(modality === m)}>
-                      {MODALITY_LABEL[m]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Enfoque terapéutico */}
-              <div style={{ marginBottom: 18 }}>
-                <p style={{ color: 'rgba(45,212,191,0.55)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>
-                  Enfoque terapéutico
-                </p>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {THERAPEUTIC_APPROACHES.map(a => (
-                    <button key={a} type="button"
-                      onClick={() => setTherapeuticApproach(therapeuticApproach === a ? '' : a)}
-                      style={pillStyle(therapeuticApproach === a)}>
-                      {a}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Problemática */}
               <div>
                 <p style={{ color: 'rgba(45,212,191,0.55)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>
@@ -512,19 +474,6 @@ export default function Explorar() {
           {/* ── Filtros activos como chips ── */}
           {activeFilterCount > 0 && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 10 }}>
-              {activeTApproach && (
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  background: 'rgba(45,212,191,0.15)', border: '1px solid rgba(45,212,191,0.35)',
-                  borderRadius: 20, padding: '4px 10px',
-                  color: '#2dd4bf', fontSize: 11,
-                }}>
-                  {activeTApproach}
-                  <button onClick={() => clearFilter('therapeuticApproach')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2dd4bf', padding: 0, display: 'flex' }}>
-                    <X size={11} />
-                  </button>
-                </span>
-              )}
               {activeProblematic && (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -534,19 +483,6 @@ export default function Explorar() {
                 }}>
                   {activeProblematic}
                   <button onClick={() => clearFilter('problematic')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2dd4bf', padding: 0, display: 'flex' }}>
-                    <X size={11} />
-                  </button>
-                </span>
-              )}
-              {activeModality && (
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  background: 'rgba(45,212,191,0.15)', border: '1px solid rgba(45,212,191,0.35)',
-                  borderRadius: 20, padding: '4px 10px',
-                  color: '#2dd4bf', fontSize: 11,
-                }}>
-                  {MODALITY_LABEL[activeModality]}
-                  <button onClick={() => clearFilter('modality')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2dd4bf', padding: 0, display: 'flex' }}>
                     <X size={11} />
                   </button>
                 </span>
@@ -568,7 +504,7 @@ export default function Explorar() {
 
       {/* ══ GRID DE RESULTADOS ══ */}
       <div style={{
-        background: 'linear-gradient(to bottom, rgba(12,12,12,0) 0%, rgba(12,12,12,0.98) 6%, rgba(12,12,12,1) 100%)',
+        background: 'transparent',
         paddingBottom: 100,
       }}>
         <div className="ex-a6" style={{ maxWidth: 980, margin: '0 auto', padding: '52px 24px 0' }}>
@@ -731,6 +667,184 @@ export default function Explorar() {
           )}
         </div>
       </div>
+
+      <SiteFooter />
+
+      {/* ══ MODAL MATCHING IA ══ */}
+      {showMatch && createPortal(
+        <div onClick={e => { if (e.target === e.currentTarget) closeMatch(); }} style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+        }}>
+          <div style={{
+            width: '100%', maxWidth: 560, background: 'rgb(12,28,26)',
+            border: '1px solid rgba(139,92,246,0.35)', borderRadius: 20,
+            padding: 32, position: 'relative', maxHeight: '90vh', overflowY: 'auto',
+          }}>
+            <button onClick={closeMatch} style={{
+              position: 'absolute', top: 16, right: 16, background: 'none',
+              border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.45)', padding: 4,
+            }}><X size={20} /></button>
+
+            {/* Header */}
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <Sparkles size={18} color="#c4b5fd" />
+                <h2 style={{ margin: 0, color: '#fff', fontSize: 20, fontWeight: 700 }}>Matching inteligente</h2>
+              </div>
+              <p style={{ margin: 0, color: 'rgba(255,255,255,0.55)', fontSize: 14 }}>
+                Responde 5 preguntas y la IA encontrará los terapeutas más compatibles contigo.
+              </p>
+            </div>
+
+            {/* Step: pregunta */}
+            {matchStep < 5 && currentQ && (
+              <div>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
+                  {MATCH_QUESTIONS.map((_, i) => (
+                    <div key={i} style={{
+                      flex: 1, height: 3, borderRadius: 4,
+                      background: i <= matchStep ? '#c4b5fd' : 'rgba(255,255,255,0.12)',
+                      transition: 'background 0.3s',
+                    }} />
+                  ))}
+                </div>
+
+                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
+                  Pregunta {matchStep + 1} de 5
+                </p>
+                <h3 style={{ color: '#fff', fontSize: 17, fontWeight: 600, margin: '0 0 20px', lineHeight: 1.4 }}>
+                  {currentQ.label}
+                </h3>
+
+                {currentQ.type === 'textarea' && (
+                  <textarea
+                    value={currentAnswer}
+                    onChange={e => setMatchAnswers(a => ({ ...a, [currentQ.key]: e.target.value }))}
+                    rows={3}
+                    placeholder={(currentQ as { placeholder?: string }).placeholder}
+                    style={{
+                      width: '100%', padding: '12px 14px', borderRadius: 10,
+                      background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(139,92,246,0.4)',
+                      color: '#fff', fontSize: 14, fontFamily: 'inherit', resize: 'vertical',
+                      outline: 'none', boxSizing: 'border-box',
+                    }}
+                  />
+                )}
+
+                {currentQ.type === 'options' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {(currentQ as { options: readonly string[] }).options.map(opt => (
+                      <button key={opt} onClick={() => setMatchAnswers(a => ({ ...a, [currentQ.key]: opt }))} style={{
+                        padding: '12px 16px', borderRadius: 10, textAlign: 'left',
+                        background: currentAnswer === opt ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.07)',
+                        border: `1.5px solid ${currentAnswer === opt ? 'rgba(139,92,246,0.7)' : 'rgba(255,255,255,0.15)'}`,
+                        color: currentAnswer === opt ? '#c4b5fd' : 'rgba(255,255,255,0.75)',
+                        fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.15s',
+                      }}>
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
+                  <button onClick={() => setMatchStep(s => Math.max(0, s - 1))} disabled={matchStep === 0} style={{
+                    padding: '10px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)',
+                    background: 'transparent', color: matchStep === 0 ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.7)',
+                    fontSize: 14, fontFamily: 'inherit', cursor: matchStep === 0 ? 'not-allowed' : 'pointer',
+                  }}>← Anterior</button>
+
+                  {matchStep < 4 ? (
+                    <button onClick={() => setMatchStep(s => s + 1)} disabled={!currentAnswer.trim()} style={{
+                      padding: '10px 24px', borderRadius: 10, border: 'none',
+                      background: currentAnswer.trim() ? 'linear-gradient(135deg, #8b5cf6, #2dd4bf)' : 'rgba(255,255,255,0.1)',
+                      color: currentAnswer.trim() ? '#fff' : 'rgba(255,255,255,0.3)',
+                      fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
+                      cursor: currentAnswer.trim() ? 'pointer' : 'not-allowed',
+                    }}>Siguiente →</button>
+                  ) : (
+                    <button onClick={() => {
+                      if (!matchAnswers.q5.trim()) setMatchAnswers(a => ({ ...a, q5: 'Sin preferencias adicionales' }));
+                      handleMatchSubmit();
+                    }} style={{
+                      padding: '10px 24px', borderRadius: 10, border: 'none',
+                      background: 'linear-gradient(135deg, #8b5cf6, #2dd4bf)',
+                      color: '#fff',
+                      fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
+                      cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 8,
+                    }}><Sparkles size={14} /> Encontrar mi match</button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Step: cargando */}
+            {matchStep === 5 && (
+              <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                <Loader2 size={40} color="#c4b5fd" style={{ animation: 'spin 1s linear infinite', marginBottom: 20 }} />
+                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, margin: 0 }}>Analizando compatibilidad...</p>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginTop: 8 }}>La IA está revisando todos los perfiles</p>
+              </div>
+            )}
+
+            {/* Step: resultados */}
+            {matchStep === 6 && matchResults && (
+              <div>
+                <h3 style={{ color: '#fff', fontSize: 17, fontWeight: 700, margin: '0 0 6px' }}>
+                  {matchResults.length > 0 ? `${matchResults.length} terapeutas compatibles encontrados` : 'Sin resultados por ahora'}
+                </h3>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, margin: '0 0 20px' }}>
+                  Ordenados por compatibilidad con tus respuestas
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {matchResults.map((m, i) => (
+                    <Link key={m.profileId} to={`/p/${m.profile.slug}`} onClick={closeMatch} style={{ textDecoration: 'none' }}>
+                      <div style={{
+                        background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: 14, padding: '14px 16px', transition: 'border-color 0.2s',
+                        display: 'flex', gap: 14, alignItems: 'flex-start',
+                      }}>
+                        {m.profile.avatar
+                          ? <img src={m.profile.avatar} alt={m.profile.title} style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />
+                          : <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(139,92,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#c4b5fd', fontSize: 18, fontWeight: 700 }}>
+                              {m.profile.title.charAt(0)}
+                            </div>
+                        }
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+                            <span style={{ color: '#fff', fontSize: 15, fontWeight: 600 }}>{m.profile.title}</span>
+                            <div style={{
+                              display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
+                              background: i === 0 ? 'rgba(139,92,246,0.3)' : 'rgba(45,212,191,0.15)',
+                              border: `1px solid ${i === 0 ? 'rgba(139,92,246,0.6)' : 'rgba(45,212,191,0.3)'}`,
+                              borderRadius: 20, padding: '3px 10px',
+                            }}>
+                              <Star size={11} color={i === 0 ? '#c4b5fd' : '#2dd4bf'} fill={i === 0 ? '#c4b5fd' : '#2dd4bf'} />
+                              <span style={{ color: i === 0 ? '#c4b5fd' : '#2dd4bf', fontSize: 12, fontWeight: 700 }}>{m.score}%</span>
+                            </div>
+                          </div>
+                          <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, margin: 0, lineHeight: 1.5 }}>{m.reason}</p>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                <button onClick={() => { setMatchStep(0); setMatchResults(null); setMatchAnswers({ q1: '', q2: '', q3: '', q4: '', q5: '' }); }} style={{
+                  marginTop: 20, width: '100%', padding: '11px', borderRadius: 10,
+                  border: '1px solid rgba(255,255,255,0.2)', background: 'transparent',
+                  color: 'rgba(255,255,255,0.6)', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer',
+                }}>
+                  Volver a responder
+                </button>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

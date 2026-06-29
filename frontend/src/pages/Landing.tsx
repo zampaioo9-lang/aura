@@ -1,7 +1,7 @@
 // frontend/src/pages/Landing.tsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, CalendarClock } from 'lucide-react';
 import { useLandingScroll } from '../hooks/useLandingScroll';
 import LandingHeader from '../components/landing/LandingHeader';
 import HeroAvatar from '../components/landing/HeroAvatar';
@@ -144,6 +144,17 @@ export default function Landing() {
               >
                 Ver directorio
               </Link>
+              <a
+                href="https://www.aliax.io/demo"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-[15px] font-medium text-[#2dd4bf] border border-[#2dd4bf]/40 hover:bg-[#2dd4bf]/10 hover:border-[#2dd4bf] transition-all duration-300 w-full sm:w-auto"
+                style={{
+                  fontFamily: 'Manrope, sans-serif',
+                  background: 'rgba(45,212,191,0.05)',
+                }}
+              >
+                <CalendarClock size={15} />
+                Reservar demo
+              </a>
             </div>
           </div>
 

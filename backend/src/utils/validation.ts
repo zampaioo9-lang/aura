@@ -66,17 +66,20 @@ export const createServiceSchema = z.object({
   durationMinutes: z.number().refine(v => (DURATIONS as readonly number[]).includes(v), {
     message: 'Duracion no valida',
   }),
+  sessionModality: z.enum(['presencial', 'online', 'hibrida']).optional(),
 });
 
 export const updateServiceSchema = z.object({
   name: z.string().min(3).max(100).optional(),
   description: z.string().max(500).optional().or(z.literal('')),
   image: z.string().url().optional().or(z.literal('')),
+  imagePosition: z.string().max(20).optional(),
   price: z.number().min(0).max(100000).optional(),
   currency: z.enum(CURRENCIES).optional(),
   durationMinutes: z.number().refine(v => (DURATIONS as readonly number[]).includes(v), {
     message: 'Duracion no valida',
   }).optional(),
+  sessionModality: z.enum(['presencial', 'online', 'hibrida']).optional().nullable(),
   isActive: z.boolean().optional(),
 });
 

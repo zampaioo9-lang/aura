@@ -4,7 +4,7 @@
 
 .bp-wrap {
   min-height: 100vh;
-  background: #0c0c0c;
+  background: linear-gradient(135deg, #1a1040 0%, #0e2633 50%, #0a1a1a 100%);
   position: relative;
   overflow: hidden;
   font-family: 'Inter', system-ui, sans-serif;

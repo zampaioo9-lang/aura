@@ -1,28 +1,33 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Zap, Gift } from 'lucide-react';
+import LandingHeader from '../components/landing/LandingHeader';
+import SiteFooter from '../components/landing/SiteFooter';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 
 const FREE_FEATURES = [
+  'Listado en el directorio de Aliax',
   '1 perfil profesional',
+  'Agenda configurable',
+  'Notas de sesión',
   'Servicios ilimitados',
   'Reservas ilimitadas',
   'Notificaciones por email',
-  'Hasta 3 fotos por servicio',
-  '2 templates (Minimalist y Bold)',
-  'Listado en el directorio de Aliax',
+  '1 foto por servicio',
+  'Template Minimalist (por defecto)',
+  'Color Aguamarina (color de marca)',
 ];
 
 const PRO_FEATURES = [
   'Todo lo del plan gratuito',
-  'Notificaciones por WhatsApp al cliente y a ti',
-  'Hasta 20 fotos por servicio',
-  'Los 4 templates (incluye Elegant y Creative)',
+  'Reseñas de tus pacientes',
+  'Todos los templates (Minimalist, Bold, Elegant, Creative)',
+  'Todos los colores de apariencia (6 opciones)',
   'Analytics completos y tendencias',
   'Posición destacada en el directorio',
-  'Hasta 3 perfiles',
-  'Recordatorio automático 24h por WhatsApp',
+  'Historia Clínica Individual y de Pareja',
+  'Recordatorio automático 24h por email',
 ];
 
 const TEAL   = '#2dd4bf';
@@ -35,6 +40,7 @@ export default function Pricing() {
   const navigate = useNavigate();
   const { user, isPro } = useAuth();
   const [loadingStripe, setLoadingStripe] = useState(false);
+  const [loadingPayPal, setLoadingPayPal] = useState(false);
 
   const handleProStripe = async () => {
     if (!user) { navigate('/register'); return; }
@@ -47,16 +53,29 @@ export default function Pricing() {
     }
   };
 
+  const handleProPayPal = async () => {
+    if (!user) { navigate('/register'); return; }
+    setLoadingPayPal(true);
+    try {
+      const res = await api.post('/subscriptions/paypal/subscription/create', { interval: 'MONTHLY' });
+      window.location.href = res.data.approvalUrl;
+    } catch {
+      setLoadingPayPal(false);
+    }
+  };
+
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #030f0e 0%, #052e2a 50%, #0a3d35 100%)',
+      background: 'linear-gradient(135deg, #1a1040 0%, #0e2633 50%, #0a1a1a 100%)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      padding: '60px 20px',
+      padding: '120px 20px 60px',
       fontFamily: 'system-ui, sans-serif',
+      position: 'relative',
     }}>
+      <LandingHeader />
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 48 }}>
         <div style={{
@@ -167,20 +186,45 @@ export default function Pricing() {
               ✓ Ya tienes Pro activo
             </div>
           ) : (
-            <button
-              onClick={handleProStripe}
-              disabled={loadingStripe}
-              style={{
-                width: '100%', padding: '13px 20px', borderRadius: 12,
-                border: 'none',
-                background: `linear-gradient(90deg, ${TEAL}, ${TEAL_D})`,
-                color: '#fff', fontSize: 15, fontWeight: 700,
-                cursor: loadingStripe ? 'not-allowed' : 'pointer',
-                opacity: loadingStripe ? 0.7 : 1,
-              }}
-            >
-              {loadingStripe ? 'Redirigiendo...' : 'Activar Pro — $9/mes'}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button
+                onClick={handleProStripe}
+                disabled={loadingStripe || loadingPayPal}
+                style={{
+                  width: '100%', padding: '13px 20px', borderRadius: 12,
+                  border: 'none',
+                  background: `linear-gradient(90deg, ${TEAL}, ${TEAL_D})`,
+                  color: '#fff', fontSize: 15, fontWeight: 700,
+                  cursor: (loadingStripe || loadingPayPal) ? 'not-allowed' : 'pointer',
+                  opacity: loadingStripe ? 0.7 : 1,
+                }}
+              >
+                {loadingStripe ? 'Redirigiendo...' : 'Pagar con tarjeta — $9/mes'}
+              </button>
+
+              <button
+                onClick={handleProPayPal}
+                disabled={loadingStripe || loadingPayPal}
+                style={{
+                  width: '100%', padding: '13px 20px', borderRadius: 12,
+                  border: 'none',
+                  background: '#FFC439',
+                  color: '#003087', fontSize: 15, fontWeight: 700,
+                  cursor: (loadingStripe || loadingPayPal) ? 'not-allowed' : 'pointer',
+                  opacity: loadingPayPal ? 0.7 : 1,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                {loadingPayPal ? 'Redirigiendo...' : (
+                  <>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.59 3.025-2.566 6.082-8.558 6.082H9.824l-1.453 9.21h4.357c.524 0 .968-.382 1.05-.9l.043-.274 1.72-10.9.044-.28a1.061 1.061 0 0 1 1.05-.9h.66c4.298 0 7.664-1.746 8.647-6.797.004-.023.008-.046.012-.068a5.42 5.42 0 0 0-.732-.887z" fill="#003087"/>
+                    </svg>
+                    PayPal — $9/mes
+                  </>
+                )}
+              </button>
+            </div>
           )}
           <p style={{ color: DIM, fontSize: 12, textAlign: 'center', marginTop: 10 }}>
             Cancela en cualquier momento
@@ -191,6 +235,10 @@ export default function Pricing() {
       {/* FAQ */}
       <div style={{ maxWidth: 560, width: '100%', marginTop: 48, color: MUTED, fontSize: 14, textAlign: 'center' }}>
         <p>¿Dudas? Escríbenos a <a href="mailto:hola@aliax.io" style={{ color: TEAL }}>hola@aliax.io</a></p>
+      </div>
+
+      <div style={{ width: '100%', marginTop: 48 }}>
+        <SiteFooter />
       </div>
     </div>
   );

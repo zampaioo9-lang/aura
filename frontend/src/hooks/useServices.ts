@@ -7,10 +7,12 @@ export interface Service {
   name: string;
   description: string | null;
   image: string | null;
+  imagePosition?: string | null;
   images?: string[];
   price: number | string;
   currency: string;
   durationMinutes: number;
+  sessionModality: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -32,15 +34,18 @@ export interface CreateServiceData {
   price: number;
   currency: string;
   durationMinutes: number;
+  sessionModality?: string;
 }
 
 export interface UpdateServiceData {
   name?: string;
   description?: string;
   image?: string;
+  imagePosition?: string;
   price?: number;
   currency?: string;
   durationMinutes?: number;
+  sessionModality?: string | null;
   isActive?: boolean;
 }
 

@@ -83,9 +83,9 @@ function jsDayToSlotDay(jsDay: number): number {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  CONFIRMED: { bg: 'rgba(34,197,94,0.15)', text: '#16a34a', border: '#86efac' },
-  PENDING:   { bg: 'rgba(245,158,11,0.15)', text: '#b45309', border: '#fcd34d' },
-  COMPLETED: { bg: 'rgba(100,116,139,0.15)', text: '#475569', border: '#94a3b8' },
+  CONFIRMED: { bg: 'rgba(16,185,129,0.82)', text: '#ffffff', border: '#059669' },
+  PENDING:   { bg: 'rgba(245,158,11,0.80)', text: '#ffffff', border: '#d97706' },
+  COMPLETED: { bg: 'rgba(100,116,139,0.70)', text: '#ffffff', border: '#64748b' },
   CANCELLED: { bg: 'rgba(239,68,68,0.10)', text: '#b91c1c', border: '#fca5a5' },
   NO_SHOW:   { bg: 'rgba(249,115,22,0.12)', text: '#c2410c', border: '#fdba74' },
 };
@@ -146,6 +146,7 @@ export default function ProfessionalCalendar({ C, profiles }: { C: Colors; profi
   function getBookingsForSlot(dayDate: Date, hour: number): CalendarBooking[] {
     const dateStr = toDateStr(dayDate);
     return bookings.filter(b => {
+      if (b.status === 'CANCELLED') return false;
       if (b.date.slice(0, 10) !== dateStr) return false;
       const start = timeToMinutes(b.startTime);
       const end   = timeToMinutes(b.endTime);
@@ -402,13 +403,17 @@ export default function ProfessionalCalendar({ C, profiles }: { C: Colors; profi
                                 height: heightPx,
                                 zIndex: 10,
                                 background: sc.bg,
-                                border: `1px solid ${sc.border}`,
+                                borderLeft: `3px solid ${sc.border}`,
+                                borderTop: `1px solid ${sc.border}`,
+                                borderRight: `1px solid ${sc.border}`,
+                                borderBottom: `1px solid ${sc.border}`,
                                 borderRadius: 6,
-                                padding: '2px 5px',
+                                padding: '3px 7px',
                                 overflow: 'hidden',
                                 cursor: isDraggingThis ? 'grabbing' : 'grab',
                                 transition: 'filter 0.15s, opacity 0.15s',
                                 opacity: isDraggingThis ? 0.35 : 1,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
                               }}
                               onMouseEnter={e => { if (!isDraggingThis) (e.currentTarget as HTMLDivElement).style.filter = 'brightness(0.92)'; }}
                               onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.filter = 'none'}
@@ -543,7 +548,7 @@ function BookingDetailModal({
 
   const canConfirm  = booking.status === 'PENDING';
   const canComplete = booking.status === 'CONFIRMED';
-  const canCancel   = booking.status === 'PENDING';
+  const canCancel   = booking.status === 'PENDING' || booking.status === 'CONFIRMED';
   const canEdit     = booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED';
 
   const dayLabel = new Date(booking.date.slice(0, 10) + 'T12:00:00').toLocaleDateString('es-ES', {

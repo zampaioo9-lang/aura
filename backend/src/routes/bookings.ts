@@ -86,10 +86,14 @@ router.get('/professional', authMiddleware, async (req: AuthRequest, res, next) 
 router.get('/client/:email', async (req, res, next) => {
   try {
     const email = req.params.email;
+    const name = req.query.name as string | undefined;
     const bookings = await prisma.booking.findMany({
-      where: { clientEmail: email },
+      where: {
+        clientEmail: email,
+        ...(name ? { clientName: name } : {}),
+      },
       include: {
-        service: { select: { name: true, price: true, currency: true, durationMinutes: true } },
+        service: { select: { name: true, price: true, currency: true, durationMinutes: true, sessionModality: true } },
         profile: { select: { title: true, slug: true } },
       },
       orderBy: { date: 'desc' },
@@ -287,6 +291,26 @@ router.post('/professional', authMiddleware, async (req: AuthRequest, res, next)
         profile: { select: { title: true, slug: true } },
       },
     });
+
+    // Remove stale cancelled bookings at the exact same slot
+    await prisma.booking.deleteMany({
+      where: { profileId, date: confirmed.date, startTime, status: 'CANCELLED' },
+    });
+
+    // Auto-create patient record if this exact name+email combo doesn't exist yet
+    const existingClient = await prisma.client.findFirst({
+      where: { userId: req.userId!, email: clientEmail, name: clientName },
+    });
+    if (!existingClient) {
+      await prisma.client.create({
+        data: {
+          userId: req.userId!,
+          name: clientName,
+          email: clientEmail,
+          phone: clientPhone || null,
+        },
+      });
+    }
 
     res.status(201).json(confirmed);
   } catch (err) {
