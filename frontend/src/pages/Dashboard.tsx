@@ -1073,13 +1073,15 @@ function BarChartSVG({ perDay, accent, muted }: {
 }
 
 /* ────────────────── Tab: Inicio ────────────────── */
-function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError, isPro, twoCol = false, onGoToAccount, onGoToAgenda }: {
+function TabInicio({ profiles, bookings, userName, C, dashStats, dashStatsError, analyticsPeriod, onPeriodChange, isPro, twoCol = false, onGoToAccount, onGoToAgenda }: {
   profiles: Profile[];
   bookings: Booking[];
   userName?: string;
   C: Colors;
-  analytics: any;
-  analyticsError: boolean;
+  dashStats: DashStats | null;
+  dashStatsError: boolean;
+  analyticsPeriod: AnalyticsPeriod;
+  onPeriodChange: (p: AnalyticsPeriod) => void;
   isPro: boolean;
   twoCol?: boolean;
   onGoToAccount: () => void;
@@ -1121,114 +1123,181 @@ function TabInicio({ profiles, bookings, userName, C, analytics, analyticsError,
   );
 
   const analyticsBlock = (
-    <>
-      {analyticsError && (
-        <div style={{ color: '#6b6b80', fontSize: 13, textAlign: 'center', padding: 16 }}>
+    <div style={{ marginTop: 16 }}>
+      {dashStatsError && (
+        <div style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: 16 }}>
           No se pudo cargar Analytics.
         </div>
       )}
-      {analytics && (
+      {!dashStats && !dashStatsError && (
+        <div style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: 16 }}>
+          Cargando…
+        </div>
+      )}
+      {dashStats && (
         <div style={{
           background: C.isDark ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.65)',
           border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.14)' : 'rgba(45,212,191,0.18)'}`,
-          borderRadius: 16, padding: 20, marginTop: 16,
+          borderRadius: 16, padding: 20,
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          boxShadow: C.isDark ? '0 4px 24px rgba(0,0,0,0.25)' : '0 2px 16px rgba(45,212,191,0.10), 0 1px 4px rgba(0,0,0,0.06)',
+          boxShadow: C.isDark
+            ? '0 4px 24px rgba(0,0,0,0.25)'
+            : '0 2px 16px rgba(45,212,191,0.10), 0 1px 4px rgba(0,0,0,0.06)',
         }}>
           {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <h3 style={{ color: C.text, fontSize: 18, fontWeight: 700, margin: 0 }}>Analytics</h3>
               {isPro ? (
-                <span style={{
-                  fontSize: 11, fontWeight: 600, color: '#10b981',
-                  background: 'rgba(16,185,129,0.15)',
-                  border: '1px solid rgba(16,185,129,0.3)',
-                  borderRadius: 20, padding: '2px 8px',
-                }}>Pro</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#10b981', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20, padding: '2px 8px' }}>Pro</span>
               ) : (
-                <Link to="/pricing" style={{
-                  fontSize: 11, color: C.accent, textDecoration: 'none',
-                  background: C.accentLight, border: `1px solid ${C.accent}44`,
-                  borderRadius: 20, padding: '2px 8px',
-                }}>Ver todo con Pro →</Link>
+                <Link to="/pricing" style={{ fontSize: 11, color: C.accent, textDecoration: 'none', background: C.accentLight, border: `1px solid ${C.accent}44`, borderRadius: 20, padding: '2px 8px' }}>Ver todo con Pro →</Link>
               )}
             </div>
-            <span style={{ color: C.muted, fontSize: 12 }}>Últimos 30 días</span>
           </div>
 
-          {/* Status counters */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6, marginBottom: 20 }}>
-            {[
-              { label: 'Pendientes', value: analytics.byStatus.PENDING, color: '#f59e0b' },
-              { label: 'Confirmadas', value: analytics.byStatus.CONFIRMED, color: '#3b82f6' },
-              { label: 'Completadas', value: analytics.byStatus.COMPLETED, color: '#10b981' },
-              { label: 'Canceladas', value: analytics.byStatus.CANCELLED, color: '#ef4444' },
-            ].map(({ label, value, color }) => (
-              <div key={label} style={{
-                background: C.isDark ? 'rgba(255,255,255,0.07)' : `${color}14`,
-                borderRadius: 10, padding: '10px 4px', textAlign: 'center',
-              }}>
-                <div style={{ color, fontSize: 22, fontWeight: 700 }}>{value}</div>
-                <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>{label}</div>
+          {/* ── Ingresos ── */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>💰 Ingresos</span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {(['week', 'month', 'year'] as AnalyticsPeriod[]).map(p => {
+                  const label = p === 'week' ? 'Semana' : p === 'month' ? 'Mes' : 'Año';
+                  const isActive = analyticsPeriod === p;
+                  const canUse = isPro || p === 'month';
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => canUse && onPeriodChange(p)}
+                      title={!canUse ? 'Requiere Pro' : undefined}
+                      style={{
+                        padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                        border: `1px solid ${isActive ? C.accent : C.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'}`,
+                        background: isActive ? C.accent : 'transparent',
+                        color: isActive ? '#fff' : canUse ? C.muted : C.isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+                        cursor: canUse ? 'pointer' : 'not-allowed',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {label}{!canUse ? ' 🔒' : ''}
+                    </button>
+                  );
+                })}
               </div>
-            ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div style={{ background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '12px 14px' }}>
+                <div style={{ color: C.text, fontSize: 22, fontWeight: 800 }}>
+                  {dashStats.income.currency} {dashStats.income.total.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </div>
+                <div style={{ color: C.muted, fontSize: 11, marginTop: 2 }}>total del período</div>
+              </div>
+              <div style={{ background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '12px 14px' }}>
+                <div style={{ color: C.text, fontSize: 22, fontWeight: 800 }}>{dashStats.income.completedSessions}</div>
+                <div style={{ color: C.muted, fontSize: 11, marginTop: 2 }}>sesiones completadas</div>
+              </div>
+            </div>
           </div>
 
-          {/* Bar chart */}
-          <div style={{ marginBottom: analytics.byService.length > 0 ? 20 : 0 }}>
-            <p style={{ color: C.muted, fontSize: 12, margin: '0 0 8px' }}>Reservas por día</p>
-            {isPro && analytics.perDay ? (
-              <BarChartSVG perDay={analytics.perDay} accent={C.accent} muted={C.muted} />
-            ) : (
-              <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden' }}>
-                <div style={{ filter: 'blur(3px)', pointerEvents: 'none', opacity: 0.6 }}>
-                  <BarChartSVG perDay={MOCK_PER_DAY} accent={C.accent} muted={C.muted} />
-                </div>
-                <div style={{
-                  position: 'absolute', inset: 0,
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  background: 'rgba(0,0,0,0.5)', borderRadius: 10, gap: 6,
+          {/* Divisor */}
+          <div style={{ height: 1, background: C.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)', marginBottom: 20 }} />
+
+          {/* ── Clientes ── */}
+          <div style={{ marginBottom: 20 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.6px', display: 'block', marginBottom: 10 }}>👥 Clientes</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+              {[
+                { label: 'activos', value: dashStats.clients.active, sub: 'últimos 15 días', pro: false },
+                { label: 'nuevos', value: dashStats.clients.newThisMonth, sub: 'este mes', pro: false },
+                { label: 'prom. sesiones', value: dashStats.clients.avgSessionsPerClient ?? '—', sub: 'por paciente', pro: true },
+                { label: 'retención', value: dashStats.clients.retentionRate != null ? `${dashStats.clients.retentionRate}%` : '—', sub: '8+ sesiones', pro: true },
+              ].map(({ label, value, sub, pro }) => (
+                <div key={label} style={{
+                  background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)',
+                  borderRadius: 10, padding: '10px 12px',
+                  opacity: pro && !isPro ? 0.4 : 1,
+                  position: 'relative',
                 }}>
-                  <span style={{ fontSize: 20 }}>🔒</span>
-                  <Link to="/pricing" style={{ color: C.accent, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
-                    Activa Pro para ver tendencias
-                  </Link>
+                  {pro && !isPro && (
+                    <span style={{ position: 'absolute', top: 6, right: 8, fontSize: 10 }}>🔒</span>
+                  )}
+                  <div style={{ color: C.text, fontSize: 20, fontWeight: 800 }}>{value}</div>
+                  <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>{label}</div>
+                  <div style={{ color: C.muted, fontSize: 10, opacity: 0.7 }}>{sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Divisor */}
+          <div style={{ height: 1, background: C.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)', marginBottom: 20 }} />
+
+          {/* ── Agenda ── */}
+          <div style={{ marginBottom: 20 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.6px', display: 'block', marginBottom: 10 }}>📅 Agenda</span>
+            <div style={{ background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '12px 14px', marginBottom: 8 }}>
+              <span style={{ color: C.text, fontSize: 15, fontWeight: 700 }}>
+                {dashStats.agenda.sessionsThisWeek} sesiones
+              </span>
+              <span style={{ color: C.muted, fontSize: 13 }}>
+                {' '}de {dashStats.agenda.slotsThisWeek > 0 ? dashStats.agenda.slotsThisWeek : '—'} slots esta semana
+              </span>
+            </div>
+            {isPro ? (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ flex: 1, background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                  <div style={{ color: '#10b981', fontSize: 18, fontWeight: 800 }}>{dashStats.agenda.cancelledWithNotice ?? 0}</div>
+                  <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>cancel. con aviso</div>
+                </div>
+                <div style={{ flex: 1, background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                  <div style={{ color: '#ef4444', fontSize: 18, fontWeight: 800 }}>{dashStats.agenda.cancelledWithoutNotice ?? 0}</div>
+                  <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>sin aviso / no-show</div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ opacity: 0.4, display: 'flex', gap: 8 }}>
+                <div style={{ flex: 1, background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                  <div style={{ color: C.muted, fontSize: 18, fontWeight: 800 }}>🔒</div>
+                  <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>cancel. con aviso</div>
+                </div>
+                <div style={{ flex: 1, background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                  <div style={{ color: C.muted, fontSize: 18, fontWeight: 800 }}>🔒</div>
+                  <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>sin aviso / no-show</div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Services */}
-          {analytics.byService.length > 0 && (
-            <div>
-              <p style={{ color: C.muted, fontSize: 12, margin: '0 0 10px' }}>Servicios más solicitados</p>
-              {analytics.byService.slice(0, 3).map((s: any, i: number, arr: any[]) => {
-                const pct = arr[0].count > 0 ? (s.count / arr[0].count) * 100 : 0;
-                return (
-                  <div key={s.name} style={{ marginBottom: i < 2 ? 12 : 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                      <span style={{ color: C.text, fontSize: 13 }}>{s.name}</span>
-                      <span style={{ color: C.muted, fontSize: 12 }}>{s.count} sesiones · ${s.revenue.toLocaleString()} {s.currency}</span>
-                    </div>
-                    <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 4, height: 4 }}>
-                      <div style={{ height: 4, borderRadius: 4, background: C.accent, width: `${pct}%`, transition: 'width 0.6s ease' }} />
+          {/* ── Progreso Clínico (solo Pro) ── */}
+          {isPro && dashStats.clinical && (
+            <>
+              <div style={{ height: 1, background: C.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)', marginBottom: 20 }} />
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.6px', display: 'block', marginBottom: 10 }}>📈 Progreso Clínico</span>
+                {dashStats.clinical.clientsWithScale > 0 ? (
+                  <div style={{ background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '14px 16px' }}>
+                    <span style={{ color: C.accent, fontSize: 28, fontWeight: 800 }}>
+                      {dashStats.clinical.improvedScalePercent ?? 0}%
+                    </span>
+                    <span style={{ color: C.muted, fontSize: 13, marginLeft: 8 }}>
+                      de pacientes mejoraron su escala
+                    </span>
+                    <div style={{ color: C.muted, fontSize: 11, marginTop: 4 }}>
+                      Base: {dashStats.clinical.clientsWithScale} pacientes con 2+ notas NECS/Diamante
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-
-          {!isPro && (
-            <p style={{ color: C.muted, fontSize: 12, marginTop: 14, textAlign: 'center' }}>
-              Mostrando últimas 10 reservas. <Link to="/pricing" style={{ color: C.accent }}>Activa Pro</Link> para ver historial completo.
-            </p>
+                ) : (
+                  <div style={{ background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '14px 16px', color: C.muted, fontSize: 13 }}>
+                    Aún no hay suficientes notas NECS/Diamante para calcular el progreso.
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}
-    </>
+    </div>
   );
 
   const onboardingChecklist = !allDone && (
