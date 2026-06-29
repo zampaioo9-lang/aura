@@ -801,7 +801,7 @@ export default function Explorar() {
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {matchResults.map((m, i) => (
-                    <Link key={m.profileId} to={`/p/${m.profile.slug}`} onClick={closeMatch} style={{ textDecoration: 'none' }}>
+                    <Link key={m.profileId} to={`/${m.profile.slug}`} onClick={closeMatch} style={{ textDecoration: 'none' }}>
                       <div style={{
                         background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
                         borderRadius: 14, padding: '14px 16px', transition: 'border-color 0.2s',
