@@ -19,8 +19,8 @@ router.post('/match', async (req, res, next) => {
     const rlKey = `match:${ip}:${today}`;
 
     const existing = await prisma.rateLimit.findUnique({ where: { key: rlKey } });
-    if (existing && existing.count >= 10) {
-      throw new AppError(429, 'Has alcanzado el límite de 10 búsquedas por día. Vuelve mañana.');
+    if (existing && existing.count >= 3) {
+      throw new AppError(429, 'Has alcanzado el límite de 3 búsquedas por día. Vuelve mañana.');
     }
     await prisma.rateLimit.upsert({
       where: { key: rlKey },
