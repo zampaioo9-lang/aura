@@ -85,7 +85,7 @@ function jsDayToSlotDay(jsDay: number): number {
 const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   CONFIRMED: { bg: 'rgba(16,185,129,0.82)', text: '#ffffff', border: '#059669' },
   PENDING:   { bg: 'rgba(245,158,11,0.80)', text: '#ffffff', border: '#d97706' },
-  COMPLETED: { bg: 'rgba(100,116,139,0.70)', text: '#ffffff', border: '#64748b' },
+  COMPLETED: { bg: 'rgba(59,130,246,0.75)',  text: '#ffffff', border: '#3b82f6' },
   CANCELLED: { bg: 'rgba(239,68,68,0.10)', text: '#b91c1c', border: '#fca5a5' },
   NO_SHOW:   { bg: 'rgba(249,115,22,0.12)', text: '#c2410c', border: '#fdba74' },
 };
