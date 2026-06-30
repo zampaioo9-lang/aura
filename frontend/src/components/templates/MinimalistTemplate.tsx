@@ -152,12 +152,10 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
   }, [profile.id]);
 
   const glassCard: React.CSSProperties = {
-    background: darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.68)',
+    background: darkMode ? 'rgba(15,22,36,0.92)' : 'rgba(255,255,255,0.88)',
     border: darkMode ? '1px solid rgba(255,255,255,0.09)' : 'none',
     borderRadius: 20,
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
-    boxShadow: darkMode ? 'none' : '0 4px 20px rgba(45,212,191,0.10), 0 1px 6px rgba(0,0,0,0.06)',
+    boxShadow: darkMode ? '0 2px 16px rgba(0,0,0,0.4)' : '0 4px 20px rgba(45,212,191,0.10), 0 1px 6px rgba(0,0,0,0.06)',
   };
 
   const sectionCard: React.CSSProperties = {
@@ -715,7 +713,7 @@ function BoardServiceCard({ service: s, onBook, C, mobile = false }: { service: 
         )}
       </div>
       {/* Contenido */}
-      <div style={{ padding: '12px 14px 14px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1, background: C.accentSoft, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
+      <div style={{ padding: '12px 14px 14px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1, background: C.accentSoft }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: 0, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {s.name}
         </p>
