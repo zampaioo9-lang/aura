@@ -23,7 +23,7 @@ interface Booking {
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; Icon: any }> = {
   CONFIRMED:  { label: 'Confirmada',  color: '#10b981', bg: 'rgba(16,185,129,0.12)',  Icon: CheckCircle },
-  COMPLETED:  { label: 'Completada',  color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  Icon: CheckCircle },
+  COMPLETED:  { label: 'Completada',  color: '#0ea5e9', bg: 'rgba(14,165,233,0.15)',  Icon: CheckCircle },
   PENDING:    { label: 'Pendiente',   color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  Icon: AlertCircle },
   CANCELLED:  { label: 'Cancelada',   color: '#ef4444', bg: 'rgba(239,68,68,0.10)',   Icon: XCircle },
 };
