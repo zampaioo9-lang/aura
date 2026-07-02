@@ -18,15 +18,16 @@ router.post('/match', async (req, res, next) => {
     const today = new Date().toISOString().split('T')[0];
     const rlKey = `match:${ip}:${today}`;
 
-    const existing = await prisma.rateLimit.findUnique({ where: { key: rlKey } });
-    if (existing && existing.count >= 3) {
-      throw new AppError(429, 'Has alcanzado el límite de 3 búsquedas por día. Vuelve mañana.');
-    }
-    await prisma.rateLimit.upsert({
-      where: { key: rlKey },
-      update: { count: { increment: 1 } },
-      create: { key: rlKey, count: 1, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
-    });
+    // WEBINAR 2026-07-01: límite desactivado temporalmente
+    // const existing = await prisma.rateLimit.findUnique({ where: { key: rlKey } });
+    // if (existing && existing.count >= 3) {
+    //   throw new AppError(429, 'Has alcanzado el límite de 3 búsquedas por día. Vuelve mañana.');
+    // }
+    // await prisma.rateLimit.upsert({
+    //   where: { key: rlKey },
+    //   update: { count: { increment: 1 } },
+    //   create: { key: rlKey, count: 1, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+    // });
 
     const profiles = await prisma.profile.findMany({
       where: { published: true },

@@ -19,6 +19,10 @@ import reviewRoutes from './routes/reviews';
 import aiNotesRoutes from './routes/ai-notes';
 import aiMatchingRoutes from './routes/ai-matching';
 import analyticsRoutes from './routes/analytics';
+import clientsRoutes from './routes/clients';
+import clinicalHistoryRoutes from './routes/clinical-history';
+import clinicalHistoryCoupleRoutes from './routes/clinical-history-couple';
+import sessionNotesRoutes from './routes/session-notes';
 import { startReminderJob } from './jobs/reminderJob';
 import { startTrialExpiryJob } from './jobs/trialExpiryJob';
 import { sendWhatsAppTemplate, templateComponents } from './services/whatsappService';
@@ -52,6 +56,10 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/ai-notes', aiNotesRoutes);
 app.use('/api/ai-matching', aiMatchingRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/clients', clientsRoutes);
+app.use('/api/clinical-history', clinicalHistoryRoutes);
+app.use('/api/clinical-history-couple', clinicalHistoryCoupleRoutes);
+app.use('/api/session-notes', sessionNotesRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
