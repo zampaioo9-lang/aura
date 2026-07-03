@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { useClinicalHistory } from '../../hooks/usePatients';
 import type { ClinicalHistory, Patient } from '../../hooks/usePatients';
 import { WizardAccentContext, accentTokens } from './WizardAccentContext';
+import ConsentStep from './ConsentStep';
 import Step1Datos from './wizard/Step1Datos';
 import Step2Motivo from './wizard/Step2Motivo';
 import Step3Problema from './wizard/Step3Problema';
@@ -15,7 +16,7 @@ import Step8Diagnostico from './wizard/Step8Diagnostico';
 import Step9Plan from './wizard/Step9Plan';
 
 const STEPS = [
-  'Datos', 'Motivo', 'Problema', 'Antec. personales',
+  'Consentimiento', 'Datos', 'Motivo', 'Problema', 'Antec. personales',
   'Antec. familiares', 'Biografía', 'Estado mental', 'Diagnóstico', 'Plan',
 ];
 
@@ -107,39 +108,46 @@ export default function PatientWizard({ patient, onClose, onPatientUpdate, accen
             display: 'flex', alignItems: 'center', padding: '10px 14px',
             borderBottom: `1px solid ${modalBorder}`, gap: 4, flexShrink: 0, overflowX: 'auto',
           }}>
-            {STEPS.map((s, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                <button
-                  className="btn-lift"
-                  onClick={() => setStep(i)} title={s}
-                  style={{
-                    width: 28, height: 28, borderRadius: '50%', border: 'none',
-                    background: i === step ? tokens.savedColor : isCompleted(i) ? `${tokens.savedColor}33` : stepInactiveBg,
-                    color: i === step ? '#fff' : isCompleted(i) ? tokens.savedColor : stepInactiveColor,
-                    fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s',
-                  }}
-                >
-                  {isCompleted(i) && i !== step ? <Check size={12} /> : i + 1}
-                </button>
-                {i < STEPS.length - 1 && (
-                  <div style={{ width: 20, height: 1, background: isCompleted(i) ? `${tokens.savedColor}44` : connectorBg }} />
-                )}
-              </div>
-            ))}
+            {STEPS.map((s, i) => {
+              const locked = i > 0 && !patient.consentGivenAt;
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                  <button
+                    className="btn-lift"
+                    onClick={() => { if (!locked) setStep(i); }}
+                    disabled={locked}
+                    title={locked ? 'Registra el consentimiento primero' : s}
+                    style={{
+                      width: 28, height: 28, borderRadius: '50%', border: 'none',
+                      background: i === step ? tokens.savedColor : isCompleted(i) ? `${tokens.savedColor}33` : stepInactiveBg,
+                      color: i === step ? '#fff' : isCompleted(i) ? tokens.savedColor : stepInactiveColor,
+                      fontSize: 11, fontWeight: 700, cursor: locked ? 'not-allowed' : 'pointer',
+                      opacity: locked ? 0.4 : 1,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s',
+                    }}
+                  >
+                    {isCompleted(i) && i !== step ? <Check size={12} /> : i + 1}
+                  </button>
+                  {i < STEPS.length - 1 && (
+                    <div style={{ width: 20, height: 1, background: isCompleted(i) ? `${tokens.savedColor}44` : connectorBg }} />
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Content */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-            {step === 0 && <Step1Datos patient={patient} onSave={onPatientUpdate} inp={inp} lbl={lbl} accent={accent} isDark={D} />}
-            {step === 1 && <Step2Motivo {...stepProps} stepIndex={1} />}
-            {step === 2 && <Step3Problema {...stepProps} stepIndex={2} />}
-            {step === 3 && <Step4AntecPersonales {...stepProps} stepIndex={3} />}
-            {step === 4 && <Step5AntecFamiliares {...stepProps} stepIndex={4} />}
-            {step === 5 && <Step6Biografia {...stepProps} stepIndex={5} />}
-            {step === 6 && <Step7ExamenMental {...stepProps} stepIndex={6} />}
-            {step === 7 && <Step8Diagnostico {...stepProps} stepIndex={7} />}
-            {step === 8 && <Step9Plan {...stepProps} stepIndex={8} />}
+            {step === 0 && <ConsentStep patient={patient} onSave={onPatientUpdate} inp={inp} lbl={lbl} accent={accent} isDark={D} />}
+            {step === 1 && <Step1Datos patient={patient} onSave={onPatientUpdate} inp={inp} lbl={lbl} accent={accent} isDark={D} />}
+            {step === 2 && <Step2Motivo {...stepProps} stepIndex={1} />}
+            {step === 3 && <Step3Problema {...stepProps} stepIndex={2} />}
+            {step === 4 && <Step4AntecPersonales {...stepProps} stepIndex={3} />}
+            {step === 5 && <Step5AntecFamiliares {...stepProps} stepIndex={4} />}
+            {step === 6 && <Step6Biografia {...stepProps} stepIndex={5} />}
+            {step === 7 && <Step7ExamenMental {...stepProps} stepIndex={6} />}
+            {step === 8 && <Step8Diagnostico {...stepProps} stepIndex={7} />}
+            {step === 9 && <Step9Plan {...stepProps} stepIndex={8} />}
           </div>
 
           {/* Footer */}
@@ -158,13 +166,19 @@ export default function PatientWizard({ patient, onClose, onPatientUpdate, accen
             <span style={{ color: counterColor, fontSize: 12 }}>
               {history?.completedSteps?.length ?? 0} / {STEPS.length} completados
             </span>
-            <button className="btn-lift" onClick={() => setStep(s => Math.min(STEPS.length - 1, s + 1))} disabled={step === STEPS.length - 1} style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px',
-              background: step === STEPS.length - 1 ? nextDis : tokens.bg,
-              border: 'none', borderRadius: 10,
-              color: step === STEPS.length - 1 ? nextDisColor : '#fff',
-              fontSize: 14, fontWeight: 600, cursor: step === STEPS.length - 1 ? 'not-allowed' : 'pointer',
-            }}>
+            <button
+              className="btn-lift"
+              onClick={() => setStep(s => Math.min(STEPS.length - 1, s + 1))}
+              disabled={step === STEPS.length - 1 || (step === 0 && !patient.consentGivenAt)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px',
+                background: (step === STEPS.length - 1 || (step === 0 && !patient.consentGivenAt)) ? nextDis : tokens.bg,
+                border: 'none', borderRadius: 10,
+                color: (step === STEPS.length - 1 || (step === 0 && !patient.consentGivenAt)) ? nextDisColor : '#fff',
+                fontSize: 14, fontWeight: 600,
+                cursor: (step === STEPS.length - 1 || (step === 0 && !patient.consentGivenAt)) ? 'not-allowed' : 'pointer',
+              }}
+            >
               Siguiente <ChevronRight size={16} />
             </button>
           </div>
