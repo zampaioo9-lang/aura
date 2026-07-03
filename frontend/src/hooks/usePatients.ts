@@ -15,6 +15,9 @@ export interface Patient {
   country?: string;
   emergencyContact?: string;
   referralSource?: string;
+  consentGivenAt?: string | null;
+  consentMethod?: string | null;
+  consentNotes?: string | null;
   notes?: string;
   createdAt: string;
   clinicalHistory?: { completedSteps: number[] } | null;
