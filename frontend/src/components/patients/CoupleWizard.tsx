@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { useClinicalHistoryCouple } from '../../hooks/usePatients';
 import type { ClinicalHistoryCouple, Patient } from '../../hooks/usePatients';
 import { WizardAccentContext, accentTokens } from './WizardAccentContext';
+import ConsentStep from './ConsentStep';
 import StepC1Datos from './couple-wizard/StepC1Datos';
 import StepC2Motivo from './couple-wizard/StepC2Motivo';
 import StepC3Historia from './couple-wizard/StepC3Historia';
@@ -15,18 +16,19 @@ import StepC8Evaluacion from './couple-wizard/StepC8Evaluacion';
 import StepC9Plan from './couple-wizard/StepC9Plan';
 
 const STEPS = [
-  'Datos', 'Motivo', 'Historia', 'Conflicto',
+  'Consentimiento', 'Datos', 'Motivo', 'Historia', 'Conflicto',
   'Intimidad', 'Familia', 'Recursos', 'Evaluación', 'Plan',
 ];
 
 interface Props {
   patient: Patient;
   onClose: () => void;
+  onPatientUpdate: (data: Partial<Patient>) => Promise<void>;
   accent?: string;
   isDark?: boolean;
 }
 
-export default function CoupleWizard({ patient, onClose, accent, isDark = true }: Props) {
+export default function CoupleWizard({ patient, onClose, onPatientUpdate, accent, isDark = true }: Props) {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const { history, saveStep } = useClinicalHistoryCouple(patient.id);
@@ -105,35 +107,48 @@ export default function CoupleWizard({ patient, onClose, accent, isDark = true }
             display: 'flex', alignItems: 'center', padding: '10px 14px',
             borderBottom: `1px solid ${modalBorder}`, gap: 4, flexShrink: 0, overflowX: 'auto',
           }}>
-            {STEPS.map((s, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                <button className="btn-lift" onClick={() => setStep(i)} title={s} style={{
-                  width: 28, height: 28, borderRadius: '50%', border: 'none',
-                  background: i === step ? tokens.savedColor : isCompleted(i) ? `${tokens.savedColor}33` : stepInactiveBg,
-                  color: i === step ? '#fff' : isCompleted(i) ? tokens.savedColor : stepInactiveColor,
-                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s',
-                }}>
-                  {isCompleted(i) && i !== step ? <Check size={12} /> : i + 1}
-                </button>
-                {i < STEPS.length - 1 && (
-                  <div style={{ width: 20, height: 1, background: isCompleted(i) ? `${tokens.savedColor}44` : connectorBg }} />
-                )}
-              </div>
-            ))}
+            {STEPS.map((s, i) => {
+              const locked = i > 0 && !patient.consentGivenAt;
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                  <button
+                    className="btn-lift"
+                    onClick={() => { if (!locked) setStep(i); }}
+                    disabled={locked}
+                    title={locked ? 'Registra el consentimiento primero' : s}
+                    style={{
+                      width: 28, height: 28, borderRadius: '50%', border: 'none',
+                      background: i === step ? tokens.savedColor : isCompleted(i) ? `${tokens.savedColor}33` : stepInactiveBg,
+                      color: i === step ? '#fff' : isCompleted(i) ? tokens.savedColor : stepInactiveColor,
+                      fontSize: 11, fontWeight: 700, cursor: locked ? 'not-allowed' : 'pointer',
+                      opacity: locked ? 0.4 : 1,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s',
+                    }}
+                  >
+                    {isCompleted(i) && i !== step ? <Check size={12} /> : i + 1}
+                  </button>
+                  {i < STEPS.length - 1 && (
+                    <div style={{ width: 20, height: 1, background: isCompleted(i) ? `${tokens.savedColor}44` : connectorBg }} />
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Content */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-            {step === 0 && <StepC1Datos {...stepProps} stepIndex={0} />}
-            {step === 1 && <StepC2Motivo {...stepProps} stepIndex={1} />}
-            {step === 2 && <StepC3Historia {...stepProps} stepIndex={2} />}
-            {step === 3 && <StepC4Conflicto {...stepProps} stepIndex={3} />}
-            {step === 4 && <StepC5Intimidad {...stepProps} stepIndex={4} />}
-            {step === 5 && <StepC6Familia {...stepProps} stepIndex={5} />}
-            {step === 6 && <StepC7Recursos {...stepProps} stepIndex={6} />}
-            {step === 7 && <StepC8Evaluacion {...stepProps} stepIndex={7} />}
-            {step === 8 && <StepC9Plan {...stepProps} stepIndex={8} />}
+            {/* step = wizard render index (shifts when a step is added); stepIndex = ClinicalHistoryCouple.completedSteps
+                business index, fixed at 0-8 for Datos..Plan — do not shift stepIndex when adding/removing wizard steps. */}
+            {step === 0 && <ConsentStep patient={patient} onSave={onPatientUpdate} inp={inp} lbl={lbl} accent={accent} isDark={D} />}
+            {step === 1 && <StepC1Datos {...stepProps} stepIndex={0} />}
+            {step === 2 && <StepC2Motivo {...stepProps} stepIndex={1} />}
+            {step === 3 && <StepC3Historia {...stepProps} stepIndex={2} />}
+            {step === 4 && <StepC4Conflicto {...stepProps} stepIndex={3} />}
+            {step === 5 && <StepC5Intimidad {...stepProps} stepIndex={4} />}
+            {step === 6 && <StepC6Familia {...stepProps} stepIndex={5} />}
+            {step === 7 && <StepC7Recursos {...stepProps} stepIndex={6} />}
+            {step === 8 && <StepC8Evaluacion {...stepProps} stepIndex={7} />}
+            {step === 9 && <StepC9Plan {...stepProps} stepIndex={8} />}
           </div>
 
           {/* Footer */}
@@ -152,13 +167,19 @@ export default function CoupleWizard({ patient, onClose, accent, isDark = true }
             <span style={{ color: counterColor, fontSize: 12 }}>
               {history?.completedSteps?.length ?? 0} / {STEPS.length} completados
             </span>
-            <button className="btn-lift" onClick={() => setStep(s => Math.min(STEPS.length - 1, s + 1))} disabled={step === STEPS.length - 1} style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px',
-              background: step === STEPS.length - 1 ? nextDis : tokens.bg,
-              border: 'none', borderRadius: 10,
-              color: step === STEPS.length - 1 ? nextDisColor : '#fff',
-              fontSize: 14, fontWeight: 600, cursor: step === STEPS.length - 1 ? 'not-allowed' : 'pointer',
-            }}>
+            <button
+              className="btn-lift"
+              onClick={() => setStep(s => Math.min(STEPS.length - 1, s + 1))}
+              disabled={step === STEPS.length - 1 || (step === 0 && !patient.consentGivenAt)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px',
+                background: (step === STEPS.length - 1 || (step === 0 && !patient.consentGivenAt)) ? nextDis : tokens.bg,
+                border: 'none', borderRadius: 10,
+                color: (step === STEPS.length - 1 || (step === 0 && !patient.consentGivenAt)) ? nextDisColor : '#fff',
+                fontSize: 14, fontWeight: 600,
+                cursor: (step === STEPS.length - 1 || (step === 0 && !patient.consentGivenAt)) ? 'not-allowed' : 'pointer',
+              }}
+            >
               Siguiente <ChevronRight size={16} />
             </button>
           </div>

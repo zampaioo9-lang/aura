@@ -336,7 +336,13 @@ export default function Pacientes({ C, isPro = false, isActive }: { C: Colors; i
           />
         )}
         {activeWizard === 'couple' && (
-          <CoupleWizard patient={selected} onClose={() => setActiveWizard(null)} accent={C.accent} isDark={C.isDark} />
+          <CoupleWizard
+            patient={selected}
+            onClose={() => setActiveWizard(null)}
+            onPatientUpdate={async (data) => { await updatePatient(selected.id, data); setSelected({ ...selected, ...data }); }}
+            accent={C.accent}
+            isDark={C.isDark}
+          />
         )}
       </div>
     );
