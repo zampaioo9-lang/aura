@@ -79,12 +79,13 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res, next) => {
     if (!existing) throw new AppError(404, 'Paciente no encontrado');
     if (existing.userId !== req.userId) throw new AppError(403, 'No autorizado');
 
-    const { birthDate, ...rest } = req.body;
+    const { birthDate, consentGivenAt, ...rest } = req.body;
     const updated = await prisma.client.update({
       where: { id: req.params.id },
       data: {
         ...rest,
         ...(birthDate !== undefined ? { birthDate: birthDate ? new Date(birthDate) : null } : {}),
+        ...(consentGivenAt !== undefined ? { consentGivenAt: consentGivenAt ? new Date(consentGivenAt) : null } : {}),
       },
     });
     res.json(updated);
