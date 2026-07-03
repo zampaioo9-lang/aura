@@ -138,6 +138,8 @@ export default function PatientWizard({ patient, onClose, onPatientUpdate, accen
 
           {/* Content */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+            {/* step = wizard render index (shifts when a step is added); stepIndex = ClinicalHistory.completedSteps
+                business index, fixed at 1-8 for Motivo..Plan — do not shift stepIndex when adding/removing wizard steps. */}
             {step === 0 && <ConsentStep patient={patient} onSave={onPatientUpdate} inp={inp} lbl={lbl} accent={accent} isDark={D} />}
             {step === 1 && <Step1Datos patient={patient} onSave={onPatientUpdate} inp={inp} lbl={lbl} accent={accent} isDark={D} />}
             {step === 2 && <Step2Motivo {...stepProps} stepIndex={1} />}
