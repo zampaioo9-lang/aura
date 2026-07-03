@@ -51,6 +51,10 @@ model Client {
   country          String?
   emergencyContact String?
   referralSource   String?
+  // Consentimiento expreso (LFPDPPP Art. 9) — ver docs/superpowers/specs/2026-07-02-consentimiento-expreso-design.md
+  consentGivenAt   DateTime?
+  consentMethod    String?
+  consentNotes     String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt @default(now())
 
