@@ -55,8 +55,10 @@ export default function ConsentStep({ patient, onSave, inp, lbl, accent, isDark 
   const handlePrint = () => {
     const w = window.open('', '_blank');
     if (!w) return;
-    w.document.write(`<pre style="font-family: sans-serif; white-space: pre-wrap; max-width: 640px; margin: 40px auto; line-height: 1.6;">${documentText}</pre>`);
+    w.document.write('<pre id="consent-doc" style="font-family: sans-serif; white-space: pre-wrap; max-width: 640px; margin: 40px auto; line-height: 1.6;"></pre>');
     w.document.close();
+    const el = w.document.getElementById('consent-doc');
+    if (el) el.textContent = documentText;
     w.print();
   };
 
