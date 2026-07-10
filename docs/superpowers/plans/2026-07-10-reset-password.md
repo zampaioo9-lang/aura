@@ -520,8 +520,8 @@ En el `return` del `AuthContext.Provider` (línea ~112), agregar `resetPassword`
 
 - [ ] **Paso 4: Verificar tipos**
 
-Run: `cd frontend && npx tsc -b --noEmit`
-Expected: sin errores. (Nota: si `tsc -b --noEmit` da error de que `--noEmit` no es compatible con `-b` en este proyecto, usar `npx tsc --noEmit -p tsconfig.app.json` en su lugar — verificar cuál `tsconfig*.json` existe en `frontend/` antes de correrlo.)
+Run: `cd frontend && npx tsc --noEmit -p tsconfig.app.json`
+Expected: sin errores. (Comando confirmado — `frontend/` usa project references con `tsconfig.app.json`/`tsconfig.node.json`.)
 
 - [ ] **Paso 5: Commit**
 
