@@ -292,6 +292,7 @@ router.post('/users/:id/reset-password', async (req, res, next) => {
     const { id } = req.params;
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (user.isAdmin) return res.status(403).json({ error: 'No se puede resetear la contraseña de un administrador' });
 
     const token = signResetToken(user.id, user.password);
     const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${token}`;
