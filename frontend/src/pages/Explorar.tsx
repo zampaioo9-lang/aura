@@ -562,7 +562,7 @@ export default function Explorar() {
                   <div
                     className={`ex-card${profile.isPro ? ' ex-card-pro' : ''}`}
                     style={{
-                      flex: 1,
+                      flex: 1, minWidth: 0,
                       background: profile.isPro ? 'rgba(45,212,191,0.06)' : 'rgba(255,255,255,0.05)',
                       border: `1px solid ${profile.isPro ? 'rgba(45,212,191,0.35)' : 'rgba(45,212,191,0.12)'}`,
                       borderRadius: 14, padding: '18px 20px', cursor: 'pointer',
