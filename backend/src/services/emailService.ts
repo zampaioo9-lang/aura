@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { env } from '../config/env';
+import { signResetToken } from './authService';
 
 export interface EmailResult {
   success: boolean;
@@ -428,3 +429,15 @@ export const emailTemplates = {
     `),
   }),
 };
+
+// ── Reseteo de contraseña — helper compartido ───────────────────────
+// Usado tanto por el flujo self-service (auth.ts, fire-and-forget) como
+// por el reseteo forzado desde el AdminPanel (admin.ts, awaited para poder
+// avisarle al admin si el envío falla) — cada caller decide si espera la
+// promesa o no, esta función solo evita duplicar la construcción del token/URL/template.
+export function sendPasswordResetEmail(user: { id: string; name: string; email: string; password: string }): Promise<EmailResult> {
+  const token = signResetToken(user.id, user.password);
+  const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${token}`;
+  const tpl = emailTemplates.passwordReset({ userName: user.name, userEmail: user.email, resetUrl });
+  return sendEmail(tpl.to, tpl.subject, tpl.html);
+}

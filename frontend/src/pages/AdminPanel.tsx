@@ -1380,23 +1380,25 @@ export default function AdminPanel() {
                             </div>
 
                             {/* Reset password button */}
-                            <div className="rounded-lg px-3 py-2 mt-3 flex items-center justify-between"
-                              style={{ background: C.subCard, border: `1px solid ${C.cardBorder}` }}>
-                              <div>
-                                <p className="text-xs" style={{ color: C.textFaint }}>Contraseña</p>
-                                <p className="text-sm" style={{ color: C.textMuted }}>
-                                  Enviar enlace para que el usuario elija una nueva
-                                </p>
+                            {!u.isAdmin && (
+                              <div className="rounded-lg px-3 py-2 mt-3 flex items-center justify-between"
+                                style={{ background: C.subCard, border: `1px solid ${C.cardBorder}` }}>
+                                <div>
+                                  <p className="text-xs" style={{ color: C.textFaint }}>Contraseña</p>
+                                  <p className="text-sm" style={{ color: C.textMuted }}>
+                                    Enviar enlace para que el usuario elija una nueva
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleResetPassword(u.id, u.email); }}
+                                  disabled={resettingPassword === u.id}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                  <Send className="w-3.5 h-3.5" />
+                                  {resettingPassword === u.id ? 'Enviando...' : 'Resetear contraseña'}
+                                </button>
                               </div>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleResetPassword(u.id, u.email); }}
-                                disabled={resettingPassword === u.id}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors disabled:opacity-50"
-                              >
-                                <Send className="w-3.5 h-3.5" />
-                                {resettingPassword === u.id ? 'Enviando...' : 'Resetear contraseña'}
-                              </button>
-                            </div>
+                            )}
 
                             {/* ── Control de Acceso ── */}
                             {!u.isAdmin && (

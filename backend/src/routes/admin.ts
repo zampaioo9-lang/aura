@@ -2,11 +2,10 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth';
 import { adminMiddleware } from '../middleware/adminAuth';
-import { sendEmail, emailTemplates } from '../services/emailService';
+import { sendEmail, emailTemplates, sendPasswordResetEmail } from '../services/emailService';
 import { sendBroadcast, getBroadcasts, addContact } from '../services/audienceService';
 import { sendWhatsApp } from '../services/whatsappService';
 import { env } from '../config/env';
-import { signResetToken } from '../services/authService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -294,10 +293,7 @@ router.post('/users/:id/reset-password', async (req, res, next) => {
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
     if (user.isAdmin) return res.status(403).json({ error: 'No se puede resetear la contraseña de un administrador' });
 
-    const token = signResetToken(user.id, user.password);
-    const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${token}`;
-    const tpl = emailTemplates.passwordReset({ userName: user.name, userEmail: user.email, resetUrl });
-    const result = await sendEmail(tpl.to, tpl.subject, tpl.html);
+    const result = await sendPasswordResetEmail(user);
 
     res.json({ success: result.success, email: user.email });
   } catch (err) {

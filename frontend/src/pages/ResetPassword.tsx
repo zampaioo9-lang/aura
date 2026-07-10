@@ -24,14 +24,17 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPwd, setShowPwd]                 = useState(false);
   const [error, setError]                     = useState('');
-  const [loading, setLoading]                 = useState(false);
+  const [invalidToken, setInvalidToken]        = useState(false);
+  const [loading, setLoading]                  = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setInvalidToken(false);
 
     if (!token) {
       setError('Este enlace no es válido. Solicita uno nuevo.');
+      setInvalidToken(true);
       return;
     }
     if (newPassword.length < 6) {
@@ -49,6 +52,7 @@ export default function ResetPassword() {
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.error || 'No se pudo restablecer la contraseña.');
+      setInvalidToken(err.response?.data?.code === 'INVALID_RESET_TOKEN');
     } finally {
       setLoading(false);
     }
@@ -96,7 +100,7 @@ export default function ResetPassword() {
               borderRadius: 10, fontSize: 13, color: 'rgba(248,113,113,0.9)',
             }}>
               {error}
-              {error.includes('válido') && (
+              {invalidToken && (
                 <>
                   {' '}
                   <Link to="/forgot-password" style={{ color: '#2dd4bf', fontWeight: 600 }}>
