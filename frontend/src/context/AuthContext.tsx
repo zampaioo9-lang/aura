@@ -33,6 +33,7 @@ interface AuthContextType {
   featureOverrides: Record<string, boolean>;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
+  resetPassword: (token: string, newPassword: string) => Promise<void>;
   logout: () => void;
   updateAccount: (data: UpdateAccountData) => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -78,6 +79,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.data.user);
   };
 
+  const resetPassword = async (token: string, newPassword: string) => {
+    const res = await api.post('/auth/reset-password', { token, newPassword });
+    localStorage.setItem('aura_token', res.data.token);
+    setToken(res.data.token);
+    setUser(res.data.user);
+  };
+
   const logout = () => {
     localStorage.removeItem('aura_token');
     setToken(null);
@@ -109,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const featureOverrides = (user?.featureOverrides ?? {}) as Record<string, boolean>;
 
   return (
-    <AuthContext.Provider value={{ user, token, isPro, featureOverrides, login, register, logout, updateAccount, refreshUser, loading }}>
+    <AuthContext.Provider value={{ user, token, isPro, featureOverrides, login, register, resetPassword, logout, updateAccount, refreshUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
