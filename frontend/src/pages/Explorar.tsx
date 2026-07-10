@@ -341,12 +341,40 @@ export default function Explorar() {
             </span>
           </h1>
 
-          {/* ── Barra de búsqueda ── */}
+          {/* ── Matching IA — protagonista ── */}
+          <div className="ex-a4" style={{ maxWidth: 720, margin: '0 auto 16px' }}>
+            <button onClick={openMatch} className="ex-match-btn" style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14,
+              padding: '24px 32px', borderRadius: 18,
+              background: 'linear-gradient(135deg, rgba(139,92,246,0.38) 0%, rgba(45,212,191,0.30) 100%)',
+              border: '1px solid rgba(139,92,246,0.55)',
+              color: '#fff', cursor: 'pointer', fontFamily: 'inherit',
+              backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+              boxShadow: '0 12px 40px rgba(139,92,246,0.28), 0 6px 16px rgba(0,0,0,0.35)',
+              transition: 'transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s, border-color 0.25s',
+            }}>
+              <Sparkles size={24} color="#c4b5fd" style={{ flexShrink: 0 }} />
+              <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
+                <span style={{ fontSize: 18, fontWeight: 700 }}>Encuentra tu match ideal con IA</span>
+                <span style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.65)', marginTop: 2 }}>
+                  Responde 5 preguntas y te decimos qué psicólogo encaja contigo
+                </span>
+              </span>
+            </button>
+          </div>
+
+          {/* ── Barra de búsqueda manual (secundaria) ── */}
+          <p style={{
+            color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: 600, textTransform: 'uppercase',
+            letterSpacing: '0.1em', textAlign: 'center', margin: '0 0 10px',
+          }}>
+            o busca manualmente
+          </p>
           <form className="ex-a4" onSubmit={handleSearch} style={{ maxWidth: 720, margin: '0 auto 12px' }}>
             <div className="ex-search-bar" style={{
               display: 'flex', overflow: 'hidden', borderRadius: 14,
-              background: 'rgba(8,5,20,0.75)',
-              border: '1px solid rgba(255,255,255,0.14)',
+              background: 'rgba(8,5,20,0.55)',
+              border: '1px solid rgba(255,255,255,0.10)',
               backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
             }}>
               <div className="ex-sf-profession" style={{ flex: 2, minWidth: 0, overflow: 'visible' }}>
@@ -411,23 +439,6 @@ export default function Explorar() {
               </button>
             </div>
           </form>
-
-          {/* ── Matching IA ── */}
-          <div className="ex-a4" style={{ maxWidth: 720, margin: '0 auto 12px', textAlign: 'center' }}>
-            <button onClick={openMatch} style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '10px 22px', borderRadius: 30,
-              background: 'linear-gradient(135deg, rgba(139,92,246,0.25), rgba(45,212,191,0.18))',
-              border: '1px solid rgba(139,92,246,0.45)',
-              color: '#c4b5fd', fontSize: 13, fontWeight: 600,
-              cursor: 'pointer', fontFamily: 'inherit',
-              backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-              transition: 'all 0.2s',
-            }}>
-              <Sparkles size={14} />
-              Encuentra tu match ideal con IA
-            </button>
-          </div>
 
           {/* ── Panel de filtros ── */}
           {showFilters && (

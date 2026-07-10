@@ -24,6 +24,7 @@ Documentación completa de la plataforma Aliax. Un archivo por módulo.
 | 13 | [Infraestructura y Deploy](13-infraestructura-deploy.md) | Vercel, Cloudinary, DB, comandos Prisma, variables de entorno, estructura de carpetas |
 | 14 | [Componentes UI Compartidos](14-componentes-ui.md) | CountrySelect, PhoneInput, ProGate, temas de color, WizardAccentContext, MinimalistTemplate |
 | 15 | [Analytics](15-analytics.md) | Endpoint, datos por plan (Free vs Pro), byStatus, byService, perDay, UI en Dashboard |
+| 16 | [Consentimiento Informado](16-consentimiento.md) | Paso 0 de los wizards HC, gating de pasos, campos consentGivenAt/consentMethod/consentNotes en Client |
 
 ---
 
@@ -46,3 +47,5 @@ Documentación completa de la plataforma Aliax. Un archivo por módulo.
 **¿Cómo funciona Stripe/PayPal?** → `10-planes-pagos.md`
 
 **¿Qué hace el campo `isPro`?** → `01-autenticacion.md` (AuthContext) y `10-planes-pagos.md`
+
+**¿Cómo funciona el consentimiento informado del paciente?** → `16-consentimiento.md`
