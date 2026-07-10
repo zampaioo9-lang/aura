@@ -329,6 +329,36 @@ export const emailTemplates = {
     `),
   }),
 
+  // Solicitud de reseteo de contraseña (self-service o forzado por admin)
+  passwordReset: (data: {
+    userName: string;
+    userEmail: string;
+    resetUrl: string;
+  }) => ({
+    to: data.userEmail,
+    subject: 'Restablece tu contraseña de Aliax',
+    html: baseTemplate('Restablece tu contraseña', `
+      ${heading(`Hola ${data.userName}`)}
+      ${subtext('Recibimos una solicitud para restablecer la contraseña de tu cuenta en Aliax. Si fuiste tú, haz clic en el siguiente botón para elegir una nueva contraseña.')}
+      ${ctaButton('Restablecer contraseña', data.resetUrl)}
+      <p style="margin-top:24px;color:#a1a1aa;font-size:13px;">Este enlace expira en 30 minutos. Si no solicitaste este cambio, puedes ignorar este correo — tu contraseña actual seguirá funcionando.</p>
+    `),
+  }),
+
+  // Confirmación tras cambio exitoso de contraseña
+  passwordChanged: (data: {
+    userName: string;
+    userEmail: string;
+  }) => ({
+    to: data.userEmail,
+    subject: 'Tu contraseña de Aliax fue actualizada',
+    html: baseTemplate('Contraseña actualizada', `
+      ${heading(`Hola ${data.userName}`)}
+      ${subtext('Tu contraseña de Aliax se actualizó correctamente. Ya puedes iniciar sesión con tu nueva contraseña.')}
+      <p style="margin-top:24px;color:#a1a1aa;font-size:13px;">Si no fuiste tú quien hizo este cambio, contáctanos de inmediato respondiendo a este correo.</p>
+    `),
+  }),
+
   // Anuncio masivo a usuarios
   announcement: (data: {
     userName: string;
