@@ -586,10 +586,11 @@ export default function Explorar() {
                         </div>
                       )}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', minWidth: 0 }}>
                           <span style={{
                             color: '#ede8ff', fontWeight: 600, fontSize: 14,
                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            minWidth: 0,
                           }}>
                             {profile.title}
                           </span>
@@ -599,6 +600,7 @@ export default function Explorar() {
                               background: 'rgba(45,212,191,0.15)', border: '1px solid rgba(45,212,191,0.35)',
                               borderRadius: 20, padding: '2px 7px',
                               color: '#2dd4bf', fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+                              flexShrink: 0,
                             }}>
                               <Zap size={8} /> PRO
                             </span>
