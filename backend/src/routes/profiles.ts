@@ -204,26 +204,43 @@ router.get('/directory', async (req, res, next) => {
       },
     } as const;
 
-    const [proProfiles, freeProfiles, total] = await Promise.all([
-      prisma.profile.findMany({
-        where: proWhere,
-        select: selectFields,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limitNum,
-      }),
-      prisma.profile.findMany({
-        where: freeWhere,
-        select: selectFields,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limitNum,
-      }),
+    // Pro profiles are listed first, then free ones fill the rest of the page.
+    // Since the two tiers are queried separately, skip/take must be split
+    // across the pro/free boundary instead of applied identically to both
+    // (applying `skip` to both independently would drop or duplicate free
+    // profiles whenever a page crosses that boundary).
+    const [proTotal, total] = await Promise.all([
+      prisma.profile.count({ where: proWhere }),
       prisma.profile.count({ where: baseWhere }),
     ]);
 
-    // Combine: Pro first, then Free, up to limitNum
-    const combined = [...proProfiles, ...freeProfiles].slice(0, limitNum);
+    const proTake = Math.max(0, Math.min(limitNum, proTotal - skip));
+    const proSkip = Math.min(skip, proTotal);
+    const freeSkip = Math.max(0, skip - proTotal);
+    const freeTake = limitNum - proTake;
+
+    const [proProfiles, freeProfiles] = await Promise.all([
+      proTake > 0
+        ? prisma.profile.findMany({
+            where: proWhere,
+            select: selectFields,
+            orderBy: { createdAt: 'desc' },
+            skip: proSkip,
+            take: proTake,
+          })
+        : Promise.resolve([]),
+      freeTake > 0
+        ? prisma.profile.findMany({
+            where: freeWhere,
+            select: selectFields,
+            orderBy: { createdAt: 'desc' },
+            skip: freeSkip,
+            take: freeTake,
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const combined = [...proProfiles, ...freeProfiles];
 
     // Obtener estadísticas de reseñas para los perfiles combinados
     const profileIds = combined.map(p => p.id);
