@@ -17,7 +17,9 @@ export function signToken(userId: string): string {
 
 export function verifyToken(token: string): { userId: string } | null {
   try {
-    return jwt.verify(token, env.JWT_SECRET) as { userId: string };
+    const payload = jwt.verify(token, env.JWT_SECRET) as { userId: string; purpose?: string };
+    if (payload.purpose) return null; // reject reset tokens (and any other special-purpose token) here
+    return { userId: payload.userId };
   } catch {
     return null;
   }
