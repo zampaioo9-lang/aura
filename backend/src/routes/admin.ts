@@ -6,6 +6,7 @@ import { sendEmail, emailTemplates } from '../services/emailService';
 import { sendBroadcast, getBroadcasts, addContact } from '../services/audienceService';
 import { sendWhatsApp } from '../services/whatsappService';
 import { env } from '../config/env';
+import { signResetToken } from '../services/authService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -280,6 +281,24 @@ router.post('/users/:id/welcome-email', async (req, res, next) => {
     });
 
     res.json({ ok: true, sentAt: new Date().toISOString() });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/admin/users/:id/reset-password
+router.post('/users/:id/reset-password', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const token = signResetToken(user.id, user.password);
+    const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${token}`;
+    const tpl = emailTemplates.passwordReset({ userName: user.name, userEmail: user.email, resetUrl });
+    const result = await sendEmail(tpl.to, tpl.subject, tpl.html);
+
+    res.json({ success: result.success, email: user.email });
   } catch (err) {
     next(err);
   }
