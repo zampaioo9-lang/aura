@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
-import { hashPassword, comparePassword, signToken } from '../services/authService';
+import { hashPassword, comparePassword, signToken, signResetToken, verifyResetToken, matchesCurrentPassword } from '../services/authService';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { registerSchema, loginSchema } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
 import { sendEmail, emailTemplates } from '../services/emailService';
 import { addContact } from '../services/audienceService';
+import { env } from '../config/env';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -138,6 +139,59 @@ router.patch('/me', authMiddleware, async (req: AuthRequest, res, next) => {
       select: { id: true, email: true, name: true, phone: true, bio: true, avatar: true, socialLinks: true, isAdmin: true, trialEndsAt: true, plan: true, planInterval: true, planExpiresAt: true },
     });
     res.json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', async (req, res, next) => {
+  try {
+    const { email } = z.object({ email: z.string().email() }).parse(req.body);
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (user) {
+      const token = signResetToken(user.id, user.password);
+      const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${token}`;
+      const tpl = emailTemplates.passwordReset({ userName: user.name, userEmail: user.email, resetUrl });
+      sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {});
+    }
+
+    // Misma respuesta exista o no el email — no revela qué correos están registrados
+    res.json({ message: 'Si el correo existe en Aliax, te enviamos un enlace para restablecer tu contraseña.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req, res, next) => {
+  try {
+    const { token, newPassword } = z.object({
+      token: z.string(),
+      newPassword: z.string().min(6),
+    }).parse(req.body);
+
+    const payload = verifyResetToken(token);
+    if (!payload) throw new AppError(400, 'Este enlace no es válido o ya expiró. Solicita uno nuevo.');
+
+    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    if (!user || !matchesCurrentPassword(payload.pwv, user.password)) {
+      throw new AppError(400, 'Este enlace ya no es válido. Solicita uno nuevo.');
+    }
+
+    const hashed = await hashPassword(newPassword);
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashed },
+      select: { id: true, email: true, name: true, isAdmin: true },
+    });
+
+    const tpl = emailTemplates.passwordChanged({ userName: user.name, userEmail: user.email });
+    sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {});
+
+    const authToken = signToken(updated.id);
+    res.json({ token: authToken, user: updated });
   } catch (err) {
     next(err);
   }
