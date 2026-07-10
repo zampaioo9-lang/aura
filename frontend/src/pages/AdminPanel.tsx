@@ -352,6 +352,7 @@ export default function AdminPanel() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [sendingWelcome, setSendingWelcome] = useState<string | null>(null);
+  const [resettingPassword, setResettingPassword] = useState<string | null>(null);
   const [annSubject, setAnnSubject] = useState('');
   const [annBody, setAnnBody] = useState('');
   const [annAudience, setAnnAudience] = useState<'all' | 'pro' | 'free' | 'user'>('all');
@@ -641,6 +642,24 @@ export default function AdminPanel() {
       alert(err.response?.data?.error || 'Error al enviar email de bienvenida');
     } finally {
       setSendingWelcome(null);
+    }
+  };
+
+  const handleResetPassword = async (userId: string, userEmail: string) => {
+    const confirmed = window.confirm(`¿Enviar un enlace de reseteo de contraseña a ${userEmail}?`);
+    if (!confirmed) return;
+    setResettingPassword(userId);
+    try {
+      const res = await api.post(`/admin/users/${userId}/reset-password`);
+      if (res.data.success) {
+        alert(`Enlace de reseteo enviado a ${userEmail}`);
+      } else {
+        alert(`No se pudo enviar el correo a ${userEmail}. Avísale por otro medio.`);
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Error al enviar el enlace de reseteo');
+    } finally {
+      setResettingPassword(null);
     }
   };
 
@@ -1358,6 +1377,25 @@ export default function AdminPanel() {
                                   {sendingWelcome === u.id ? 'Reenviando...' : 'Reenviar'}
                                 </button>
                               )}
+                            </div>
+
+                            {/* Reset password button */}
+                            <div className="rounded-lg px-3 py-2 mt-3 flex items-center justify-between"
+                              style={{ background: C.subCard, border: `1px solid ${C.cardBorder}` }}>
+                              <div>
+                                <p className="text-xs" style={{ color: C.textFaint }}>Contraseña</p>
+                                <p className="text-sm" style={{ color: C.textMuted }}>
+                                  Enviar enlace para que el usuario elija una nueva
+                                </p>
+                              </div>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleResetPassword(u.id, u.email); }}
+                                disabled={resettingPassword === u.id}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                              >
+                                <Send className="w-3.5 h-3.5" />
+                                {resettingPassword === u.id ? 'Enviando...' : 'Resetear contraseña'}
+                              </button>
                             </div>
 
                             {/* ── Control de Acceso ── */}
