@@ -7,6 +7,8 @@ import { ToastProvider } from './components/Toast';
 const Landing = lazy(() => import('./pages/Landing'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const ProfileEditor = lazy(() => import('./pages/ProfileEditor'));
 const ProfileCreate = lazy(() => import('./pages/ProfileCreate'));
@@ -63,6 +65,8 @@ function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/dashboard/services" element={<ProtectedRoute><ServicesDashboard /></ProtectedRoute>} />
               <Route path="/dashboard/availability" element={<ProtectedRoute><AvailabilityDashboard /></ProtectedRoute>} />

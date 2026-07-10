@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { env } from '../config/env';
+import { signResetToken } from './authService';
 
 export interface EmailResult {
   success: boolean;
@@ -329,6 +330,36 @@ export const emailTemplates = {
     `),
   }),
 
+  // Solicitud de reseteo de contraseña (self-service o forzado por admin)
+  passwordReset: (data: {
+    userName: string;
+    userEmail: string;
+    resetUrl: string;
+  }) => ({
+    to: data.userEmail,
+    subject: 'Restablece tu contraseña de Aliax',
+    html: baseTemplate('Restablece tu contraseña', `
+      ${heading(`Hola ${data.userName}`)}
+      ${subtext('Recibimos una solicitud para restablecer la contraseña de tu cuenta en Aliax. Si fuiste tú, haz clic en el siguiente botón para elegir una nueva contraseña.')}
+      ${ctaButton('Restablecer contraseña', data.resetUrl)}
+      <p style="margin-top:24px;color:#a1a1aa;font-size:13px;">Este enlace expira en 30 minutos. Si no solicitaste este cambio, puedes ignorar este correo — tu contraseña actual seguirá funcionando.</p>
+    `),
+  }),
+
+  // Confirmación tras cambio exitoso de contraseña
+  passwordChanged: (data: {
+    userName: string;
+    userEmail: string;
+  }) => ({
+    to: data.userEmail,
+    subject: 'Tu contraseña de Aliax fue actualizada',
+    html: baseTemplate('Contraseña actualizada', `
+      ${heading(`Hola ${data.userName}`)}
+      ${subtext('Tu contraseña de Aliax se actualizó correctamente. Ya puedes iniciar sesión con tu nueva contraseña.')}
+      <p style="margin-top:24px;color:#a1a1aa;font-size:13px;">Si no fuiste tú quien hizo este cambio, contáctanos de inmediato respondiendo a este correo.</p>
+    `),
+  }),
+
   // Anuncio masivo a usuarios
   announcement: (data: {
     userName: string;
@@ -398,3 +429,15 @@ export const emailTemplates = {
     `),
   }),
 };
+
+// ── Reseteo de contraseña — helper compartido ───────────────────────
+// Usado tanto por el flujo self-service (auth.ts, fire-and-forget) como
+// por el reseteo forzado desde el AdminPanel (admin.ts, awaited para poder
+// avisarle al admin si el envío falla) — cada caller decide si espera la
+// promesa o no, esta función solo evita duplicar la construcción del token/URL/template.
+export function sendPasswordResetEmail(user: { id: string; name: string; email: string; password: string }): Promise<EmailResult> {
+  const token = signResetToken(user.id, user.password);
+  const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${token}`;
+  const tpl = emailTemplates.passwordReset({ userName: user.name, userEmail: user.email, resetUrl });
+  return sendEmail(tpl.to, tpl.subject, tpl.html);
+}

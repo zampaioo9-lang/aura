@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import LandingHeader from '../components/landing/LandingHeader';
@@ -14,24 +14,45 @@ const inp: React.CSSProperties = {
   transition: 'border-color 0.2s',
 };
 
-export default function Login() {
-  const { login } = useAuth();
+export default function ResetPassword() {
+  const { resetPassword } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [showPwd, setShowPwd]   = useState(false);
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token') ?? '';
+
+  const [newPassword, setNewPassword]         = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPwd, setShowPwd]                 = useState(false);
+  const [error, setError]                     = useState('');
+  const [invalidToken, setInvalidToken]        = useState(false);
+  const [loading, setLoading]                  = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setInvalidToken(false);
+
+    if (!token) {
+      setError('Este enlace no es válido. Solicita uno nuevo.');
+      setInvalidToken(true);
+      return;
+    }
+    if (newPassword.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+
     setLoading(true);
     try {
-      await login(email, password);
+      await resetPassword(token, newPassword);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Email o contraseña incorrectos');
+      setError(err.response?.data?.error || 'No se pudo restablecer la contraseña.');
+      setInvalidToken(err.response?.data?.code === 'INVALID_RESET_TOKEN');
     } finally {
       setLoading(false);
     }
@@ -45,7 +66,6 @@ export default function Login() {
       padding: '24px 16px', position: 'relative', overflow: 'hidden',
     }}>
       <LandingHeader />
-      {/* Teal glow orb */}
       <div style={{
         position: 'absolute', top: '-15%', left: '50%', transform: 'translateX(-50%)',
         width: 600, height: 500,
@@ -54,8 +74,6 @@ export default function Login() {
       }} />
 
       <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 420 }}>
-
-        {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
             <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#9b87f5', boxShadow: '0 0 10px rgba(155,135,245,0.9)' }} />
@@ -63,7 +81,6 @@ export default function Login() {
           </Link>
         </div>
 
-        {/* Card */}
         <div style={{
           background: 'rgba(255,255,255,0.03)',
           border: '1px solid rgba(45,212,191,0.15)',
@@ -71,9 +88,9 @@ export default function Login() {
           backdropFilter: 'blur(20px)',
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
         }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 6px' }}>Iniciar sesión</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 6px' }}>Elige tu nueva contraseña</h2>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '0 0 28px' }}>
-            Bienvenido de vuelta
+            Escribe y confirma tu nueva contraseña
           </p>
 
           {error && (
@@ -83,30 +100,26 @@ export default function Login() {
               borderRadius: 10, fontSize: 13, color: 'rgba(248,113,113,0.9)',
             }}>
               {error}
+              {invalidToken && (
+                <>
+                  {' '}
+                  <Link to="/forgot-password" style={{ color: '#2dd4bf', fontWeight: 600 }}>
+                    Solicitar un enlace nuevo
+                  </Link>
+                </>
+              )}
             </div>
           )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
-                Email
-              </label>
-              <input
-                type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                style={inp}
-                onFocus={e => (e.currentTarget.style.borderColor = 'rgba(45,212,191,0.5)')}
-                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
-                Contraseña
+                Nueva contraseña
               </label>
               <div style={{ position: 'relative' }}>
                 <input
-                  type={showPwd ? 'text' : 'password'} value={password}
-                  onChange={e => setPassword(e.target.value)} required
+                  type={showPwd ? 'text' : 'password'} value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)} required minLength={6}
                   style={{ ...inp, paddingRight: 40 }}
                   onFocus={e => (e.currentTarget.style.borderColor = 'rgba(45,212,191,0.5)')}
                   onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
@@ -116,11 +129,19 @@ export default function Login() {
                   {showPwd ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
-              <div style={{ textAlign: 'right', marginTop: 8 }}>
-                <Link to="/forgot-password" style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>
-                  ¿Olvidaste tu contraseña?
-                </Link>
-              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
+                Confirmar contraseña
+              </label>
+              <input
+                type={showPwd ? 'text' : 'password'} value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)} required minLength={6}
+                style={inp}
+                onFocus={e => (e.currentTarget.style.borderColor = 'rgba(45,212,191,0.5)')}
+                onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
+              />
             </div>
 
             <button type="submit" disabled={loading} style={{
@@ -129,21 +150,10 @@ export default function Login() {
               color: '#fff', fontSize: 14, fontWeight: 600,
               border: 'none', borderRadius: 10, cursor: 'pointer',
               fontFamily: 'inherit', opacity: loading ? 0.6 : 1,
-              transition: 'filter 0.2s',
-            }}
-              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.1)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1)'; }}
-            >
-              {loading ? 'Ingresando...' : 'Ingresar'}
+            }}>
+              {loading ? 'Guardando...' : 'Restablecer contraseña'}
             </button>
           </form>
-
-          <p style={{ marginTop: 20, textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>
-            ¿No tienes cuenta?{' '}
-            <Link to="/register" style={{ color: '#2dd4bf', textDecoration: 'none', fontWeight: 500 }}>
-              Registrarse gratis
-            </Link>
-          </p>
         </div>
       </div>
 
