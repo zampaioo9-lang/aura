@@ -6,6 +6,7 @@ import CustomDatePicker from '../CustomDatePicker';
 import { accentTokens } from './WizardAccentContext';
 import api from '../../api/client';
 import { useFeature } from '../../hooks/useFeature';
+import AudioUploadBlock from './AudioUploadBlock';
 
 interface Props { clientId: string; accent?: string; isDark?: boolean; }
 
@@ -261,6 +262,8 @@ const EMPTY_SCALE: ScaleData = { scale: 0, q1: '', q2: '' };
 export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)', isDark = false }: Props) {
   const { notes, loading, addNote, updateNote, deleteNote } = useSessionNotes(clientId);
   const canUseAI = useFeature('aiNotes');
+  const canUseAudioNotes = useFeature('audio_notes');
+  const [audioBusy, setAudioBusy] = useState(false);
   const [showForm, setShowForm]     = useState(false);
   const [editingId, setEditingId]   = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -451,9 +454,18 @@ export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)',
                 <p style={{ fontSize: 12.5, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(109,40,217,0.75)', marginBottom: 10, lineHeight: 1.55 }}>
                   Describe brevemente lo que ocurrió en sesión y la IA completará los campos automáticamente.
                 </p>
+                {canUseAudioNotes && (
+                  <AudioUploadBlock
+                    clientId={clientId}
+                    onTranscriptReady={text => setAiDraft(text)}
+                    onBusyChange={setAudioBusy}
+                    isDark={isDark}
+                  />
+                )}
                 <textarea
                   value={aiDraft}
                   onChange={e => setAiDraft(e.target.value)}
+                  disabled={audioBusy}
                   style={{ ...ta, minHeight: 72, borderColor: `rgba(${_ar},${_ag},${_ab},0.3)`, background: isDark ? `rgba(${_ar},${_ag},${_ab},0.08)` : 'rgba(255,255,255,0.85)', color: textStrong }}
                   rows={3}
                   placeholder="Ej: El paciente llegó ansioso por conflicto laboral. Trabajamos técnicas de regulación emocional. Logró identificar sus patrones de pensamiento. Tarea: diario de emociones..."
