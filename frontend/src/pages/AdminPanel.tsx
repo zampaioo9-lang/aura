@@ -386,6 +386,7 @@ export default function AdminPanel() {
     { key: 'agenda',            label: 'Agenda' },
     { key: 'templates_premium', label: 'Templates Premium' },
     { key: 'colores_premium',   label: 'Colores Premium' },
+    { key: 'aiNotes',           label: 'Notas con IA' },
   ];
 
   const handleToggleFeature = async (userId: string, key: string, value: boolean) => {
