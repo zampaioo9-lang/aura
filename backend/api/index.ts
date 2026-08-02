@@ -50,6 +50,7 @@ try {
   const aiMatchingRoutes = require('../src/routes/ai-matching').default;
   const analyticsRoutes = require('../src/routes/analytics').default;
   const reviewRoutes = require('../src/routes/reviews').default;
+  const audioNotesRoutes = require('../src/routes/audio-notes').default;
   const { sendWhatsApp } = require('../src/services/whatsappService');
 
   app.use('/api/auth', authRoutes);
@@ -73,6 +74,7 @@ try {
   app.use('/api/ai-matching', aiMatchingRoutes);
   app.use('/api/analytics', analyticsRoutes);
   app.use('/api/reviews', reviewRoutes);
+  app.use('/api/audio-notes', audioNotesRoutes);
 
   app.get('/api/test/whatsapp', async (req, res) => {
     const to = req.query.to as string;
