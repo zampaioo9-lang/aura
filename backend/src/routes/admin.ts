@@ -193,7 +193,7 @@ router.patch('/users/:id/features', async (req: any, res, next) => {
 
     const VALID_KEYS = [
       'historia_clinica', 'terapia_pareja', 'templates_premium',
-      'pacientes', 'analytics', 'agenda', 'colores_premium', 'aiNotes',
+      'pacientes', 'analytics', 'agenda', 'colores_premium', 'aiNotes', 'audio_notes',
     ];
 
     for (const [key, val] of Object.entries(updates)) {

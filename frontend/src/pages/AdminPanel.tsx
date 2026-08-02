@@ -387,6 +387,7 @@ export default function AdminPanel() {
     { key: 'templates_premium', label: 'Templates Premium' },
     { key: 'colores_premium',   label: 'Colores Premium' },
     { key: 'aiNotes',           label: 'Notas con IA' },
+    { key: 'audio_notes',       label: 'Transcripción de audio' },
   ];
 
   const handleToggleFeature = async (userId: string, key: string, value: boolean) => {
