@@ -58,10 +58,11 @@ model Client {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt @default(now())
 
-  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clinicalHistory       ClinicalHistory?
-  clinicalHistoryCouple ClinicalHistoryCouple?
-  sessionNotes          SessionNote[]
+  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinicalHistory        ClinicalHistory?
+  clinicalHistoryCouple  ClinicalHistoryCouple?
+  sessionNotes           SessionNote[]
+  audioTranscriptionJobs AudioTranscriptionJob[]
 
   @@index([userId])
 }
@@ -221,6 +222,21 @@ model SessionNote {
   updatedAt     DateTime @updatedAt
 
   @@index([clientId])
+}
+
+model AudioTranscriptionJob {
+  id                 String   @id @default(cuid())
+  clientId           String
+  client             Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId             String
+  assemblyAiId       String
+  status             String   @default("processing")
+  consentConfirmedAt DateTime
+  errorMessage       String?
+  createdAt          DateTime @default(now())
+
+  @@index([clientId])
+  @@index([userId])
 }
 
 model Profile {

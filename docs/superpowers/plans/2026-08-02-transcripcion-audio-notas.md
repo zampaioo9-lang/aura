@@ -119,15 +119,12 @@ model AudioTranscriptionJob {
 }
 ```
 
-- [ ] **Step 2: Crear la migración**
+- [ ] **Step 2: Sincronizar el esquema con la base**
 
-Run: `cd backend && npx prisma migrate dev --name add_audio_transcription_job`
-Expected: crea `prisma/migrations/<timestamp>_add_audio_transcription_job/migration.sql` y termina con "Your database is now in sync with your schema."
+Nota (descubierto al ejecutar este plan): `npx prisma migrate dev` falla en este repo con `P3006`/`P1014` porque el historial de migraciones tiene drift respecto al shadow DB (el proyecto ya sincroniza esquema con `prisma db push` en producción vía `start:prod`, no con migraciones formales). Usar `db push` directamente:
 
-- [ ] **Step 3: Regenerar el cliente de Prisma**
-
-Run: `cd backend && npx prisma generate`
-Expected: "Generated Prisma Client" sin errores.
+Run: `cd backend && npx prisma db push`
+Expected: "Your database is now in sync with your Prisma schema." y luego "Generated Prisma Client" (db push corre generate automáticamente).
 
 - [ ] **Step 4: Verificar que compila**
 
