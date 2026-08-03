@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { uploadAudio } from '../middleware/upload';
 import { AppError } from '../middleware/errorHandler';
-import { isProUser } from '../lib/planUtils';
+import { isClinicoUser } from '../lib/planUtils';
 import { uploadAndStartTranscription, getTranscriptionResult } from '../services/assemblyAiService';
 
 const router = Router();
@@ -22,7 +22,7 @@ async function verifyAudioNotesAccess(userId: string) {
   });
   if (!user) throw new AppError(401, 'No autorizado');
   const overrides = (user.featureOverrides as Record<string, boolean>) ?? {};
-  const hasAccess = isProUser(user) || overrides.audio_notes === true;
+  const hasAccess = isClinicoUser(user) || overrides.audio_notes === true;
   if (!hasAccess) throw new AppError(403, 'Esta función requiere el módulo de transcripción de audio');
 }
 
