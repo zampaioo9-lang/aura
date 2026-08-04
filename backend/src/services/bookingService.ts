@@ -41,6 +41,7 @@ async function saveNotification(
 // ── checkAvailability ──────────────────────────────────────────────
 export async function checkAvailability(
   profileId: string,
+  serviceId: string,
   date: string,
   startTime: string,
   durationMinutes: number
@@ -90,11 +91,18 @@ export async function checkAvailability(
     }
   }
 
-  // ── Verificar disponibilidad semanal ───────────────────────────
-  const daySlots = await prisma.availabilitySlot.findMany({
-    where: { profileId, dayOfWeek, isActive: true },
+  // ── Verificar disponibilidad semanal (horario propio del servicio, con fallback al general) ─
+  const serviceSlots = await prisma.serviceAvailability.findMany({
+    where: { serviceId, dayOfWeek, isActive: true },
     orderBy: { startTime: 'asc' },
   });
+
+  const daySlots = serviceSlots.length > 0
+    ? serviceSlots
+    : await prisma.availabilitySlot.findMany({
+        where: { profileId, dayOfWeek, isActive: true },
+        orderBy: { startTime: 'asc' },
+      });
 
   if (daySlots.length === 0) {
     return { available: false, reason: 'El profesional no atiende este dia' };
@@ -262,6 +270,7 @@ export async function createBooking(data: {
 
   const { available, reason } = await checkAvailability(
     data.profileId,
+    data.serviceId,
     data.date,
     data.startTime,
     service.durationMinutes
