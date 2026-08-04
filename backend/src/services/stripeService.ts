@@ -12,6 +12,7 @@ export async function createCheckoutSession(
   email: string,
   interval: 'MONTHLY' | 'YEARLY' | 'LIFETIME',
   currency: 'USD' | 'MXN' = 'USD',
+  tier: 'PRO' | 'CLINICO' = 'PRO',
 ): Promise<string> {
   // Find or create Stripe customer
   let user = await prisma.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
@@ -35,7 +36,7 @@ export async function createCheckoutSession(
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${env.FRONTEND_URL}/payment/cancel`,
-      metadata: { userId, interval: 'LIFETIME' },
+      metadata: { userId, interval: 'LIFETIME', tier: 'PRO' },
     };
 
     // For MXN, avoid customer currency lock by using customer_email instead of customer id
@@ -49,9 +50,14 @@ export async function createCheckoutSession(
     return session.url!;
   }
 
-  const priceId = interval === 'MONTHLY'
-    ? (currency === 'MXN' ? env.STRIPE_PRICE_MONTHLY_MXN : env.STRIPE_PRICE_MONTHLY)
-    : env.STRIPE_PRICE_YEARLY;
+  let priceId: string;
+  if (tier === 'CLINICO') {
+    priceId = currency === 'MXN' ? env.STRIPE_PRICE_CLINICO_MONTHLY_MXN : env.STRIPE_PRICE_CLINICO_MONTHLY;
+  } else {
+    priceId = interval === 'MONTHLY'
+      ? (currency === 'MXN' ? env.STRIPE_PRICE_MONTHLY_MXN : env.STRIPE_PRICE_MONTHLY)
+      : env.STRIPE_PRICE_YEARLY;
+  }
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
@@ -61,8 +67,8 @@ export async function createCheckoutSession(
     allow_promotion_codes: true,
     success_url: `${env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${env.FRONTEND_URL}/payment/cancel`,
-    metadata: { userId, interval },
-    subscription_data: { metadata: { userId, interval } },
+    metadata: { userId, interval, tier },
+    subscription_data: { metadata: { userId, interval, tier } },
   });
 
   return session.url!;
@@ -80,6 +86,7 @@ export async function handleWebhookEvent(rawBody: Buffer, sig: string): Promise<
     const session = event.data.object as Stripe.Checkout.Session;
     const userId = session.metadata?.userId;
     const interval = session.metadata?.interval as 'MONTHLY' | 'YEARLY' | 'LIFETIME' | undefined;
+    const tier = (session.metadata?.tier as 'PRO' | 'CLINICO' | undefined) ?? 'PRO';
 
     if (!userId || !interval) return;
 
@@ -107,7 +114,7 @@ export async function handleWebhookEvent(rawBody: Buffer, sig: string): Promise<
     await prisma.user.update({
       where: { id: userId },
       data: {
-        plan: 'PRO',
+        plan: tier,
         planInterval: interval,
         planExpiresAt,
         stripeSubscriptionId,
