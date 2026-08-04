@@ -136,14 +136,6 @@ const ACCENT_THEMES = [
   },
   // ── Pro ──
   {
-    id: 'bold', label: 'Bold', pro: true,
-    accent: 'rgb(253,224,71)',
-    accentDark:  'rgba(253,224,71,0.15)',
-    accentLight: 'rgba(253,224,71,0.08)',
-    darkGradient:  'linear-gradient(160deg, #3d2f00 0%, #a37510 100%)',
-    lightGradient: 'linear-gradient(160deg, #fde047 0%, #fef08a 100%)',
-  },
-  {
     id: 'elegante', label: 'Elegante', pro: true,
     accent: 'rgb(62,153,201)',
     accentDark:  'rgba(62,153,201,0.15)',
@@ -152,20 +144,21 @@ const ACCENT_THEMES = [
     lightGradient: 'linear-gradient(160deg, #3e99c9 0%, #60c4f0 100%)',
   },
   {
-    id: 'carbono', label: 'Carbono', pro: true,
-    accent: 'rgb(20,70,65)',
-    accentDark:  'rgba(20,70,65,0.25)',
-    accentLight: 'rgba(20,70,65,0.12)',
-    darkGradient:  'linear-gradient(160deg, #020808 0%, #050f0e 100%)',
-    lightGradient: 'linear-gradient(160deg, #0a2420 0%, #0f3530 100%)',
-  },
-  {
     id: 'nocturno', label: 'Nocturno', pro: true,
     accent: 'rgb(88,28,155)',
     accentDark:  'rgba(88,28,155,0.18)',
     accentLight: 'rgba(88,28,155,0.10)',
     darkGradient:  'linear-gradient(160deg, #1a0641 0%, #3c0e80 100%)',
     lightGradient: 'linear-gradient(160deg, #5b21b6 0%, #7c3aed 100%)',
+  },
+  {
+    id: 'obsidiana', label: 'Obsidiana', pro: true,
+    accent: 'rgb(21,17,32)',
+    accentDark:  'rgba(21,17,32,0.35)',
+    accentLight: 'rgba(21,17,32,0.18)',
+    darkGradient:  'linear-gradient(160deg, #080414 0%, #151120 100%)',
+    lightGradient: 'linear-gradient(160deg, #151120 0%, #2a2140 100%)',
+    boardBg: '#080414',
   },
 ];
 
@@ -356,7 +349,7 @@ export default function Dashboard() {
     : `linear-gradient(160deg, rgba(${_r},${_g},${_b},0.09) 0%, rgba(${_r},${_g},${_b},0.19) 100%), #ffffff`;
 
   // Inner content panel background
-  const boardBg = theme === 'dark' ? accentTheme.darkGradient : 'white';
+  const boardBg = accentTheme.boardBg ?? (theme === 'dark' ? accentTheme.darkGradient : 'white');
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden" style={{ background: shellBg }}>

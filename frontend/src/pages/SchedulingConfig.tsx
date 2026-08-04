@@ -1225,7 +1225,7 @@ const PAGES: { id: Tab; icon: ReactNode; label: string }[] = [
 
 interface Profile { id: string; title: string; slug: string }
 
-const ACCENT_MAP: Record<string,string> = { aguamarina:'rgb(45,212,191)', nocturno:'rgb(147,51,234)', neon:'rgb(217,72,240)', dorado:'rgb(253,224,71)', ocean:'rgb(62,153,201)', bosque:'rgb(20,70,65)', cosmo:'rgb(88,28,155)' };
+const ACCENT_MAP: Record<string,string> = { aguamarina:'rgb(45,212,191)', nocturno:'rgb(147,51,234)', neon:'rgb(217,72,240)', ocean:'rgb(62,153,201)', cosmo:'rgb(88,28,155)', obsidiana:'rgb(21,17,32)' };
 function mkThemeDark(r: number, g: number, b: number) {
   const a = (al: number) => `rgba(${r},${g},${b},${al})`;
   const mt = `rgb(${Math.round(Math.min(r/2+90,235))},${Math.round(Math.min(g/2+100,235))},${Math.round(Math.min(b/2+100,235))})`;
