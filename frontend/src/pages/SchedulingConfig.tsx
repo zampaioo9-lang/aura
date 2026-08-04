@@ -169,7 +169,7 @@ function DayChip({ label, active, onClick }: { label: string; active: boolean; o
   return (
     <button onClick={onClick} style={{
       padding: '8px 14px', borderRadius: 20, border: `1px solid ${active ? 'var(--sc-accent)' : 'var(--sc-border)'}`,
-      background: active ? 'var(--sc-accent-18)' : 'var(--sc-inner)', color: active ? 'var(--sc-accent)' : 'var(--sc-muted)',
+      background: active ? 'var(--sc-accent-18)' : 'var(--sc-inner)', color: active ? 'var(--sc-accent-text)' : 'var(--sc-muted)',
       cursor: 'pointer', fontSize: 13, fontWeight: active ? 500 : 400, fontFamily: 'DM Sans, sans-serif',
       transition: 'all .15s',
     }}>{label}</button>
@@ -284,7 +284,7 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
     await fetchSlots();
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent-text)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   const dayHours = (day: number) => slots.filter(s => s.dayOfWeek === day && s.isActive).reduce((acc, s) => acc + (t2m(s.endTime) - t2m(s.startTime)) / 60, 0);
 
@@ -292,8 +292,8 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
     <>
       {/* Días laborables */}
       <Card>
-        <CardHeader dot="var(--sc-accent)" title="Días laborables" action={
-          <button onClick={() => setShowTemplates(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500, background: 'var(--sc-accent-12)', color: 'var(--sc-accent)' }}>
+        <CardHeader dot="var(--sc-accent-text)" title="Días laborables" action={
+          <button onClick={() => setShowTemplates(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500, background: 'var(--sc-accent-12)', color: 'var(--sc-accent-text)' }}>
             <Sparkles size={13} /> Aplicar plantilla
           </button>
         } />
@@ -363,7 +363,7 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
             return (
               <div key={d} style={{ textAlign: 'center', padding: '10px 4px', borderRadius: 8, background: h > 0 ? 'var(--sc-accent-10)' : 'var(--sc-inner)', border: `1px solid ${h > 0 ? 'var(--sc-accent-25)' : 'var(--sc-border)'}` }}>
                 <div style={{ fontSize: 10, color: 'var(--sc-muted)', marginBottom: 4 }}>{DAY_NAMES_SHORT[d]}</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: h > 0 ? 'var(--sc-accent)' : 'var(--sc-muted2)' }}>{h > 0 ? `${h.toFixed(1)}h` : '—'}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: h > 0 ? 'var(--sc-accent-text)' : 'var(--sc-muted2)' }}>{h > 0 ? `${h.toFixed(1)}h` : '—'}</div>
               </div>
             );
           })}
@@ -571,7 +571,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
     setDragId(null); setDragOverId(null);
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent-text)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   const currentFranjas = selectedDay !== null ? (franjasByDay[selectedDay] ?? []) : [];
   const byProfile = services.filter(s => s.profileId === profileId);
@@ -597,7 +597,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === f ? 'var(--sc-accent)' : 'var(--sc-border)'}`,
             background: filter === f ? 'var(--sc-accent-15)' : 'var(--sc-inner)',
-            color: filter === f ? 'var(--sc-accent)' : 'var(--sc-muted)',
+            color: filter === f ? 'var(--sc-accent-text)' : 'var(--sc-muted)',
             cursor: 'pointer', fontSize: 13, fontFamily: 'DM Sans', fontWeight: filter === f ? 500 : 400,
           }}>
             {f === 'active' ? 'Activos' : f === 'inactive' ? 'Inactivos' : 'Todos'}
@@ -818,7 +818,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
                   flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5,
                   background: 'var(--sc-accent-12)', border: '1px solid var(--sc-accent-30)',
                   borderRadius: 8, cursor: 'pointer', padding: '6px 12px',
-                  color: 'var(--sc-accent)', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500,
+                  color: 'var(--sc-accent-text)', fontSize: 12, fontFamily: 'DM Sans', fontWeight: 500,
                 }}
               >
                 <Pencil size={12} /> Editar
@@ -904,7 +904,7 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
     return b.startDate.slice(0, 10) === b.endDate.slice(0, 10) ? s : `${s} → ${e}`;
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent-text)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   return (
     <>
@@ -994,7 +994,7 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
                   {expired ? ' · Expirado' : ''}
                 </div>
               </div>
-              <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', background: 'var(--sc-accent-18)', color: 'var(--sc-accent)' }}>
+              <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', background: 'var(--sc-accent-18)', color: 'var(--sc-accent-text)' }}>
                 {b.isAllDay ? 'Completo' : 'Parcial'}
               </span>
               <BtnDanger onClick={() => handleDelete(b.id)}>Eliminar</BtnDanger>
@@ -1045,7 +1045,7 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
     finally { setSaving(false); }
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent-text)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   return (
     <>
@@ -1059,7 +1059,7 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
 
       {/* Ventanas de tiempo */}
       <Card>
-        <CardHeader dot="var(--sc-accent)" title="Ventanas de tiempo" />
+        <CardHeader dot="var(--sc-accent-text)" title="Ventanas de tiempo" />
         <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <FormSelect label="Antelación mínima para reservar" value={String(settings.minAdvanceHours)} onChange={v => upd('minAdvanceHours', Number(v))} options={[
             { value: '0', label: 'Inmediatamente' }, { value: '1', label: '1 hora antes' },
@@ -1182,7 +1182,7 @@ function TabNotificaciones({ isPro = false }: { isPro?: boolean }) {
 
       {/* Recordatorios */}
       <Card>
-        <CardHeader dot="var(--sc-accent)" title="Recordatorios automáticos al cliente" />
+        <CardHeader dot="var(--sc-accent-text)" title="Recordatorios automáticos al cliente" />
         <ToggleRow label="Confirmación de reserva" desc="Inmediato tras reservar" on={reminders.confirmacion} onChange={() => tog(reminders, setReminders, 'confirmacion')} />
         <ToggleRow label="Recordatorio previo 24h" desc="24 horas antes de la cita" on={reminders.recordatorio24h} onChange={() => tog(reminders, setReminders, 'recordatorio24h')} />
         <ProGate isPro={isPro}>
@@ -1226,15 +1226,15 @@ const PAGES: { id: Tab; icon: ReactNode; label: string }[] = [
 interface Profile { id: string; title: string; slug: string }
 
 const ACCENT_MAP: Record<string,string> = { aguamarina:'rgb(45,212,191)', nocturno:'rgb(147,51,234)', neon:'rgb(217,72,240)', ocean:'rgb(62,153,201)', cosmo:'rgb(88,28,155)', obsidiana:'rgb(21,17,32)' };
-function mkThemeDark(r: number, g: number, b: number, mainOverride?: string) {
+function mkThemeDark(r: number, g: number, b: number, mainOverride?: string, mutedOverride?: string) {
   const a = (al: number) => `rgba(${r},${g},${b},${al})`;
   const mt = `rgb(${Math.round(Math.min(r/2+90,235))},${Math.round(Math.min(g/2+100,235))},${Math.round(Math.min(b/2+100,235))})`;
-  return { main: mainOverride ?? 'transparent', side:'rgba(255,255,255,0.05)', inner:'rgba(255,255,255,0.07)', border:a(0.18), text:'#e8f0f0', muted:mt, muted2:a(0.2) };
+  return { main: mainOverride ?? 'transparent', side:'rgba(255,255,255,0.05)', inner:'rgba(255,255,255,0.07)', border:a(0.18), text:'#e8f0f0', muted: mutedOverride ?? mt, muted2:a(0.2) };
 }
-function mkThemeLight(r: number, g: number, b: number, mainOverride?: string) {
+function mkThemeLight(r: number, g: number, b: number, mainOverride?: string, mutedOverride?: string) {
   const a = (al: number) => `rgba(${r},${g},${b},${al})`;
   const mt = `rgb(${Math.round(r*0.4)},${Math.round(g*0.5)},${Math.round(b*0.5)})`;
-  return { main: mainOverride ?? 'transparent', side:'rgba(255,255,255,0.72)', inner:'rgba(255,255,255,0.55)', border:a(0.25), text:'#0a1f1e', muted:mt, muted2:a(0.15) };
+  return { main: mainOverride ?? 'transparent', side:'rgba(255,255,255,0.72)', inner:'rgba(255,255,255,0.55)', border:a(0.25), text:'#0a1f1e', muted: mutedOverride ?? mt, muted2:a(0.15) };
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -1256,8 +1256,8 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
   const aA = (a: number) => `rgba(${_r},${_g},${_b},${a})`;
   const isObsidiana = ctxAccent === 'rgb(21,17,32)';
   const T = theme === 'dark'
-    ? mkThemeDark(_r,_g,_b, isObsidiana ? '#211d2b' : undefined)
-    : mkThemeLight(_r,_g,_b, isObsidiana ? '#211d2b' : undefined);
+    ? mkThemeDark(_r,_g,_b, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined)
+    : mkThemeLight(_r,_g,_b, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined);
 
   useEffect(() => {
     const el = asideRef.current;
@@ -1289,6 +1289,7 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
       '--sc-main': T.main, '--sc-side': T.side, '--sc-inner': T.inner,
       '--sc-border': T.border, '--sc-text': T.text, '--sc-muted': T.muted, '--sc-muted2': T.muted2,
       '--sc-accent': ctxAccent,
+      '--sc-accent-text': isObsidiana ? 'rgb(45,212,191)' : ctxAccent,
       '--sc-accent-06': aA(0.06), '--sc-accent-08': aA(0.08), '--sc-accent-10': aA(0.10),
       '--sc-accent-12': aA(0.12), '--sc-accent-15': aA(0.15), '--sc-accent-18': aA(0.18),
       '--sc-accent-25': aA(0.25), '--sc-accent-30': aA(0.30), '--sc-accent-40': aA(0.40),
@@ -1424,8 +1425,8 @@ export default function SchedulingConfig() {
   const sA = (a: number) => `rgba(${_sr},${_sg},${_sb},${a})`;
   const isObsidiana = _sa === 'rgb(21,17,32)';
   const T = theme === 'dark'
-    ? mkThemeDark(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined)
-    : mkThemeLight(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined);
+    ? mkThemeDark(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined)
+    : mkThemeLight(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined);
 
   useEffect(() => {
     api.get('/profiles').then(res => {
@@ -1448,6 +1449,7 @@ export default function SchedulingConfig() {
       '--sc-main': T.main, '--sc-side': T.side, '--sc-inner': T.inner,
       '--sc-border': T.border, '--sc-text': T.text, '--sc-muted': T.muted, '--sc-muted2': T.muted2,
       '--sc-accent': _sa,
+      '--sc-accent-text': isObsidiana ? 'rgb(45,212,191)' : _sa,
       '--sc-accent-06': sA(0.06), '--sc-accent-08': sA(0.08), '--sc-accent-10': sA(0.10),
       '--sc-accent-12': sA(0.12), '--sc-accent-15': sA(0.15), '--sc-accent-18': sA(0.18),
       '--sc-accent-25': sA(0.25), '--sc-accent-30': sA(0.30), '--sc-accent-40': sA(0.40),
