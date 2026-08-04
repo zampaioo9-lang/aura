@@ -70,7 +70,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
       onClick={onChange}
       style={{
         width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', flexShrink: 0,
-        background: on ? 'var(--sc-accent)' : 'var(--sc-border)', position: 'relative', transition: 'background .2s',
+        background: on ? 'var(--sc-accent)' : 'var(--sc-inner)', position: 'relative', transition: 'background .2s',
       }}
     >
       <span style={{
