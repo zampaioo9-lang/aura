@@ -442,8 +442,8 @@ export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)',
           }}>
             {/* Header row */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 16, fontWeight: 700, letterSpacing: 0.2, color: isDark ? '#ddd6fe' : '#7c3aed' }}>
-                <Sparkles size={16} style={{ color: '#c4b5fd' }} />
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 800, letterSpacing: 0.2, color: isDark ? '#ede9fe' : '#6d28d9' }}>
+                <Sparkles size={19} style={{ color: '#c4b5fd' }} />
                 Generar con IA
               </span>
               {!canUseAI && (
@@ -495,10 +495,13 @@ export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)',
               </>
             ) : (
               <div onClick={() => setShowClinicoDialog(true)} style={{ position: 'relative', cursor: 'pointer' }}>
+                <p style={{
+                  fontSize: 13.5, fontWeight: 600, lineHeight: 1.6, marginBottom: 12,
+                  color: isDark ? '#e9d5ff' : '#5b21b6',
+                }}>
+                  Escribe una breve descripción de la sesión, o sube hasta 1 hora de audio — la IA transcribe y genera tu nota clínica completa, automáticamente.
+                </p>
                 <div style={{ opacity: 0.4, pointerEvents: 'none' }}>
-                  <p style={{ fontSize: 12.5, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(109,40,217,0.75)', marginBottom: 10, lineHeight: 1.55 }}>
-                    Escribe una breve descripción de la sesión, o sube hasta 1 hora de audio — la IA transcribe y genera tu nota clínica completa, automáticamente.
-                  </p>
                   <button disabled style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     width: '100%', padding: '12px 18px', borderRadius: 10, border: 'none',
