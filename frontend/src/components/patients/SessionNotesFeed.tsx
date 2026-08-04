@@ -5,7 +5,7 @@ import type { SessionNote } from '../../hooks/usePatients';
 import CustomDatePicker from '../CustomDatePicker';
 import { accentTokens } from './WizardAccentContext';
 import api from '../../api/client';
-import { useFeature } from '../../hooks/useFeature';
+import { useClinicoFeature } from '../../hooks/useClinicoFeature';
 import AudioUploadBlock from './AudioUploadBlock';
 
 interface Props { clientId: string; accent?: string; isDark?: boolean; }
@@ -261,8 +261,8 @@ const EMPTY_SCALE: ScaleData = { scale: 0, q1: '', q2: '' };
 
 export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)', isDark = false }: Props) {
   const { notes, loading, addNote, updateNote, deleteNote } = useSessionNotes(clientId);
-  const canUseAI = useFeature('aiNotes');
-  const canUseAudioNotes = useFeature('audio_notes');
+  const canUseAI = useClinicoFeature('aiNotes');
+  const canUseAudioNotes = useClinicoFeature('audio_notes');
   const [audioBusy, setAudioBusy] = useState(false);
   const [showForm, setShowForm]     = useState(false);
   const [editingId, setEditingId]   = useState<string | null>(null);
