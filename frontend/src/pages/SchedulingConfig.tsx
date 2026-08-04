@@ -1256,8 +1256,8 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
   const aA = (a: number) => `rgba(${_r},${_g},${_b},${a})`;
   const isObsidiana = ctxAccent === 'rgb(21,17,32)';
   const T = theme === 'dark'
-    ? mkThemeDark(_r,_g,_b, isObsidiana ? '#151120' : undefined)
-    : mkThemeLight(_r,_g,_b, isObsidiana ? '#151120' : undefined);
+    ? mkThemeDark(_r,_g,_b, isObsidiana ? '#211d2b' : undefined)
+    : mkThemeLight(_r,_g,_b, isObsidiana ? '#211d2b' : undefined);
 
   useEffect(() => {
     const el = asideRef.current;
@@ -1424,8 +1424,8 @@ export default function SchedulingConfig() {
   const sA = (a: number) => `rgba(${_sr},${_sg},${_sb},${a})`;
   const isObsidiana = _sa === 'rgb(21,17,32)';
   const T = theme === 'dark'
-    ? mkThemeDark(_sr,_sg,_sb, isObsidiana ? '#151120' : undefined)
-    : mkThemeLight(_sr,_sg,_sb, isObsidiana ? '#151120' : undefined);
+    ? mkThemeDark(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined)
+    : mkThemeLight(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined);
 
   useEffect(() => {
     api.get('/profiles').then(res => {

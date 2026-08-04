@@ -156,9 +156,9 @@ const ACCENT_THEMES = [
     accent: 'rgb(21,17,32)',
     accentDark:  'rgba(21,17,32,0.35)',
     accentLight: 'rgba(21,17,32,0.18)',
-    darkGradient:  'linear-gradient(160deg, #080414 0%, #151120 100%)',
-    lightGradient: 'linear-gradient(160deg, #151120 0%, #2a2140 100%)',
-    boardBg: '#080414',
+    darkGradient:  'linear-gradient(160deg, #211d2b 0%, #2a2438 100%)',
+    lightGradient: 'linear-gradient(160deg, #211d2b 0%, #34304a 100%)',
+    boardBg: '#151120',
   },
 ];
 
