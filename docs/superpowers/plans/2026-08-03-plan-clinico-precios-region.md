@@ -745,13 +745,14 @@ export default function Pricing() {
   const [region, setRegion] = useState<Region>('INTL');
 
   useEffect(() => {
-    let resolved = detectRegion();
+    const resolved = detectRegion();
+    setRegion(resolved);
+    if (!user) return; // /profiles requiere sesión — no llamar en la página pública sin login
     api.get('/profiles').then(res => {
       const country = res.data?.[0]?.country as string | undefined;
-      if (country && /m[eé]xico|^mx$/i.test(country)) resolved = 'MX';
-      setRegion(resolved);
-    }).catch(() => setRegion(resolved));
-  }, []);
+      if (country && /m[eé]xico|^mx$/i.test(country)) setRegion('MX');
+    }).catch(() => { /* si falla, se queda con la detección por idioma */ });
+  }, [user]);
 
   const priceOf = (tier: 'PRO' | 'CLINICO') => PRICES[tier][region];
 
