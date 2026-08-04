@@ -88,7 +88,10 @@ export const bookingSchema = z.object({
   serviceId: z.string(),
   clientName: z.string().min(2, 'Nombre minimo 2 caracteres').max(100, 'Nombre maximo 100 caracteres'),
   clientEmail: z.string().email('Email invalido'),
-  clientPhone: z.string().regex(/^\+[1-9]\d{1,14}$/, 'Formato: +34612345678'),
+  clientPhone: z.union([
+    z.string().regex(/^\+[1-9]\d{1,14}$/, 'Formato: +34612345678'),
+    z.literal(''),
+  ]).optional(),
   clientNotes: z.string().max(500, 'Maximo 500 caracteres').optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato: YYYY-MM-DD').refine(val => {
     const d = new Date(val);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Clock, Loader2, X } from 'lucide-react';
 import api from '../api/client';
@@ -37,6 +37,11 @@ export default function BookingForm({ profileId, serviceId, serviceName, primary
   const [slots, setSlots] = useState<string[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState('');
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (error) scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [error]);
 
   const modalBg    = hexToDark(primaryColor, 0.14);      // very dark tinted bg
   const borderCol  = `${primaryColor}22`;                // 13% opacity border
@@ -130,7 +135,7 @@ export default function BookingForm({ profileId, serviceId, serviceName, primary
           </button>
         </div>
 
-        <div style={{ overflowY: 'auto', padding: 28, paddingTop: 20, flex: 1 }}>
+        <div ref={scrollRef} style={{ overflowY: 'auto', padding: 28, paddingTop: 20, flex: 1 }}>
           {error && (
             <div style={{ marginBottom: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, color: '#fca5a5', fontSize: 13 }}>
               {error}

@@ -238,7 +238,7 @@ export async function createBooking(data: {
   serviceId: string;
   clientName: string;
   clientEmail: string;
-  clientPhone: string;
+  clientPhone?: string;
   clientNotes?: string;
   date: string;
   startTime: string;
@@ -284,7 +284,7 @@ export async function createBooking(data: {
       professionalId: profile.userId,
       clientName: data.clientName,
       clientEmail: data.clientEmail,
-      clientPhone: data.clientPhone,
+      clientPhone: data.clientPhone || '',
       clientNotes: data.clientNotes || null,
       date: new Date(data.date),
       startTime: data.startTime,
@@ -320,7 +320,7 @@ export async function createBooking(data: {
         professionalName: profile.user.name,
         clientName: data.clientName,
         clientEmail: data.clientEmail,
-        clientPhone: data.clientPhone,
+        clientPhone: data.clientPhone || '',
         clientNotes: data.clientNotes,
         serviceName: service.name,
         date: data.date,
@@ -351,7 +351,7 @@ export async function createBooking(data: {
       professionalEmail,
       clientName: data.clientName,
       clientEmail: data.clientEmail,
-      clientPhone: data.clientPhone,
+      clientPhone: data.clientPhone || '',
       clientNotes: data.clientNotes,
       serviceName: booking.service.name,
       date: data.date,
