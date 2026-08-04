@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { createCheckoutSession, handleWebhookEvent } from '../services/stripeService';
-import { verifySubscription, resolveInterval, createPayPalOrder, capturePayPalOrder, createPayPalSubscription } from '../services/paypalService';
+import { verifySubscription, resolveInterval, resolveTier, createPayPalOrder, capturePayPalOrder, createPayPalSubscription } from '../services/paypalService';
 import { env } from '../config/env';
 
 const router = Router();
@@ -14,11 +14,12 @@ const LAUNCH_END = new Date('2026-03-29T00:00:00Z');
 // POST /api/subscriptions/stripe/checkout
 router.post('/stripe/checkout', authMiddleware, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { interval, currency } = req.body as { interval?: string; currency?: string };
+    const { interval, currency, tier } = req.body as { interval?: string; currency?: string; tier?: string };
     if (interval !== 'MONTHLY' && interval !== 'YEARLY' && interval !== 'LIFETIME') {
       throw new AppError(400, 'interval must be MONTHLY, YEARLY or LIFETIME');
     }
     const resolvedCurrency = currency === 'MXN' ? 'MXN' : 'USD';
+    const resolvedTier = tier === 'CLINICO' ? 'CLINICO' : 'PRO';
 
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
@@ -26,7 +27,7 @@ router.post('/stripe/checkout', authMiddleware, async (req: AuthRequest, res: Re
     });
     if (!user) throw new AppError(404, 'User not found');
 
-    const url = await createCheckoutSession(req.userId!, user.email, interval, resolvedCurrency);
+    const url = await createCheckoutSession(req.userId!, user.email, interval, resolvedCurrency, resolvedTier);
     res.json({ url });
   } catch (err: any) {
     console.error('Stripe checkout error:', err?.message, err?.raw || '');
@@ -51,8 +52,18 @@ router.post('/stripe/webhook', async (req: Request, res: Response, next: NextFun
 // POST /api/subscriptions/paypal/subscription/create  (crea suscripción mensual/anual)
 router.post('/paypal/subscription/create', authMiddleware, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { interval } = req.body as { interval?: string };
-    const planId = interval === 'YEARLY' ? env.PAYPAL_PLAN_YEARLY : env.PAYPAL_PLAN_MONTHLY;
+    const { interval, currency, tier } = req.body as { interval?: string; currency?: string; tier?: string };
+    const resolvedCurrency = currency === 'MXN' ? 'MXN' : 'USD';
+    const resolvedTier = tier === 'CLINICO' ? 'CLINICO' : 'PRO';
+
+    let planId: string;
+    if (resolvedTier === 'CLINICO') {
+      planId = resolvedCurrency === 'MXN' ? env.PAYPAL_PLAN_CLINICO_MONTHLY_MXN : env.PAYPAL_PLAN_CLINICO_MONTHLY;
+    } else if (interval === 'YEARLY') {
+      planId = env.PAYPAL_PLAN_YEARLY;
+    } else {
+      planId = resolvedCurrency === 'MXN' ? env.PAYPAL_PLAN_PRO_MONTHLY_MXN : env.PAYPAL_PLAN_MONTHLY;
+    }
     if (!planId) throw new AppError(500, 'PayPal plan not configured');
 
     const approvalUrl = await createPayPalSubscription(
@@ -78,6 +89,7 @@ router.post('/paypal/capture', authMiddleware, async (req: AuthRequest, res: Res
     }
 
     const interval = resolveInterval(subscription.plan_id);
+    const tier = resolveTier(subscription.plan_id);
     const planExpiresAt = interval === 'MONTHLY'
       ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
       : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
@@ -85,14 +97,14 @@ router.post('/paypal/capture', authMiddleware, async (req: AuthRequest, res: Res
     await prisma.user.update({
       where: { id: req.userId },
       data: {
-        plan: 'PRO',
+        plan: tier,
         planInterval: interval,
         planExpiresAt,
         paypalSubscriptionId: subscriptionId,
       },
     });
 
-    res.json({ success: true, interval, planExpiresAt });
+    res.json({ success: true, interval, tier, planExpiresAt });
   } catch (err) {
     next(err);
   }

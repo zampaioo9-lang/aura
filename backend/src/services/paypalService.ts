@@ -49,6 +49,11 @@ export function resolveInterval(planId: string): 'MONTHLY' | 'YEARLY' {
   return 'MONTHLY';
 }
 
+export function resolveTier(planId: string): 'PRO' | 'CLINICO' {
+  if (planId === env.PAYPAL_PLAN_CLINICO_MONTHLY || planId === env.PAYPAL_PLAN_CLINICO_MONTHLY_MXN) return 'CLINICO';
+  return 'PRO';
+}
+
 export async function createPayPalOrder(
   amount: string,
   returnUrl: string,
