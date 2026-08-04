@@ -1239,7 +1239,7 @@ function mkThemeLight(r: number, g: number, b: number, mainOverride?: string, mu
 // ════════════════════════════════════════════════════════════════════
 // EMBEDDED PANEL — para incrustar en Dashboard como pestaña
 // ════════════════════════════════════════════════════════════════════
-export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; accent?: string }) {
+export function SchedulingPanel({ theme, accent, accentId }: { theme: 'dark' | 'light'; accent?: string; accentId?: string }) {
   const { isPro } = useAuth();
   const canAgendaPanel = useFeature('agenda');
   const effectiveIsPro = isPro || canAgendaPanel;
@@ -1253,8 +1253,8 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
   const _nums = ctxAccent.match(/\d+/g) ?? ['45','212','191'];
   const [_r, _g, _b] = _nums.map(Number);
   const aA = (a: number) => `rgba(${_r},${_g},${_b},${a})`;
-  const isObsidiana = ctxAccent === 'rgb(21,17,32)';
-  const accentText = isObsidiana ? 'rgb(45,212,191)' : ctxAccent;
+  const isObsidiana = accentId === 'obsidiana';
+  const accentText = ctxAccent;
   const T = theme === 'dark'
     ? mkThemeDark(_r,_g,_b, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined, isObsidiana ? '#262230' : undefined)
     : mkThemeLight(_r,_g,_b, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined, isObsidiana ? '#262230' : undefined);

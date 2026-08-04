@@ -153,12 +153,13 @@ const ACCENT_THEMES = [
   },
   {
     id: 'obsidiana', label: 'Obsidiana', pro: true,
-    accent: 'rgb(21,17,32)',
-    accentDark:  'rgba(21,17,32,0.35)',
-    accentLight: 'rgba(21,17,32,0.18)',
+    accent: 'rgb(45,212,191)',
+    accentDark:  'rgba(45,212,191,0.15)',
+    accentLight: 'rgba(45,212,191,0.08)',
     darkGradient:  'linear-gradient(160deg, #211d2b 0%, #2a2438 100%)',
     lightGradient: 'linear-gradient(160deg, #211d2b 0%, #34304a 100%)',
     boardBg: '#151120',
+    swatchColor: 'rgb(21,17,32)',
   },
 ];
 
@@ -566,7 +567,7 @@ export default function Dashboard() {
                     <div key={t.id} title={`${t.label} (Pro)`} style={{ position: 'relative', width: 22, height: 22, flexShrink: 0 }}>
                       <div style={{
                         width: 22, height: 22, borderRadius: '50%',
-                        background: t.accent, opacity: 0.38,
+                        background: t.swatchColor ?? t.accent, opacity: 0.38,
                         border: '3px solid rgba(255,255,255,0.2)',
                       }} />
                       <div style={{
@@ -581,7 +582,7 @@ export default function Dashboard() {
                       onClick={() => setAccentId(t.id)}
                       style={{
                         width: 22, height: 22, borderRadius: '50%',
-                        background: t.accent,
+                        background: t.swatchColor ?? t.accent,
                         border: `3px solid ${accentId === t.id ? 'white' : 'rgba(255,255,255,0.35)'}`,
                         outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
                         outlineOffset: '2px', cursor: 'pointer',
@@ -643,7 +644,7 @@ export default function Dashboard() {
             )}
             {visitedMobile.has('agenda') && (
               <div style={{ display: mobileSection === 'agenda' ? undefined : 'none' }}>
-                <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />
+                <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} accentId={accentId} />
               </div>
             )}
             {visitedMobile.has('cuenta') && (
@@ -842,7 +843,7 @@ export default function Dashboard() {
                     <div key={t.id} title={`${t.label} — Pro`} style={{ position: 'relative', width: 20, height: 20, flexShrink: 0 }}>
                       <div style={{
                         width: 20, height: 20, borderRadius: '50%',
-                        background: t.accent,
+                        background: t.swatchColor ?? t.accent,
                         border: `2px solid ${C.isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.18)'}`,
                       }} />
                       <span style={{
@@ -854,7 +855,7 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     <button key={t.id} title={t.label} onClick={() => setAccentId(t.id)} style={{
-                      width: 20, height: 20, flexShrink: 0, borderRadius: '50%', background: t.accent,
+                      width: 20, height: 20, flexShrink: 0, borderRadius: '50%', background: t.swatchColor ?? t.accent,
                       border: `2px solid ${accentId === t.id ? (C.isDark ? 'white' : '#333') : 'rgba(0,0,0,0.25)'}`,
                       outline: accentId === t.id ? `2px solid ${t.accent}` : 'none',
                       outlineOffset: '2px', cursor: 'pointer',
@@ -929,7 +930,7 @@ export default function Dashboard() {
             )}
             {visitedTabs.has('agenda') && (
               <div style={{ display: activeTab === 'agenda' ? undefined : 'none' }}>
-                <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} />
+                <TabAgenda theme={theme} profiles={profiles} C={C} isPro={isPro ?? false} accentId={accentId} />
               </div>
             )}
             {visitedTabs.has('cuenta') && (
@@ -1818,7 +1819,7 @@ function TabResenas({ C, isPro }: { C: Colors; isPro: boolean }) {
 }
 
 /* ────────────────── Tab: Configurar Agenda ────────────────── */
-function TabAgenda({ theme, profiles, C, isPro }: { theme: 'dark' | 'light'; profiles: Profile[]; C: Colors; isPro: boolean }) {
+function TabAgenda({ theme, profiles, C, isPro, accentId }: { theme: 'dark' | 'light'; profiles: Profile[]; C: Colors; isPro: boolean; accentId: string }) {
   if (profiles.length === 0) {
     return (
       <div style={{ maxWidth: 560, margin: '0 auto' }}>
@@ -1889,5 +1890,5 @@ function TabAgenda({ theme, profiles, C, isPro }: { theme: 'dark' | 'light'; pro
       </div>
     );
   }
-  return <SchedulingPanel theme={theme} accent={C.accent} />;
+  return <SchedulingPanel theme={theme} accent={C.accent} accentId={accentId} />;
 }
