@@ -1226,15 +1226,15 @@ const PAGES: { id: Tab; icon: ReactNode; label: string }[] = [
 interface Profile { id: string; title: string; slug: string }
 
 const ACCENT_MAP: Record<string,string> = { aguamarina:'rgb(45,212,191)', nocturno:'rgb(147,51,234)', neon:'rgb(217,72,240)', ocean:'rgb(62,153,201)', cosmo:'rgb(88,28,155)', obsidiana:'rgb(21,17,32)' };
-function mkThemeDark(r: number, g: number, b: number) {
+function mkThemeDark(r: number, g: number, b: number, mainOverride?: string) {
   const a = (al: number) => `rgba(${r},${g},${b},${al})`;
   const mt = `rgb(${Math.round(Math.min(r/2+90,235))},${Math.round(Math.min(g/2+100,235))},${Math.round(Math.min(b/2+100,235))})`;
-  return { main:'transparent', side:'rgba(255,255,255,0.05)', inner:'rgba(255,255,255,0.07)', border:a(0.18), text:'#e8f0f0', muted:mt, muted2:a(0.2) };
+  return { main: mainOverride ?? 'transparent', side:'rgba(255,255,255,0.05)', inner:'rgba(255,255,255,0.07)', border:a(0.18), text:'#e8f0f0', muted:mt, muted2:a(0.2) };
 }
-function mkThemeLight(r: number, g: number, b: number) {
+function mkThemeLight(r: number, g: number, b: number, mainOverride?: string) {
   const a = (al: number) => `rgba(${r},${g},${b},${al})`;
   const mt = `rgb(${Math.round(r*0.4)},${Math.round(g*0.5)},${Math.round(b*0.5)})`;
-  return { main:'transparent', side:'rgba(255,255,255,0.72)', inner:'rgba(255,255,255,0.55)', border:a(0.25), text:'#0a1f1e', muted:mt, muted2:a(0.15) };
+  return { main: mainOverride ?? 'transparent', side:'rgba(255,255,255,0.72)', inner:'rgba(255,255,255,0.55)', border:a(0.25), text:'#0a1f1e', muted:mt, muted2:a(0.15) };
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -1254,7 +1254,10 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
   const _nums = ctxAccent.match(/\d+/g) ?? ['45','212','191'];
   const [_r, _g, _b] = _nums.map(Number);
   const aA = (a: number) => `rgba(${_r},${_g},${_b},${a})`;
-  const T = theme === 'dark' ? mkThemeDark(_r,_g,_b) : mkThemeLight(_r,_g,_b);
+  const isObsidiana = ctxAccent === 'rgb(21,17,32)';
+  const T = theme === 'dark'
+    ? mkThemeDark(_r,_g,_b, isObsidiana ? '#151120' : undefined)
+    : mkThemeLight(_r,_g,_b, isObsidiana ? '#151120' : undefined);
 
   useEffect(() => {
     const el = asideRef.current;
@@ -1419,7 +1422,10 @@ export default function SchedulingConfig() {
   const _sn = _sa.match(/\d+/g) ?? ['45','212','191'];
   const [_sr, _sg, _sb] = _sn.map(Number);
   const sA = (a: number) => `rgba(${_sr},${_sg},${_sb},${a})`;
-  const T = theme === 'dark' ? mkThemeDark(_sr,_sg,_sb) : mkThemeLight(_sr,_sg,_sb);
+  const isObsidiana = _sa === 'rgb(21,17,32)';
+  const T = theme === 'dark'
+    ? mkThemeDark(_sr,_sg,_sb, isObsidiana ? '#151120' : undefined)
+    : mkThemeLight(_sr,_sg,_sb, isObsidiana ? '#151120' : undefined);
 
   useEffect(() => {
     api.get('/profiles').then(res => {
