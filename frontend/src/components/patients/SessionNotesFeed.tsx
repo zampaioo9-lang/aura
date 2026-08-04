@@ -445,7 +445,7 @@ export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)',
               </span>
               {!canUseAI && (
                 <span style={{ fontSize: 11, fontWeight: 700, background: `linear-gradient(135deg,#8b5cf6,${accent})`, color: '#fff', borderRadius: 20, padding: '3px 10px', letterSpacing: 0.6 }}>
-                  PRO
+                  CLÍNICO
                 </span>
               )}
             </div>
@@ -498,7 +498,7 @@ export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)',
                     Ahorra tiempo redactando notas
                   </p>
                   <p style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(109,40,217,0.65)', lineHeight: 1.55, margin: 0 }}>
-                    Con el plan Pro, describe la sesión en tus palabras y la IA completa la nota estructurada por ti.
+                    Con el plan Clínico, describe la sesión en tus palabras (o sube el audio) y la IA completa la nota estructurada por ti.
                   </p>
                 </div>
               </div>
