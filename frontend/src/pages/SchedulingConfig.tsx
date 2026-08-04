@@ -1279,7 +1279,7 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}>
-      <div style={{ width: 32, height: 32, border: `3px solid ${aA(0.3)}`, borderTopColor: ctxAccent, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      <div style={{ width: 32, height: 32, border: `3px solid ${aA(0.3)}`, borderTopColor: accentText, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
     </div>
   );
 
@@ -1291,9 +1291,9 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
       '--sc-border': T.border, '--sc-text': T.text, '--sc-muted': T.muted, '--sc-muted2': T.muted2,
       '--sc-accent': ctxAccent,
       '--sc-accent-text': isObsidiana ? 'rgb(45,212,191)' : ctxAccent,
-      '--sc-accent-06': aA(0.06), '--sc-accent-08': aA(0.08), '--sc-accent-10': aA(0.10),
-      '--sc-accent-12': aA(0.12), '--sc-accent-15': aA(0.15), '--sc-accent-18': aA(0.18),
-      '--sc-accent-25': aA(0.25), '--sc-accent-30': aA(0.30), '--sc-accent-40': aA(0.40),
+      '--sc-accent-06': isObsidiana ? '#262230' : aA(0.06), '--sc-accent-08': isObsidiana ? '#262230' : aA(0.08), '--sc-accent-10': isObsidiana ? '#262230' : aA(0.10),
+      '--sc-accent-12': isObsidiana ? '#262230' : aA(0.12), '--sc-accent-15': isObsidiana ? '#262230' : aA(0.15), '--sc-accent-18': isObsidiana ? '#262230' : aA(0.18),
+      '--sc-accent-25': isObsidiana ? '#262230' : aA(0.25), '--sc-accent-30': isObsidiana ? '#262230' : aA(0.30), '--sc-accent-40': isObsidiana ? '#262230' : aA(0.40),
     } as React.CSSProperties}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -1374,7 +1374,7 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
             className="sc-panel-btn"
             style={{
               color: tab === p.id ? accentText : T.muted,
-              background: tab === p.id ? aA(0.15) : 'transparent',
+              background: tab === p.id ? (isObsidiana ? '#262230' : aA(0.15)) : 'transparent',
             }}
           >
             <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{p.icon}</span>
@@ -1440,7 +1440,7 @@ export default function SchedulingConfig() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: T.main }}>
-        <div style={{ width: 32, height: 32, border: `3px solid ${sA(0.3)}`, borderTopColor: _sa, borderRadius: '50%' }} />
+        <div style={{ width: 32, height: 32, border: `3px solid ${sA(0.3)}`, borderTopColor: accentText, borderRadius: '50%' }} />
       </div>
     );
   }
@@ -1452,9 +1452,9 @@ export default function SchedulingConfig() {
       '--sc-border': T.border, '--sc-text': T.text, '--sc-muted': T.muted, '--sc-muted2': T.muted2,
       '--sc-accent': _sa,
       '--sc-accent-text': isObsidiana ? 'rgb(45,212,191)' : _sa,
-      '--sc-accent-06': sA(0.06), '--sc-accent-08': sA(0.08), '--sc-accent-10': sA(0.10),
-      '--sc-accent-12': sA(0.12), '--sc-accent-15': sA(0.15), '--sc-accent-18': sA(0.18),
-      '--sc-accent-25': sA(0.25), '--sc-accent-30': sA(0.30), '--sc-accent-40': sA(0.40),
+      '--sc-accent-06': isObsidiana ? '#262230' : sA(0.06), '--sc-accent-08': isObsidiana ? '#262230' : sA(0.08), '--sc-accent-10': isObsidiana ? '#262230' : sA(0.10),
+      '--sc-accent-12': isObsidiana ? '#262230' : sA(0.12), '--sc-accent-15': isObsidiana ? '#262230' : sA(0.15), '--sc-accent-18': isObsidiana ? '#262230' : sA(0.18),
+      '--sc-accent-25': isObsidiana ? '#262230' : sA(0.25), '--sc-accent-30': isObsidiana ? '#262230' : sA(0.30), '--sc-accent-40': isObsidiana ? '#262230' : sA(0.40),
     } as React.CSSProperties}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -1534,7 +1534,7 @@ export default function SchedulingConfig() {
           <button key={p.id} onClick={() => setTab(p.id)} className="sc-aside-tab" style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8,
             cursor: 'pointer', fontSize: 14, color: tab === p.id ? accentText : T.muted,
-            background: tab === p.id ? sA(0.15) : 'transparent',
+            background: tab === p.id ? (isObsidiana ? '#262230' : sA(0.15)) : 'transparent',
             border: 'none', width: '100%', textAlign: 'left', fontFamily: 'DM Sans, sans-serif',
             transition: 'all .15s',
           }}>
