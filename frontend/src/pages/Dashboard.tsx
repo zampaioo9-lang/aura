@@ -159,7 +159,7 @@ const ACCENT_THEMES = [
     darkGradient:  'linear-gradient(160deg, #211d2b 0%, #2a2438 100%)',
     lightGradient: 'linear-gradient(160deg, #211d2b 0%, #34304a 100%)',
     boardBg: '#151120',
-    swatchColor: 'rgb(21,17,32)',
+    swatchColor: 'rgb(38,34,48)',
   },
 ];
 
@@ -337,20 +337,21 @@ export default function Dashboard() {
     { id: 'resenas',    label: 'Reseñas',            icon: <Star className="h-4 w-4" /> },
   ];
 
+  const _am = (accentTheme.swatchColor ?? accentTheme.accent).match(/rgb\((\d+),(\d+),(\d+)\)/);
+  const [_r, _g, _b] = _am ? [_am[1], _am[2], _am[3]] : ['147', '51', '234'];
+  const lightTint = `linear-gradient(160deg, rgba(${_r},${_g},${_b},0.09) 0%, rgba(${_r},${_g},${_b},0.19) 100%), #ffffff`;
+
   /* gradient for mobile profile card and dark shell */
   const profileGradient = theme === 'dark'
     ? accentTheme.darkGradient
-    : accentTheme.lightGradient;
-
-  const _am = accentTheme.accent.match(/rgb\((\d+),(\d+),(\d+)\)/);
-  const [_r, _g, _b] = _am ? [_am[1], _am[2], _am[3]] : ['147', '51', '234'];
+    : (accentTheme.swatchColor ? lightTint : accentTheme.lightGradient);
 
   const shellBg = theme === 'dark'
     ? `linear-gradient(rgba(0,0,0,0.28), rgba(0,0,0,0.28)), ${accentTheme.darkGradient}`
-    : `linear-gradient(160deg, rgba(${_r},${_g},${_b},0.09) 0%, rgba(${_r},${_g},${_b},0.19) 100%), #ffffff`;
+    : lightTint;
 
   // Inner content panel background
-  const boardBg = accentTheme.boardBg ?? (theme === 'dark' ? accentTheme.darkGradient : 'white');
+  const boardBg = theme === 'dark' ? (accentTheme.boardBg ?? accentTheme.darkGradient) : 'white';
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden" style={{ background: shellBg }}>
