@@ -83,15 +83,21 @@ export default function AudioUploadBlock({ clientId, onTranscriptReady, onBusyCh
         onChange={e => { const f = e.target.files?.[0]; if (f) handleFileSelected(f); }}
       />
       <button
+        className="btn-lift"
         onClick={() => fileInputRef.current?.click()}
         style={{
-          display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-          borderRadius: 8, border: `1px solid ${boxBorder}`, background: 'transparent',
-          color: textColor, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          width: '100%', padding: '12px 18px', borderRadius: 10, border: 'none',
+          background: 'linear-gradient(135deg,#7c3aed,#4338ca)',
+          color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: 'pointer',
+          boxShadow: '0 3px 12px rgba(124,58,237,0.35)',
         }}
       >
-        <Mic size={14} /> Subir audio de la sesión
+        <Mic size={16} /> Subir audio de la sesión
       </button>
+      <p style={{ fontSize: 11, color: textColor, opacity: 0.75, margin: '6px 0 0', textAlign: 'center' }}>
+        Hasta 1 hora de audio · el audio nunca se almacena
+      </p>
 
       {pendingFile && (
         <div style={{ marginTop: 8, padding: '10px 12px', border: `1px dashed ${boxBorder}`, borderRadius: 10 }}>

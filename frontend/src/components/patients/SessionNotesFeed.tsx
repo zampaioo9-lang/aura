@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Plus, Edit3, Trash2, ChevronDown, ChevronUp, Sparkles, Loader2, Lock } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
+import { Plus, Edit3, Trash2, ChevronDown, ChevronUp, Sparkles, Loader2, Lock, Mic, X } from 'lucide-react';
 import { useSessionNotes } from '../../hooks/usePatients';
 import type { SessionNote } from '../../hooks/usePatients';
 import CustomDatePicker from '../CustomDatePicker';
@@ -264,6 +266,7 @@ export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)',
   const canUseAI = useClinicoFeature('aiNotes');
   const canUseAudioNotes = useClinicoFeature('audio_notes');
   const [audioBusy, setAudioBusy] = useState(false);
+  const [showClinicoDialog, setShowClinicoDialog] = useState(false);
   const [showForm, setShowForm]     = useState(false);
   const [editingId, setEditingId]   = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -452,7 +455,7 @@ export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)',
             {canUseAI ? (
               <>
                 <p style={{ fontSize: 12.5, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(109,40,217,0.75)', marginBottom: 10, lineHeight: 1.55 }}>
-                  Describe brevemente lo que ocurrió en sesión y la IA completará los campos automáticamente.
+                  Escribe una breve descripción de la sesión, o sube hasta 1 hora de audio — la IA transcribe y genera tu nota clínica completa, automáticamente.
                 </p>
                 {canUseAudioNotes && (
                   <AudioUploadBlock
@@ -491,17 +494,97 @@ export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)',
                 </button>
               </>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4 }}>
-                <Lock size={18} style={{ color: '#a78bfa', flexShrink: 0, marginTop: 2 }} />
-                <div>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: isDark ? '#c4b5fd' : '#7c3aed', margin: '0 0 3px' }}>
-                    Ahorra tiempo redactando notas
+              <div onClick={() => setShowClinicoDialog(true)} style={{ position: 'relative', cursor: 'pointer' }}>
+                <div style={{ opacity: 0.4, pointerEvents: 'none' }}>
+                  <p style={{ fontSize: 12.5, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(109,40,217,0.75)', marginBottom: 10, lineHeight: 1.55 }}>
+                    Escribe una breve descripción de la sesión, o sube hasta 1 hora de audio — la IA transcribe y genera tu nota clínica completa, automáticamente.
                   </p>
-                  <p style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(109,40,217,0.65)', lineHeight: 1.55, margin: 0 }}>
-                    Con el plan Clínico, describe la sesión en tus palabras (o sube el audio) y la IA completa la nota estructurada por ti.
-                  </p>
+                  <button disabled style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    width: '100%', padding: '12px 18px', borderRadius: 10, border: 'none',
+                    background: 'linear-gradient(135deg,#7c3aed,#4338ca)',
+                    color: '#fff', fontSize: 13.5, fontWeight: 700,
+                  }}>
+                    <Mic size={16} /> Subir audio de la sesión
+                  </button>
+                  <textarea
+                    readOnly
+                    disabled
+                    rows={3}
+                    style={{ ...ta, minHeight: 72, marginTop: 10, borderColor: `rgba(${_ar},${_ag},${_ab},0.3)`, background: isDark ? `rgba(${_ar},${_ag},${_ab},0.08)` : 'rgba(255,255,255,0.85)', color: textStrong }}
+                    placeholder="Ej: El paciente llegó ansioso por conflicto laboral. Trabajamos técnicas de regulación emocional..."
+                  />
+                  <button disabled style={{
+                    marginTop: 10, display: 'flex', alignItems: 'center', gap: 7,
+                    padding: '9px 18px', borderRadius: 10, border: 'none',
+                    background: 'rgba(124,58,237,0.25)', color: '#fff', fontSize: 13, fontWeight: 600,
+                  }}>
+                    <Sparkles size={14} /> Generar nota
+                  </button>
+                </div>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', borderRadius: 20,
+                    background: isDark ? 'rgba(20,10,40,0.92)' : 'rgba(255,255,255,0.95)',
+                    border: `1px solid rgba(${_ar},${_ag},${_ab},0.4)`,
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+                  }}>
+                    <Lock size={15} style={{ color: isDark ? '#c4b5fd' : '#7c3aed' }} />
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: isDark ? '#e9d5ff' : '#5b21b6' }}>
+                      Disponible en plan Clínico
+                    </span>
+                  </div>
                 </div>
               </div>
+            )}
+
+            {showClinicoDialog && createPortal(
+              <div
+                onClick={() => setShowClinicoDialog(false)}
+                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 16 }}
+              >
+                <div
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    background: isDark ? '#1a1030' : '#ffffff', borderRadius: 18, padding: 28,
+                    maxWidth: 380, width: '100%', textAlign: 'center', position: 'relative',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+                  }}
+                >
+                  <button
+                    onClick={() => setShowClinicoDialog(false)}
+                    style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', cursor: 'pointer', color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)' }}
+                  >
+                    <X size={18} />
+                  </button>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: '50%', margin: '0 auto 14px',
+                    background: 'linear-gradient(135deg,#7c3aed,#4338ca)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Sparkles size={22} color="#fff" />
+                  </div>
+                  <h3 style={{ fontSize: 17, fontWeight: 700, color: isDark ? '#fff' : '#1a1030', margin: '0 0 8px' }}>
+                    Disponible en plan Clínico
+                  </h3>
+                  <p style={{ fontSize: 13.5, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)', lineHeight: 1.6, margin: '0 0 20px' }}>
+                    Describe la sesión en tus palabras o sube hasta 1 hora de audio, y la IA genera tu nota clínica completa por ti. Disponible en el plan Clínico.
+                  </p>
+                  <Link
+                    to="/pricing"
+                    onClick={() => setShowClinicoDialog(false)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      width: '100%', padding: '11px 20px', borderRadius: 10, textDecoration: 'none',
+                      background: 'linear-gradient(135deg,#7c3aed,#4338ca)', color: '#fff',
+                      fontSize: 14, fontWeight: 700, boxShadow: '0 2px 10px rgba(124,58,237,0.35)',
+                    }}
+                  >
+                    Ver planes
+                  </Link>
+                </div>
+              </div>,
+              document.body
             )}
           </div>
 
