@@ -30,6 +30,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isPro: boolean;
+  isClinico: boolean;
   featureOverrides: Record<string, boolean>;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, phone?: string) => Promise<void>;
@@ -114,10 +115,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false;
   })();
 
+  const isClinico = (() => {
+    if (!user) return false;
+    if (user.isAdmin) return true;
+    if (user.plan !== 'CLINICO') return false;
+    if (!user.planExpiresAt) return true;
+    return new Date(user.planExpiresAt) > new Date();
+  })();
+
   const featureOverrides = (user?.featureOverrides ?? {}) as Record<string, boolean>;
 
   return (
-    <AuthContext.Provider value={{ user, token, isPro, featureOverrides, login, register, resetPassword, logout, updateAccount, refreshUser, loading }}>
+    <AuthContext.Provider value={{ user, token, isPro, isClinico, featureOverrides, login, register, resetPassword, logout, updateAccount, refreshUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
