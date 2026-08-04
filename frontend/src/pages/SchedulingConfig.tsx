@@ -765,6 +765,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
         {getSorted(filtered).map(s => (
           <div
             key={s.id}
+            className="sc-service-card"
             draggable
             onDragStart={() => setDragId(s.id)}
             onDragOver={e => { e.preventDefault(); if (s.id !== dragId) setDragOverId(s.id); }}
@@ -773,7 +774,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
             style={{
               display: 'flex', alignItems: 'center', gap: 0,
               border: `1px solid ${dragOverId === s.id ? 'var(--sc-accent)' : editingService?.id === s.id ? 'var(--sc-accent)' : 'var(--sc-border)'}`,
-              borderRadius: 10, transition: 'all .15s',
+              borderRadius: 10, transition: 'transform .15s ease, box-shadow .15s ease, border-color .15s ease',
               opacity: dragId === s.id ? 0.4 : s.isActive ? 1 : 0.6,
               outline: dragOverId === s.id ? '2px dashed var(--sc-accent)' : 'none',
               outlineOffset: 2,
@@ -1309,6 +1310,8 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
           transition: all .15s;
         }
         .sc-panel-main { flex: 1; padding: 24px; overflow-y: auto; }
+        .sc-service-card { box-shadow: 0 2px 10px rgba(0,0,0,0.10); }
+        .sc-service-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,0.18); }
         @media (max-width: 767px) {
           .sc-panel { flex-direction: column !important; }
           .sc-panel-aside {
