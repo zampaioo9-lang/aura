@@ -108,10 +108,9 @@ function CardHeader({ dot, title, action }: { dot: string; title: string; action
 function BtnPrimary({ onClick, children, disabled = false, small = false }: {
   onClick?: () => void; children: React.ReactNode; disabled?: boolean; small?: boolean;
 }) {
-  const { accent } = useSC();
   return (
     <button onClick={onClick} disabled={disabled} style={{
-      background: accent, color: 'white', border: 'none', borderRadius: 8, cursor: disabled ? 'not-allowed' : 'pointer',
+      background: 'var(--sc-accent-text)', color: 'white', border: 'none', borderRadius: 8, cursor: disabled ? 'not-allowed' : 'pointer',
       padding: small ? '6px 12px' : '10px 20px', fontSize: small ? 13 : 14, fontFamily: 'DM Sans, sans-serif', fontWeight: 500,
       opacity: disabled ? 0.6 : 1,
     }}>{children}</button>

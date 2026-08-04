@@ -15,7 +15,8 @@ interface Props {
 }
 
 function makeAccentTokens(accent?: string) {
-  const m = accent?.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  const isObsidiana = accent === 'rgb(21,17,32)';
+  const m = (isObsidiana ? undefined : accent)?.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
   const [r, g, b] = m ? [+m[1], +m[2], +m[3]] : [45, 212, 191];
   const mkRgb = (f: number) => `rgb(${Math.round(r * f)},${Math.round(g * f)},${Math.round(b * f)})`;
   const mk = (a: number) => `rgba(${r},${g},${b},${a})`;
