@@ -1255,6 +1255,7 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
   const [_r, _g, _b] = _nums.map(Number);
   const aA = (a: number) => `rgba(${_r},${_g},${_b},${a})`;
   const isObsidiana = ctxAccent === 'rgb(21,17,32)';
+  const accentText = isObsidiana ? 'rgb(45,212,191)' : ctxAccent;
   const T = theme === 'dark'
     ? mkThemeDark(_r,_g,_b, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined)
     : mkThemeLight(_r,_g,_b, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined);
@@ -1372,7 +1373,7 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
             onClick={() => setTab(p.id)}
             className="sc-panel-btn"
             style={{
-              color: tab === p.id ? ctxAccent : T.muted,
+              color: tab === p.id ? accentText : T.muted,
               background: tab === p.id ? aA(0.15) : 'transparent',
             }}
           >
@@ -1424,6 +1425,7 @@ export default function SchedulingConfig() {
   const [_sr, _sg, _sb] = _sn.map(Number);
   const sA = (a: number) => `rgba(${_sr},${_sg},${_sb},${a})`;
   const isObsidiana = _sa === 'rgb(21,17,32)';
+  const accentText = isObsidiana ? 'rgb(45,212,191)' : _sa;
   const T = theme === 'dark'
     ? mkThemeDark(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined)
     : mkThemeLight(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined);
@@ -1531,7 +1533,7 @@ export default function SchedulingConfig() {
         {PAGES.map(p => (
           <button key={p.id} onClick={() => setTab(p.id)} className="sc-aside-tab" style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8,
-            cursor: 'pointer', fontSize: 14, color: tab === p.id ? _sa : T.muted,
+            cursor: 'pointer', fontSize: 14, color: tab === p.id ? accentText : T.muted,
             background: tab === p.id ? sA(0.15) : 'transparent',
             border: 'none', width: '100%', textAlign: 'left', fontFamily: 'DM Sans, sans-serif',
             transition: 'all .15s',
