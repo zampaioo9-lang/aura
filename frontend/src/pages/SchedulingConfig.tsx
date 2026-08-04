@@ -1226,15 +1226,15 @@ const PAGES: { id: Tab; icon: ReactNode; label: string }[] = [
 interface Profile { id: string; title: string; slug: string }
 
 const ACCENT_MAP: Record<string,string> = { aguamarina:'rgb(45,212,191)', nocturno:'rgb(147,51,234)', neon:'rgb(217,72,240)', ocean:'rgb(62,153,201)', cosmo:'rgb(88,28,155)', obsidiana:'rgb(21,17,32)' };
-function mkThemeDark(r: number, g: number, b: number, mainOverride?: string, mutedOverride?: string) {
+function mkThemeDark(r: number, g: number, b: number, mainOverride?: string, mutedOverride?: string, blockOverride?: string) {
   const a = (al: number) => `rgba(${r},${g},${b},${al})`;
   const mt = `rgb(${Math.round(Math.min(r/2+90,235))},${Math.round(Math.min(g/2+100,235))},${Math.round(Math.min(b/2+100,235))})`;
-  return { main: mainOverride ?? 'transparent', side:'rgba(255,255,255,0.05)', inner:'rgba(255,255,255,0.07)', border:a(0.18), text:'#e8f0f0', muted: mutedOverride ?? mt, muted2:a(0.2) };
+  return { main: mainOverride ?? 'transparent', side: blockOverride ?? 'rgba(255,255,255,0.05)', inner: blockOverride ?? 'rgba(255,255,255,0.07)', border:a(0.18), text:'#e8f0f0', muted: mutedOverride ?? mt, muted2:a(0.2) };
 }
-function mkThemeLight(r: number, g: number, b: number, mainOverride?: string, mutedOverride?: string) {
+function mkThemeLight(r: number, g: number, b: number, mainOverride?: string, mutedOverride?: string, blockOverride?: string) {
   const a = (al: number) => `rgba(${r},${g},${b},${al})`;
   const mt = `rgb(${Math.round(r*0.4)},${Math.round(g*0.5)},${Math.round(b*0.5)})`;
-  return { main: mainOverride ?? 'transparent', side:'rgba(255,255,255,0.72)', inner:'rgba(255,255,255,0.55)', border:a(0.25), text:'#0a1f1e', muted: mutedOverride ?? mt, muted2:a(0.15) };
+  return { main: mainOverride ?? 'transparent', side: blockOverride ?? 'rgba(255,255,255,0.72)', inner: blockOverride ?? 'rgba(255,255,255,0.55)', border:a(0.25), text:'#0a1f1e', muted: mutedOverride ?? mt, muted2:a(0.15) };
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -1257,8 +1257,8 @@ export function SchedulingPanel({ theme, accent }: { theme: 'dark' | 'light'; ac
   const isObsidiana = ctxAccent === 'rgb(21,17,32)';
   const accentText = isObsidiana ? 'rgb(45,212,191)' : ctxAccent;
   const T = theme === 'dark'
-    ? mkThemeDark(_r,_g,_b, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined)
-    : mkThemeLight(_r,_g,_b, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined);
+    ? mkThemeDark(_r,_g,_b, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined, isObsidiana ? '#262230' : undefined)
+    : mkThemeLight(_r,_g,_b, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined, isObsidiana ? '#262230' : undefined);
 
   useEffect(() => {
     const el = asideRef.current;
@@ -1427,8 +1427,8 @@ export default function SchedulingConfig() {
   const isObsidiana = _sa === 'rgb(21,17,32)';
   const accentText = isObsidiana ? 'rgb(45,212,191)' : _sa;
   const T = theme === 'dark'
-    ? mkThemeDark(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined)
-    : mkThemeLight(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined);
+    ? mkThemeDark(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined, isObsidiana ? '#262230' : undefined)
+    : mkThemeLight(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined, isObsidiana ? '#262230' : undefined);
 
   useEffect(() => {
     api.get('/profiles').then(res => {
