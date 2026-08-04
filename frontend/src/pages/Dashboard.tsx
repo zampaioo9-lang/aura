@@ -657,7 +657,7 @@ export default function Dashboard() {
               </div>
             )}
             <div className="mt-10 text-center" style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
-              <Link to="/pricing" className="text-xs" style={{ color: C.muted }}>Ver planes</Link>
+              <Link to="/pricing" className="text-xs" style={{ color: 'rgb(45,212,191)' }}>Ver planes</Link>
               {user?.isAdmin && (
                 <a href="https://github.com/zampaioo9-lang/aura/tree/master/docs/manual" target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: C.muted }}>Manual</a>
               )}
@@ -802,7 +802,7 @@ export default function Dashboard() {
               <p style={{ fontWeight: 700, fontSize: 14, color: C.text, margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {user?.name}
               </p>
-              <span style={{ fontSize: 11, fontWeight: 600, background: C.accentLight, color: C.accent, borderRadius: 6, padding: '2px 8px' }}>
+              <span style={{ fontSize: 11, fontWeight: 600, background: 'rgba(45,212,191,0.15)', color: 'rgb(45,212,191)', borderRadius: 6, padding: '2px 8px' }}>
                 {isPro ? 'Pro' : 'Free'}
               </span>
             </div>
@@ -870,9 +870,9 @@ export default function Dashboard() {
           {/* Footer */}
           <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Link to="/pricing"
-              style={{ fontSize: 14, color: C.muted, textDecoration: 'none', padding: '7px 10px', borderRadius: 8 }}
+              style={{ fontSize: 14, color: 'rgb(45,212,191)', textDecoration: 'none', padding: '7px 10px', borderRadius: 8 }}
               onMouseEnter={e => (e.currentTarget.style.color = C.text)}
-              onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgb(45,212,191)')}
             >
               Ver planes
             </Link>
