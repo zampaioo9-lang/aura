@@ -1255,9 +1255,10 @@ export function SchedulingPanel({ theme, accent, accentId }: { theme: 'dark' | '
   const aA = (a: number) => `rgba(${_r},${_g},${_b},${a})`;
   const isObsidiana = accentId === 'obsidiana';
   const accentText = ctxAccent;
+  const isObsidianaDark = isObsidiana && theme === 'dark';
   const T = theme === 'dark'
-    ? mkThemeDark(_r,_g,_b, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined, isObsidiana ? '#262230' : undefined)
-    : mkThemeLight(_r,_g,_b, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined, isObsidiana ? '#262230' : undefined);
+    ? mkThemeDark(_r,_g,_b, isObsidianaDark ? '#211d2b' : undefined, isObsidianaDark ? 'rgba(45,212,191,0.55)' : undefined, isObsidianaDark ? '#262230' : undefined)
+    : mkThemeLight(_r,_g,_b);
 
   useEffect(() => {
     const el = asideRef.current;
@@ -1290,9 +1291,9 @@ export function SchedulingPanel({ theme, accent, accentId }: { theme: 'dark' | '
       '--sc-border': T.border, '--sc-text': T.text, '--sc-muted': T.muted, '--sc-muted2': T.muted2,
       '--sc-accent': ctxAccent,
       '--sc-accent-text': isObsidiana ? 'rgb(45,212,191)' : ctxAccent,
-      '--sc-accent-06': isObsidiana ? '#262230' : aA(0.06), '--sc-accent-08': isObsidiana ? '#262230' : aA(0.08), '--sc-accent-10': isObsidiana ? '#262230' : aA(0.10),
-      '--sc-accent-12': isObsidiana ? '#262230' : aA(0.12), '--sc-accent-15': isObsidiana ? '#262230' : aA(0.15), '--sc-accent-18': isObsidiana ? '#262230' : aA(0.18),
-      '--sc-accent-25': isObsidiana ? '#262230' : aA(0.25), '--sc-accent-30': isObsidiana ? '#262230' : aA(0.30), '--sc-accent-40': isObsidiana ? '#262230' : aA(0.40),
+      '--sc-accent-06': isObsidianaDark ? '#262230' : aA(0.06), '--sc-accent-08': isObsidianaDark ? '#262230' : aA(0.08), '--sc-accent-10': isObsidianaDark ? '#262230' : aA(0.10),
+      '--sc-accent-12': isObsidianaDark ? '#262230' : aA(0.12), '--sc-accent-15': isObsidianaDark ? '#262230' : aA(0.15), '--sc-accent-18': isObsidianaDark ? '#262230' : aA(0.18),
+      '--sc-accent-25': isObsidianaDark ? '#262230' : aA(0.25), '--sc-accent-30': isObsidianaDark ? '#262230' : aA(0.30), '--sc-accent-40': isObsidianaDark ? '#262230' : aA(0.40),
     } as React.CSSProperties}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -1373,7 +1374,7 @@ export function SchedulingPanel({ theme, accent, accentId }: { theme: 'dark' | '
             className="sc-panel-btn"
             style={{
               color: tab === p.id ? accentText : T.muted,
-              background: tab === p.id ? (isObsidiana ? '#262230' : aA(0.15)) : 'transparent',
+              background: tab === p.id ? (isObsidianaDark ? '#262230' : aA(0.15)) : 'transparent',
             }}
           >
             <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{p.icon}</span>
@@ -1424,10 +1425,11 @@ export default function SchedulingConfig() {
   const [_sr, _sg, _sb] = _sn.map(Number);
   const sA = (a: number) => `rgba(${_sr},${_sg},${_sb},${a})`;
   const isObsidiana = _sa === 'rgb(21,17,32)';
+  const isObsidianaDark = isObsidiana && theme === 'dark';
   const accentText = isObsidiana ? 'rgb(45,212,191)' : _sa;
   const T = theme === 'dark'
-    ? mkThemeDark(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined, isObsidiana ? '#262230' : undefined)
-    : mkThemeLight(_sr,_sg,_sb, isObsidiana ? '#211d2b' : undefined, isObsidiana ? 'rgba(45,212,191,0.55)' : undefined, isObsidiana ? '#262230' : undefined);
+    ? mkThemeDark(_sr,_sg,_sb, isObsidianaDark ? '#211d2b' : undefined, isObsidianaDark ? 'rgba(45,212,191,0.55)' : undefined, isObsidianaDark ? '#262230' : undefined)
+    : mkThemeLight(_sr,_sg,_sb);
 
   useEffect(() => {
     api.get('/profiles').then(res => {
@@ -1451,9 +1453,9 @@ export default function SchedulingConfig() {
       '--sc-border': T.border, '--sc-text': T.text, '--sc-muted': T.muted, '--sc-muted2': T.muted2,
       '--sc-accent': _sa,
       '--sc-accent-text': isObsidiana ? 'rgb(45,212,191)' : _sa,
-      '--sc-accent-06': isObsidiana ? '#262230' : sA(0.06), '--sc-accent-08': isObsidiana ? '#262230' : sA(0.08), '--sc-accent-10': isObsidiana ? '#262230' : sA(0.10),
-      '--sc-accent-12': isObsidiana ? '#262230' : sA(0.12), '--sc-accent-15': isObsidiana ? '#262230' : sA(0.15), '--sc-accent-18': isObsidiana ? '#262230' : sA(0.18),
-      '--sc-accent-25': isObsidiana ? '#262230' : sA(0.25), '--sc-accent-30': isObsidiana ? '#262230' : sA(0.30), '--sc-accent-40': isObsidiana ? '#262230' : sA(0.40),
+      '--sc-accent-06': isObsidianaDark ? '#262230' : sA(0.06), '--sc-accent-08': isObsidianaDark ? '#262230' : sA(0.08), '--sc-accent-10': isObsidianaDark ? '#262230' : sA(0.10),
+      '--sc-accent-12': isObsidianaDark ? '#262230' : sA(0.12), '--sc-accent-15': isObsidianaDark ? '#262230' : sA(0.15), '--sc-accent-18': isObsidianaDark ? '#262230' : sA(0.18),
+      '--sc-accent-25': isObsidianaDark ? '#262230' : sA(0.25), '--sc-accent-30': isObsidianaDark ? '#262230' : sA(0.30), '--sc-accent-40': isObsidianaDark ? '#262230' : sA(0.40),
     } as React.CSSProperties}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -1533,7 +1535,7 @@ export default function SchedulingConfig() {
           <button key={p.id} onClick={() => setTab(p.id)} className="sc-aside-tab" style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8,
             cursor: 'pointer', fontSize: 14, color: tab === p.id ? accentText : T.muted,
-            background: tab === p.id ? (isObsidiana ? '#262230' : sA(0.15)) : 'transparent',
+            background: tab === p.id ? (isObsidianaDark ? '#262230' : sA(0.15)) : 'transparent',
             border: 'none', width: '100%', textAlign: 'left', fontFamily: 'DM Sans, sans-serif',
             transition: 'all .15s',
           }}>
