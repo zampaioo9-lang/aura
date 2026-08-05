@@ -25,7 +25,7 @@ export async function uploadAndStartTranscription(buffer: Buffer): Promise<strin
 
 export type TranscriptionResult =
   | { status: 'processing' }
-  | { status: 'completed'; transcript: string }
+  | { status: 'completed'; transcript: string; audioDurationSeconds: number }
   | { status: 'failed'; errorMessage: string };
 
 interface AssemblyAiUtterance { speaker: string; text: string; }
@@ -48,6 +48,7 @@ export async function getTranscriptionResult(assemblyAiId: string): Promise<Tran
   const transcript = utterances?.length
     ? utterances.map(u => `Hablante ${u.speaker}: ${u.text}`).join('\n')
     : ((data.text as string) ?? '');
+  const audioDurationSeconds = Math.round((data.audio_duration as number) ?? 0);
 
   try {
     await axios.delete(`${BASE_URL}/transcript/${assemblyAiId}`, { headers: authHeaders() });
@@ -55,5 +56,5 @@ export async function getTranscriptionResult(assemblyAiId: string): Promise<Tran
     console.error('[AssemblyAI] No se pudo borrar el transcript tras recuperarlo:', err);
   }
 
-  return { status: 'completed', transcript };
+  return { status: 'completed', transcript, audioDurationSeconds };
 }

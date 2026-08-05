@@ -7,6 +7,7 @@ import { registerSchema, loginSchema } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
 import { sendEmail, emailTemplates, sendPasswordResetEmail } from '../services/emailService';
 import { addContact } from '../services/audienceService';
+import { clinicoTrialExpiry } from '../lib/planUtils';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -20,13 +21,17 @@ router.post('/register', async (req, res, next) => {
     if (existing) throw new AppError(409, 'Email already registered');
 
     const hashed = await hashPassword(data.password);
+    const trialExpiry = clinicoTrialExpiry();
     const user = await prisma.user.create({
       data: {
         email: data.email,
         password: hashed,
         name: data.name,
         phone: data.phone || null,
-        plan: 'FREE',
+        plan: 'CLINICO',
+        planExpiresAt: trialExpiry,
+        clinicoTrialEndsAt: trialExpiry,
+        hasUsedClinicoTrial: true,
       },
     });
 

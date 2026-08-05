@@ -6,6 +6,7 @@ import { sendEmail, emailTemplates, sendPasswordResetEmail } from '../services/e
 import { sendBroadcast, getBroadcasts, addContact } from '../services/audienceService';
 import { sendWhatsApp } from '../services/whatsappService';
 import { env } from '../config/env';
+import { clinicoTrialExpiry } from '../lib/planUtils';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -248,6 +249,35 @@ router.patch('/users/:id/grant-pro', async (req: any, res, next) => {
     });
 
     res.json({ ok: true, planExpiresAt: updated.planExpiresAt });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/admin/users/:id/activate-clinico-trial
+router.patch('/users/:id/activate-clinico-trial', async (req: any, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const target = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+    if (!target) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const trialExpiry = clinicoTrialExpiry();
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: {
+        plan: 'CLINICO',
+        planExpiresAt: trialExpiry,
+        clinicoTrialEndsAt: trialExpiry,
+        hasUsedClinicoTrial: true,
+        trialAudioSecondsUsed: 0,
+        trialAiNotesUsed: 0,
+      },
+      select: { id: true, plan: true, planExpiresAt: true, clinicoTrialEndsAt: true },
+    });
+
+    res.json({ ok: true, planExpiresAt: updated.planExpiresAt, clinicoTrialEndsAt: updated.clinicoTrialEndsAt });
   } catch (err) {
     next(err);
   }

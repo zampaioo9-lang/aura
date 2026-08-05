@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
+import { isClinicoUser, isInClinicoTrial, CLINICO_TRIAL_AI_NOTES } from '../lib/planUtils';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -12,6 +13,23 @@ async function verifyClientOwnership(clientId: string, userId: string) {
   if (!client) throw new AppError(404, 'Paciente no encontrado');
   if (client.userId !== userId) throw new AppError(403, 'No autorizado');
   return client;
+}
+
+async function verifyAiNotesAccess(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { plan: true, planExpiresAt: true, isAdmin: true, featureOverrides: true, clinicoTrialEndsAt: true, trialAiNotesUsed: true },
+  });
+  if (!user) throw new AppError(401, 'No autorizado');
+  const overrides = (user.featureOverrides as Record<string, boolean>) ?? {};
+  const hasAccess = isClinicoUser(user) || overrides.aiNotes === true;
+  if (!hasAccess) throw new AppError(403, 'Esta función requiere el módulo de notas con IA');
+
+  if (isInClinicoTrial(user) && user.trialAiNotesUsed >= CLINICO_TRIAL_AI_NOTES) {
+    throw new AppError(403, 'Alcanzaste el límite de notas con IA de tu periodo de prueba (10 notas). Actualiza tu plan para seguir generando.');
+  }
+
+  return user;
 }
 
 const PLACEHOLDER = '[PACIENTE]';
@@ -147,6 +165,8 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res, next) => 
     const { description, noteType = 'LIBRE', clientId } = req.body;
     if (!description?.trim()) throw new AppError(400, 'La descripción es requerida');
 
+    const requestingUser = await verifyAiNotesAccess(req.userId!);
+
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new AppError(500, 'ANTHROPIC_API_KEY no configurada');
 
@@ -198,6 +218,13 @@ ${anonymizedDescription}`,
     }
     if (noteType !== 'DIAMANTE' && noteType !== 'NECS' && 'nextPlan' in generated) {
       generated.nextPlan = stringifyField(generated.nextPlan);
+    }
+
+    if (isInClinicoTrial(requestingUser)) {
+      await prisma.user.update({
+        where: { id: req.userId! },
+        data: { trialAiNotesUsed: { increment: 1 } },
+      });
     }
 
     res.json(generated);

@@ -21,6 +21,10 @@ model User {
   plan                 String?
   planInterval         String?
   planExpiresAt        DateTime?
+  clinicoTrialEndsAt   DateTime?
+  hasUsedClinicoTrial  Boolean   @default(false)
+  trialAudioSecondsUsed Int      @default(0)
+  trialAiNotesUsed     Int       @default(0)
   stripeCustomerId     String?
   stripeSubscriptionId String?
   stripeHasDiscount    Boolean   @default(false)

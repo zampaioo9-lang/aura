@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { uploadAudio } from '../middleware/upload';
 import { AppError } from '../middleware/errorHandler';
-import { isClinicoUser } from '../lib/planUtils';
+import { isClinicoUser, isInClinicoTrial, CLINICO_TRIAL_AUDIO_SECONDS } from '../lib/planUtils';
 import { uploadAndStartTranscription, getTranscriptionResult } from '../services/assemblyAiService';
 
 const router = Router();
@@ -18,12 +18,16 @@ async function verifyClientOwnership(clientId: string, userId: string) {
 async function verifyAudioNotesAccess(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { plan: true, planExpiresAt: true, isAdmin: true, featureOverrides: true },
+    select: { plan: true, planExpiresAt: true, isAdmin: true, featureOverrides: true, clinicoTrialEndsAt: true, trialAudioSecondsUsed: true },
   });
   if (!user) throw new AppError(401, 'No autorizado');
   const overrides = (user.featureOverrides as Record<string, boolean>) ?? {};
   const hasAccess = isClinicoUser(user) || overrides.audio_notes === true;
   if (!hasAccess) throw new AppError(403, 'Esta función requiere el módulo de transcripción de audio');
+
+  if (isInClinicoTrial(user) && user.trialAudioSecondsUsed >= CLINICO_TRIAL_AUDIO_SECONDS) {
+    throw new AppError(403, 'Alcanzaste el límite de audio de tu periodo de prueba (2 horas). Actualiza tu plan para seguir transcribiendo.');
+  }
 }
 
 // POST /api/audio-notes/transcribe/:clientId
@@ -79,6 +83,15 @@ router.get('/transcribe/:jobId', authMiddleware, async (req: AuthRequest, res, n
 
     if (result.status === 'completed') {
       await prisma.audioTranscriptionJob.update({ where: { id: job.id }, data: { status: 'completed' } });
+
+      const user = await prisma.user.findUnique({ where: { id: job.userId }, select: { clinicoTrialEndsAt: true } });
+      if (user && isInClinicoTrial(user)) {
+        await prisma.user.update({
+          where: { id: job.userId },
+          data: { trialAudioSecondsUsed: { increment: result.audioDurationSeconds } },
+        });
+      }
+
       return res.json({ status: 'completed', transcript: result.transcript });
     }
 

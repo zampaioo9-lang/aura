@@ -373,6 +373,7 @@ export default function AdminPanel() {
   const [updatingPermissions, setUpdatingPermissions] = useState<string | null>(null);
   const [updatingBlock, setUpdatingBlock] = useState<string | null>(null);
   const [grantingPro, setGrantingPro] = useState<string | null>(null);
+  const [activatingTrial, setActivatingTrial] = useState<string | null>(null);
   const [grantMonths, setGrantMonths] = useState(1);
   const [expiryDaysAhead, setExpiryDaysAhead] = useState(7);
   const [sendingExpiryNotif, setSendingExpiryNotif] = useState(false);
@@ -464,6 +465,25 @@ export default function AdminPanel() {
       toast(err.response?.data?.error || 'Error al activar PRO', 'error');
     } finally {
       setGrantingPro(null);
+    }
+  };
+
+  const handleActivateClinicoTrial = async (userId: string) => {
+    setActivatingTrial(userId);
+    try {
+      const res = await api.patch(`/admin/users/${userId}/activate-clinico-trial`);
+      const { planExpiresAt } = res.data;
+      setUsers(prev => prev.map(u =>
+        u.id === userId
+          ? { ...u, plan: 'CLINICO', planExpiresAt }
+          : u
+      ));
+      const expiryStr = new Date(planExpiresAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+      toast(`Trial Clínico activado — vence el ${expiryStr}`, 'success');
+    } catch (err: any) {
+      toast(err.response?.data?.error || 'Error al activar el trial', 'error');
+    } finally {
+      setActivatingTrial(null);
     }
   };
 
@@ -1503,6 +1523,19 @@ export default function AdminPanel() {
                                     style={{ background: 'rgba(45,212,191,0.18)', color: '#2dd4bf', border: '1px solid rgba(45,212,191,0.3)', cursor: 'pointer' }}
                                   >
                                     {grantingPro === u.id ? '...' : '✓ Activar PRO'}
+                                  </button>
+                                </div>
+
+                                {/* Activar trial Clínico */}
+                                <div className="mt-3 pt-3 flex items-center gap-2 flex-wrap" style={{ borderTop: `1px solid ${C.cardBorder}` }}>
+                                  <span className="text-xs font-semibold" style={{ color: C.textMuted }}>Trial Clínico (5 días):</span>
+                                  <button
+                                    disabled={activatingTrial === u.id}
+                                    onClick={e => { e.stopPropagation(); handleActivateClinicoTrial(u.id); }}
+                                    className="px-3 py-1 text-xs font-semibold rounded-md transition-colors disabled:opacity-50"
+                                    style={{ background: 'rgba(168,85,247,0.18)', color: '#a855f7', border: '1px solid rgba(168,85,247,0.3)', cursor: 'pointer' }}
+                                  >
+                                    {activatingTrial === u.id ? '...' : '✓ Activar trial Clínico'}
                                   </button>
                                 </div>
                               </div>
