@@ -1123,13 +1123,13 @@ function TabInicio({ profiles, bookings, userName, C, dashStats, dashStatsError,
       {dashStats && (
         <div style={{
           background: C.isDark ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.65)',
-          border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.14)' : 'rgba(45,212,191,0.18)'}`,
+          border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.14)' : `rgba(${C.borderRgb[0]},${C.borderRgb[1]},${C.borderRgb[2]},0.18)`}`,
           borderRadius: 16, padding: 20,
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           boxShadow: C.isDark
             ? '0 4px 24px rgba(0,0,0,0.25)'
-            : '0 2px 16px rgba(45,212,191,0.10), 0 1px 4px rgba(0,0,0,0.06)',
+            : `0 2px 16px rgba(${C.borderRgb[0]},${C.borderRgb[1]},${C.borderRgb[2]},0.10), 0 1px 4px rgba(0,0,0,0.06)`,
           opacity: isLoadingStats ? 0.6 : 1,
           transition: 'opacity 0.2s ease',
           pointerEvents: isLoadingStats ? 'none' : undefined,
