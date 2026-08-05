@@ -54,6 +54,14 @@ const INTERVAL_LABEL: Record<string, string> = {
 };
 
 function PlanBadge({ u }: { u: UserRow }) {
+  if (u.plan === 'CLINICO') {
+    return (
+      <span style={{ padding: '2px 8px', background: 'rgba(168,85,247,0.18)', backdropFilter: 'blur(8px)', color: '#a855f7', fontSize: 11, borderRadius: 99, fontWeight: 600, border: '1px solid rgba(168,85,247,0.3)', whiteSpace: 'nowrap' }}>
+        Clínico
+      </span>
+    );
+  }
+
   if (u.plan === 'PRO') {
     const intervalLabel = INTERVAL_LABEL[u.planInterval ?? ''] ?? u.planInterval ?? '?';
     const payMethod = u.paypalSubscriptionId ? 'PayPal' : u.stripeSubscriptionId ? 'Stripe' : '';
@@ -1278,6 +1286,15 @@ export default function AdminPanel() {
                                   {u.stripeHasDiscount && (
                                     <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full flex items-center gap-1">
                                       <Tag className="w-3 h-3" /> Pagó con código de descuento
+                                    </span>
+                                  )}
+                                </div>
+                              ) : u.plan === 'CLINICO' ? (
+                                <div className="flex flex-wrap gap-3 text-sm" style={{ color: C.text }}>
+                                  <span>Clínico</span>
+                                  {u.planExpiresAt && (
+                                    <span style={{ color: C.textMuted }}>
+                                      Expira: {new Date(u.planExpiresAt).toLocaleDateString('es-ES')}
                                     </span>
                                   )}
                                 </div>

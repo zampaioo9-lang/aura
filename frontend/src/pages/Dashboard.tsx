@@ -194,7 +194,7 @@ const LIGHT: Colors = {
 };
 
 export default function Dashboard() {
-  const { user, logout, isPro, refreshUser } = useAuth();
+  const { user, logout, isPro, isClinico, refreshUser } = useAuth();
   const { toast } = useToast();
   const canColoresPremium = useFeature('colores_premium');
   const canPacientes = useFeature('pacientes');
@@ -431,6 +431,39 @@ export default function Dashboard() {
               style={{ color }}
             >
               {expired ? 'Activar plan' : 'Ver detalles'}
+            </Link>
+          </div>
+        );
+      })()}
+
+      {/* ── Trial Clínico banner ── */}
+      {(() => {
+        if (!user?.clinicoTrialEndsAt) return null;
+        const endsAt = new Date(user.clinicoTrialEndsAt);
+        if (endsAt.getTime() <= Date.now()) return null;
+
+        const daysLeft = Math.max(0, Math.ceil((endsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+        const minutesUsed = Math.floor((user.trialAudioSecondsUsed ?? 0) / 60);
+        const notesUsed = user.trialAiNotesUsed ?? 0;
+
+        const bg     = C.isDark ? 'rgba(168,85,247,0.14)' : '#f5f3ff';
+        const border = C.isDark ? 'rgba(168,85,247,0.35)' : '#ddd6fe';
+        const color  = C.isDark ? '#d8b4fe' : '#6d28d9';
+
+        return (
+          <div
+            className="shrink-0 flex items-center justify-between gap-3 px-5 py-2 text-sm"
+            style={{ background: bg, borderBottom: `1px solid ${border}`, color }}
+          >
+            <span>
+              Prueba gratuita del plan Clínico · vence en {daysLeft} día{daysLeft === 1 ? '' : 's'} · {minutesUsed}/120 min de audio · {notesUsed}/10 notas con IA
+            </span>
+            <Link
+              to="/pricing"
+              className="shrink-0 font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity"
+              style={{ color }}
+            >
+              Ver planes
             </Link>
           </div>
         );
@@ -805,7 +838,7 @@ export default function Dashboard() {
                 {user?.name}
               </p>
               <span style={{ fontSize: 11, fontWeight: 600, background: 'rgba(45,212,191,0.15)', color: 'rgb(45,212,191)', borderRadius: 6, padding: '2px 8px' }}>
-                {isPro ? 'Pro' : 'Free'}
+                {isClinico ? 'Clínico' : isPro ? 'Pro' : 'Free'}
               </span>
             </div>
           </div>

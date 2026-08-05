@@ -15,6 +15,9 @@ interface User {
   planExpiresAt?: string | null;
   blocked?: boolean;
   featureOverrides?: Record<string, boolean>;
+  clinicoTrialEndsAt?: string | null;
+  trialAudioSecondsUsed?: number;
+  trialAiNotesUsed?: number;
 }
 
 interface UpdateAccountData {
