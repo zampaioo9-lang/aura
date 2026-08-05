@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user.isAdmin) return true;
     if (!user.plan) return false;
     if (user.plan === 'LIFETIME') return true;
-    if (user.plan === 'PRO') {
+    if (user.plan === 'PRO' || user.plan === 'CLINICO') {
       if (!user.planExpiresAt) return true;
       return new Date(user.planExpiresAt) > new Date();
     }
