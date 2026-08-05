@@ -91,6 +91,18 @@ export async function checkAvailability(
     }
   }
 
+  // ── Verificar bloqueos semanales fijos (recurrentes) ────────────
+  const recurringBlocks = await prisma.recurringScheduleBlock.findMany({
+    where: { profileId, dayOfWeek },
+  });
+  for (const block of recurringBlocks) {
+    const bs = timeToMinutes(block.startTime);
+    const be = timeToMinutes(block.endTime);
+    if (startMins < be && endMins > bs) {
+      return { available: false, reason: block.reason || 'Horario bloqueado recurrentemente' };
+    }
+  }
+
   // ── Verificar disponibilidad semanal (horario propio del servicio, con fallback al general) ─
   const serviceSlots = await prisma.serviceAvailability.findMany({
     where: { serviceId, dayOfWeek, isActive: true },
@@ -167,6 +179,10 @@ export async function getAvailableSlots(
   const fullDayBlock = blocks.find(b => b.isAllDay);
   if (fullDayBlock) return [];
 
+  const recurringBlocks = await prisma.recurringScheduleBlock.findMany({
+    where: { profileId, dayOfWeek },
+  });
+
   // Slots de disponibilidad: primero buscar slots específicos del servicio
   const serviceSlots = await prisma.serviceAvailability.findMany({
     where: { serviceId, dayOfWeek, isActive: true },
@@ -215,6 +231,13 @@ export async function getAvailableSlots(
         return start < be && end > bs;
       });
       if (blockedByPartial) continue;
+
+      const blockedByRecurring = recurringBlocks.some(b => {
+        const bs = timeToMinutes(b.startTime);
+        const be = timeToMinutes(b.endTime);
+        return start < be && end > bs;
+      });
+      if (blockedByRecurring) continue;
 
       // Verificar conflictos con reservas existentes (con buffer)
       const hasConflict = existingBookings.some(b => {

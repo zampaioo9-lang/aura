@@ -148,6 +148,18 @@ export const updateScheduleBlockSchema = z.object({
   reason:    z.string().max(200).optional(),
 });
 
+export const createRecurringScheduleBlockSchema = z.object({
+  profileId: z.string(),
+  dayOfWeek: z.number().int().min(0).max(6),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:mm requerido'),
+  endTime:   z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:mm requerido'),
+  reason:    z.string().max(200).optional(),
+}).refine(data => {
+  const [sh, sm] = data.startTime.split(':').map(Number);
+  const [eh, em] = data.endTime.split(':').map(Number);
+  return (sh * 60 + sm) < (eh * 60 + em);
+}, { message: 'La hora de inicio debe ser anterior a la hora de fin' });
+
 // ── ServiceAvailability schemas ────────────────────────────────────
 export const createServiceAvailabilitySchema = z.object({
   serviceId: z.string(),

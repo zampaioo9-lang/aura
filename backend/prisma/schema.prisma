@@ -286,6 +286,7 @@ model Profile {
   bookings          Booking[]
   availabilitySlots AvailabilitySlot[]
   scheduleBlocks    ScheduleBlock[]
+  recurringScheduleBlocks RecurringScheduleBlock[]
   bookingSettings   BookingSettings?
   reviews           Review[]
 
@@ -449,6 +450,22 @@ model ScheduleBlock {
 
   @@index([profileId])
   @@index([profileId, startDate, endDate])
+}
+
+// Bloqueos semanales fijos (ej. "todos los martes 13:00-14:00"), sin fecha de fin
+model RecurringScheduleBlock {
+  id        String   @id @default(uuid())
+  profileId String
+  dayOfWeek Int      // 0=Domingo, 1=Lunes, ..., 6=Sábado
+  startTime String   // "13:00"
+  endTime   String   // "14:00"
+  reason    String?
+  createdAt DateTime @default(now())
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([profileId, dayOfWeek])
 }
 
 // Disponibilidad específica por servicio (sobreescribe la disponibilidad general)

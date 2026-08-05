@@ -55,6 +55,16 @@ export interface ScheduleBlock {
   createdAt: string;
 }
 
+export interface RecurringScheduleBlock {
+  id:        string;
+  profileId: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime:   string;
+  reason:    string | null;
+  createdAt: string;
+}
+
 export interface ServiceAvailabilitySlot {
   id:        string;
   serviceId: string;

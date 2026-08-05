@@ -9,9 +9,9 @@ import { useAuth } from '../context/AuthContext';
 import { useFeature } from '../hooks/useFeature';
 import ProGate from '../components/ProGate';
 import {
-  DAY_NAMES_SHORT, TIMEZONES, LANGUAGES,
+  DAY_NAMES, DAY_NAMES_SHORT, TIMEZONES, LANGUAGES,
   type AvailabilitySlot, type BookingSettings,
-  type ScheduleBlock, type ServiceAvailabilitySlot,
+  type ScheduleBlock, type ServiceAvailabilitySlot, type RecurringScheduleBlock,
 } from '../types/availability';
 import { useServices, type Service } from '../hooks/useServices';
 import ImageUpload from '../components/ImageUpload';
@@ -858,6 +858,11 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
   const [form, setForm] = useState({ title: '', startDate: '', endDate: '', type: 'vacaciones', isAllDay: true, startTime: '09:00', endTime: '18:00' });
   const [saving, setSaving] = useState(false);
 
+  const [recurringBlocks, setRecurringBlocks] = useState<RecurringScheduleBlock[]>([]);
+  const [showRecurringForm, setShowRecurringForm] = useState(false);
+  const [recurringForm, setRecurringForm] = useState({ dayOfWeek: 1, startTime: '13:00', endTime: '14:00', reason: '' });
+  const [savingRecurring, setSavingRecurring] = useState(false);
+
   const typeIcons: Record<string, string> = { vacaciones: '🏖️', reunion: '💼', otro: '🔧', personal: '🏠' };
 
   const fetchBlocks = useCallback(async () => {
@@ -869,6 +874,42 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
   }, [profileId]);
 
   useEffect(() => { fetchBlocks(); }, [fetchBlocks]);
+
+  const fetchRecurringBlocks = useCallback(async () => {
+    try {
+      const res = await api.get('/recurring-schedule-blocks', { params: { profileId } });
+      setRecurringBlocks(res.data);
+    } catch { /* silencioso: no bloquea el resto de la pestaña */ }
+  }, [profileId]);
+
+  useEffect(() => { fetchRecurringBlocks(); }, [fetchRecurringBlocks]);
+
+  const handleCreateRecurring = async () => {
+    setSavingRecurring(true);
+    try {
+      await api.post('/recurring-schedule-blocks', {
+        profileId,
+        dayOfWeek: recurringForm.dayOfWeek,
+        startTime: recurringForm.startTime,
+        endTime: recurringForm.endTime,
+        reason: recurringForm.reason || undefined,
+      });
+      toast('Bloqueo recurrente creado');
+      setShowRecurringForm(false);
+      setRecurringForm({ dayOfWeek: 1, startTime: '13:00', endTime: '14:00', reason: '' });
+      fetchRecurringBlocks();
+    } catch (err: any) { toast(err.response?.data?.error || 'Error', 'error'); }
+    finally { setSavingRecurring(false); }
+  };
+
+  const handleDeleteRecurring = async (id: string) => {
+    if (!confirm('¿Eliminar este bloqueo recurrente?')) return;
+    try {
+      await api.delete(`/recurring-schedule-blocks/${id}`);
+      setRecurringBlocks(prev => prev.filter(b => b.id !== id));
+      toast('Bloqueo recurrente eliminado');
+    } catch { toast('Error al eliminar', 'error'); }
+  };
 
   const handleCreate = async () => {
     if (!form.title || !form.startDate) { toast('Completa los campos requeridos', 'error'); return; }
@@ -1007,7 +1048,56 @@ function TabBloqueos({ profileId, isPro = false }: { profileId: string; isPro?: 
         <Card>
           <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, marginBottom: 12, color: 'var(--sc-text)' }}>Bloqueos semanales fijos</div>
           <p style={{ color: 'var(--sc-muted)', fontSize: 14, marginBottom: 14 }}>Configura horarios que siempre estarán bloqueados independientemente de tu disponibilidad base.</p>
-          <BtnGhost small>+ Añadir bloqueo recurrente</BtnGhost>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+            {recurringBlocks.length === 0 && !showRecurringForm && (
+              <p style={{ color: 'var(--sc-muted)', fontSize: 13 }}>No tienes bloqueos recurrentes configurados</p>
+            )}
+            {recurringBlocks.map(b => (
+              <div key={b.id} style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                background: 'var(--sc-inner)', border: '1px solid var(--sc-border)', borderRadius: 10, padding: '12px 16px',
+              }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--sc-text)' }}>
+                    Todos los {DAY_NAMES[b.dayOfWeek]} · {b.startTime} — {b.endTime}
+                  </div>
+                  {b.reason && (
+                    <div style={{ fontSize: 12, color: 'var(--sc-muted)', marginTop: 2 }}>{b.reason}</div>
+                  )}
+                </div>
+                <BtnDanger onClick={() => handleDeleteRecurring(b.id)}>Eliminar</BtnDanger>
+              </div>
+            ))}
+          </div>
+
+          {showRecurringForm ? (
+            <div style={{ background: 'rgba(45,212,191,0.06)', border: '1px dashed rgba(45,212,191,0.4)', borderRadius: 10, padding: 16 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+                {DAY_NAMES_SHORT.map((label, idx) => (
+                  <DayChip key={idx} label={label} active={recurringForm.dayOfWeek === idx}
+                    onClick={() => setRecurringForm(f => ({ ...f, dayOfWeek: idx }))} />
+                ))}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                <TimeSelect value={recurringForm.startTime} onChange={v => setRecurringForm(f => ({ ...f, startTime: v }))} />
+                <span style={{ color: 'var(--sc-muted)', fontSize: 13 }}>hasta</span>
+                <TimeSelect value={recurringForm.endTime} onChange={v => setRecurringForm(f => ({ ...f, endTime: v }))} />
+              </div>
+              <input
+                value={recurringForm.reason}
+                onChange={e => setRecurringForm(f => ({ ...f, reason: e.target.value }))}
+                placeholder="Motivo (opcional), ej. Supervisión clínica"
+                style={{ width: '100%', background: 'var(--sc-inner)', border: '1px solid var(--sc-border)', borderRadius: 8, padding: '10px 14px', color: 'var(--sc-text)', fontFamily: 'DM Sans', fontSize: 14, outline: 'none', marginBottom: 16, boxSizing: 'border-box' }}
+              />
+              <div style={{ display: 'flex', gap: 10 }}>
+                <BtnPrimary small onClick={handleCreateRecurring} disabled={savingRecurring}>{savingRecurring ? 'Guardando...' : 'Agregar bloqueo recurrente'}</BtnPrimary>
+                <BtnGhost small onClick={() => setShowRecurringForm(false)}>Cancelar</BtnGhost>
+              </div>
+            </div>
+          ) : (
+            <BtnGhost small onClick={() => setShowRecurringForm(true)}>+ Añadir bloqueo recurrente</BtnGhost>
+          )}
         </Card>
       </ProGate>
     </>

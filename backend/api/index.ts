@@ -38,6 +38,7 @@ try {
   const availabilityRoutes = require('../src/routes/availability').default;
   const bookingSettingsRoutes = require('../src/routes/booking-settings').default;
   const scheduleBlocksRoutes = require('../src/routes/schedule-blocks').default;
+  const recurringScheduleBlocksRoutes = require('../src/routes/recurring-schedule-blocks').default;
   const serviceAvailabilityRoutes = require('../src/routes/service-availability').default;
   const adminRoutes = require('../src/routes/admin').default;
   const subscriptionRoutes = require('../src/routes/subscriptions').default;
@@ -62,6 +63,7 @@ try {
   app.use('/api/availability', availabilityRoutes);
   app.use('/api/booking-settings', bookingSettingsRoutes);
   app.use('/api/schedule-blocks', scheduleBlocksRoutes);
+  app.use('/api/recurring-schedule-blocks', recurringScheduleBlocksRoutes);
   app.use('/api/service-availability', serviceAvailabilityRoutes);
   app.use('/api/admin', adminRoutes);
   app.use('/api/subscriptions', subscriptionRoutes);
