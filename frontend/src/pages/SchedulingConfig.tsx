@@ -1510,7 +1510,7 @@ export default function SchedulingConfig() {
   const [profiles, setProfiles]       = useState<Profile[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState('');
   const [loading, setLoading]         = useState(true);
-  const [theme]                       = useState<'dark'|'light'>(() => (localStorage.getItem('aliax_theme') as any) || 'dark');
+  const [theme]                       = useState<'dark'|'light'>(() => (localStorage.getItem('aliax_theme') as any) || 'light');
   const _sa = ACCENT_MAP[localStorage.getItem('aliax_accent') || ''] ?? 'rgb(45,212,191)';
   const _sn = _sa.match(/\d+/g) ?? ['45','212','191'];
   const [_sr, _sg, _sb] = _sn.map(Number);

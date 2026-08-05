@@ -58,7 +58,7 @@ export default function ProfileCreate() {
   const approachesRef = useRef<HTMLDivElement>(null);
 
   const accentId = localStorage.getItem('aliax_accent') ?? 'aguamarina';
-  const isDark = (localStorage.getItem('aliax_theme') ?? 'dark') === 'dark';
+  const isDark = (localStorage.getItem('aliax_theme') ?? 'light') === 'dark';
   const accent = ACCENT_COLORS[accentId] ?? ACCENT_COLORS.aguamarina;
   const am = accent.match(/rgb\((\d+),(\d+),(\d+)\)/);
   const [ar, ag, ab] = am ? [am[1], am[2], am[3]] : ['45', '212', '191'];

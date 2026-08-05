@@ -216,7 +216,7 @@ export default function Dashboard() {
     return (tab && ['inicio', 'citas', 'resenas', 'agenda', 'cuenta'].includes(tab)) ? tab : 'perfil';
   });
   const [theme, setTheme] = useState<'dark' | 'light'>(
-    () => (localStorage.getItem('aliax_theme') as 'dark' | 'light') || 'dark'
+    () => (localStorage.getItem('aliax_theme') as 'dark' | 'light') || 'light'
   );
   const [accentId, setAccentId] = useState<string>(
     () => localStorage.getItem('aliax_accent') || 'aguamarina'
