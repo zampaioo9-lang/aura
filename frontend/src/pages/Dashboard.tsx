@@ -486,7 +486,7 @@ export default function Dashboard() {
             className="shrink-0 flex items-center justify-between gap-3 px-5 py-2 text-sm"
             style={{ background: '#7f1d1d', borderBottom: '1px solid #991b1b', color: '#fef2f2' }}
           >
-            <span>Tu prueba gratuita del plan Clínico terminó. Actualiza tu plan para seguir usando notas con IA y transcripción de audio.</span>
+            <span>Tu prueba del plan Clínico terminó. Sigues con tu perfil, agenda y notas manuales gratis · actualiza tu plan para recuperar notas con IA y transcripción de audio.</span>
             <Link
               to="/pricing"
               className="shrink-0 font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity"

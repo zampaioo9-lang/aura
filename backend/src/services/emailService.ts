@@ -312,7 +312,7 @@ export const emailTemplates = {
       </div>
 
       <div style="margin-top:12px;padding:16px;background:#f0fdf4;border-radius:8px;">
-        <p style="margin:0;color:#18181b;font-size:14px;">Al terminar los 5 días tu cuenta pasa automáticamente al <strong>plan gratuito</strong>, sin límite de tiempo. Puedes actualizar a Pro o Clínico cuando quieras.</p>
+        <p style="margin:0;color:#18181b;font-size:14px;">Al terminar los 5 días tu cuenta pasa automáticamente al <strong>plan gratuito</strong>, sin límite de tiempo, y sigues con tu perfil en el directorio, tu agenda y tus notas manuales, todo sin costo. Puedes actualizar a Pro o Clínico cuando quieras.</p>
       </div>
 
       <div style="margin-top:24px;">
