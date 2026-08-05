@@ -97,7 +97,8 @@ export default function Landing() {
               style={{ fontFamily: 'Manrope, sans-serif', maxWidth: 360 }}
             >
               Grabas el audio de la sesión y la IA transcribe y genera tu nota clínica automáticamente.
-              Tu perfil, agenda y reservas siempre son gratis.
+              <br />
+              Tu perfil, agenda y reservas son siempre gratis.
             </p>
           </div>
 
