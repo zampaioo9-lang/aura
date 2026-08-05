@@ -90,7 +90,7 @@ export default function Landing() {
               }}
             >
               <span style={{ display: 'block' }}>Automatiza</span>
-              <span style={{ display: 'block' }}>tu nota <span className="text-shimmer-teal">clínica</span></span>
+              <span style={{ display: 'block', whiteSpace: 'nowrap' }}>tu nota <span className="text-shimmer-teal">clínica</span></span>
             </h1>
             <p
               className="text-white/60 text-[11px] md:text-[15px] leading-relaxed hidden sm:block"
