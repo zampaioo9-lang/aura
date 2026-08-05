@@ -1251,11 +1251,12 @@ export function SchedulingPanel({ theme, accent, accentId }: { theme: 'dark' | '
   const asideRef                    = useRef<HTMLElement>(null);
   const ctxAccent = accent ?? 'rgb(45,212,191)';
   const _nums = ctxAccent.match(/\d+/g) ?? ['45','212','191'];
-  const [_r, _g, _b] = _nums.map(Number);
-  const aA = (a: number) => `rgba(${_r},${_g},${_b},${a})`;
   const isObsidiana = accentId === 'obsidiana';
-  const accentText = ctxAccent;
   const isObsidianaDark = isObsidiana && theme === 'dark';
+  const isObsidianaLight = isObsidiana && theme === 'light';
+  const [_r, _g, _b] = isObsidianaLight ? [21, 17, 32] : _nums.map(Number);
+  const aA = (a: number) => `rgba(${_r},${_g},${_b},${a})`;
+  const accentText = ctxAccent;
   const T = theme === 'dark'
     ? mkThemeDark(_r,_g,_b, isObsidianaDark ? '#211d2b' : undefined, isObsidianaDark ? 'rgba(45,212,191,0.55)' : undefined, isObsidianaDark ? '#262230' : undefined)
     : mkThemeLight(_r,_g,_b);
