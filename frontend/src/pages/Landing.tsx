@@ -9,6 +9,7 @@ import HeroTitle from '../components/landing/HeroTitle';
 import SoapTiles from '../components/landing/SoapTiles';
 import SecondScreen from '../components/landing/SecondScreen';
 import ThirdScreen from '../components/landing/ThirdScreen';
+import FourthScreen from '../components/landing/FourthScreen';
 
 const c01 = (v: number) => Math.max(0, Math.min(1, v));
 
@@ -170,6 +171,9 @@ export default function Landing() {
 
         {/* THIRD SCREEN — modulos/funcionalidades */}
         <ThirdScreen lerpedProgress={lerpedProgress} />
+
+        {/* FOURTH SCREEN — pie de pagina */}
+        <FourthScreen lerpedProgress={lerpedProgress} />
       </div>
     </main>
   );

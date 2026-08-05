@@ -10,7 +10,7 @@ const c01 = (v: number) => Math.max(0, Math.min(1, v));
 
 const SPECIALTIES = [
   'Psicólogos', 'Terapeutas de Pareja', 'Neuropsicólogos',
-  'Coaches de Vida', 'Terapeutas Infantiles', 'Ansiedad y Estrés',
+  'Terapeutas Infantiles', 'Ansiedad y Estrés',
   'Terapia Cognitivo-Conductual', 'Mindfulness',
 ];
 
