@@ -71,6 +71,7 @@ interface Colors {
   mainBg: string;
   tabsBg: string;
   border: string;
+  borderRgb: [number, number, number];
   cardBg: string;
   cardShadow: string;
   text: string;
@@ -169,6 +170,7 @@ const DARK: Colors = {
   mainBg: '#0c0c0c',
   tabsBg: '#071412',
   border: 'rgba(45,212,191,0.15)',
+  borderRgb: [45,212,191],
   cardBg: 'rgba(10,25,22,0.85)',
   cardShadow: 'none',
   text: '#e8f0f0',
@@ -184,6 +186,7 @@ const LIGHT: Colors = {
   mainBg: 'white',
   tabsBg: '#e6faf8',
   border: 'rgba(13,148,136,0.15)',
+  borderRgb: [13,148,136],
   cardBg: 'white',
   cardShadow: '0 2px 8px rgba(0,0,0,0.06)',
   text: '#0a1f1e',
@@ -269,6 +272,7 @@ export default function Dashboard() {
       accentLight: theme === 'dark' ? accentTheme.accentDark : accentTheme.accentLight,
       muted,
       border: `rgba(${borderRgb[0]},${borderRgb[1]},${borderRgb[2]},0.15)`,
+      borderRgb: borderRgb as [number, number, number],
     };
   }, [theme, accentTheme]);
 
@@ -1087,8 +1091,7 @@ function TabInicio({ profiles, bookings, userName, C, dashStats, dashStatsError,
   const isAgendaOk        = agendaConfigured === true;
   const isPublished       = profiles.some(p => p.published);
   const allDone           = isProfileCreated && hasService && isAgendaOk && isPublished;
-  const _am = C.accent.match(/rgb\((\d+),(\d+),(\d+)\)/);
-  const [_r, _g, _b] = _am ? [_am[1], _am[2], _am[3]] : ['147', '51', '234'];
+  const [_r, _g, _b] = C.borderRgb;
   const copyUrl = (slug: string, id: string) => {
     navigator.clipboard.writeText(`${window.location.origin}/${slug}`).then(() => {
       setCopiedId(id);
