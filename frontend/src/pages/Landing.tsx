@@ -90,14 +90,13 @@ export default function Landing() {
               }}
             >
               <span style={{ display: 'block' }}>Automatiza</span>
-              <span style={{ display: 'block' }}>tu nota</span>
-              <span className="text-shimmer-teal">clínica</span>
+              <span style={{ display: 'block' }}>tu nota <span className="text-shimmer-teal">clínica</span></span>
             </h1>
             <p
               className="text-white/60 text-[11px] md:text-[15px] leading-relaxed hidden sm:block"
               style={{ fontFamily: 'Manrope, sans-serif', maxWidth: 360 }}
             >
-              Grabas la sesión y la IA transcribe y genera tu nota clínica automáticamente.
+              Grabas el audio de la sesión y la IA transcribe y genera tu nota clínica automáticamente.
               Tu perfil, agenda y reservas siempre son gratis.
             </p>
           </div>
