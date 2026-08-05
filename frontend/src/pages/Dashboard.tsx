@@ -258,12 +258,17 @@ export default function Dashboard() {
     const muted = theme === 'dark'
       ? `rgb(${Math.round((r+120)/2)},${Math.round((g+120)/2)},${Math.round((b+120)/2)})`
       : `rgb(${Math.round(r*0.4)},${Math.round(g*0.5)},${Math.round(b*0.5)})`;
+    // En modo claro, el borde usa el color real de la identidad (swatchColor) en vez
+    // del accent sustituido — para Obsidiana eso evita que el borde se vea aguamarina.
+    const borderRgb = (theme === 'light' && accentTheme.swatchColor)
+      ? accentTheme.swatchColor.match(/\d+/g)!.map(Number)
+      : [r, g, b];
     return {
       ...base,
       accent:      accentTheme.accent,
       accentLight: theme === 'dark' ? accentTheme.accentDark : accentTheme.accentLight,
       muted,
-      border: `rgba(${r},${g},${b},0.15)`,
+      border: `rgba(${borderRgb[0]},${borderRgb[1]},${borderRgb[2]},0.15)`,
     };
   }, [theme, accentTheme]);
 
@@ -1042,7 +1047,7 @@ function DashNavRow({ icon, isActive, C, onClick, children }: { icon: React.Reac
       <span style={{ color: isActive ? 'white' : C.isDark ? 'rgba(255,255,255,0.6)' : C.accent, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
         {icon}
       </span>
-      <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 500, color: isActive ? 'white' : C.isDark ? 'rgba(255,255,255,0.85)' : C.text, lineHeight: 1 }}>
+      <span style={{ fontSize: 14, fontWeight: isActive ? 600 : 500, color: isActive ? 'white' : C.isDark ? 'rgba(255,255,255,0.85)' : C.text, lineHeight: 1 }}>
         {children}
       </span>
     </button>
