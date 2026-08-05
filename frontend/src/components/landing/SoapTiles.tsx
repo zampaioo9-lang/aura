@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react';
 interface Props { scrollProgress: number; }
 
 const TILES = [
-  { label: 'Perfil verificado gratis', offset: 120 },
-  { label: 'Aparece en búsquedas',     offset: 180 },
-  { label: 'Agenda sin comisiones',    offset: 240 },
+  { label: 'Grabas la sesión',   offset: 120 },
+  { label: 'La IA transcribe',   offset: 180 },
+  { label: 'Tu nota, lista',     offset: 240 },
 ];
 
 const c01 = (v: number) => Math.max(0, Math.min(1, v));

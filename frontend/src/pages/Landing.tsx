@@ -77,7 +77,7 @@ export default function Landing() {
               className="text-[#2dd4bf] text-[9px] md:text-[11px] uppercase tracking-[0.2em] font-medium whitespace-nowrap"
               style={{ fontFamily: 'Manrope, sans-serif' }}
             >
-              Directorio · México &amp; LATAM
+              Automatización clínica con IA
             </p>
             <h1
               className="text-white font-bold"
@@ -89,16 +89,16 @@ export default function Landing() {
                 margin: '0 0 8px',
               }}
             >
-              <span style={{ display: 'block' }}>Psicólogos que</span>
-              <span style={{ display: 'block' }}>ya están siendo</span>
-              <span className="text-shimmer-teal">encontrados</span>
+              <span style={{ display: 'block' }}>Automatiza</span>
+              <span style={{ display: 'block' }}>tu nota</span>
+              <span className="text-shimmer-teal">clínica</span>
             </h1>
             <p
               className="text-white/60 text-[11px] md:text-[15px] leading-relaxed hidden sm:block"
               style={{ fontFamily: 'Manrope, sans-serif', maxWidth: 360 }}
             >
-              El directorio gratuito para psicólogos y psicoterapeutas en Latinoamérica.
-              Aparece por enfoque terapéutico, ciudad y modalidad.
+              Grabas la sesión y la IA transcribe y genera tu nota clínica automáticamente.
+              Tu perfil, agenda y reservas siempre son gratis.
             </p>
           </div>
 
