@@ -304,22 +304,27 @@ export const emailTemplates = {
     subject: '¡Bienvenido a Aliax! 🎉',
     html: baseTemplate('Bienvenido a Aliax', `
       ${heading(`¡Hola ${data.userName}!`)}
-      ${subtext('Nos da mucho gusto que formes parte de Aliax. Tu cuenta ha sido creada exitosamente con el <strong>plan gratuito</strong> — sin límite de tiempo.')}
+      ${subtext('Nos da mucho gusto que formes parte de Aliax. Tu cuenta ya está activa.')}
 
-      <div style="margin-top:20px;padding:16px;background:#f0fdf4;border-radius:8px;">
-        <p style="margin:0 0 6px;color:#16a34a;font-size:13px;font-weight:600;">Plan Gratuito — siempre gratis</p>
-        <p style="margin:0;color:#18181b;font-size:15px;">Gestiona tus citas, servicios y clientes sin costo. Cuando quieras más funciones, puedes actualizar a Pro.</p>
+      <div style="margin-top:20px;padding:16px;background:#f5f3ff;border-radius:8px;border:1px solid #ddd6fe;">
+        <p style="margin:0 0 6px;color:#6d28d9;font-size:13px;font-weight:600;">De regalo: plan Clínico completo durante 5 días</p>
+        <p style="margin:0;color:#18181b;font-size:15px;">Incluye el módulo de notas con IA: sube hasta 120 minutos de audio de sesión en total, o escribe hasta 10 notas sin audio, y la IA las transcribe y organiza en una nota clínica lista para revisar.</p>
+      </div>
+
+      <div style="margin-top:12px;padding:16px;background:#f0fdf4;border-radius:8px;">
+        <p style="margin:0;color:#18181b;font-size:14px;">Al terminar los 5 días tu cuenta pasa automáticamente al <strong>plan gratuito</strong>, sin límite de tiempo. Puedes actualizar a Pro o Clínico cuando quieras.</p>
       </div>
 
       <div style="margin-top:24px;">
         <p style="margin:0 0 12px;color:#18181b;font-size:15px;font-weight:600;">¿Qué puedes hacer en Aliax?</p>
         <table width="100%" cellpadding="0" cellspacing="0">
-          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Tu perfil público en el directorio</strong> — nuevos pacientes te encuentran por enfoque terapéutico</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Notas de sesión con IA:</strong> sube el audio o escribe una breve descripción y obtén tu nota clínica lista en minutos</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Tu perfil público en el directorio:</strong> nuevos pacientes te encuentran por enfoque terapéutico</td></tr>
           <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Agenda inteligente:</strong> tus clientes reservan citas solos, 24/7, sin que tú intervengas</td></tr>
-          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Historia clínica digital</strong> por paciente — organizada, accesible y siempre contigo</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Historia clínica digital</strong> por paciente, organizada, accesible y siempre contigo</td></tr>
           <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Notas de evolución del paciente</strong>, basadas en el esquema oficial SOAP y esquema Diamante para TBCS</td></tr>
-          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Tu enlace personalizado</strong> — compártelo con tus clientes y recibe reservas al instante</td></tr>
-          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Servicios, precios y modalidades</strong> — presencial, online o ambas</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Tu enlace personalizado:</strong> compártelo con tus clientes y recibe reservas al instante</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Servicios, precios y modalidades:</strong> presencial, online o ambas</td></tr>
           <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Notificaciones automáticas</strong> de citas a ti y a tus pacientes</td></tr>
         </table>
       </div>

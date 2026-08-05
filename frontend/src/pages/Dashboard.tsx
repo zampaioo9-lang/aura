@@ -445,10 +445,11 @@ export default function Dashboard() {
         const daysLeft = Math.max(0, Math.ceil((endsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
         const minutesUsed = Math.floor((user.trialAudioSecondsUsed ?? 0) / 60);
         const notesUsed = user.trialAiNotesUsed ?? 0;
+        const nearLimit = minutesUsed / 120 >= 0.8 || notesUsed / 10 >= 0.8 || daysLeft <= 1;
 
-        const bg     = C.isDark ? 'rgba(168,85,247,0.14)' : '#f5f3ff';
-        const border = C.isDark ? 'rgba(168,85,247,0.35)' : '#ddd6fe';
-        const color  = C.isDark ? '#d8b4fe' : '#6d28d9';
+        const bg     = nearLimit ? '#78350f' : C.isDark ? 'rgba(168,85,247,0.14)' : '#f5f3ff';
+        const border = nearLimit ? '#92400e' : C.isDark ? 'rgba(168,85,247,0.35)' : '#ddd6fe';
+        const color  = nearLimit ? '#fef2f2' : C.isDark ? '#d8b4fe' : '#6d28d9';
 
         return (
           <div
@@ -464,6 +465,34 @@ export default function Dashboard() {
               style={{ color }}
             >
               Ver planes
+            </Link>
+          </div>
+        );
+      })()}
+
+      {/* ── Trial Clínico expirado ── */}
+      {(() => {
+        if (!user?.clinicoTrialEndsAt) return null;
+        if (isPro) return null;
+
+        const endsAt = new Date(user.clinicoTrialEndsAt);
+        if (endsAt.getTime() > Date.now()) return null;
+
+        const daysSinceExpiry = Math.floor((Date.now() - endsAt.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysSinceExpiry > 7) return null;
+
+        return (
+          <div
+            className="shrink-0 flex items-center justify-between gap-3 px-5 py-2 text-sm"
+            style={{ background: '#7f1d1d', borderBottom: '1px solid #991b1b', color: '#fef2f2' }}
+          >
+            <span>Tu prueba gratuita del plan Clínico terminó. Actualiza tu plan para seguir usando notas con IA y transcripción de audio.</span>
+            <Link
+              to="/pricing"
+              className="shrink-0 font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity"
+              style={{ color: '#fef2f2' }}
+            >
+              Actualizar plan
             </Link>
           </div>
         );
