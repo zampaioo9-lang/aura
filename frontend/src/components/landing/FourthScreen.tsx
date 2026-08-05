@@ -32,7 +32,7 @@ const COLUMNS = [
 ];
 
 export default function FourthScreen({ lerpedProgress }: Props) {
-  const sp    = c01((lerpedProgress - 1.55) / 0.3);
+  const sp    = c01((lerpedProgress - 1.36) / 0.13);
   const eased = 1 - Math.pow(1 - sp, 3);
 
   return (
