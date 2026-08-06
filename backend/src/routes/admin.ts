@@ -82,22 +82,43 @@ router.get('/users', async (req, res, next) => {
     const limit = parseInt(String(req.query.limit || '20'));
     const skip = (page - 1) * limit;
     const search = req.query.search ? String(req.query.search) : undefined;
+    const welcomeEmail = req.query.welcomeEmail ? String(req.query.welcomeEmail) : undefined; // 'sent' | 'not_sent'
+    const profileStatus = req.query.profileStatus ? String(req.query.profileStatus) : undefined; // 'published' | 'unpublished'
+    const plan = req.query.plan ? String(req.query.plan) : undefined; // 'FREE' | 'PRO' | 'CLINICO' | 'LIFETIME'
+    const createdFrom = req.query.createdFrom ? String(req.query.createdFrom) : undefined;
+    const createdTo = req.query.createdTo ? String(req.query.createdTo) : undefined;
+    const sortDir = req.query.sortDir === 'asc' ? 'asc' : 'desc';
 
-    const where = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' as const } },
-            { email: { contains: search, mode: 'insensitive' as const } },
-          ],
-        }
-      : {};
+    const andConditions: any[] = [];
+    if (search) {
+      andConditions.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' as const } },
+          { email: { contains: search, mode: 'insensitive' as const } },
+        ],
+      });
+    }
+    if (welcomeEmail === 'sent') andConditions.push({ welcomeEmailSentAt: { not: null } });
+    if (welcomeEmail === 'not_sent') andConditions.push({ welcomeEmailSentAt: null });
+    if (profileStatus === 'published') andConditions.push({ profiles: { some: { published: true } } });
+    if (profileStatus === 'unpublished') andConditions.push({ profiles: { none: { published: true } } });
+    if (plan === 'FREE') andConditions.push({ plan: null });
+    if (plan === 'PRO' || plan === 'CLINICO' || plan === 'LIFETIME') andConditions.push({ plan });
+    if (createdFrom) andConditions.push({ createdAt: { gte: new Date(createdFrom) } });
+    if (createdTo) {
+      const to = new Date(createdTo);
+      to.setHours(23, 59, 59, 999);
+      andConditions.push({ createdAt: { lte: to } });
+    }
+
+    const where = andConditions.length > 0 ? { AND: andConditions } : {};
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: sortDir },
         select: {
           id: true,
           email: true,
