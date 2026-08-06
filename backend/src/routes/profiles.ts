@@ -138,38 +138,37 @@ router.get('/directory', async (req, res, next) => {
 
     const now = new Date();
 
+    // "Destacados" incluye LIFETIME, PRO vigente y CLINICO vigente (pagado o en
+    // trial) — en cuanto el plan CLINICO vence (planExpiresAt <= now), el perfil
+    // cae solo a freeWhere sin necesidad de ningún proceso que lo "regrese".
+    const boostedUserWhere: Prisma.UserWhereInput = {
+      OR: [
+        { plan: 'LIFETIME' },
+        {
+          plan: 'PRO',
+          OR: [
+            { planExpiresAt: null },
+            { planExpiresAt: { gt: now } },
+          ],
+        },
+        {
+          plan: 'CLINICO',
+          OR: [
+            { planExpiresAt: null },
+            { planExpiresAt: { gt: now } },
+          ],
+        },
+      ],
+    };
+
     const proWhere: Prisma.ProfileWhereInput = {
       ...baseWhere,
-      user: {
-        OR: [
-          { plan: 'LIFETIME' },
-          {
-            plan: 'PRO',
-            OR: [
-              { planExpiresAt: null },
-              { planExpiresAt: { gt: now } },
-            ],
-          },
-        ],
-      },
+      user: boostedUserWhere,
     };
 
     const freeWhere: Prisma.ProfileWhereInput = {
       ...baseWhere,
-      NOT: {
-        user: {
-          OR: [
-            { plan: 'LIFETIME' },
-            {
-              plan: 'PRO',
-              OR: [
-                { planExpiresAt: null },
-                { planExpiresAt: { gt: now } },
-              ],
-            },
-          ],
-        },
-      },
+      NOT: { user: boostedUserWhere },
     };
 
     const selectFields = {
@@ -258,11 +257,14 @@ router.get('/directory', async (req, res, next) => {
       const stats = statsMap.get(rest.id);
       const isPro = user.plan === 'LIFETIME' ||
         (user.plan === 'PRO' && (!user.planExpiresAt || new Date(user.planExpiresAt) > now));
+      const isClinico = user.plan === 'CLINICO' && (!user.planExpiresAt || new Date(user.planExpiresAt) > now);
+      const boosted = isPro || isClinico;
       return {
         ...rest,
         isPro,
-        averageRating: (isPro && stats) ? Math.round(stats.avg * 10) / 10 : null,
-        reviewCount: (isPro && stats) ? stats.count : 0,
+        isClinico,
+        averageRating: (boosted && stats) ? Math.round(stats.avg * 10) / 10 : null,
+        reviewCount: (boosted && stats) ? stats.count : 0,
       };
     });
 

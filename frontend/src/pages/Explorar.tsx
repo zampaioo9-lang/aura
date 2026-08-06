@@ -26,6 +26,7 @@ interface DirectoryProfile {
   sessionCurrency?: string;
   therapeuticApproaches?: string[];
   isPro: boolean;
+  isClinico: boolean;
   averageRating?: number | null;
   reviewCount?: number;
   services: { id: string; name: string; price: number; currency: string }[];
@@ -556,15 +557,17 @@ export default function Explorar() {
               gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
               gap: 16, alignItems: 'stretch',
             }}>
-              {profiles.map(profile => (
+              {profiles.map(profile => {
+                const boosted = profile.isPro || profile.isClinico;
+                return (
                 <Link key={profile.id} to={`/book/${profile.slug}`}
                   style={{ textDecoration: 'none', display: 'flex' }}>
                   <div
-                    className={`ex-card${profile.isPro ? ' ex-card-pro' : ''}`}
+                    className={`ex-card${boosted ? ' ex-card-pro' : ''}`}
                     style={{
                       flex: 1, minWidth: 0,
-                      background: profile.isPro ? 'rgba(45,212,191,0.06)' : 'rgba(255,255,255,0.05)',
-                      border: `1px solid ${profile.isPro ? 'rgba(45,212,191,0.35)' : 'rgba(45,212,191,0.12)'}`,
+                      background: boosted ? 'rgba(45,212,191,0.06)' : 'rgba(255,255,255,0.05)',
+                      border: `1px solid ${boosted ? 'rgba(45,212,191,0.35)' : 'rgba(45,212,191,0.12)'}`,
                       borderRadius: 14, padding: '18px 20px', cursor: 'pointer',
                       display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 14,
                       backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
@@ -603,6 +606,17 @@ export default function Explorar() {
                               flexShrink: 0,
                             }}>
                               <Zap size={8} /> PRO
+                            </span>
+                          )}
+                          {profile.isClinico && (
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 3,
+                              background: 'rgba(45,212,191,0.15)', border: '1px solid rgba(45,212,191,0.35)',
+                              borderRadius: 20, padding: '2px 7px',
+                              color: '#2dd4bf', fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+                              flexShrink: 0,
+                            }}>
+                              <Zap size={8} /> CLÍNICO
                             </span>
                           )}
                         </div>
@@ -676,7 +690,8 @@ export default function Explorar() {
                     )}
                   </div>
                 </Link>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
