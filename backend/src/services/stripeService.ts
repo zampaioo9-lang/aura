@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { PrismaClient } from '@prisma/client';
 import { env } from '../config/env';
+import { sendEmail, emailTemplates } from './emailService';
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY);
 const prisma = new PrismaClient();
@@ -92,6 +93,19 @@ export async function handleWebhookEvent(rawBody: Buffer, sig: string): Promise<
 
     const hasDiscount = ((session.total_details as any)?.amount_discount ?? 0) > 0;
 
+    const notifyAdmin = async (finalTier: string, finalInterval: string) => {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } });
+      if (!user) return;
+      const tpl = emailTemplates.adminNewPayment({
+        userName: user.name,
+        userEmail: user.email,
+        provider: 'Stripe',
+        tier: finalTier,
+        interval: finalInterval,
+      });
+      sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {});
+    };
+
     if (interval === 'LIFETIME') {
       await prisma.user.update({
         where: { id: userId },
@@ -103,6 +117,7 @@ export async function handleWebhookEvent(rawBody: Buffer, sig: string): Promise<
           stripeHasDiscount: hasDiscount,
         },
       });
+      await notifyAdmin('PRO', 'LIFETIME');
       return;
     }
 
@@ -121,6 +136,7 @@ export async function handleWebhookEvent(rawBody: Buffer, sig: string): Promise<
         stripeHasDiscount: hasDiscount,
       },
     });
+    await notifyAdmin(tier, interval);
   }
 
   if (event.type === 'customer.subscription.deleted') {

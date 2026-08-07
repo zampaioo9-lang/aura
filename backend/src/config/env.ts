@@ -30,6 +30,8 @@ export const env = {
   PAYPAL_PLAN_CLINICO_MONTHLY: process.env.PAYPAL_PLAN_CLINICO_MONTHLY || '',
   PAYPAL_PLAN_CLINICO_MONTHLY_MXN: process.env.PAYPAL_PLAN_CLINICO_MONTHLY_MXN || '',
   PAYPAL_BASE_URL: process.env.PAYPAL_BASE_URL || 'https://api-m.sandbox.paypal.com',
+  PAYPAL_WEBHOOK_ID: process.env.PAYPAL_WEBHOOK_ID || '',
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'zampaio9@gmail.com',
   RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || 'Aliax <notificaciones@aliax.io>',
   RESEND_AUDIENCE_ID: process.env.RESEND_AUDIENCE_ID || '',

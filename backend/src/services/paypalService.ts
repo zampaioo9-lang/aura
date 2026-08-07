@@ -59,6 +59,7 @@ export async function createPayPalOrder(
   returnUrl: string,
   cancelUrl: string,
   currency: 'USD' | 'MXN' = 'USD',
+  userId?: string,
 ): Promise<{ orderId: string; approvalUrl: string }> {
   const token = await getAccessToken();
   const res = await fetch(`${env.PAYPAL_BASE_URL}/v2/checkout/orders`, {
@@ -81,6 +82,7 @@ export async function createPayPalOrder(
             value: amount,
           },
           description: 'Aliax Pro Lifetime',
+          custom_id: userId,
         },
       ],
     }),
@@ -99,6 +101,7 @@ export async function createPayPalSubscription(
   planId: string,
   returnUrl: string,
   cancelUrl: string,
+  userId?: string,
 ): Promise<string> {
   const token = await getAccessToken();
   const res = await fetch(`${env.PAYPAL_BASE_URL}/v1/billing/subscriptions`, {
@@ -110,6 +113,7 @@ export async function createPayPalSubscription(
     },
     body: JSON.stringify({
       plan_id: planId,
+      custom_id: userId,
       application_context: {
         return_url: returnUrl,
         cancel_url: cancelUrl,
@@ -127,6 +131,33 @@ export async function createPayPalSubscription(
   const data = await res.json() as { id: string; links: Array<{ rel: string; href: string }> };
   const approvalLink = data.links.find(l => l.rel === 'approve');
   return approvalLink?.href ?? '';
+}
+
+export async function verifyPayPalWebhookSignature(
+  headers: Record<string, string | string[] | undefined>,
+  body: unknown,
+): Promise<boolean> {
+  const token = await getAccessToken();
+  const res = await fetch(`${env.PAYPAL_BASE_URL}/v1/notifications/verify-webhook-signature`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      auth_algo: headers['paypal-auth-algo'],
+      cert_url: headers['paypal-cert-url'],
+      transmission_id: headers['paypal-transmission-id'],
+      transmission_sig: headers['paypal-transmission-sig'],
+      transmission_time: headers['paypal-transmission-time'],
+      webhook_id: env.PAYPAL_WEBHOOK_ID,
+      webhook_event: body,
+    }),
+  });
+
+  if (!res.ok) return false;
+  const data = await res.json() as { verification_status: string };
+  return data.verification_status === 'SUCCESS';
 }
 
 export async function capturePayPalOrder(orderId: string): Promise<{ status: string }> {

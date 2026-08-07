@@ -384,6 +384,45 @@ export const emailTemplates = {
     `),
   }),
 
+  // Admin: nuevo usuario registrado
+  adminNewUser: (data: {
+    userName: string;
+    userEmail: string;
+  }) => ({
+    to: env.ADMIN_EMAIL,
+    subject: `Nuevo registro en Aliax: ${data.userName}`,
+    html: baseTemplate('Nuevo usuario registrado', `
+      ${heading('Nuevo usuario registrado')}
+      ${subtext('Alguien acaba de crear una cuenta en Aliax.')}
+      ${detailTable(detailRow('Nombre', data.userName) + detailRow('Correo', data.userEmail))}
+      ${ctaButton('Ver en el Admin', 'https://www.aliax.io/admin')}
+    `),
+  }),
+
+  // Admin: pago confirmado (Stripe o PayPal)
+  adminNewPayment: (data: {
+    userName: string;
+    userEmail: string;
+    provider: 'Stripe' | 'PayPal';
+    tier: string;
+    interval: string;
+  }) => ({
+    to: env.ADMIN_EMAIL,
+    subject: `💰 Pago confirmado (${data.provider}): ${data.userName}`,
+    html: baseTemplate('Pago confirmado', `
+      ${badge(`${data.provider} · ${data.tier} · ${data.interval}`, '#16a34a')}
+      ${heading('Se confirmó un pago')}
+      ${subtext('El plan del usuario ya se actualizó automáticamente en la base de datos.')}
+      ${detailTable(
+        detailRow('Nombre', data.userName) +
+        detailRow('Correo', data.userEmail) +
+        detailRow('Plan', `${data.tier} (${data.interval})`) +
+        detailRow('Método de pago', data.provider)
+      )}
+      ${ctaButton('Ver en el Admin', 'https://www.aliax.io/admin')}
+    `),
+  }),
+
   // Al profesional: cita cancelada por el cliente
   cancellationProfessional: (data: {
     professionalName: string;

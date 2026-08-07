@@ -52,6 +52,10 @@ router.post('/register', async (req, res, next) => {
       }
     }).catch(() => {});
 
+    // Notificar al admin del nuevo registro (no bloqueante)
+    const adminTpl = emailTemplates.adminNewUser({ userName: user.name, userEmail: user.email });
+    sendEmail(adminTpl.to, adminTpl.subject, adminTpl.html).catch(() => {});
+
     const token = signToken(user.id);
     res.status(201).json({
       token,
