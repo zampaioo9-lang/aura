@@ -368,7 +368,7 @@ router.get('/announcement-logs', async (req, res, next) => {
       SELECT id, subject, audience, "sentCount", "failCount", recipients, "sentAt"
       FROM "AnnouncementLog"
       ORDER BY "sentAt" DESC
-      LIMIT 50
+      LIMIT 2000
     `;
     res.json(logs);
   } catch (err) {
