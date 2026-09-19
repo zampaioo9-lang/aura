@@ -581,6 +581,10 @@ router.post('/newsletter/sync', async (_req, res, next) => {
 router.get('/users/:id/activity', async (req, res, next) => {
   try {
     const { id } = req.params;
+
+    const user = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
     const days = Math.max(1, Math.min(365, parseInt(String(req.query.days ?? '30'), 10) || 30));
     const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
