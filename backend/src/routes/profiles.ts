@@ -4,6 +4,7 @@ import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { profileSchema } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
 import { isProUser } from '../lib/planUtils';
+import { logActivity } from '../services/activityService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -374,6 +375,16 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res, next) => {
       where: { id: req.params.id },
       data,
     });
+
+    if (existing.published === false && data.published === true) {
+      logActivity({ userId: req.userId!, module: 'perfil', type: 'PROFILE_PUBLISHED', metadata: { profileId: profile.id } });
+    } else if (existing.published === true && data.published === false) {
+      logActivity({ userId: req.userId!, module: 'perfil', type: 'PROFILE_UNPUBLISHED', metadata: { profileId: profile.id } });
+    }
+    if (data.template && data.template !== existing.template) {
+      logActivity({ userId: req.userId!, module: 'perfil', type: 'TEMPLATE_CHANGED', metadata: { profileId: profile.id, template: data.template } });
+    }
+
     res.json(profile);
   } catch (err) {
     next(err);
