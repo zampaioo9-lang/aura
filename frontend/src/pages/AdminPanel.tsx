@@ -380,6 +380,8 @@ export default function AdminPanel() {
     recentActions: { type: string; module: string; metadata: any; createdAt: string }[];
   }>>({});
   const [loadingActivity, setLoadingActivity] = useState<string | null>(null);
+  const [activitySummary, setActivitySummary] = useState<{ module: string; count: number }[]>([]);
+  const [activityPeriod, setActivityPeriod] = useState<'30d' | '90d' | 'all'>('30d');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
@@ -617,6 +619,10 @@ export default function AdminPanel() {
       })
       .finally(() => setLoadingUsers(false));
   }, [page, search, welcomeEmailFilter, profileStatusFilter, planFilter, createdFrom, createdTo, sortDir]);
+
+  useEffect(() => {
+    api.get(`/admin/activity/summary?period=${activityPeriod}`).then(res => setActivitySummary(res.data));
+  }, [activityPeriod]);
 
   const resetFiltersToPage1 = () => setPage(1);
 
@@ -857,6 +863,48 @@ export default function AdminPanel() {
             </div>
           </div>
         )}
+
+        {/* ── Módulos más usados ── */}
+        <div className="rounded-lg px-4 py-3 mb-4" style={{ background: C.subCard, boxShadow: C.subCardShadow }}>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: C.textFaint }}>
+              Módulos más usados (todos los usuarios)
+            </span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {(['30d', '90d', 'all'] as const).map(p => {
+                const label = p === '30d' ? '30 días' : p === '90d' ? '90 días' : 'Todo';
+                const isActive = activityPeriod === p;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setActivityPeriod(p)}
+                    style={{
+                      padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                      border: `1px solid ${isActive ? C.accent : dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'}`,
+                      background: isActive ? C.accent : 'transparent',
+                      color: isActive ? '#fff' : C.textMuted,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {activitySummary.length === 0 ? (
+            <p className="text-xs italic" style={{ color: C.textFaint }}>Sin actividad registrada en este periodo.</p>
+          ) : (
+            <ol className="text-sm space-y-1.5" style={{ color: C.text }}>
+              {activitySummary.map((m, i) => (
+                <li key={m.module} className="flex items-center justify-between">
+                  <span>{i + 1}. {m.module}</span>
+                  <span style={{ color: C.textFaint }}>{m.count} usos</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
 
         {/* Newsletter — Resend Broadcasts */}
         <div className="rounded-xl p-5" style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}>
