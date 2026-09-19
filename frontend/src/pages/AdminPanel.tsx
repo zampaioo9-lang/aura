@@ -380,6 +380,7 @@ export default function AdminPanel() {
     recentActions: { type: string; module: string; metadata: any; createdAt: string }[];
   }>>({});
   const [loadingActivity, setLoadingActivity] = useState<string | null>(null);
+  const [activityDays, setActivityDays] = useState<7 | 30 | 90>(30);
   const [activitySummary, setActivitySummary] = useState<{ module: string; count: number }[]>([]);
   const [activityPeriod, setActivityPeriod] = useState<'30d' | '90d' | 'all'>('30d');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -623,6 +624,17 @@ export default function AdminPanel() {
   useEffect(() => {
     api.get(`/admin/activity/summary?period=${activityPeriod}`).then(res => setActivitySummary(res.data));
   }, [activityPeriod]);
+
+  useEffect(() => {
+    if (!expandedUser) return;
+    const key = `${expandedUser}-${activityDays}`;
+    if (activityByUser[key]) return;
+    setLoadingActivity(expandedUser);
+    api.get(`/admin/users/${expandedUser}/activity?days=${activityDays}`)
+      .then(res => setActivityByUser(prev => ({ ...prev, [key]: res.data })))
+      .catch(() => {})
+      .finally(() => setLoadingActivity(null));
+  }, [expandedUser, activityDays]);
 
   const resetFiltersToPage1 = () => setPage(1);
 
@@ -1376,17 +1388,7 @@ export default function AdminPanel() {
                         }}
                         onMouseEnter={e => (e.currentTarget.style.background = C.tableRowHover)}
                         onMouseLeave={e => (e.currentTarget.style.background = expandedUser === u.id ? C.expandedBg : (idx % 2 === 0 ? C.tableRow : C.tableRowAlt))}
-                        onClick={() => {
-                          const next = expandedUser === u.id ? null : u.id;
-                          setExpandedUser(next);
-                          if (next && !activityByUser[next]) {
-                            setLoadingActivity(next);
-                            api.get(`/admin/users/${next}/activity?days=30`)
-                              .then(res => setActivityByUser(prev => ({ ...prev, [next]: res.data })))
-                              .catch(() => {})
-                              .finally(() => setLoadingActivity(null));
-                          }
-                        }}
+                        onClick={() => setExpandedUser(expandedUser === u.id ? null : u.id)}
                       >
                         <td className="px-5 py-3">
                           <p className="font-medium" style={{ color: C.text }}>{u.name}</p>
@@ -1521,41 +1523,69 @@ export default function AdminPanel() {
                             )}
 
                             {/* Actividad */}
-                            {loadingActivity === u.id ? (
-                              <div className="rounded-lg px-3 py-3 mt-3 text-xs" style={{ background: C.subCard, boxShadow: C.subCardShadow, color: C.textFaint }}>
-                                Cargando actividad...
-                              </div>
-                            ) : activityByUser[u.id] ? (
-                              <div className="rounded-lg px-3 py-3 mt-3" style={{ background: C.subCard, boxShadow: C.subCardShadow }}>
-                                <p className="text-xs font-semibold mb-2" style={{ color: C.textMuted }}>Actividad (últimos 30 días)</p>
-                                <p className="text-sm mb-2" style={{ color: C.text }}>
-                                  Activo <strong>{activityByUser[u.id].activeDays}</strong> de los últimos 30 días
-                                  {activityByUser[u.id].lastActiveAt && (
-                                    <> · última vez: {new Date(activityByUser[u.id].lastActiveAt!).toLocaleDateString('es-ES')}</>
-                                  )}
-                                </p>
-                                {activityByUser[u.id].moduleCounts.length > 0 && (
-                                  <div className="flex flex-wrap gap-2 mb-2">
-                                    {activityByUser[u.id].moduleCounts.map(m => (
-                                      <span key={m.module} className="text-xs rounded-full px-2 py-0.5" style={{ background: C.accentLight, color: C.accent }}>
-                                        {m.module} ({m.count})
-                                      </span>
-                                    ))}
+                            {(() => {
+                              const activityKey = `${u.id}-${activityDays}`;
+                              const activity = activityByUser[activityKey];
+                              return (
+                                <div className="rounded-lg px-3 py-3 mt-3" style={{ background: C.subCard, boxShadow: C.subCardShadow }}>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs font-semibold" style={{ color: C.textMuted }}>Actividad (últimos {activityDays} días)</p>
+                                    <div style={{ display: 'flex', gap: 4 }}>
+                                      {([7, 30, 90] as const).map(d => {
+                                        const isActive = activityDays === d;
+                                        return (
+                                          <button
+                                            key={d}
+                                            onClick={e => { e.stopPropagation(); setActivityDays(d); }}
+                                            style={{
+                                              padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 600,
+                                              border: `1px solid ${isActive ? C.accent : dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'}`,
+                                              background: isActive ? C.accent : 'transparent',
+                                              color: isActive ? '#fff' : C.textMuted,
+                                              cursor: 'pointer',
+                                            }}
+                                          >
+                                            {d}d
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
                                   </div>
-                                )}
-                                {activityByUser[u.id].recentActions.length > 0 ? (
-                                  <ul className="text-xs space-y-1" style={{ color: C.textFaint }}>
-                                    {activityByUser[u.id].recentActions.map((a, i) => (
-                                      <li key={i}>
-                                        {ACTIVITY_LABELS[a.type] ?? a.type} · {new Date(a.createdAt).toLocaleDateString('es-ES')}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                ) : (
-                                  <p className="text-xs italic" style={{ color: C.textFaint }}>Sin acciones registradas todavía.</p>
-                                )}
-                              </div>
-                            ) : null}
+                                  {loadingActivity === u.id ? (
+                                    <p className="text-xs" style={{ color: C.textFaint }}>Cargando actividad...</p>
+                                  ) : activity ? (
+                                    <>
+                                      <p className="text-sm mb-2" style={{ color: C.text }}>
+                                        Activo <strong>{activity.activeDays}</strong> de los últimos {activityDays} días
+                                        {activity.lastActiveAt && (
+                                          <> · última vez: {new Date(activity.lastActiveAt).toLocaleDateString('es-ES')}</>
+                                        )}
+                                      </p>
+                                      {activity.moduleCounts.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                          {activity.moduleCounts.map(m => (
+                                            <span key={m.module} className="text-xs rounded-full px-2 py-0.5" style={{ background: C.accentLight, color: C.accent }}>
+                                              {m.module} ({m.count})
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {activity.recentActions.length > 0 ? (
+                                        <ul className="text-xs space-y-1" style={{ color: C.textFaint }}>
+                                          {activity.recentActions.map((a, i) => (
+                                            <li key={i}>
+                                              {ACTIVITY_LABELS[a.type] ?? a.type} · {new Date(a.createdAt).toLocaleDateString('es-ES')}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      ) : (
+                                        <p className="text-xs italic" style={{ color: C.textFaint }}>Sin acciones registradas todavía.</p>
+                                      )}
+                                    </>
+                                  ) : null}
+                                </div>
+                              );
+                            })()}
 
                             {/* Correos enviados a este usuario */}
                             {(() => {
