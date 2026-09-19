@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { isClinicoUser, isInClinicoTrial, CLINICO_TRIAL_AI_NOTES } from '../lib/planUtils';
+import { logActivity } from '../services/activityService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -227,6 +228,7 @@ ${anonymizedDescription}`,
       });
     }
 
+    logActivity({ userId: req.userId!, module: 'pacientes', type: 'NOTE_AI_GENERATED', metadata: { noteType, clientId: clientId ?? null } });
     res.json(generated);
   } catch (err) {
     next(err);
