@@ -29,6 +29,7 @@ app.get('/api/health', (_req, res) => {
 // Lazy load routes to catch import errors
 try {
   const { errorHandler } = require('../src/middleware/errorHandler');
+  const { activityLogger } = require('../src/middleware/activityLogger');
   const authRoutes = require('../src/routes/auth').default;
   const profileRoutes = require('../src/routes/profiles').default;
   const serviceRoutes = require('../src/routes/services').default;
@@ -54,6 +55,7 @@ try {
   const audioNotesRoutes = require('../src/routes/audio-notes').default;
   const { sendWhatsApp } = require('../src/services/whatsappService');
 
+  app.use(activityLogger);
   app.use('/api/auth', authRoutes);
   app.use('/api/profiles', profileRoutes);
   app.use('/api/services', serviceRoutes);

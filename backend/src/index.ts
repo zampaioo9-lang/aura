@@ -3,6 +3,7 @@ import path from 'path';
 import cors from 'cors';
 import { env } from './config/env';
 import { errorHandler } from './middleware/errorHandler';
+import { activityLogger } from './middleware/activityLogger';
 import authRoutes from './routes/auth';
 import profileRoutes from './routes/profiles';
 import serviceRoutes from './routes/services';
@@ -37,6 +38,8 @@ app.use(cors());
 app.use('/api/subscriptions/stripe/webhook', express.raw({ type: 'application/json' }));
 
 app.use(express.json());
+
+app.use(activityLogger);
 
 // Serve local uploads in dev mode
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
