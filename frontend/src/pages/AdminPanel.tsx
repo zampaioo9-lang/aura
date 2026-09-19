@@ -100,6 +100,18 @@ function PlanBadge({ u }: { u: UserRow }) {
   return <span style={{ padding: '2px 8px', background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(8px)', color: 'rgba(255,255,255,0.4)', fontSize: 11, borderRadius: 99, border: '1px solid rgba(255,255,255,0.12)' }}>Sin plan</span>;
 }
 
+const ACTIVITY_LABELS: Record<string, string> = {
+  CLIENT_CREATED: '🧑‍⚕️ Creó un paciente',
+  CLIENT_UPDATED: '🧑‍⚕️ Editó un paciente',
+  HISTORY_STEP_COMPLETED: '✅ Avanzó en Historia Clínica',
+  NOTE_CREATED: '📝 Creó una nota de sesión',
+  NOTE_AI_GENERATED: '🤖 Generó una nota con IA',
+  AUDIO_TRANSCRIPTION_STARTED: '🎙️ Inició una transcripción de audio',
+  PROFILE_PUBLISHED: '🌐 Publicó su perfil',
+  PROFILE_UNPUBLISHED: '🌐 Despublicó su perfil',
+  TEMPLATE_CHANGED: '🎨 Cambió de plantilla',
+};
+
 const ONBOARDING_TEMPLATES = [
   {
     id: 'o1',
@@ -361,6 +373,13 @@ export default function AdminPanel() {
   const [createdTo, setCreatedTo] = useState('');
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [activityByUser, setActivityByUser] = useState<Record<string, {
+    activeDays: number;
+    lastActiveAt: string | null;
+    moduleCounts: { module: string; count: number }[];
+    recentActions: { type: string; module: string; metadata: any; createdAt: string }[];
+  }>>({});
+  const [loadingActivity, setLoadingActivity] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
@@ -1309,7 +1328,16 @@ export default function AdminPanel() {
                         }}
                         onMouseEnter={e => (e.currentTarget.style.background = C.tableRowHover)}
                         onMouseLeave={e => (e.currentTarget.style.background = expandedUser === u.id ? C.expandedBg : (idx % 2 === 0 ? C.tableRow : C.tableRowAlt))}
-                        onClick={() => setExpandedUser(expandedUser === u.id ? null : u.id)}
+                        onClick={() => {
+                          const next = expandedUser === u.id ? null : u.id;
+                          setExpandedUser(next);
+                          if (next && !activityByUser[next]) {
+                            setLoadingActivity(next);
+                            api.get(`/admin/users/${next}/activity?days=30`)
+                              .then(res => setActivityByUser(prev => ({ ...prev, [next]: res.data })))
+                              .finally(() => setLoadingActivity(null));
+                          }
+                        }}
                       >
                         <td className="px-5 py-3">
                           <p className="font-medium" style={{ color: C.text }}>{u.name}</p>
@@ -1442,6 +1470,43 @@ export default function AdminPanel() {
                             ) : (
                               <p className="text-xs italic" style={{ color: C.textFaint }}>Este usuario aún no creó ningún perfil.</p>
                             )}
+
+                            {/* Actividad */}
+                            {loadingActivity === u.id ? (
+                              <div className="rounded-lg px-3 py-3 mt-3 text-xs" style={{ background: C.subCard, boxShadow: C.subCardShadow, color: C.textFaint }}>
+                                Cargando actividad...
+                              </div>
+                            ) : activityByUser[u.id] ? (
+                              <div className="rounded-lg px-3 py-3 mt-3" style={{ background: C.subCard, boxShadow: C.subCardShadow }}>
+                                <p className="text-xs font-semibold mb-2" style={{ color: C.textMuted }}>Actividad (últimos 30 días)</p>
+                                <p className="text-sm mb-2" style={{ color: C.text }}>
+                                  Activo <strong>{activityByUser[u.id].activeDays}</strong> de los últimos 30 días
+                                  {activityByUser[u.id].lastActiveAt && (
+                                    <> · última vez: {new Date(activityByUser[u.id].lastActiveAt!).toLocaleDateString('es-ES')}</>
+                                  )}
+                                </p>
+                                {activityByUser[u.id].moduleCounts.length > 0 && (
+                                  <div className="flex flex-wrap gap-2 mb-2">
+                                    {activityByUser[u.id].moduleCounts.map(m => (
+                                      <span key={m.module} className="text-xs rounded-full px-2 py-0.5" style={{ background: C.accentLight, color: C.accent }}>
+                                        {m.module} ({m.count})
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {activityByUser[u.id].recentActions.length > 0 ? (
+                                  <ul className="text-xs space-y-1" style={{ color: C.textFaint }}>
+                                    {activityByUser[u.id].recentActions.map((a, i) => (
+                                      <li key={i}>
+                                        {ACTIVITY_LABELS[a.type] ?? a.type} · {new Date(a.createdAt).toLocaleDateString('es-ES')}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-xs italic" style={{ color: C.textFaint }}>Sin acciones registradas todavía.</p>
+                                )}
+                              </div>
+                            ) : null}
 
                             {/* Correos enviados a este usuario */}
                             {(() => {
