@@ -82,22 +82,43 @@ router.get('/users', async (req, res, next) => {
     const limit = parseInt(String(req.query.limit || '20'));
     const skip = (page - 1) * limit;
     const search = req.query.search ? String(req.query.search) : undefined;
+    const welcomeEmail = req.query.welcomeEmail ? String(req.query.welcomeEmail) : undefined; // 'sent' | 'not_sent'
+    const profileStatus = req.query.profileStatus ? String(req.query.profileStatus) : undefined; // 'published' | 'unpublished'
+    const plan = req.query.plan ? String(req.query.plan) : undefined; // 'FREE' | 'PRO' | 'CLINICO' | 'LIFETIME'
+    const createdFrom = req.query.createdFrom ? String(req.query.createdFrom) : undefined;
+    const createdTo = req.query.createdTo ? String(req.query.createdTo) : undefined;
+    const sortDir = req.query.sortDir === 'asc' ? 'asc' : 'desc';
 
-    const where = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' as const } },
-            { email: { contains: search, mode: 'insensitive' as const } },
-          ],
-        }
-      : {};
+    const andConditions: any[] = [];
+    if (search) {
+      andConditions.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' as const } },
+          { email: { contains: search, mode: 'insensitive' as const } },
+        ],
+      });
+    }
+    if (welcomeEmail === 'sent') andConditions.push({ welcomeEmailSentAt: { not: null } });
+    if (welcomeEmail === 'not_sent') andConditions.push({ welcomeEmailSentAt: null });
+    if (profileStatus === 'published') andConditions.push({ profiles: { some: { published: true } } });
+    if (profileStatus === 'unpublished') andConditions.push({ profiles: { none: { published: true } } });
+    if (plan === 'FREE') andConditions.push({ plan: null });
+    if (plan === 'PRO' || plan === 'CLINICO' || plan === 'LIFETIME') andConditions.push({ plan });
+    if (createdFrom) andConditions.push({ createdAt: { gte: new Date(createdFrom) } });
+    if (createdTo) {
+      const to = new Date(createdTo);
+      to.setHours(23, 59, 59, 999);
+      andConditions.push({ createdAt: { lte: to } });
+    }
+
+    const where = andConditions.length > 0 ? { AND: andConditions } : {};
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: sortDir },
         select: {
           id: true,
           email: true,
@@ -554,6 +575,75 @@ router.post('/newsletter/sync', async (_req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+// GET /api/admin/users/:id/activity?days=30
+router.get('/users/:id/activity', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const days = Math.max(1, Math.min(365, parseInt(String(req.query.days ?? '30'), 10) || 30));
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const [activeDaysRows, lastActiveRows, moduleCountRows, recentActionRows] = await Promise.all([
+      prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(DISTINCT DATE("createdAt")) as count
+        FROM "ActivityEvent"
+        WHERE "userId" = ${id} AND "createdAt" >= ${cutoff}
+      `,
+      prisma.$queryRaw<{ lastActiveAt: Date | null }[]>`
+        SELECT MAX("createdAt") as "lastActiveAt"
+        FROM "ActivityEvent"
+        WHERE "userId" = ${id}
+      `,
+      prisma.$queryRaw<{ module: string; count: bigint }[]>`
+        SELECT module, COUNT(*)::int as count
+        FROM "ActivityEvent"
+        WHERE "userId" = ${id} AND type = 'VIEW' AND "createdAt" >= ${cutoff}
+        GROUP BY module
+        ORDER BY count DESC
+      `,
+      prisma.$queryRaw<{ type: string; module: string; metadata: unknown; createdAt: Date }[]>`
+        SELECT type, module, metadata, "createdAt"
+        FROM "ActivityEvent"
+        WHERE "userId" = ${id} AND type != 'VIEW'
+        ORDER BY "createdAt" DESC
+        LIMIT 10
+      `,
+    ]);
+
+    res.json({
+      activeDays: Number(activeDaysRows[0]?.count ?? 0),
+      periodDays: days,
+      lastActiveAt: lastActiveRows[0]?.lastActiveAt ?? null,
+      moduleCounts: moduleCountRows.map(r => ({ module: r.module, count: Number(r.count) })),
+      recentActions: recentActionRows.map(r => ({ type: r.type, module: r.module, metadata: r.metadata, createdAt: r.createdAt })),
+    });
+  } catch (err) { next(err); }
+});
+
+// GET /api/admin/activity/summary?period=30d|90d|all
+router.get('/activity/summary', async (req, res, next) => {
+  try {
+    const period = String(req.query.period ?? '30d');
+    const cutoff =
+      period === '90d' ? new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) :
+      period === 'all' ? new Date(0) :
+      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const rows = await prisma.$queryRaw<{ module: string; count: bigint }[]>`
+      SELECT module, COUNT(*)::int as count
+      FROM "ActivityEvent"
+      WHERE type = 'VIEW' AND "createdAt" >= ${cutoff}
+      GROUP BY module
+      ORDER BY count DESC
+    `;
+
+    res.json(rows.map(r => ({ module: r.module, count: Number(r.count) })));
+  } catch (err) { next(err); }
 });
 
 export default router;

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
+import { logActivity } from '../services/activityService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -42,6 +43,7 @@ router.post('/:clientId', authMiddleware, async (req: AuthRequest, res, next) =>
         nextPlan: req.body.nextPlan,
       },
     });
+    logActivity({ userId: req.userId!, module: 'pacientes', type: 'NOTE_CREATED', metadata: { clientId: req.params.clientId, noteType: note.noteType } });
     res.status(201).json(note);
   } catch (err) { next(err); }
 });

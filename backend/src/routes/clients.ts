@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
+import { logActivity } from '../services/activityService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -68,6 +69,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res, next) => {
         referralSource:  referralSource  || null,
       },
     });
+    logActivity({ userId: req.userId!, module: 'pacientes', type: 'CLIENT_CREATED', metadata: { clientName: client.name } });
     res.status(201).json(client);
   } catch (err) { next(err); }
 });
@@ -88,6 +90,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res, next) => {
         ...(consentGivenAt !== undefined ? { consentGivenAt: consentGivenAt ? new Date(consentGivenAt) : null } : {}),
       },
     });
+    logActivity({ userId: req.userId!, module: 'pacientes', type: 'CLIENT_UPDATED', metadata: { clientName: updated.name } });
     res.json(updated);
   } catch (err) { next(err); }
 });

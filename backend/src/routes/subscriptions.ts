@@ -3,8 +3,9 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { createCheckoutSession, handleWebhookEvent } from '../services/stripeService';
-import { verifySubscription, resolveInterval, resolveTier, createPayPalOrder, capturePayPalOrder, createPayPalSubscription } from '../services/paypalService';
+import { verifySubscription, resolveInterval, resolveTier, createPayPalOrder, capturePayPalOrder, createPayPalSubscription, verifyPayPalWebhookSignature } from '../services/paypalService';
 import { env } from '../config/env';
+import { sendEmail, emailTemplates } from '../services/emailService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -70,6 +71,7 @@ router.post('/paypal/subscription/create', authMiddleware, async (req: AuthReque
       planId,
       `${env.FRONTEND_URL}/payment/paypal-return`,
       `${env.FRONTEND_URL}/pricing`,
+      req.userId,
     );
     res.json({ approvalUrl });
   } catch (err) {
@@ -124,6 +126,7 @@ router.post('/paypal/order/create', authMiddleware, async (req: AuthRequest, res
       `${env.FRONTEND_URL}/payment/paypal-return`,
       `${env.FRONTEND_URL}/pricing`,
       resolvedCurrency,
+      req.userId,
     );
     res.json({ orderId, approvalUrl });
   } catch (err) {
@@ -155,6 +158,61 @@ router.post('/paypal/order/capture', authMiddleware, async (req: AuthRequest, re
     res.json({ success: true });
   } catch (err) {
     next(err);
+  }
+});
+
+async function notifyAdminPayPalPayment(userId: string, tier: string, interval: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } });
+  if (!user) return;
+  const tpl = emailTemplates.adminNewPayment({
+    userName: user.name,
+    userEmail: user.email,
+    provider: 'PayPal',
+    tier,
+    interval,
+  });
+  sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {});
+}
+
+// POST /api/subscriptions/paypal/webhook  (respaldo servidor-a-servidor, no depende
+// de que el navegador del usuario complete el regreso desde PayPal)
+router.post('/paypal/webhook', async (req: Request, res: Response) => {
+  try {
+    const valid = await verifyPayPalWebhookSignature(req.headers as Record<string, string>, req.body);
+    if (!valid) {
+      res.status(400).json({ error: 'Invalid webhook signature' });
+      return;
+    }
+
+    const { event_type, resource } = req.body as { event_type: string; resource: any };
+    const userId: string | undefined = resource?.custom_id;
+
+    if (event_type === 'PAYMENT.CAPTURE.COMPLETED' && userId) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { plan: 'PRO', planInterval: 'LIFETIME', planExpiresAt: null, paypalSubscriptionId: null },
+      });
+      await notifyAdminPayPalPayment(userId, 'PRO', 'LIFETIME');
+    }
+
+    if (event_type === 'BILLING.SUBSCRIPTION.ACTIVATED' && userId) {
+      const interval = resolveInterval(resource.plan_id);
+      const tier = resolveTier(resource.plan_id);
+      const planExpiresAt = interval === 'MONTHLY'
+        ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: { plan: tier, planInterval: interval, planExpiresAt, paypalSubscriptionId: resource.id },
+      });
+      await notifyAdminPayPalPayment(userId, tier, interval);
+    }
+
+    res.json({ received: true });
+  } catch (err) {
+    console.error('[PayPal Webhook] Error:', err);
+    res.status(500).json({ error: 'Webhook processing error' });
   }
 });
 

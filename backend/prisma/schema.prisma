@@ -36,6 +36,7 @@ model User {
   profiles             Profile[]
   professionalBookings Booking[] @relation("ProfessionalBookings")
   clients              Client[]
+  activityEvents       ActivityEvent[]
 }
 
 model Client {
@@ -534,4 +535,18 @@ model RateLimit {
   expiresAt DateTime
 
   @@index([key])
+}
+
+model ActivityEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  module    String
+  type      String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([module])
 }
