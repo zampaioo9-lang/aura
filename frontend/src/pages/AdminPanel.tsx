@@ -1335,6 +1335,7 @@ export default function AdminPanel() {
                             setLoadingActivity(next);
                             api.get(`/admin/users/${next}/activity?days=30`)
                               .then(res => setActivityByUser(prev => ({ ...prev, [next]: res.data })))
+                              .catch(() => {})
                               .finally(() => setLoadingActivity(null));
                           }
                         }}
