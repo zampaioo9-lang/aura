@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, ChevronLeft, ChevronRight, CreditCard, Tag, Sun, Moon, Trash2, Mail, MailX, Send } from 'lucide-react';
+import { Users, Search, ChevronLeft, ChevronRight, CreditCard, Tag, Sun, Moon, Trash2, Mail, MailX, Send, User, Activity, Shield, BarChart3 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
@@ -381,8 +381,10 @@ export default function AdminPanel() {
   }>>({});
   const [loadingActivity, setLoadingActivity] = useState<string | null>(null);
   const [activityDays, setActivityDays] = useState<7 | 30 | 90>(30);
+  const [userDetailTab, setUserDetailTab] = useState<'perfil' | 'actividad' | 'comunicacion'>('actividad');
   const [activitySummary, setActivitySummary] = useState<{ module: string; count: number }[]>([]);
   const [activityPeriod, setActivityPeriod] = useState<'30d' | '90d' | 'all'>('30d');
+  const [pageTab, setPageTab] = useState<'resumen' | 'usuarios' | 'comunicacion'>('usuarios');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
@@ -791,8 +793,43 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-6 py-6">
+       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
 
+        {/* ── Pestañas de página (columna izquierda) ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 200, flexShrink: 0, position: 'sticky', top: 24 }}>
+          {[
+            { id: 'resumen' as const, label: 'Resumen', icon: BarChart3 },
+            { id: 'usuarios' as const, label: 'Usuarios', icon: Users },
+            { id: 'comunicacion' as const, label: 'Comunicación', icon: Send },
+          ].map(tab => {
+            const Icon = tab.icon;
+            const isActive = pageTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setPageTab(tab.id)}
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition-colors"
+                style={{
+                  background: isActive ? C.accentLight : 'transparent',
+                  color: isActive ? C.accent : C.textMuted,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="space-y-6" style={{ flex: 1, minWidth: 0 }}>
+
+        {pageTab === 'resumen' && (
+        <>
         {/* ── Resumen compacto ── */}
         {loadingStats ? (
           <div className="rounded-2xl h-32 animate-pulse" style={{ background: C.card, border: `1px solid ${C.cardBorder}` }} />
@@ -917,7 +954,11 @@ export default function AdminPanel() {
             </ol>
           )}
         </div>
+        </>
+        )}
 
+        {pageTab === 'comunicacion' && (
+        <>
         {/* Newsletter — Resend Broadcasts */}
         <div className="rounded-xl p-5" style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}>
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2" style={{ color: C.text }}>
@@ -1125,12 +1166,12 @@ export default function AdminPanel() {
             <div>
               <label className="text-xs font-medium block mb-1" style={{ color: C.textMuted }}>Mensaje</label>
               <textarea
-                rows={4}
+                rows={16}
                 placeholder="Escribe el mensaje del anuncio. Puedes usar saltos de línea."
                 value={annBody}
                 onChange={e => { setAnnBody(e.target.value); setAnnResult(null); }}
-                className="w-full px-3 py-2 text-sm rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-teal-400"
-                style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text }}
+                className="w-full px-3 py-2 text-sm rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-teal-400"
+                style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text, minHeight: 320 }}
               />
             </div>
             <div className="flex items-center gap-4">
@@ -1236,7 +1277,11 @@ export default function AdminPanel() {
             </button>
           </div>
         </div>
+        </>
+        )}
 
+        {pageTab === 'usuarios' && (
+        <>
         {/* Users table */}
         <div className="rounded-xl" style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}>
           <div className="px-5 py-4 flex items-center justify-between flex-wrap gap-3"
@@ -1439,6 +1484,34 @@ export default function AdminPanel() {
                       {expandedUser === u.id && (
                         <tr style={{ background: C.expandedBg }}>
                           <td colSpan={7} className="px-5 py-4">
+                          <div className="flex gap-4">
+                            <div className="flex flex-col gap-1 flex-shrink-0" style={{ width: 168 }}>
+                              {[
+                                { id: 'perfil' as const, label: 'Perfil y Plan', icon: User },
+                                { id: 'actividad' as const, label: 'Actividad', icon: Activity },
+                                { id: 'comunicacion' as const, label: 'Comunicación y Accesos', icon: Shield },
+                              ].map(tab => {
+                                const Icon = tab.icon;
+                                const isActive = userDetailTab === tab.id;
+                                return (
+                                  <button
+                                    key={tab.id}
+                                    onClick={e => { e.stopPropagation(); setUserDetailTab(tab.id); }}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-left transition-colors"
+                                    style={{
+                                      background: isActive ? C.accentLight : 'transparent',
+                                      color: isActive ? C.accent : C.textMuted,
+                                    }}
+                                  >
+                                    <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                                    {tab.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                            {userDetailTab === 'perfil' && (
+                            <>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                               {[
                                 { label: 'Nombre', value: u.name },
@@ -1521,7 +1594,11 @@ export default function AdminPanel() {
                             ) : (
                               <p className="text-xs italic" style={{ color: C.textFaint }}>Este usuario aún no creó ningún perfil.</p>
                             )}
+                            </>
+                            )}
 
+                            {userDetailTab === 'actividad' && (
+                            <>
                             {/* Actividad */}
                             {(() => {
                               const activityKey = `${u.id}-${activityDays}`;
@@ -1586,7 +1663,11 @@ export default function AdminPanel() {
                                 </div>
                               );
                             })()}
+                            </>
+                            )}
 
+                            {userDetailTab === 'comunicacion' && (
+                            <>
                             {/* Correos enviados a este usuario */}
                             {(() => {
                               const userLogs = annLogs.filter(log =>
@@ -1844,6 +1925,10 @@ export default function AdminPanel() {
                                 )}
                               </div>
                             )}
+                            </>
+                            )}
+                            </div>
+                          </div>
                           </td>
                         </tr>
                       )}
@@ -1880,6 +1965,11 @@ export default function AdminPanel() {
             </div>
           )}
         </div>
+        </>
+        )}
+
+        </div>
+       </div>
       </div>
     </div>
   );
