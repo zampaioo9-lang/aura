@@ -37,4 +37,5 @@ export const env = {
   RESEND_AUDIENCE_ID: process.env.RESEND_AUDIENCE_ID || '',
   RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET || '',
   ASSEMBLYAI_API_KEY: process.env.ASSEMBLYAI_API_KEY || '',
+  CRISIS_REFERRAL_SECRET: process.env.CRISIS_REFERRAL_SECRET || '',
 };
