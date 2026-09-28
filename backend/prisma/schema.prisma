@@ -278,6 +278,7 @@ model Profile {
   languages              String[]  @default([])
   acceptsInvoice         Boolean?  @default(false)
   workingStyle           String?
+  lastCrisisAssignedAt   DateTime?
   createdAt       DateTime  @default(now())
   updatedAt     DateTime  @updatedAt @default(now())
 
