@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import crypto from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
 import { env } from '../config/env';
@@ -7,6 +8,15 @@ import { sendEmail, emailTemplates } from '../services/emailService';
 const router = Router();
 const prisma = new PrismaClient();
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // POST /api/crisis-referrals — llamada servidor a servidor desde ia-terapia,
 // autenticada con un secreto compartido (no es un usuario logueado). Busca
 // un terapeuta Pro/Clínico elegible por rotación simple y lo notifica por
@@ -14,7 +24,13 @@ const prisma = new PrismaClient();
 router.post('/', async (req, res, next) => {
   try {
     const secret = req.header('X-Ia-Terapia-Secret');
-    if (!env.CRISIS_REFERRAL_SECRET || secret !== env.CRISIS_REFERRAL_SECRET) {
+    const provided = Buffer.from(secret ?? '', 'utf8');
+    const expected = Buffer.from(env.CRISIS_REFERRAL_SECRET, 'utf8');
+    const authorized =
+      env.CRISIS_REFERRAL_SECRET.length > 0 &&
+      provided.length === expected.length &&
+      crypto.timingSafeEqual(provided, expected);
+    if (!authorized) {
       throw new AppError(401, 'No autorizado');
     }
 
@@ -23,14 +39,25 @@ router.post('/', async (req, res, next) => {
       throw new AppError(400, 'riskEventId y summary son requeridos');
     }
 
+    // Idempotencia: si ia-terapia reintenta el mismo riskEventId (timeout,
+    // 5xx transitorio), no elegimos otro terapeuta ni reenviamos el correo,
+    // solo devolvemos el resultado ya registrado.
+    const existing = await prisma.crisisReferral.findUnique({ where: { riskEventId } });
+    if (existing) {
+      res.json({ notified: existing.emailSuccess, profileId: existing.profileId ?? undefined });
+      return;
+    }
+
     const now = new Date();
     // Mismo criterio de plan vigente que /api/profiles/directory, sin
     // filtrar por enfoque terapéutico (decisión explícita del spec: en una
-    // crisis importa más la disponibilidad que el modelo exacto).
+    // crisis importa más la disponibilidad que el modelo exacto). Excluye
+    // usuarios bloqueados por admin.
     const eligible = await prisma.profile.findFirst({
       where: {
         published: true,
         user: {
+          blocked: false,
           OR: [
             { plan: 'LIFETIME' },
             { plan: 'PRO', OR: [{ planExpiresAt: null }, { planExpiresAt: { gt: now } }] },
@@ -43,6 +70,7 @@ router.post('/', async (req, res, next) => {
     });
 
     if (!eligible) {
+      await prisma.crisisReferral.create({ data: { riskEventId, profileId: null, emailSuccess: false } });
       res.json({ notified: false });
       return;
     }
@@ -52,11 +80,22 @@ router.post('/', async (req, res, next) => {
     const tpl = emailTemplates.crisisReferral({
       professionalName: eligible.user.name,
       professionalEmail: eligible.user.email,
-      summary,
+      summary: escapeHtml(summary),
     });
-    await sendEmail(tpl.to, tpl.subject, tpl.html);
+    const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
+    if (!emailResult.success) {
+      console.error(`[CrisisReferral] Failed to notify profile ${eligible.id}:`, emailResult.error);
+    }
 
-    res.json({ notified: true, profileId: eligible.id });
+    await prisma.crisisReferral.create({
+      data: { riskEventId, profileId: eligible.id, emailSuccess: emailResult.success },
+    });
+
+    if (emailResult.success) {
+      res.json({ notified: true, profileId: eligible.id });
+    } else {
+      res.json({ notified: false });
+    }
   } catch (err) {
     next(err);
   }

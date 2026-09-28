@@ -536,3 +536,11 @@ model RateLimit {
 
   @@index([key])
 }
+
+model CrisisReferral {
+  id           String   @id @default(cuid())
+  riskEventId  String   @unique
+  profileId    String?
+  emailSuccess Boolean
+  createdAt    DateTime @default(now())
+}
