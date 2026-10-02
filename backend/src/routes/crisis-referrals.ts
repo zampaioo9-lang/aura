@@ -8,6 +8,13 @@ import { sendEmail, emailTemplates } from '../services/emailService';
 const router = Router();
 const prisma = new PrismaClient();
 
+// Cuentas internas/demo del propio fundador (ver memoria del proyecto:
+// project_aliax_cuentas_demo_admin), no terapeutas externas reales con
+// disponibilidad genuina. Se excluyen siempre de la elegibilidad de
+// derivación de crisis, sin importar qué tan completo esté su perfil —
+// un caso real no debe terminar en una cuenta de demostración.
+const INTERNAL_DEMO_EMAILS = ['psiquecreativa9@gmail.com', 'zampaioo9@gmail.com', 'zampaio9@hotmail.com'];
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -70,7 +77,7 @@ router.post('/', async (req, res, next) => {
         ],
         services: { some: { isActive: true } },
         availabilitySlots: { some: { isActive: true } },
-        user: { blocked: false },
+        user: { blocked: false, email: { notIn: INTERNAL_DEMO_EMAILS } },
       },
       orderBy: [{ lastCrisisAssignedAt: { sort: 'asc', nulls: 'first' } }],
       include: { user: { select: { name: true, email: true } } },
