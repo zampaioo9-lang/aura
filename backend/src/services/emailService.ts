@@ -492,6 +492,23 @@ export const emailTemplates = {
       <p style="margin-top:20px;color:#a1a1aa;font-size:12px;line-height:1.5;">Este enlace es de uso único y expira en 7 días. Si ya dejaste tu reseña o no deseas hacerlo, simplemente ignora este mensaje.</p>
     `),
   }),
+
+  // Al terapeuta: caso de riesgo alto en ia-terapia, requiere contacto directo
+  crisisReferral: (data: {
+    professionalName: string;
+    professionalEmail: string;
+    summary: string;
+  }) => ({
+    to: data.professionalEmail,
+    subject: `Caso urgente: se necesita contacto directo — Aliax`,
+    html: baseTemplate('Caso urgente', `
+      ${badge('Riesgo alto', '#dc2626')}
+      ${heading(`Hola ${data.professionalName}`)}
+      ${subtext('Una persona en un programa de acompañamiento guiado por IA (ia-terapia, un proyecto afiliado a Aliax) mostró señales de riesgo alto. Te pedimos que la contactes directamente lo antes posible.')}
+      ${detailTable(detailRow('Resumen del caso', data.summary))}
+      <p style="margin-top:20px;color:#a1a1aa;font-size:12px;line-height:1.5;">Este correo no incluye datos clínicos completos, solo lo necesario para el primer contacto. Actúa con tu criterio profesional habitual.</p>
+    `),
+  }),
 };
 
 // ── Reseteo de contraseña — helper compartido ───────────────────────

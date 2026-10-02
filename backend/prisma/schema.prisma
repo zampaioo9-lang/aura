@@ -279,6 +279,7 @@ model Profile {
   languages              String[]  @default([])
   acceptsInvoice         Boolean?  @default(false)
   workingStyle           String?
+  lastCrisisAssignedAt   DateTime?
   createdAt       DateTime  @default(now())
   updatedAt     DateTime  @updatedAt @default(now())
 
@@ -535,4 +536,12 @@ model RateLimit {
   expiresAt DateTime
 
   @@index([key])
+}
+
+model CrisisReferral {
+  id           String   @id @default(cuid())
+  riskEventId  String   @unique
+  profileId    String?
+  emailSuccess Boolean
+  createdAt    DateTime @default(now())
 }
