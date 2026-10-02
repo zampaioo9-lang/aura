@@ -49,21 +49,28 @@ router.post('/', async (req, res, next) => {
     }
 
     const now = new Date();
-    // Mismo criterio de plan vigente que /api/profiles/directory, sin
-    // filtrar por enfoque terapéutico (decisión explícita del spec: en una
-    // crisis importa más la disponibilidad que el modelo exacto). Excluye
-    // usuarios bloqueados por admin.
+    // Criterio de elegibilidad (2026-10-02, decisión explícita del fundador):
+    // mientras la base de terapeutas Pro/Clínico sea casi nula, filtrar por
+    // plan de pago deja el sistema de crisis sin nadie a quien derivar casi
+    // siempre, cayendo al respaldo del fundador en cada caso. En su lugar se
+    // filtra por que el perfil esté realmente completo y publicado, sin
+    // importar el plan — en una crisis importa más que el perfil sea real y
+    // contactable que si el terapeuta paga la suscripción. "Completo" =
+    // cédula capturada, especialidad definida, al menos un servicio activo,
+    // y al menos un horario de disponibilidad activo. Excluye usuarios
+    // bloqueados por admin.
     const eligible = await prisma.profile.findFirst({
       where: {
         published: true,
-        user: {
-          blocked: false,
-          OR: [
-            { plan: 'LIFETIME' },
-            { plan: 'PRO', OR: [{ planExpiresAt: null }, { planExpiresAt: { gt: now } }] },
-            { plan: 'CLINICO', OR: [{ planExpiresAt: null }, { planExpiresAt: { gt: now } }] },
-          ],
-        },
+        AND: [
+          { cedula: { not: null } },
+          { cedula: { not: '' } },
+          { specialty: { not: null } },
+          { specialty: { not: '' } },
+        ],
+        services: { some: { isActive: true } },
+        availabilitySlots: { some: { isActive: true } },
+        user: { blocked: false },
       },
       orderBy: [{ lastCrisisAssignedAt: { sort: 'asc', nulls: 'first' } }],
       include: { user: { select: { name: true, email: true } } },
