@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Clock, MapPin, ArrowLeft, Award, Star } from 'lucide-react';
+import { Clock, MapPin, ArrowLeft, Award, Star, ShieldCheck } from 'lucide-react';
 import api from '../api/client';
 import BookingForm from '../components/BookingForm';
 import { formatPrice, formatDuration } from '../lib/utils';
@@ -92,6 +92,12 @@ export default function BookingPage() {
           <div style={{ minWidth: 0 }}>
             <h1 className="bp-pro-name">{profile.title}</h1>
             <p className="bp-pro-profession">{profile.profession}</p>
+            {profile.cedula && (
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(45,212,191,0.10)', border: '1px solid rgba(45,212,191,0.30)', borderRadius: 20, padding: '4px 11px', marginBottom: 10 }}>
+                <ShieldCheck size={12} color="#2dd4bf" />
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#2dd4bf', letterSpacing: '0.02em' }}>Profesional Verificado</span>
+              </div>
+            )}
             <div className="bp-pro-tags">
               {profile.specialty && (
                 <span className="bp-tag">{profile.specialty}</span>

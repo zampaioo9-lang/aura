@@ -423,6 +423,26 @@ export const emailTemplates = {
     `),
   }),
 
+  // Admin: fallo inesperado al iniciar una transcripción de audio (clave inválida, AssemblyAI caído, cuota agotada, etc.)
+  adminTranscriptionError: (data: {
+    userName: string;
+    userEmail: string;
+    errorDetail: string;
+  }) => ({
+    to: env.ADMIN_EMAIL,
+    subject: `⚠️ Falló la transcripción de audio (${data.userName})`,
+    html: baseTemplate('Falló la transcripción de audio', `
+      ${badge('Error de transcripción', '#dc2626')}
+      ${heading('No se pudo iniciar una transcripción')}
+      ${subtext('El usuario solo vio el mensaje genérico "No se pudo iniciar la transcripción, intenta de nuevo". Este es el error real capturado en el servidor.')}
+      ${detailTable(
+        detailRow('Usuario', data.userName) +
+        detailRow('Correo', data.userEmail) +
+        detailRow('Error real', data.errorDetail)
+      )}
+    `),
+  }),
+
   // Al profesional: cita cancelada por el cliente
   cancellationProfessional: (data: {
     professionalName: string;

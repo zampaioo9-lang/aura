@@ -30,6 +30,7 @@ router.post('/register', async (req, res, next) => {
         phone: data.phone || null,
         plan: 'CLINICO',
         planExpiresAt: trialExpiry,
+        clinicoTrialStartedAt: new Date(),
         clinicoTrialEndsAt: trialExpiry,
         hasUsedClinicoTrial: true,
       },

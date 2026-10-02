@@ -166,9 +166,24 @@ router.get('/directory', async (req, res, next) => {
       user: boostedUserWhere,
     };
 
+    // No se define como `NOT: { user: boostedUserWhere } }` porque en SQL una
+    // comparación con NULL (ej. plan IS NULL) no da false, da un resultado
+    // indeterminado — por lo que un usuario con plan NULL no calzaría ni en
+    // boostedUserWhere ni en su negación, y su perfil desaparecería del
+    // directorio por completo. Se enumera el caso "no destacado" explícitamente
+    // en su lugar, cubriendo tanto plan NULL como el string literal 'FREE'.
+    const freeUserWhere: Prisma.UserWhereInput = {
+      OR: [
+        { plan: null },
+        { plan: { notIn: ['LIFETIME', 'PRO', 'CLINICO'] } },
+        { plan: 'PRO', planExpiresAt: { lte: now } },
+        { plan: 'CLINICO', planExpiresAt: { lte: now } },
+      ],
+    };
+
     const freeWhere: Prisma.ProfileWhereInput = {
       ...baseWhere,
-      NOT: { user: boostedUserWhere },
+      user: freeUserWhere,
     };
 
     const selectFields = {

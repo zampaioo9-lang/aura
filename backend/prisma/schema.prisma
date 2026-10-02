@@ -21,6 +21,7 @@ model User {
   plan                 String?
   planInterval         String?
   planExpiresAt        DateTime?
+  clinicoTrialStartedAt DateTime?
   clinicoTrialEndsAt   DateTime?
   hasUsedClinicoTrial  Boolean   @default(false)
   trialAudioSecondsUsed Int      @default(0)

@@ -3,7 +3,7 @@ export default function PrivacyPolicy() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-3xl mx-auto px-4 py-16">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Política de Privacidad</h1>
-        <p className="text-sm text-gray-500 mb-10">Última actualización: 2 de julio de 2026</p>
+        <p className="text-sm text-gray-500 mb-10">Última actualización: 23 de agosto de 2026</p>
 
         <div className="space-y-8 text-gray-700">
           <section>
@@ -28,6 +28,10 @@ export default function PrivacyPolicy() {
                 proceso terapéutico. Estos son <strong>datos personales sensibles</strong> conforme al Art. 3,
                 fracción VI de la LFPDPPP — ver sección 2.
               </li>
+              <li>
+                Si tu profesional utiliza la función de transcripción de audio: el audio de la sesión, procesado
+                de forma temporal para generar la transcripción — ver sección 2 sobre cómo se maneja este audio.
+              </li>
             </ul>
           </section>
 
@@ -50,6 +54,14 @@ export default function PrivacyPolicy() {
               el texto de la descripción de sesión se envía a nuestro proveedor de IA (ver sección 5). Antes de
               este envío, Aliax.io sustituye automáticamente tu nombre por un identificador genérico, de modo que
               el proveedor de IA no recibe datos que te identifiquen directamente.
+            </p>
+            <p className="mt-2">
+              Si tu profesional utiliza la función de transcripción de audio, la plataforma le solicita confirmar
+              expresamente que obtuvo tu consentimiento para grabar la sesión antes de subir el audio. El archivo
+              de audio se envía a nuestro proveedor de transcripción (ver sección 5) únicamente para generar el
+              texto de la conversación; <strong>Aliax.io no almacena el audio en ningún momento</strong>, ni antes
+              ni después de la transcripción, y el proveedor de transcripción elimina el archivo y el resultado de
+              su propio sistema una vez que Aliax.io lo recupera.
             </p>
           </section>
 
@@ -94,6 +106,11 @@ export default function PrivacyPolicy() {
                 <strong>Anthropic (modelos Claude)</strong>: cuando tu profesional usa la función de notas
                 clínicas o de coincidencia con inteligencia artificial. El texto enviado no incluye tu nombre —
                 ver sección 2
+              </li>
+              <li>
+                <strong>AssemblyAI</strong>: cuando tu profesional usa la función de transcripción de audio,
+                para convertir el audio de la sesión en texto. El audio se procesa de forma temporal y se
+                elimina inmediatamente después — ver sección 2
               </li>
             </ul>
             <p className="mt-2">

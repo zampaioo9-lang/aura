@@ -380,6 +380,18 @@ export default function Dashboard() {
           >
             Actualizar plan
           </Link>
+          {/* Ayuda — WhatsApp, visible en todas las pantallas */}
+          <a
+            href={`https://wa.me/524492123720?text=${encodeURIComponent('Hola, tengo una pregunta sobre Aliax.io 👋')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-sm font-medium px-2 md:px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
+            style={{ background: C.isDark ? 'rgba(255,255,255,0.12)' : C.accentLight, color: C.isDark ? 'white' : C.accent, border: `1px solid ${C.isDark ? 'rgba(255,255,255,0.2)' : C.accent + '44'}` }}
+            aria-label="Ayuda por WhatsApp"
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="hidden md:inline">Ayuda</span>
+          </a>
           {/* Theme toggle — all sizes */}
           <button
             className="p-2 rounded-lg transition-colors"

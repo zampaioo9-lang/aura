@@ -31,6 +31,7 @@ interface UserRow {
   plan: string | null;
   planInterval: string | null;
   planExpiresAt: string | null;
+  clinicoTrialStartedAt: string | null;
   stripeSubscriptionId: string | null;
   paypalSubscriptionId: string | null;
   stripeHasDiscount: boolean;
@@ -55,6 +56,14 @@ const INTERVAL_LABEL: Record<string, string> = {
 
 function PlanBadge({ u }: { u: UserRow }) {
   if (u.plan === 'CLINICO') {
+    const expired = !!u.planExpiresAt && new Date(u.planExpiresAt) <= new Date();
+    if (expired) {
+      return (
+        <span style={{ padding: '2px 8px', background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(8px)', color: 'rgba(255,255,255,0.4)', fontSize: 11, borderRadius: 99, border: '1px solid rgba(255,255,255,0.12)', whiteSpace: 'nowrap' }}>
+          Clínico vencido
+        </span>
+      );
+    }
     return (
       <span style={{ padding: '2px 8px', background: 'rgba(168,85,247,0.18)', backdropFilter: 'blur(8px)', color: '#a855f7', fontSize: 11, borderRadius: 99, fontWeight: 600, border: '1px solid rgba(168,85,247,0.3)', whiteSpace: 'nowrap' }}>
         Clínico
@@ -245,6 +254,106 @@ No se trata de una foto perfecta ni de sesión profesional costosa. Basta con qu
 Evita fotos grupales, recortadas de otra imagen, o sin tu cara claramente visible.
 
 Sube tu foto desde Editar perfil — toma menos de 2 minutos y cambia la primera impresión que tienen de ti.
+
+— César
+Aliax.io`,
+  },
+  {
+    id: 'o7',
+    tag: 'Notas IA',
+    tagColor: '#2563eb',
+    subject: 'El expediente incompleto es el riesgo silencioso de tu consulta',
+    body: `Hola,
+
+Te hago una pregunta directa: ¿tus notas de sesión están al día con todos tus pacientes, o hay algunas pendientes de "cuando tengas tiempo"?
+
+No eres el único. Es la parte de la consulta que más se pospone — y la que más expone cuando se pospone. Un expediente incompleto no es solo un pendiente administrativo: es tu respaldo profesional si algún día lo necesitas, y es lo que sostiene la continuidad del tratamiento si retomas un caso semanas después.
+
+El módulo de Notas con IA de Aliax existe justo para cerrar esa brecha. Subes el audio de la sesión (o escribes una breve descripción si no grabaste) y la IA la transcribe y organiza en una nota clínica completa, en formato SOAP, Diamante TBCS o NECS, lista para que la revises y guardes el mismo día.
+
+No reemplaza tu criterio clínico — reemplaza la fricción que te hacía posponerlo.
+
+Pruébalo con tu próxima sesión desde tu dashboard.
+
+— César
+Aliax.io`,
+  },
+  {
+    id: 'o8',
+    tag: 'Notas IA',
+    tagColor: '#2563eb',
+    subject: 'Lo que antes te tomaba 20 minutos por sesión, ahora son 3',
+    body: `Hola,
+
+Haz la cuenta con tu propia agenda: si escribir una nota de sesión te toma entre 15 y 20 minutos, y ves 15 pacientes a la semana, eso es más de 4 horas semanales solo en documentación. Tiempo que no cobras y que casi siempre se roba de tu descanso, no de tu consultorio.
+
+Con el módulo de Notas con IA, ese proceso cambia de forma: subes el audio de la sesión y la IA entrega la nota ya estructurada en el formato clínico que uses (SOAP, Diamante TBCS o NECS). Tu parte pasa de "redactar desde cero" a "revisar y ajustar" — normalmente 2 o 3 minutos.
+
+No es una nota genérica: usa lo que realmente se dijo en la sesión, organizado en el esquema clínico correspondiente.
+
+Las horas que recuperas cada semana no son un beneficio abstracto — son sesiones que puedes tomar, o tiempo que puedes simplemente no trabajar.
+
+Pruébalo con tu próxima sesión desde tu dashboard.
+
+— César
+Aliax.io`,
+  },
+  {
+    id: 'o9',
+    tag: 'Notas IA',
+    tagColor: '#2563eb',
+    subject: 'La nota a mano ya no es el estándar — esto es lo que la reemplaza',
+    body: `Hola,
+
+La forma en que documentamos una sesión no ha cambiado mucho en décadas: libreta, memoria y tiempo extra al final del día. Mientras tanto, el resto de las profesiones de salud ya adoptaron herramientas que hacen ese trabajo por ellos.
+
+Esto no es una moda pasajera de la inteligencia artificial — es hacia donde va la documentación clínica en general, y adoptarlo ahora te pone del lado correcto de ese cambio, no corriendo detrás de él después.
+
+Un paciente que ve que su terapeuta usa herramientas modernas para llevar su expediente no percibe eso como frialdad — lo percibe como cuidado y organización. Es la misma lógica de por qué un consultorio ordenado transmite más confianza que uno caótico.
+
+El módulo de Notas con IA de Aliax convierte el audio de tu sesión en una nota clínica lista, en el formato que ya usas. No cambia cómo haces terapia — cambia cómo la documentas.
+
+Pruébalo con tu próxima sesión desde tu dashboard.
+
+— César
+Aliax.io`,
+  },
+  {
+    id: 'o10',
+    tag: 'Notas IA',
+    tagColor: '#2563eb',
+    subject: 'Deja de tomar notas en sesión y empieza a estar realmente presente',
+    body: `Hola,
+
+Piensa en tu última sesión: ¿cuántas veces bajaste la mirada para anotar algo, justo en el momento en que el paciente más necesitaba sentir que lo estabas mirando?
+
+Tomar notas mientras escuchas es un costo silencioso — te divide la atención en el momento exacto en que más se necesita completa. Y la alternativa, no anotar nada y reconstruir todo de memoria al final del día, tiene su propio costo: se pierden matices, frases textuales, detalles que en su momento parecían menores pero que en la sesión 8 resultan clave.
+
+Con el módulo de Notas con IA, grabas el audio de la sesión (con el consentimiento del paciente) y quedas libre de documentar mientras ocurre. La IA transcribe y organiza todo después, en el formato clínico que uses — y tú te quedas con toda tu atención puesta en la persona que tienes enfrente.
+
+Es, quizás, el beneficio menos obvio de esta herramienta: no solo te ahorra tiempo después, mejora la calidad de lo que pasa durante la sesión.
+
+Pruébalo con tu próxima sesión desde tu dashboard.
+
+— César
+Aliax.io`,
+  },
+  {
+    id: 'o11',
+    tag: 'Notas IA',
+    tagColor: '#2563eb',
+    subject: 'La carga administrativa silenciosa que agota a los terapeutas',
+    body: `Hola,
+
+Hay un tipo de cansancio en esta profesión del que casi no se habla: no es el desgaste de sostener a tus pacientes, es el peso acumulado de la documentación pendiente. Notas atrasadas, expedientes a medio llenar, la sensación de que el trabajo "de verdad" ya terminó pero la parte administrativa sigue ahí.
+
+Ese peso tiene nombre en la literatura de salud: carga de documentación. Y es una de las causas de fatiga profesional menos reconocidas, precisamente porque no se ve como parte del trabajo clínico, aunque consume la misma energía.
+
+El módulo de Notas con IA no elimina la documentación — la vuelve mucho más ligera. Subes el audio, revisas la nota ya estructurada, y sigues con tu día. Esa energía que ya no se va en redactar desde cero es energía que te queda para tus pacientes, o simplemente para ti.
+
+Si todavía no lo has probado, esta semana es un buen momento para hacerlo con una sola sesión y notar la diferencia.
+
+Pruébalo desde tu dashboard.
 
 — César
 Aliax.io`,
@@ -927,10 +1036,10 @@ export default function AdminPanel() {
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2" style={{ color: C.text }}>
             <Mail className="w-4 h-4 text-teal-400" />
             Secuencia de Onboarding
-            <span className="text-xs font-normal px-2 py-0.5 rounded-full" style={{ background: 'rgba(13,148,136,0.12)', color: '#0d9488' }}>6 correos · activación → conversión</span>
+            <span className="text-xs font-normal px-2 py-0.5 rounded-full" style={{ background: 'rgba(13,148,136,0.12)', color: '#0d9488' }}>11 correos · activación → conversión + notas IA</span>
           </h2>
           <p className="text-xs mb-4" style={{ color: C.textFaint }}>
-            Para usuarios nuevos que aún no han completado su perfil o activado su cuenta. Enviar en orden, con 3–4 días entre cada uno.
+            #1–6: para usuarios nuevos que aún no han completado su perfil o activado su cuenta. #7–11 ("Notas IA"): profundizan el beneficio del módulo de transcripción — cumplimiento del expediente, ahorro de tiempo, y por qué vale la pena adoptarlo ya. Enviar en orden, con 3–4 días entre cada uno.
           </p>
           <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollSnapType: 'x proximity' }}>
             {ONBOARDING_TEMPLATES.map((tpl, idx) => (
@@ -1402,11 +1511,19 @@ export default function AdminPanel() {
                               ) : u.plan === 'CLINICO' ? (
                                 <div className="flex flex-wrap gap-3 text-sm" style={{ color: C.text }}>
                                   <span>Clínico</span>
-                                  {u.planExpiresAt && (
+                                  {u.clinicoTrialStartedAt && (
                                     <span style={{ color: C.textMuted }}>
-                                      Expira: {new Date(u.planExpiresAt).toLocaleDateString('es-ES')}
+                                      Inicio: {new Date(u.clinicoTrialStartedAt).toLocaleDateString('es-ES')}
                                     </span>
                                   )}
+                                  {u.planExpiresAt && (() => {
+                                    const expired = new Date(u.planExpiresAt) <= new Date();
+                                    return (
+                                      <span style={{ color: expired ? '#f87171' : C.textMuted, fontWeight: expired ? 600 : 400 }}>
+                                        {expired ? 'Venció' : 'Expira'}: {new Date(u.planExpiresAt).toLocaleDateString('es-ES')}
+                                      </span>
+                                    );
+                                  })()}
                                 </div>
                               ) : u.trialEndsAt ? (
                                 <div style={{ color: C.text }} className="text-sm">

@@ -1,10 +1,12 @@
 import { Router } from 'express';
+import axios from 'axios';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { uploadAudio } from '../middleware/upload';
 import { AppError } from '../middleware/errorHandler';
 import { isClinicoUser, isInClinicoTrial, CLINICO_TRIAL_AUDIO_SECONDS } from '../lib/planUtils';
 import { uploadAndStartTranscription, getTranscriptionResult } from '../services/assemblyAiService';
+import { emailTemplates, sendEmail } from '../services/emailService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -60,7 +62,23 @@ router.post('/transcribe/:clientId', authMiddleware, (req, res, next) => {
 
     res.status(201).json({ jobId: job.id });
   } catch (err) {
-    next(err instanceof AppError ? err : new AppError(502, 'No se pudo iniciar la transcripción, intenta de nuevo'));
+    if (err instanceof AppError) return next(err);
+
+    const errorDetail = axios.isAxiosError(err)
+      ? `HTTP ${err.response?.status ?? 'sin respuesta'} — ${JSON.stringify(err.response?.data ?? err.message)}`
+      : err instanceof Error ? err.message : String(err);
+
+    console.error('[audio-notes] Fallo inesperado al iniciar transcripción:', errorDetail);
+
+    prisma.user.findUnique({ where: { id: req.userId! }, select: { name: true, email: true } })
+      .then((user) => {
+        if (!user) return;
+        const tpl = emailTemplates.adminTranscriptionError({ userName: user.name, userEmail: user.email, errorDetail });
+        return sendEmail(tpl.to, tpl.subject, tpl.html);
+      })
+      .catch(() => {});
+
+    next(new AppError(502, 'No se pudo iniciar la transcripción, intenta de nuevo'));
   }
 });
 

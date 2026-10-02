@@ -72,7 +72,7 @@ export default function Landing() {
 
           {/* Hero copy */}
           <div
-            className="absolute left-[5%] md:left-[11%] top-[14%] md:top-1/2 md:-translate-y-[55%] flex flex-col gap-2 md:gap-3 z-20 pointer-events-none w-[58%] md:max-w-[40%]"
+            className="absolute left-1/2 -translate-x-1/2 md:left-[11%] md:translate-x-0 top-[14%] md:top-1/2 md:-translate-y-[55%] flex flex-col items-center md:items-start text-center md:text-left gap-2 md:gap-3 z-20 pointer-events-none w-[84%] md:max-w-[40%]"
             style={{ opacity: copyOpacity, filter: copyBlur > 0.1 ? `blur(${copyBlur}px)` : 'none' }}
           >
             <p

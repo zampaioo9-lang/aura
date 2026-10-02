@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, MapPin, Zap, SlidersHorizontal, X, ChevronDown, Sparkles, Loader2, Star } from 'lucide-react';
+import { Search, MapPin, Zap, SlidersHorizontal, X, ChevronDown, Sparkles, Loader2, Star, ShieldCheck } from 'lucide-react';
 import api from '../api/client';
 import './Explorar.css';
 import LandingHeader from '../components/landing/LandingHeader';
@@ -27,6 +27,7 @@ interface DirectoryProfile {
   therapeuticApproaches?: string[];
   isPro: boolean;
   isClinico: boolean;
+  cedula?: string | null;
   averageRating?: number | null;
   reviewCount?: number;
   services: { id: string; name: string; price: number; currency: string }[];
@@ -229,7 +230,14 @@ export default function Explorar() {
       Object.entries(params).forEach(([k, v]) => { if (v) urlParams.set(k, v); });
       urlParams.set('limit', '50');
       const res = await api.get(`/profiles/directory?${urlParams}`);
-      setProfiles(res.data.profiles);
+      // Perfiles sin foto y sin cédula (verificado) van al final, sin alterar
+      // el orden relativo entre sí ni el de los demás (destacados primero, etc.)
+      const sorted = [...res.data.profiles].sort((a: DirectoryProfile, b: DirectoryProfile) => {
+        const aDemote = !a.avatar && !a.cedula;
+        const bDemote = !b.avatar && !b.cedula;
+        return aDemote === bDemote ? 0 : aDemote ? 1 : -1;
+      });
+      setProfiles(sorted);
     } catch {
       setProfiles([]);
     } finally {
@@ -661,9 +669,9 @@ export default function Explorar() {
                       {profile.therapeuticApproaches && profile.therapeuticApproaches.length > 0
                         ? profile.therapeuticApproaches.slice(0, 3).map(a => (
                           <span key={a} style={{
-                            background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.20)',
+                            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)',
                             borderRadius: 6, padding: '3px 9px',
-                            color: 'rgba(45,212,191,0.8)', fontSize: 11,
+                            color: 'rgba(210,195,240,0.6)', fontSize: 11,
                           }}>
                             {a}
                           </span>
@@ -687,6 +695,14 @@ export default function Explorar() {
                           {profile.sessionCurrency ?? 'MXN'} {Number(profile.pricePerSession).toLocaleString()}
                         </span> / sesión
                       </p>
+                    )}
+
+                    {/* Profesional verificado */}
+                    {profile.cedula && (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(45,212,191,0.10)', border: '1px solid rgba(45,212,191,0.30)', borderRadius: 20, padding: '4px 11px', alignSelf: 'flex-start' }}>
+                        <ShieldCheck size={12} color="#2dd4bf" />
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#2dd4bf', letterSpacing: '0.02em' }}>Profesional Verificado</span>
+                      </div>
                     )}
                   </div>
                 </Link>

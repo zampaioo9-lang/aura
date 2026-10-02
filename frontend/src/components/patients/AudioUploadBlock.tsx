@@ -98,6 +98,12 @@ export default function AudioUploadBlock({ clientId, onTranscriptReady, onBusyCh
       <p style={{ fontSize: 11, color: textColor, opacity: 0.75, margin: '6px 0 0', textAlign: 'center' }}>
         Hasta 1 hora de audio · el audio nunca se almacena
       </p>
+      <p style={{ fontSize: 10.5, color: textColor, opacity: 0.6, margin: '3px 0 0', textAlign: 'center' }}>
+        Se procesa mediante un servicio externo de transcripción y se elimina de inmediato —{' '}
+        <a href="/privacidad" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+          ver aviso de privacidad
+        </a>
+      </p>
 
       {pendingFile && (
         <div style={{ marginTop: 8, padding: '10px 12px', border: `1px dashed ${boxBorder}`, borderRadius: 10 }}>

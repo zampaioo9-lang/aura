@@ -130,6 +130,7 @@ router.get('/users', async (req, res, next) => {
           plan: true,
           planInterval: true,
           planExpiresAt: true,
+          clinicoTrialStartedAt: true,
           stripeSubscriptionId: true,
           paypalSubscriptionId: true,
           stripeHasDiscount: true,
@@ -290,6 +291,7 @@ router.patch('/users/:id/activate-clinico-trial', async (req: any, res, next) =>
       data: {
         plan: 'CLINICO',
         planExpiresAt: trialExpiry,
+        clinicoTrialStartedAt: new Date(),
         clinicoTrialEndsAt: trialExpiry,
         hasUsedClinicoTrial: true,
         trialAudioSecondsUsed: 0,
