@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { requirePro } from '../middleware/requirePro';
 import { AppError } from '../middleware/errorHandler';
+import { logActivity } from '../services/activityService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -36,6 +37,7 @@ router.put('/:clientId', authMiddleware, requirePro, async (req: AuthRequest, re
       create: { clientId: req.params.clientId, ...fields, completedSteps: completedSteps ?? [] },
       update: { ...fields, ...(completedSteps !== undefined ? { completedSteps } : {}) },
     });
+    logActivity({ userId: req.userId!, module: 'pacientes', type: 'HISTORY_STEP_COMPLETED', metadata: { clientId: req.params.clientId, completedSteps: history.completedSteps } });
     res.json(history);
   } catch (err) { next(err); }
 });

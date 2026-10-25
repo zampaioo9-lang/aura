@@ -7,6 +7,7 @@ import { AppError } from '../middleware/errorHandler';
 import { isClinicoUser, isInClinicoTrial, CLINICO_TRIAL_AUDIO_SECONDS } from '../lib/planUtils';
 import { uploadAndStartTranscription, getTranscriptionResult } from '../services/assemblyAiService';
 import { emailTemplates, sendEmail } from '../services/emailService';
+import { logActivity } from '../services/activityService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -60,6 +61,7 @@ router.post('/transcribe/:clientId', authMiddleware, (req, res, next) => {
       },
     });
 
+    logActivity({ userId: req.userId!, module: 'pacientes', type: 'AUDIO_TRANSCRIPTION_STARTED', metadata: { clientId: req.params.clientId } });
     res.status(201).json({ jobId: job.id });
   } catch (err) {
     if (err instanceof AppError) return next(err);

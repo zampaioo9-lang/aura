@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, ChevronLeft, ChevronRight, CreditCard, Tag, Sun, Moon, Trash2, Mail, MailX, Send } from 'lucide-react';
+import { Users, Search, ChevronLeft, ChevronRight, CreditCard, Tag, Sun, Moon, Trash2, Mail, MailX, Send, User, Activity, Shield, BarChart3 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
@@ -108,6 +108,18 @@ function PlanBadge({ u }: { u: UserRow }) {
 
   return <span style={{ padding: '2px 8px', background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(8px)', color: 'rgba(255,255,255,0.4)', fontSize: 11, borderRadius: 99, border: '1px solid rgba(255,255,255,0.12)' }}>Sin plan</span>;
 }
+
+const ACTIVITY_LABELS: Record<string, string> = {
+  CLIENT_CREATED: '🧑‍⚕️ Creó un paciente',
+  CLIENT_UPDATED: '🧑‍⚕️ Editó un paciente',
+  HISTORY_STEP_COMPLETED: '✅ Avanzó en Historia Clínica',
+  NOTE_CREATED: '📝 Creó una nota de sesión',
+  NOTE_AI_GENERATED: '🤖 Generó una nota con IA',
+  AUDIO_TRANSCRIPTION_STARTED: '🎙️ Inició una transcripción de audio',
+  PROFILE_PUBLISHED: '🌐 Publicó su perfil',
+  PROFILE_UNPUBLISHED: '🌐 Despublicó su perfil',
+  TEMPLATE_CHANGED: '🎨 Cambió de plantilla',
+};
 
 const ONBOARDING_TEMPLATES = [
   {
@@ -470,6 +482,18 @@ export default function AdminPanel() {
   const [createdTo, setCreatedTo] = useState('');
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [activityByUser, setActivityByUser] = useState<Record<string, {
+    activeDays: number;
+    lastActiveAt: string | null;
+    moduleCounts: { module: string; count: number }[];
+    recentActions: { type: string; module: string; metadata: any; createdAt: string }[];
+  }>>({});
+  const [loadingActivity, setLoadingActivity] = useState<string | null>(null);
+  const [activityDays, setActivityDays] = useState<7 | 30 | 90>(30);
+  const [userDetailTab, setUserDetailTab] = useState<'perfil' | 'actividad' | 'comunicacion'>('actividad');
+  const [activitySummary, setActivitySummary] = useState<{ module: string; count: number }[]>([]);
+  const [activityPeriod, setActivityPeriod] = useState<'30d' | '90d' | 'all'>('30d');
+  const [pageTab, setPageTab] = useState<'resumen' | 'usuarios' | 'comunicacion'>('usuarios');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
@@ -708,6 +732,21 @@ export default function AdminPanel() {
       .finally(() => setLoadingUsers(false));
   }, [page, search, welcomeEmailFilter, profileStatusFilter, planFilter, createdFrom, createdTo, sortDir]);
 
+  useEffect(() => {
+    api.get(`/admin/activity/summary?period=${activityPeriod}`).then(res => setActivitySummary(res.data));
+  }, [activityPeriod]);
+
+  useEffect(() => {
+    if (!expandedUser) return;
+    const key = `${expandedUser}-${activityDays}`;
+    if (activityByUser[key]) return;
+    setLoadingActivity(expandedUser);
+    api.get(`/admin/users/${expandedUser}/activity?days=${activityDays}`)
+      .then(res => setActivityByUser(prev => ({ ...prev, [key]: res.data })))
+      .catch(() => {})
+      .finally(() => setLoadingActivity(null));
+  }, [expandedUser, activityDays]);
+
   const resetFiltersToPage1 = () => setPage(1);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -863,8 +902,43 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-6 py-6">
+       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
 
+        {/* ── Pestañas de página (columna izquierda) ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 200, flexShrink: 0, position: 'sticky', top: 24 }}>
+          {[
+            { id: 'resumen' as const, label: 'Resumen', icon: BarChart3 },
+            { id: 'usuarios' as const, label: 'Usuarios', icon: Users },
+            { id: 'comunicacion' as const, label: 'Comunicación', icon: Send },
+          ].map(tab => {
+            const Icon = tab.icon;
+            const isActive = pageTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setPageTab(tab.id)}
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition-colors"
+                style={{
+                  background: isActive ? C.accentLight : 'transparent',
+                  color: isActive ? C.accent : C.textMuted,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="space-y-6" style={{ flex: 1, minWidth: 0 }}>
+
+        {pageTab === 'resumen' && (
+        <>
         {/* ── Resumen compacto ── */}
         {loadingStats ? (
           <div className="rounded-2xl h-32 animate-pulse" style={{ background: C.card, border: `1px solid ${C.cardBorder}` }} />
@@ -948,6 +1022,52 @@ export default function AdminPanel() {
           </div>
         )}
 
+        {/* ── Módulos más usados ── */}
+        <div className="rounded-lg px-4 py-3 mb-4" style={{ background: C.subCard, boxShadow: C.subCardShadow }}>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: C.textFaint }}>
+              Módulos más usados (todos los usuarios)
+            </span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {(['30d', '90d', 'all'] as const).map(p => {
+                const label = p === '30d' ? '30 días' : p === '90d' ? '90 días' : 'Todo';
+                const isActive = activityPeriod === p;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setActivityPeriod(p)}
+                    style={{
+                      padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                      border: `1px solid ${isActive ? C.accent : dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'}`,
+                      background: isActive ? C.accent : 'transparent',
+                      color: isActive ? '#fff' : C.textMuted,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {activitySummary.length === 0 ? (
+            <p className="text-xs italic" style={{ color: C.textFaint }}>Sin actividad registrada en este periodo.</p>
+          ) : (
+            <ol className="text-sm space-y-1.5" style={{ color: C.text }}>
+              {activitySummary.map((m, i) => (
+                <li key={m.module} className="flex items-center justify-between">
+                  <span>{i + 1}. {m.module}</span>
+                  <span style={{ color: C.textFaint }}>{m.count} usos</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+        </>
+        )}
+
+        {pageTab === 'comunicacion' && (
+        <>
         {/* Newsletter — Resend Broadcasts */}
         <div className="rounded-xl p-5" style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}>
           <h2 className="text-sm font-semibold mb-1 flex items-center gap-2" style={{ color: C.text }}>
@@ -1155,12 +1275,12 @@ export default function AdminPanel() {
             <div>
               <label className="text-xs font-medium block mb-1" style={{ color: C.textMuted }}>Mensaje</label>
               <textarea
-                rows={4}
+                rows={16}
                 placeholder="Escribe el mensaje del anuncio. Puedes usar saltos de línea."
                 value={annBody}
                 onChange={e => { setAnnBody(e.target.value); setAnnResult(null); }}
-                className="w-full px-3 py-2 text-sm rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-teal-400"
-                style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text }}
+                className="w-full px-3 py-2 text-sm rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-teal-400"
+                style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text, minHeight: 320 }}
               />
             </div>
             <div className="flex items-center gap-4">
@@ -1266,7 +1386,11 @@ export default function AdminPanel() {
             </button>
           </div>
         </div>
+        </>
+        )}
 
+        {pageTab === 'usuarios' && (
+        <>
         {/* Users table */}
         <div className="rounded-xl" style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}>
           <div className="px-5 py-4 flex items-center justify-between flex-wrap gap-3"
@@ -1469,6 +1593,34 @@ export default function AdminPanel() {
                       {expandedUser === u.id && (
                         <tr style={{ background: C.expandedBg }}>
                           <td colSpan={7} className="px-5 py-4">
+                          <div className="flex gap-4">
+                            <div className="flex flex-col gap-1 flex-shrink-0" style={{ width: 168 }}>
+                              {[
+                                { id: 'perfil' as const, label: 'Perfil y Plan', icon: User },
+                                { id: 'actividad' as const, label: 'Actividad', icon: Activity },
+                                { id: 'comunicacion' as const, label: 'Comunicación y Accesos', icon: Shield },
+                              ].map(tab => {
+                                const Icon = tab.icon;
+                                const isActive = userDetailTab === tab.id;
+                                return (
+                                  <button
+                                    key={tab.id}
+                                    onClick={e => { e.stopPropagation(); setUserDetailTab(tab.id); }}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-left transition-colors"
+                                    style={{
+                                      background: isActive ? C.accentLight : 'transparent',
+                                      color: isActive ? C.accent : C.textMuted,
+                                    }}
+                                  >
+                                    <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                                    {tab.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                            {userDetailTab === 'perfil' && (
+                            <>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                               {[
                                 { label: 'Nombre', value: u.name },
@@ -1559,7 +1711,80 @@ export default function AdminPanel() {
                             ) : (
                               <p className="text-xs italic" style={{ color: C.textFaint }}>Este usuario aún no creó ningún perfil.</p>
                             )}
+                            </>
+                            )}
 
+                            {userDetailTab === 'actividad' && (
+                            <>
+                            {/* Actividad */}
+                            {(() => {
+                              const activityKey = `${u.id}-${activityDays}`;
+                              const activity = activityByUser[activityKey];
+                              return (
+                                <div className="rounded-lg px-3 py-3 mt-3" style={{ background: C.subCard, boxShadow: C.subCardShadow }}>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs font-semibold" style={{ color: C.textMuted }}>Actividad (últimos {activityDays} días)</p>
+                                    <div style={{ display: 'flex', gap: 4 }}>
+                                      {([7, 30, 90] as const).map(d => {
+                                        const isActive = activityDays === d;
+                                        return (
+                                          <button
+                                            key={d}
+                                            onClick={e => { e.stopPropagation(); setActivityDays(d); }}
+                                            style={{
+                                              padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 600,
+                                              border: `1px solid ${isActive ? C.accent : dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'}`,
+                                              background: isActive ? C.accent : 'transparent',
+                                              color: isActive ? '#fff' : C.textMuted,
+                                              cursor: 'pointer',
+                                            }}
+                                          >
+                                            {d}d
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                  {loadingActivity === u.id ? (
+                                    <p className="text-xs" style={{ color: C.textFaint }}>Cargando actividad...</p>
+                                  ) : activity ? (
+                                    <>
+                                      <p className="text-sm mb-2" style={{ color: C.text }}>
+                                        Activo <strong>{activity.activeDays}</strong> de los últimos {activityDays} días
+                                        {activity.lastActiveAt && (
+                                          <> · última vez: {new Date(activity.lastActiveAt).toLocaleDateString('es-ES')}</>
+                                        )}
+                                      </p>
+                                      {activity.moduleCounts.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                          {activity.moduleCounts.map(m => (
+                                            <span key={m.module} className="text-xs rounded-full px-2 py-0.5" style={{ background: C.accentLight, color: C.accent }}>
+                                              {m.module} ({m.count})
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {activity.recentActions.length > 0 ? (
+                                        <ul className="text-xs space-y-1" style={{ color: C.textFaint }}>
+                                          {activity.recentActions.map((a, i) => (
+                                            <li key={i}>
+                                              {ACTIVITY_LABELS[a.type] ?? a.type} · {new Date(a.createdAt).toLocaleDateString('es-ES')}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      ) : (
+                                        <p className="text-xs italic" style={{ color: C.textFaint }}>Sin acciones registradas todavía.</p>
+                                      )}
+                                    </>
+                                  ) : null}
+                                </div>
+                              );
+                            })()}
+                            </>
+                            )}
+
+                            {userDetailTab === 'comunicacion' && (
+                            <>
                             {/* Correos enviados a este usuario */}
                             {(() => {
                               const userLogs = annLogs.filter(log =>
@@ -1817,6 +2042,10 @@ export default function AdminPanel() {
                                 )}
                               </div>
                             )}
+                            </>
+                            )}
+                            </div>
+                          </div>
                           </td>
                         </tr>
                       )}
@@ -1853,6 +2082,11 @@ export default function AdminPanel() {
             </div>
           )}
         </div>
+        </>
+        )}
+
+        </div>
+       </div>
       </div>
     </div>
   );

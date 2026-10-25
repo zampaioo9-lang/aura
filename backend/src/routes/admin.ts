@@ -391,7 +391,7 @@ router.get('/announcement-logs', async (req, res, next) => {
       SELECT id, subject, audience, "sentCount", "failCount", recipients, "sentAt"
       FROM "AnnouncementLog"
       ORDER BY "sentAt" DESC
-      LIMIT 50
+      LIMIT 2000
     `;
     res.json(logs);
   } catch (err) {
@@ -577,6 +577,75 @@ router.post('/newsletter/sync', async (_req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+// GET /api/admin/users/:id/activity?days=30
+router.get('/users/:id/activity', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const days = Math.max(1, Math.min(365, parseInt(String(req.query.days ?? '30'), 10) || 30));
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const [activeDaysRows, lastActiveRows, moduleCountRows, recentActionRows] = await Promise.all([
+      prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(DISTINCT DATE("createdAt")) as count
+        FROM "ActivityEvent"
+        WHERE "userId" = ${id} AND "createdAt" >= ${cutoff}
+      `,
+      prisma.$queryRaw<{ lastActiveAt: Date | null }[]>`
+        SELECT MAX("createdAt") as "lastActiveAt"
+        FROM "ActivityEvent"
+        WHERE "userId" = ${id}
+      `,
+      prisma.$queryRaw<{ module: string; count: bigint }[]>`
+        SELECT module, COUNT(*)::int as count
+        FROM "ActivityEvent"
+        WHERE "userId" = ${id} AND type = 'VIEW' AND "createdAt" >= ${cutoff}
+        GROUP BY module
+        ORDER BY count DESC
+      `,
+      prisma.$queryRaw<{ type: string; module: string; metadata: unknown; createdAt: Date }[]>`
+        SELECT type, module, metadata, "createdAt"
+        FROM "ActivityEvent"
+        WHERE "userId" = ${id} AND type != 'VIEW'
+        ORDER BY "createdAt" DESC
+        LIMIT 10
+      `,
+    ]);
+
+    res.json({
+      activeDays: Number(activeDaysRows[0]?.count ?? 0),
+      periodDays: days,
+      lastActiveAt: lastActiveRows[0]?.lastActiveAt ?? null,
+      moduleCounts: moduleCountRows.map(r => ({ module: r.module, count: Number(r.count) })),
+      recentActions: recentActionRows.map(r => ({ type: r.type, module: r.module, metadata: r.metadata, createdAt: r.createdAt })),
+    });
+  } catch (err) { next(err); }
+});
+
+// GET /api/admin/activity/summary?period=30d|90d|all
+router.get('/activity/summary', async (req, res, next) => {
+  try {
+    const period = String(req.query.period ?? '30d');
+    const cutoff =
+      period === '90d' ? new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) :
+      period === 'all' ? new Date(0) :
+      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const rows = await prisma.$queryRaw<{ module: string; count: bigint }[]>`
+      SELECT module, COUNT(*)::int as count
+      FROM "ActivityEvent"
+      WHERE type = 'VIEW' AND "createdAt" >= ${cutoff}
+      GROUP BY module
+      ORDER BY count DESC
+    `;
+
+    res.json(rows.map(r => ({ module: r.module, count: Number(r.count) })));
+  } catch (err) { next(err); }
 });
 
 export default router;
