@@ -83,6 +83,10 @@ router.get('/profile/:profileId', async (req, res, next) => {
 });
 
 // GET /api/offerings/:id — Detail (public if PUBLISHED, owner can see any status)
+// TODO(Fase 3/4 — checkout y gating de acceso): esta ruta publica devuelve el contenido
+// completo de los modulos (fileUrl, textContent) sin verificar ninguna Purchase. Es el
+// alcance esperado de esta fase (no hay checkout todavia), pero en cuanto exista Purchase,
+// hay que dejar de incluir fileUrl/textContent aqui para quien no haya comprado.
 router.get('/:id', async (req, res, next) => {
   try {
     const offering = await prisma.offering.findUnique({
@@ -209,6 +213,8 @@ router.post('/:offeringId/modules', authMiddleware, async (req: AuthRequest, res
 });
 
 // GET /api/offerings/:offeringId/modules — List modules (public if offering PUBLISHED)
+// TODO(Fase 3/4 — checkout y gating de acceso): mismo pendiente que GET /:id — esta ruta
+// sirve fileUrl/textContent completos sin verificar Purchase. Alcance esperado de esta fase.
 router.get('/:offeringId/modules', async (req, res, next) => {
   try {
     const offering = await prisma.offering.findUnique({ where: { id: req.params.offeringId } });
