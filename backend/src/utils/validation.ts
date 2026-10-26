@@ -265,7 +265,7 @@ export const createQuestionSchema = z.object({
   options: z.array(z.object({
     label: z.string().min(1, 'La opcion no puede estar vacia').max(100, 'Maximo 100 caracteres'),
     value: z.number().int('El valor debe ser un numero entero'),
-  })).optional(),
+  })).max(20, 'Maximo 20 opciones').optional(),
 }).refine(
   (data) => data.type === 'FREE_TEXT' || (!!data.options && data.options.length >= 2),
   { message: 'Las preguntas de opcion unica o multiple requieren al menos 2 opciones' }
