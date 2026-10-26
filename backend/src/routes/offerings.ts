@@ -21,7 +21,7 @@ async function verifyOfferingOwnership(offeringId: string, userId: string) {
 }
 
 // Helper: verify a module belongs to offeringId AND the offering's profile belongs to
-// userId, in one atomic query — closes the same class of IDOR that Fase 1's review found
+// userId, in one atomic query. Closes the same class of IDOR that Fase 1's review found
 // on the Module routes (see the comments on PUT/DELETE /:offeringId/modules/:moduleId
 // below), but in a single query instead of two separate ones.
 async function verifyModuleOwnership(offeringId: string, moduleId: string, userId: string) {
@@ -33,7 +33,7 @@ async function verifyModuleOwnership(offeringId: string, moduleId: string, userI
 }
 
 // Helper: verify a question belongs to moduleId AND that module's offering's profile
-// belongs to userId, in one atomic query — same pattern, one level deeper.
+// belongs to userId, in one atomic query, same pattern as above, one level deeper.
 async function verifyQuestionOwnership(moduleId: string, questionId: string, userId: string) {
   const question = await prisma.question.findFirst({
     where: { id: questionId, moduleId, module: { offering: { profile: { userId } } } },
@@ -43,7 +43,7 @@ async function verifyQuestionOwnership(moduleId: string, questionId: string, use
 }
 
 // Helper: verify a scoring rule belongs to moduleId AND that module's offering's profile
-// belongs to userId — same pattern as verifyQuestionOwnership.
+// belongs to userId, same pattern as verifyQuestionOwnership.
 async function verifyScoringRuleOwnership(moduleId: string, ruleId: string, userId: string) {
   const rule = await prisma.scoringRule.findFirst({
     where: { id: ruleId, moduleId, module: { offering: { profile: { userId } } } },
@@ -338,7 +338,7 @@ router.delete('/:offeringId/modules/:moduleId', authMiddleware, async (req: Auth
   }
 });
 
-// POST /api/offerings/:offeringId/modules/:moduleId/questions — Add question (auth, owner, module must be QUESTIONNAIRE)
+// POST /api/offerings/:offeringId/modules/:moduleId/questions: Add question (auth, owner, module must be QUESTIONNAIRE)
 router.post('/:offeringId/modules/:moduleId/questions', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     const module = await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
@@ -365,7 +365,7 @@ router.post('/:offeringId/modules/:moduleId/questions', authMiddleware, async (r
   }
 });
 
-// GET /api/offerings/:offeringId/modules/:moduleId/questions — List questions (auth, owner only — not public yet, same reasoning as the Fase 1 TODO on module content)
+// GET /api/offerings/:offeringId/modules/:moduleId/questions: List questions (auth, owner only, not public yet, same reasoning as the Fase 1 TODO on module content)
 router.get('/:offeringId/modules/:moduleId/questions', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
@@ -381,7 +381,7 @@ router.get('/:offeringId/modules/:moduleId/questions', authMiddleware, async (re
   }
 });
 
-// PUT /api/offerings/:offeringId/modules/:moduleId/questions/:questionId — Update question text (auth, owner). Type and options are immutable post-creation (same convention as Module.type/Offering.type) — to change them, delete and recreate the question.
+// PUT /api/offerings/:offeringId/modules/:moduleId/questions/:questionId: Update question text (auth, owner). Type and options are immutable post-creation (same convention as Module.type/Offering.type). To change them, delete and recreate the question.
 router.put('/:offeringId/modules/:moduleId/questions/:questionId', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
@@ -399,7 +399,14 @@ router.put('/:offeringId/modules/:moduleId/questions/:questionId', authMiddlewar
   }
 });
 
-// DELETE /api/offerings/:offeringId/modules/:moduleId/questions/:questionId — Delete question (auth, owner). Cascades to its QuestionOption rows and any Answer rows via the schema's onDelete: Cascade.
+// DELETE /api/offerings/:offeringId/modules/:moduleId/questions/:questionId: Delete question (auth, owner). Cascades to its QuestionOption rows and any Answer rows via the schema's onDelete: Cascade.
+// TODO(Fase 4 - encontrado en la revision final de Fase 2): esta ruta no revisa el status del
+// Offering. Se puede borrar la ultima pregunta de un modulo QUESTIONNAIRE aunque el Offering ya
+// este PUBLISHED, dejandolo en el mismo estado invalido que PATCH /:id/publish esta disenado a
+// bloquear. No muerde hoy porque no existe todavia ningun comprador que consuma los modulos
+// (Fase 3/4), pero hay que decidir como manejarlo antes de que Fase 4 este en produccion:
+// bloquear el borrado si offering.status === 'PUBLISHED', o despublicar automaticamente, o algo
+// mas deliberado. Mismo gap existe para DELETE de Module en general, no es nuevo de esta ruta.
 router.delete('/:offeringId/modules/:moduleId/questions/:questionId', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
@@ -415,7 +422,7 @@ router.delete('/:offeringId/modules/:moduleId/questions/:questionId', authMiddle
   }
 });
 
-// POST /api/offerings/:offeringId/modules/:moduleId/scoring-rules — Add scoring rule (auth, owner, module must be QUESTIONNAIRE)
+// POST /api/offerings/:offeringId/modules/:moduleId/scoring-rules: Add scoring rule (auth, owner, module must be QUESTIONNAIRE)
 router.post('/:offeringId/modules/:moduleId/scoring-rules', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     const module = await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
@@ -433,7 +440,7 @@ router.post('/:offeringId/modules/:moduleId/scoring-rules', authMiddleware, asyn
   }
 });
 
-// GET /api/offerings/:offeringId/modules/:moduleId/scoring-rules — List scoring rules (auth, owner only)
+// GET /api/offerings/:offeringId/modules/:moduleId/scoring-rules: List scoring rules (auth, owner only)
 router.get('/:offeringId/modules/:moduleId/scoring-rules', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
@@ -448,7 +455,7 @@ router.get('/:offeringId/modules/:moduleId/scoring-rules', authMiddleware, async
   }
 });
 
-// PUT /api/offerings/:offeringId/modules/:moduleId/scoring-rules/:ruleId — Update scoring rule (auth, owner)
+// PUT /api/offerings/:offeringId/modules/:moduleId/scoring-rules/:ruleId: Update scoring rule (auth, owner)
 router.put('/:offeringId/modules/:moduleId/scoring-rules/:ruleId', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
@@ -476,7 +483,7 @@ router.put('/:offeringId/modules/:moduleId/scoring-rules/:ruleId', authMiddlewar
   }
 });
 
-// DELETE /api/offerings/:offeringId/modules/:moduleId/scoring-rules/:ruleId — Delete scoring rule (auth, owner)
+// DELETE /api/offerings/:offeringId/modules/:moduleId/scoring-rules/:ruleId: Delete scoring rule (auth, owner)
 router.delete('/:offeringId/modules/:moduleId/scoring-rules/:ruleId', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
