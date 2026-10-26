@@ -10,6 +10,8 @@
 
 **Fuera de esta Fase 1 (planes futuros, spec ya los documenta como separados):** constructor de preguntas/cuestionario con scoring, checkout de invitado + pago, generación de PDF de respuestas, visor de contenido para el comprador, integración en Explorar/perfil público del frontend.
 
+> **Nota post-implementación (26 oct 2026):** el código real en `src/routes/offerings.ts` divergió de los bloques de código de este plan durante las rondas de revisión — en particular el handler `PUT /:id` y las rutas de módulo incluyen fixes de seguridad/invariantes que no estaban en el borrador original (ver commits `ffbc023..6aabfa1` en la rama `feature/talleres-cursos-webinars`, incluye una corrección de un IDOR crítico encontrado y verificado empíricamente). **El archivo en disco es la fuente de verdad, no el código mostrado abajo.** Pendiente real detectado en la revisión final, no bloqueante para esta fase pero a tener en cuenta en Fase 3/4: `GET /:id` y `GET /:offeringId/modules` sirven el contenido completo (`fileUrl`/`textContent`) sin ningún control de compra — ya marcado con `TODO` en el código — hay que cerrar eso en cuanto exista `Purchase`.
+
 ---
 
 ### Task 1: Modelo de datos — Prisma schema
