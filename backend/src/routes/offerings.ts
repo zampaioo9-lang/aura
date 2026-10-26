@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
-import { createOfferingSchema, updateOfferingSchema, createModuleSchema, updateModuleSchema, createQuestionSchema, updateQuestionSchema } from '../utils/validation';
+import { createOfferingSchema, updateOfferingSchema, createModuleSchema, updateModuleSchema, createQuestionSchema, updateQuestionSchema, createScoringRuleSchema, updateScoringRuleSchema } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
 import { isProUser } from '../lib/planUtils';
 import { verifyToken } from '../services/authService';
@@ -40,6 +40,16 @@ async function verifyQuestionOwnership(moduleId: string, questionId: string, use
   });
   if (!question) throw new AppError(404, 'Pregunta no encontrada');
   return question;
+}
+
+// Helper: verify a scoring rule belongs to moduleId AND that module's offering's profile
+// belongs to userId — same pattern as verifyQuestionOwnership.
+async function verifyScoringRuleOwnership(moduleId: string, ruleId: string, userId: string) {
+  const rule = await prisma.scoringRule.findFirst({
+    where: { id: ruleId, moduleId, module: { offering: { profile: { userId } } } },
+  });
+  if (!rule) throw new AppError(404, 'Regla de puntuacion no encontrada');
+  return rule;
 }
 
 // POST /api/offerings — Create offering (auth, solo Pro/Clinico)
@@ -400,6 +410,83 @@ router.delete('/:offeringId/modules/:moduleId/questions/:questionId', authMiddle
     if (count === 0) throw new AppError(404, 'Pregunta no encontrada');
 
     res.json({ message: 'Pregunta eliminada' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/offerings/:offeringId/modules/:moduleId/scoring-rules — Add scoring rule (auth, owner, module must be QUESTIONNAIRE)
+router.post('/:offeringId/modules/:moduleId/scoring-rules', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    const module = await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
+    if (module.type !== 'QUESTIONNAIRE') {
+      throw new AppError(400, 'Solo los modulos de tipo Cuestionario pueden tener reglas de puntuacion');
+    }
+
+    const data = createScoringRuleSchema.parse(req.body);
+    const rule = await prisma.scoringRule.create({
+      data: { moduleId: req.params.moduleId, ...data },
+    });
+    res.status(201).json(rule);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/offerings/:offeringId/modules/:moduleId/scoring-rules — List scoring rules (auth, owner only)
+router.get('/:offeringId/modules/:moduleId/scoring-rules', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
+
+    const rules = await prisma.scoringRule.findMany({
+      where: { moduleId: req.params.moduleId },
+      orderBy: { minScore: 'asc' },
+    });
+    res.json(rules);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/offerings/:offeringId/modules/:moduleId/scoring-rules/:ruleId — Update scoring rule (auth, owner)
+router.put('/:offeringId/modules/:moduleId/scoring-rules/:ruleId', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
+    const existing = await verifyScoringRuleOwnership(req.params.moduleId, req.params.ruleId, req.userId!);
+
+    const data = updateScoringRuleSchema.parse(req.body);
+
+    // Re-check minScore<=maxScore against the MERGED result, same reasoning as every
+    // other partial-update invariant check in this file (Offering.scheduledAt/externalLink,
+    // Module.textContent/fileUrl): a PUT that only sends one of the two fields must not be
+    // able to produce an inverted range.
+    const finalMin = data.minScore !== undefined ? data.minScore : existing.minScore;
+    const finalMax = data.maxScore !== undefined ? data.maxScore : existing.maxScore;
+    if (finalMax < finalMin) {
+      throw new AppError(400, 'maxScore debe ser mayor o igual a minScore');
+    }
+
+    const rule = await prisma.scoringRule.update({
+      where: { id: req.params.ruleId },
+      data,
+    });
+    res.json(rule);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/offerings/:offeringId/modules/:moduleId/scoring-rules/:ruleId — Delete scoring rule (auth, owner)
+router.delete('/:offeringId/modules/:moduleId/scoring-rules/:ruleId', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
+
+    const { count } = await prisma.scoringRule.deleteMany({
+      where: { id: req.params.ruleId, moduleId: req.params.moduleId },
+    });
+    if (count === 0) throw new AppError(404, 'Regla de puntuacion no encontrada');
+
+    res.json({ message: 'Regla de puntuacion eliminada' });
   } catch (err) {
     next(err);
   }
