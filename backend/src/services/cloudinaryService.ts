@@ -81,7 +81,30 @@ export async function uploadVideo(
   });
 }
 
-export async function deleteFile(publicId: string, resourceType: 'image' | 'video' = 'image'): Promise<boolean> {
+export async function uploadPdf(
+  fileBuffer: Buffer,
+  folder: string = 'aura/documents'
+): Promise<{ url: string; publicId: string }> {
+  if (!isConfigured()) {
+    throw new Error('Cloudinary not configured');
+  }
+
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: 'raw',
+        allowed_formats: ['pdf'],
+      },
+      (error, result) => {
+        if (error || !result) return reject(error || new Error('Upload failed'));
+        resolve({ url: result.secure_url, publicId: result.public_id });
+      }
+    ).end(fileBuffer);
+  });
+}
+
+export async function deleteFile(publicId: string, resourceType: 'image' | 'video' | 'raw' = 'image'): Promise<boolean> {
   if (!isConfigured()) {
     console.log('[Cloudinary] Not configured. Would delete:', publicId);
     return false;

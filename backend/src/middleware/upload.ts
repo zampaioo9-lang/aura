@@ -4,10 +4,12 @@ import { AppError } from './errorHandler';
 const IMAGE_MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const VIDEO_MAX_SIZE = 50 * 1024 * 1024; // 50MB
 const AUDIO_MAX_SIZE = 100 * 1024 * 1024; // 100MB (~1.5-2h de audio comprimido)
+const PDF_MAX_SIZE = 20 * 1024 * 1024; // 20MB
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime'];
 const ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/ogg', 'audio/x-m4a'];
+const ALLOWED_PDF_TYPES = ['application/pdf'];
 
 const storage = multer.memoryStorage();
 
@@ -39,6 +41,17 @@ export const uploadAudio = multer({
   fileFilter: (_req, file, cb) => {
     if (!ALLOWED_AUDIO_TYPES.includes(file.mimetype)) {
       return cb(new AppError(400, 'Solo se permiten audios MP3, MP4, WAV, OGG o M4A'));
+    }
+    cb(null, true);
+  },
+}).single('file');
+
+export const uploadPdf = multer({
+  storage,
+  limits: { fileSize: PDF_MAX_SIZE },
+  fileFilter: (_req, file, cb) => {
+    if (!ALLOWED_PDF_TYPES.includes(file.mimetype)) {
+      return cb(new AppError(400, 'Solo se permiten archivos PDF'));
     }
     cb(null, true);
   },

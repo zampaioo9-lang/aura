@@ -3,8 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
-import { uploadImage as uploadImageMiddleware, uploadVideo as uploadVideoMiddleware } from '../middleware/upload';
-import { uploadImage, uploadVideo, isCloudinaryConfigured } from '../services/cloudinaryService';
+import { uploadImage as uploadImageMiddleware, uploadVideo as uploadVideoMiddleware, uploadPdf as uploadPdfMiddleware } from '../middleware/upload';
+import { uploadImage, uploadVideo, uploadPdf, isCloudinaryConfigured } from '../services/cloudinaryService';
 import { AppError } from '../middleware/errorHandler';
 import { env } from '../config/env';
 
@@ -68,6 +68,28 @@ router.post('/video', authMiddleware, (req, res, next) => {
     }
 
     const result = await uploadVideo(req.file.buffer);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/upload/pdf
+router.post('/pdf', authMiddleware, (req, res, next) => {
+  uploadPdfMiddleware(req, res, (err) => {
+    if (err) return next(err instanceof Error ? err : new AppError(400, 'Error al subir PDF'));
+    next();
+  });
+}, async (req: AuthRequest, res, next) => {
+  try {
+    if (!req.file) throw new AppError(400, 'No se envio ningun PDF');
+
+    if (!isCloudinaryConfigured()) {
+      const url = saveLocal(req.file.buffer, '.pdf');
+      return res.json({ url, publicId: `local-pdf-${Date.now()}` });
+    }
+
+    const result = await uploadPdf(req.file.buffer);
     res.json(result);
   } catch (err) {
     next(err);
