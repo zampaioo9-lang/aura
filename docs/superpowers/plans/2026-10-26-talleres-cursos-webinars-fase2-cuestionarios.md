@@ -518,4 +518,9 @@ git commit -m "feat: add ScoringRule CRUD routes nested under Module"
 - **Fase 4:** página de acceso del comprador (vía `accessToken`, sin login), visor de módulos, responder cuestionario (usando las `Question`/`QuestionOption` de esta fase), calcular el puntaje con `ScoringRule`, generar y descargar el PDF de resultado.
 - **Fase 5 (frontend):** dashboard "Mis Talleres y Cursos" del profesional — crear/editar Offering, agregar módulos, y el constructor de preguntas visual sobre las rutas de esta Fase 2. Nada de esto se construyó todavía; hasta este punto, Fases 1 y 2 son 100% backend.
 
+**Preguntas de diseño abiertas, detectadas en la revisión final de Fase 2 (resolver antes de construir Fase 4, no bloquean esta fase):**
+
+1. **¿Debe exigirse al menos una `ScoringRule` para publicar un módulo Cuestionario que tenga preguntas de opción única/múltiple?** Hoy no se exige nada: un Cuestionario con solo preguntas de texto libre no necesita reglas (no hay nada que puntuar), pero uno con preguntas de opción (que sí tienen `value` numérico) se puede publicar con cero reglas de puntuación — en Fase 4 eso significaría que el comprador obtiene un puntaje que no coincide con ningún rango, sin mensaje de resultado.
+2. **¿Qué pasa cuando se borra la última pregunta (o el módulo entero) de un Cuestionario de un Offering ya PUBLICADO?** Ver el `TODO(Fase 4 ...)` agregado en `backend/src/routes/offerings.ts` junto al DELETE de preguntas — hoy no hay ningún chequeo de `offering.status`, así que se puede dejar un Offering publicado con un Cuestionario vacío, exactamente el estado que `PATCH /:id/publish` está diseñado a bloquear al momento de publicar. Mismo gap aplica al borrado de Módulos en general (no es nuevo de esta fase).
+
 Cada una merece su propio plan cuando llegue el momento.
