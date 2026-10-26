@@ -164,9 +164,21 @@ router.patch('/:id/publish', authMiddleware, async (req: AuthRequest, res, next)
     }
 
     if (existing.status === 'DRAFT') {
-      const moduleCount = await prisma.module.count({ where: { offeringId: existing.id } });
-      if (moduleCount === 0) {
+      const modules = await prisma.module.findMany({
+        where: { offeringId: existing.id },
+        include: { _count: { select: { questions: true } } },
+      });
+      if (modules.length === 0) {
         throw new AppError(400, 'Agrega al menos un modulo antes de publicar');
+      }
+      const emptyQuestionnaire = modules.find(
+        (m) => m.type === 'QUESTIONNAIRE' && m._count.questions === 0
+      );
+      if (emptyQuestionnaire) {
+        throw new AppError(
+          400,
+          `El modulo de cuestionario "${emptyQuestionnaire.title}" necesita al menos una pregunta antes de publicar`
+        );
       }
     }
 
@@ -256,11 +268,13 @@ router.put('/:offeringId/modules/:moduleId', authMiddleware, async (req: AuthReq
       if (!finalTextContent) {
         throw new AppError(400, 'Un modulo de texto requiere contenido');
       }
-    } else {
+    } else if (existing.type === 'VIDEO' || existing.type === 'PDF') {
       if (!finalFileUrl) {
         throw new AppError(400, 'Un modulo de video o PDF requiere un archivo');
       }
     }
+    // QUESTIONNAIRE no tiene invariante de textContent/fileUrl — su contenido son las
+    // Preguntas (Question), que se gestionan por separado via las rutas de /questions.
 
     const module = await prisma.module.update({
       where: { id: req.params.moduleId },
