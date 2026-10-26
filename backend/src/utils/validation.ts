@@ -208,3 +208,53 @@ export const bulkCreateAvailabilitySchema = z.object({
     endTime: z.string().regex(/^\d{2}:\d{2}$/),
   })).min(1).max(50),
 });
+
+export const createOfferingSchema = z.object({
+  profileId: z.string(),
+  type: z.enum(['LIVE_WORKSHOP', 'RECORDED_COURSE']),
+  title: z.string().min(3, 'Minimo 3 caracteres').max(150, 'Maximo 150 caracteres'),
+  description: z.string().max(1000, 'Maximo 1000 caracteres').optional().or(z.literal('')),
+  coverImage: z.string().url().optional().or(z.literal('')),
+  priceUSD: z.number().min(0, 'El precio no puede ser negativo').max(10000, 'Precio maximo 10,000'),
+  priceMXN: z.number().min(0).max(200000).optional(),
+  scheduledAt: z.string().datetime().optional(),
+  capacity: z.number().int().min(1).max(1000).optional(),
+  externalLink: z.string().url('Debe ser una URL valida (ej. enlace de Zoom o Meet)').optional().or(z.literal('')),
+}).refine(
+  (data) => data.type !== 'LIVE_WORKSHOP' || (data.scheduledAt && data.externalLink),
+  { message: 'Un taller en vivo requiere fecha/hora y enlace externo' }
+);
+
+export const updateOfferingSchema = z.object({
+  title: z.string().min(3).max(150).optional(),
+  description: z.string().max(1000).optional().or(z.literal('')),
+  coverImage: z.string().url().optional().or(z.literal('')),
+  priceUSD: z.number().min(0).max(10000).optional(),
+  priceMXN: z.number().min(0).max(200000).optional().nullable(),
+  scheduledAt: z.string().datetime().optional().nullable(),
+  capacity: z.number().int().min(1).max(1000).optional().nullable(),
+  externalLink: z.string().url().optional().nullable().or(z.literal('')),
+});
+
+export const createModuleSchema = z.object({
+  title: z.string().min(2, 'Minimo 2 caracteres').max(150, 'Maximo 150 caracteres'),
+  description: z.string().max(500).optional().or(z.literal('')),
+  type: z.enum(['TEXT', 'VIDEO', 'PDF'], {
+    errorMap: () => ({ message: 'Tipo de modulo no valido (en esta version: TEXT, VIDEO o PDF)' }),
+  }),
+  textContent: z.string().max(10000).optional(),
+  fileUrl: z.string().url().optional().or(z.literal('')),
+}).refine(
+  (data) => data.type !== 'TEXT' || !!data.textContent,
+  { message: 'Un modulo de texto requiere contenido' }
+).refine(
+  (data) => data.type === 'TEXT' || !!data.fileUrl,
+  { message: 'Un modulo de video o PDF requiere un archivo subido primero (fileUrl)' }
+);
+
+export const updateModuleSchema = z.object({
+  title: z.string().min(2).max(150).optional(),
+  description: z.string().max(500).optional().or(z.literal('')),
+  textContent: z.string().max(10000).optional(),
+  fileUrl: z.string().url().optional().or(z.literal('')),
+});

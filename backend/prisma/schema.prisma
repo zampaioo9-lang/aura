@@ -286,6 +286,7 @@ model Profile {
 
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   services          Service[]
+  offerings Offering[]
   bookings          Booking[]
   availabilitySlots AvailabilitySlot[]
   scheduleBlocks    ScheduleBlock[]
@@ -559,4 +560,141 @@ model ActivityEvent {
 
   @@index([userId, createdAt])
   @@index([module])
+}
+
+model Offering {
+  id           String         @id @default(uuid())
+  profileId    String
+  type         OfferingType
+  title        String
+  description  String?
+  coverImage   String?
+  priceUSD     Decimal
+  priceMXN     Decimal?
+  status       OfferingStatus @default(DRAFT)
+  // Solo aplica si type = LIVE_WORKSHOP
+  scheduledAt  DateTime?
+  capacity     Int?
+  externalLink String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  profile   Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  modules   Module[]
+  purchases Purchase[]
+
+  @@index([profileId])
+  @@index([status])
+}
+
+enum OfferingType {
+  LIVE_WORKSHOP
+  RECORDED_COURSE
+}
+
+enum OfferingStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Module {
+  id          String     @id @default(uuid())
+  offeringId  String
+  order       Int
+  title       String
+  description String?
+  type        ModuleType
+  textContent String?    // solo type = TEXT
+  fileUrl     String?    // solo type = VIDEO | PDF (Cloudinary)
+  createdAt   DateTime   @default(now())
+
+  offering     Offering      @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  questions    Question[]
+  scoringRules ScoringRule[]
+
+  @@index([offeringId])
+}
+
+enum ModuleType {
+  TEXT
+  VIDEO
+  PDF
+  QUESTIONNAIRE
+}
+
+model Question {
+  id       String       @id @default(uuid())
+  moduleId String
+  order    Int
+  text     String
+  type     QuestionType
+
+  module  Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  options QuestionOption[]
+  answers Answer[]
+
+  @@index([moduleId])
+}
+
+enum QuestionType {
+  FREE_TEXT
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+}
+
+model QuestionOption {
+  id         String @id @default(uuid())
+  questionId String
+  label      String
+  value      Int
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+model ScoringRule {
+  id       String @id @default(uuid())
+  moduleId String
+  minScore Int
+  maxScore Int
+  message  String
+
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@index([moduleId])
+}
+
+model Purchase {
+  id          String    @id @default(uuid())
+  offeringId  String
+  buyerName   String
+  buyerEmail  String
+  buyerPhone  String?
+  accessToken String    @unique
+  paidAt      DateTime?
+  amountPaid  Decimal?
+  createdAt   DateTime  @default(now())
+
+  offering Offering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  answers  Answer[]
+
+  @@index([offeringId])
+  @@index([accessToken])
+}
+
+model Answer {
+  id             String   @id @default(uuid())
+  purchaseId     String
+  questionId     String
+  valueText      String?
+  valueOptionIds String[] @default([])
+  createdAt      DateTime @default(now())
+
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([purchaseId])
+  @@index([questionId])
 }
