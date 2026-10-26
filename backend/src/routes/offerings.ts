@@ -273,7 +273,7 @@ router.put('/:offeringId/modules/:moduleId', authMiddleware, async (req: AuthReq
         throw new AppError(400, 'Un modulo de video o PDF requiere un archivo');
       }
     }
-    // QUESTIONNAIRE no tiene invariante de textContent/fileUrl — su contenido son las
+    // QUESTIONNAIRE no tiene invariante de textContent/fileUrl: su contenido son las
     // Preguntas (Question), que se gestionan por separado via las rutas de /questions.
 
     const module = await prisma.module.update({
