@@ -105,7 +105,10 @@ router.get('/:id', async (req, res, next) => {
       throw new AppError(404, 'Oferta no encontrada');
     }
 
-    res.json(offering);
+    // Do not leak the internal profile.userId to the client; it's only needed
+    // above for the isOwner check.
+    const { userId, ...publicProfile } = offering.profile;
+    res.json({ ...offering, profile: publicProfile });
   } catch (err) {
     next(err);
   }
@@ -151,6 +154,10 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res, next) => {
 router.patch('/:id/publish', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     const existing = await verifyOfferingOwnership(req.params.id, req.userId!);
+
+    if (existing.status === 'ARCHIVED') {
+      throw new AppError(400, 'No se puede publicar una oferta archivada');
+    }
 
     if (existing.status === 'DRAFT') {
       const moduleCount = await prisma.module.count({ where: { offeringId: existing.id } });
@@ -224,6 +231,31 @@ router.put('/:offeringId/modules/:moduleId', authMiddleware, async (req: AuthReq
     await verifyOfferingOwnership(req.params.offeringId, req.userId!);
     const data = updateModuleSchema.parse(req.body);
 
+    // IMPORTANT (code-quality review after Task 4): the module must actually belong to
+    // offeringId from the URL — looking it up by id alone would let an owner of ANY
+    // offering edit a module of a DIFFERENT, unrelated offering (IDOR) by pairing their
+    // own offeringId with a moduleId discovered elsewhere (e.g. a published offering's
+    // public modules list). findFirst scoped to both ids both confirms ownership and
+    // gives us the existing row to merge against for the type-invariant re-check below
+    // (same pattern already applied to Offering's PUT).
+    const existing = await prisma.module.findFirst({
+      where: { id: req.params.moduleId, offeringId: req.params.offeringId },
+    });
+    if (!existing) throw new AppError(404, 'Modulo no encontrado');
+
+    const finalTextContent = data.textContent !== undefined ? data.textContent : existing.textContent;
+    const finalFileUrl = data.fileUrl !== undefined ? data.fileUrl : existing.fileUrl;
+
+    if (existing.type === 'TEXT') {
+      if (!finalTextContent) {
+        throw new AppError(400, 'Un modulo de texto requiere contenido');
+      }
+    } else {
+      if (!finalFileUrl) {
+        throw new AppError(400, 'Un modulo de video o PDF requiere un archivo');
+      }
+    }
+
     const module = await prisma.module.update({
       where: { id: req.params.moduleId },
       data,
@@ -238,7 +270,16 @@ router.put('/:offeringId/modules/:moduleId', authMiddleware, async (req: AuthReq
 router.delete('/:offeringId/modules/:moduleId', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     await verifyOfferingOwnership(req.params.offeringId, req.userId!);
-    await prisma.module.delete({ where: { id: req.params.moduleId } });
+
+    // Scope the delete to offeringId as well (not just moduleId) to close the same
+    // IDOR as above: without this, any offering owner could delete a module belonging
+    // to someone else's offering by supplying their own offeringId with a foreign
+    // moduleId.
+    const { count } = await prisma.module.deleteMany({
+      where: { id: req.params.moduleId, offeringId: req.params.offeringId },
+    });
+    if (count === 0) throw new AppError(404, 'Modulo no encontrado');
+
     res.json({ message: 'Modulo eliminado' });
   } catch (err) {
     next(err);
