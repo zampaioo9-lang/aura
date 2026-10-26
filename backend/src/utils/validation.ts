@@ -219,7 +219,7 @@ export const createOfferingSchema = z.object({
   priceMXN: z.number().min(0).max(200000).optional(),
   scheduledAt: z.string().datetime().optional(),
   capacity: z.number().int().min(1).max(1000).optional(),
-  externalLink: z.string().url('Debe ser una URL valida (ej. enlace de Zoom o Meet)').optional(),
+  externalLink: z.string().url('Debe ser una URL valida (ej. enlace de Zoom o Meet)').optional().or(z.literal('')),
 }).refine(
   (data) => data.type !== 'LIVE_WORKSHOP' || (data.scheduledAt && data.externalLink),
   { message: 'Un taller en vivo requiere fecha/hora y enlace externo' }
@@ -233,7 +233,7 @@ export const updateOfferingSchema = z.object({
   priceMXN: z.number().min(0).max(200000).optional().nullable(),
   scheduledAt: z.string().datetime().optional().nullable(),
   capacity: z.number().int().min(1).max(1000).optional().nullable(),
-  externalLink: z.string().url().optional().nullable(),
+  externalLink: z.string().url().optional().nullable().or(z.literal('')),
 });
 
 export const createModuleSchema = z.object({
@@ -243,7 +243,7 @@ export const createModuleSchema = z.object({
     errorMap: () => ({ message: 'Tipo de modulo no valido (en esta version: TEXT, VIDEO o PDF)' }),
   }),
   textContent: z.string().max(10000).optional(),
-  fileUrl: z.string().url().optional(),
+  fileUrl: z.string().url().optional().or(z.literal('')),
 }).refine(
   (data) => data.type !== 'TEXT' || !!data.textContent,
   { message: 'Un modulo de texto requiere contenido' }
@@ -256,5 +256,5 @@ export const updateModuleSchema = z.object({
   title: z.string().min(2).max(150).optional(),
   description: z.string().max(500).optional().or(z.literal('')),
   textContent: z.string().max(10000).optional(),
-  fileUrl: z.string().url().optional(),
+  fileUrl: z.string().url().optional().or(z.literal('')),
 });
