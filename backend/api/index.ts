@@ -54,6 +54,7 @@ try {
   const reviewRoutes = require('../src/routes/reviews').default;
   const audioNotesRoutes = require('../src/routes/audio-notes').default;
   const crisisReferralsRoutes = require('../src/routes/crisis-referrals').default;
+  const offeringRoutes = require('../src/routes/offerings').default;
   const { sendWhatsApp } = require('../src/services/whatsappService');
 
   app.use(activityLogger);
@@ -81,6 +82,7 @@ try {
   app.use('/api/reviews', reviewRoutes);
   app.use('/api/audio-notes', audioNotesRoutes);
   app.use('/api/crisis-referrals', crisisReferralsRoutes);
+  app.use('/api/offerings', offeringRoutes);
 
   app.get('/api/test/whatsapp', async (req, res) => {
     const to = req.query.to as string;
