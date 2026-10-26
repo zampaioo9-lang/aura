@@ -239,8 +239,8 @@ export const updateOfferingSchema = z.object({
 export const createModuleSchema = z.object({
   title: z.string().min(2, 'Minimo 2 caracteres').max(150, 'Maximo 150 caracteres'),
   description: z.string().max(500).optional().or(z.literal('')),
-  type: z.enum(['TEXT', 'VIDEO', 'PDF'], {
-    errorMap: () => ({ message: 'Tipo de modulo no valido (en esta version: TEXT, VIDEO o PDF)' }),
+  type: z.enum(['TEXT', 'VIDEO', 'PDF', 'QUESTIONNAIRE'], {
+    errorMap: () => ({ message: 'Tipo de modulo no valido (TEXT, VIDEO, PDF o QUESTIONNAIRE)' }),
   }),
   textContent: z.string().max(10000).optional(),
   fileUrl: z.string().url().optional().or(z.literal('')),
@@ -248,7 +248,7 @@ export const createModuleSchema = z.object({
   (data) => data.type !== 'TEXT' || !!data.textContent,
   { message: 'Un modulo de texto requiere contenido' }
 ).refine(
-  (data) => data.type === 'TEXT' || !!data.fileUrl,
+  (data) => !(data.type === 'VIDEO' || data.type === 'PDF') || !!data.fileUrl,
   { message: 'Un modulo de video o PDF requiere un archivo subido primero (fileUrl)' }
 );
 
@@ -258,3 +258,40 @@ export const updateModuleSchema = z.object({
   textContent: z.string().max(10000).optional(),
   fileUrl: z.string().url().optional().or(z.literal('')),
 });
+
+export const createQuestionSchema = z.object({
+  text: z.string().min(3, 'Minimo 3 caracteres').max(300, 'Maximo 300 caracteres'),
+  type: z.enum(['FREE_TEXT', 'SINGLE_CHOICE', 'MULTIPLE_CHOICE']),
+  options: z.array(z.object({
+    label: z.string().min(1, 'La opcion no puede estar vacia').max(100, 'Maximo 100 caracteres'),
+    value: z.number().int('El valor debe ser un numero entero'),
+  })).max(20, 'Maximo 20 opciones').optional(),
+}).refine(
+  (data) => data.type === 'FREE_TEXT' || (!!data.options && data.options.length >= 2),
+  { message: 'Las preguntas de opcion unica o multiple requieren al menos 2 opciones' }
+).refine(
+  (data) => data.type !== 'FREE_TEXT' || !data.options,
+  { message: 'Las preguntas de texto libre no llevan opciones' }
+);
+
+export const updateQuestionSchema = z.object({
+  text: z.string().min(3, 'Minimo 3 caracteres').max(300, 'Maximo 300 caracteres'),
+});
+
+export const createScoringRuleSchema = z.object({
+  minScore: z.number().int('minScore debe ser un numero entero'),
+  maxScore: z.number().int('maxScore debe ser un numero entero'),
+  message: z.string().min(3, 'Minimo 3 caracteres').max(500, 'Maximo 500 caracteres'),
+}).refine(
+  (data) => data.maxScore >= data.minScore,
+  { message: 'maxScore debe ser mayor o igual a minScore' }
+);
+
+export const updateScoringRuleSchema = z.object({
+  minScore: z.number().int().optional(),
+  maxScore: z.number().int().optional(),
+  message: z.string().min(3).max(500).optional(),
+}).refine(
+  (data) => data.minScore === undefined || data.maxScore === undefined || data.maxScore >= data.minScore,
+  { message: 'maxScore debe ser mayor o igual a minScore' }
+);
