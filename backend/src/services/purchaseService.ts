@@ -91,7 +91,8 @@ export async function resolvePendingOfferingCheckout(customId: string | undefine
   const id = customId.slice(PENDING_CHECKOUT_PREFIX.length);
   try {
     return await prisma.pendingOfferingCheckout.delete({ where: { id } });
-  } catch {
-    return null; // ya consumido, o nunca existio
+  } catch (err: any) {
+    if (err.code === 'P2025') return null; // ya consumido, o nunca existio
+    throw err; // cualquier otro error (ej. caida de conexion) no se debe enmascarar como race benigna
   }
 }
