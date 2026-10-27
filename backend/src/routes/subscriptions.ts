@@ -185,6 +185,36 @@ router.post('/paypal/webhook', async (req: Request, res: Response) => {
     }
 
     const { event_type, resource } = req.body as { event_type: string; resource: any };
+
+    if (event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+      const { resolvePendingOfferingCheckout, createPurchaseAndNotify, PENDING_CHECKOUT_PREFIX } = await import('../services/purchaseService');
+
+      // Compra de un Offering (taller/curso/webinar): el custom_id tiene un prefijo
+      // reservado que ningun flujo de plan/suscripcion usa. Se detecta por el PREFIJO,
+      // no por si resolvePendingOfferingCheckout encontro algo -- si el capture del
+      // comprador (Tarea 8) ya lo consumio, aqui no hay nada que resolver, pero el
+      // custom_id SIGUE siendo de un Offering, nunca un userId real: hay que responder
+      // 200 y salir, nunca caer al codigo de abajo (que lo trataria como userId y fallaria
+      // con un 500 al no encontrar ningun User con ese id).
+      if (resource?.custom_id?.startsWith(PENDING_CHECKOUT_PREFIX)) {
+        const pending = await resolvePendingOfferingCheckout(resource?.custom_id);
+        if (pending) {
+          await createPurchaseAndNotify({
+            offeringId: pending.offeringId,
+            buyerName: pending.buyerName,
+            buyerEmail: pending.buyerEmail,
+            buyerPhone: pending.buyerPhone,
+            amountPaid: Number(resource?.amount?.value ?? 0),
+            currency: resource?.amount?.currency_code ?? pending.currency,
+            providerRef: resource?.id ?? resource?.custom_id,
+            provider: 'PayPal',
+          });
+        }
+        res.json({ received: true });
+        return;
+      }
+    }
+
     const userId: string | undefined = resource?.custom_id;
 
     if (event_type === 'PAYMENT.CAPTURE.COMPLETED' && userId) {

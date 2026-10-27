@@ -59,7 +59,8 @@ export async function createPayPalOrder(
   returnUrl: string,
   cancelUrl: string,
   currency: 'USD' | 'MXN' = 'USD',
-  userId?: string,
+  customId?: string,
+  description: string = 'Aliax Pro Lifetime',
 ): Promise<{ orderId: string; approvalUrl: string }> {
   const token = await getAccessToken();
   const res = await fetch(`${env.PAYPAL_BASE_URL}/v2/checkout/orders`, {
@@ -81,8 +82,8 @@ export async function createPayPalOrder(
             currency_code: currency,
             value: amount,
           },
-          description: 'Aliax Pro Lifetime',
-          custom_id: userId,
+          description,
+          custom_id: customId,
         },
       ],
     }),
@@ -160,7 +161,12 @@ export async function verifyPayPalWebhookSignature(
   return data.verification_status === 'SUCCESS';
 }
 
-export async function capturePayPalOrder(orderId: string): Promise<{ status: string }> {
+export async function capturePayPalOrder(orderId: string): Promise<{
+  status: string;
+  amount?: string;
+  currency?: string;
+  customId?: string;
+}> {
   const token = await getAccessToken();
   const res = await fetch(`${env.PAYPAL_BASE_URL}/v2/checkout/orders/${orderId}/capture`, {
     method: 'POST',
@@ -174,6 +180,21 @@ export async function capturePayPalOrder(orderId: string): Promise<{ status: str
     throw new Error(`PayPal capture order failed: ${res.status}`);
   }
 
-  const data = await res.json() as { status: string };
-  return { status: data.status };
+  const data = await res.json() as {
+    status: string;
+    purchase_units?: Array<{
+      custom_id?: string;
+      payments?: { captures?: Array<{ amount?: { value?: string; currency_code?: string } }> };
+    }>;
+  };
+
+  const unit = data.purchase_units?.[0];
+  const capture = unit?.payments?.captures?.[0];
+
+  return {
+    status: data.status,
+    amount: capture?.amount?.value,
+    currency: capture?.amount?.currency_code,
+    customId: unit?.custom_id,
+  };
 }
