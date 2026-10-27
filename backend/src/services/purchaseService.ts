@@ -31,19 +31,24 @@ export async function createPurchaseAndNotify(params: CreatePurchaseParams): Pro
 
   const accessToken = crypto.randomUUID();
 
-  await prisma.purchase.create({
-    data: {
-      offeringId: params.offeringId,
-      buyerName: params.buyerName,
-      buyerEmail: params.buyerEmail,
-      buyerPhone: params.buyerPhone,
-      accessToken,
-      paidAt: new Date(),
-      amountPaid: params.amountPaid,
-      currency: params.currency,
-      providerRef: params.providerRef,
-    },
-  });
+  try {
+    await prisma.purchase.create({
+      data: {
+        offeringId: params.offeringId,
+        buyerName: params.buyerName,
+        buyerEmail: params.buyerEmail,
+        buyerPhone: params.buyerPhone,
+        accessToken,
+        paidAt: new Date(),
+        amountPaid: params.amountPaid,
+        currency: params.currency,
+        providerRef: params.providerRef,
+      },
+    });
+  } catch (err: any) {
+    if (err.code === 'P2002') return; // ya fue creado por una llamada concurrente
+    throw err;
+  }
 
   const accessUrl = `${env.FRONTEND_URL}/mi-compra/${accessToken}`;
 
@@ -53,7 +58,11 @@ export async function createPurchaseAndNotify(params: CreatePurchaseParams): Pro
     offeringTitle: offering.title,
     accessUrl,
   });
-  sendEmail(buyerTpl.to, buyerTpl.subject, buyerTpl.html).catch(() => {});
+  sendEmail(buyerTpl.to, buyerTpl.subject, buyerTpl.html).then((result) => {
+    if (!result.success) {
+      console.error(`[purchaseService] Failed to send buyer confirmation email: offeringId=${params.offeringId} providerRef=${params.providerRef} buyerEmail=${params.buyerEmail}`);
+    }
+  }).catch(() => {});
 
   const adminTpl = emailTemplates.adminNewOfferingSale({
     buyerName: params.buyerName,
@@ -63,7 +72,11 @@ export async function createPurchaseAndNotify(params: CreatePurchaseParams): Pro
     amountPaid: params.amountPaid,
     currency: params.currency,
   });
-  sendEmail(adminTpl.to, adminTpl.subject, adminTpl.html).catch(() => {});
+  sendEmail(adminTpl.to, adminTpl.subject, adminTpl.html).then((result) => {
+    if (!result.success) {
+      console.error(`[purchaseService] Failed to send admin sale notification email: offeringId=${params.offeringId} providerRef=${params.providerRef} buyerEmail=${params.buyerEmail}`);
+    }
+  }).catch(() => {});
 }
 
 // Usado solo por el flujo de PayPal (ver Tarea 6): resuelve un custom_id con el prefijo
@@ -76,9 +89,9 @@ export async function resolvePendingOfferingCheckout(customId: string | undefine
   if (!customId || !customId.startsWith(PENDING_CHECKOUT_PREFIX)) return null;
 
   const id = customId.slice(PENDING_CHECKOUT_PREFIX.length);
-  const pending = await prisma.pendingOfferingCheckout.findUnique({ where: { id } });
-  if (!pending) return null;
-
-  await prisma.pendingOfferingCheckout.delete({ where: { id } }).catch(() => {});
-  return pending;
+  try {
+    return await prisma.pendingOfferingCheckout.delete({ where: { id } });
+  } catch {
+    return null; // ya consumido, o nunca existio
+  }
 }
