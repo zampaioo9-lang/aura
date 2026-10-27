@@ -26,6 +26,10 @@ const PayPalReturn = lazy(() => import('./pages/PayPalReturn'));
 const Explorar = lazy(() => import('./pages/Explorar'));
 const PsicologosDirectory = lazy(() => import('./pages/PsicologosDirectory'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
+const OfferingPublic = lazy(() => import('./pages/OfferingPublic'));
+const OfferingCheckoutSuccess = lazy(() => import('./pages/OfferingCheckoutSuccess'));
+const OfferingCheckoutCancel = lazy(() => import('./pages/OfferingCheckoutCancel'));
+const OfferingPayPalReturn = lazy(() => import('./pages/OfferingPayPalReturn'));
 
 function PageLoader() {
   return (
@@ -89,6 +93,10 @@ function App() {
               <Route path="/psicologos/:countryCode/:citySlug/:approach" element={<PsicologosDirectory />} />
               <Route path="/book/:slug" element={<BookingPage />} />
               <Route path="/review/:token" element={<ReviewPage />} />
+              <Route path="/oferta/:offeringId" element={<OfferingPublic />} />
+              <Route path="/oferta/:offeringId/exito" element={<OfferingCheckoutSuccess />} />
+              <Route path="/oferta/:offeringId/cancelado" element={<OfferingCheckoutCancel />} />
+              <Route path="/oferta/:offeringId/paypal-retorno" element={<OfferingPayPalReturn />} />
               <Route path="/:slug" element={<PublicProfile />} />
             </Routes>
           </Suspense>

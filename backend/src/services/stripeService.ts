@@ -75,6 +75,41 @@ export async function createCheckoutSession(
   return session.url!;
 }
 
+export async function createOfferingCheckoutSession(params: {
+  offeringId: string;
+  offeringTitle: string;
+  priceAmount: number; // ya resuelto por el caller segun currency (priceUSD o priceMXN)
+  currency: 'USD' | 'MXN';
+  buyerName: string;
+  buyerEmail: string;
+  buyerPhone: string;
+}): Promise<string> {
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    payment_method_types: ['card'],
+    customer_email: params.buyerEmail,
+    line_items: [{
+      price_data: {
+        currency: params.currency.toLowerCase(),
+        product_data: { name: params.offeringTitle },
+        unit_amount: Math.round(params.priceAmount * 100),
+      },
+      quantity: 1,
+    }],
+    success_url: `${env.FRONTEND_URL}/oferta/${params.offeringId}/exito`,
+    cancel_url: `${env.FRONTEND_URL}/oferta/${params.offeringId}/cancelado`,
+    metadata: {
+      offeringId: params.offeringId,
+      buyerName: params.buyerName,
+      buyerEmail: params.buyerEmail,
+      buyerPhone: params.buyerPhone,
+      currency: params.currency,
+    },
+  });
+
+  return session.url!;
+}
+
 export async function handleWebhookEvent(rawBody: Buffer, sig: string): Promise<void> {
   let event: Stripe.Event;
   try {
@@ -85,6 +120,24 @@ export async function handleWebhookEvent(rawBody: Buffer, sig: string): Promise<
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
+
+    // Compra de un Offering (taller/curso/webinar) -- distinto de un pago de plan/suscripcion,
+    // que no trae offeringId en su metadata.
+    if (session.metadata?.offeringId) {
+      const { createPurchaseAndNotify } = await import('./purchaseService');
+      await createPurchaseAndNotify({
+        offeringId: session.metadata.offeringId,
+        buyerName: session.metadata.buyerName ?? '',
+        buyerEmail: session.metadata.buyerEmail ?? '',
+        buyerPhone: session.metadata.buyerPhone || null,
+        amountPaid: (session.amount_total ?? 0) / 100,
+        currency: session.metadata.currency ?? 'USD',
+        providerRef: session.id,
+        provider: 'Stripe',
+      });
+      return;
+    }
+
     const userId = session.metadata?.userId;
     const interval = session.metadata?.interval as 'MONTHLY' | 'YEARLY' | 'LIFETIME' | undefined;
     const tier = (session.metadata?.tier as 'PRO' | 'CLINICO' | undefined) ?? 'PRO';
