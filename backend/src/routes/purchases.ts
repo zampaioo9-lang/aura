@@ -38,6 +38,14 @@ router.post('/checkout', async (req, res, next) => {
       throw new AppError(400, 'Este taller ya se llevo a cabo');
     }
 
+    // Limite conocido y aceptado desde el diseno de esta fase (ver el spec,
+    // "Casos especiales y limites conocidos"): este chequeo y la creacion real del
+    // Purchase (en purchaseService, al confirmarse el pago) no son atomicos ni
+    // transaccionales entre si -- el pago puede tardar minutos en completarse despues de
+    // pasar este chequeo, asi que varios compradores casi simultaneos podrian todos pasarlo
+    // cuando solo queda 1 lugar. Dado que el pago ya se captura para todos en ese escenario,
+    // no hay reembolso automatico; el profesional lo resuelve manualmente. Aceptable para el
+    // volumen esperado en esta etapa.
     if (offering.capacity) {
       const purchaseCount = await prisma.purchase.count({ where: { offeringId: offering.id } });
       if (purchaseCount >= offering.capacity) {
@@ -83,7 +91,10 @@ router.post('/checkout', async (req, res, next) => {
       `${env.FRONTEND_URL}/oferta/${offering.id}/cancelado`,
       data.currency,
       `${PENDING_CHECKOUT_PREFIX}${pending.id}`,
-      offering.title,
+      // PayPal limita purchase_units[].description a 127 caracteres, pero offering.title
+      // permite hasta 150 (createOfferingSchema) -- truncar para que un titulo largo no
+      // tire la orden entera con un 422 silencioso.
+      offering.title.slice(0, 127),
     );
     res.json({ redirectUrl: approvalUrl });
   } catch (err) {
