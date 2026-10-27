@@ -109,12 +109,27 @@ router.post('/checkout', async (req, res, next) => {
 // createPurchaseFromPendingCheckout, que es atomico (delete de PendingOfferingCheckout +
 // create de Purchase en una sola transaccion), asi que da igual cual de los dos llegue
 // primero: el otro simplemente no encuentra nada que hacer.
+// Limite conocido y aceptado: si esta ruta se llama dos veces para el mismo orderId (ej.
+// el comprador recarga la pagina de retorno de PayPal), la segunda llamada a
+// capturePayPalOrder falla (PayPal rechaza capturar una orden ya capturada) y eso hoy se
+// propaga como un 500 generico -- aunque el pago ya se completo exitosamente en la primera
+// llamada. Arreglarlo bien requeriria detectar el error especifico de "ya capturada" de
+// PayPal y tratarlo como exito, lo cual queda fuera de alcance por ahora.
 router.post('/paypal/capture', async (req, res, next) => {
   try {
     const { orderId } = req.body as { orderId?: string };
     if (!orderId) throw new AppError(400, 'orderId is required');
 
-    const { capturePayPalOrder } = await import('../services/paypalService');
+    const { getPayPalOrderCustomId, capturePayPalOrder } = await import('../services/paypalService');
+
+    // Verificar ANTES de capturar (ver fix de revision): capturePayPalOrder es mutable y
+    // comparte namespace con el flujo autenticado de Lifetime-PRO -- esta ruta sin auth
+    // nunca debe capturar una orden que no sea de un Offering.
+    const customId = await getPayPalOrderCustomId(orderId);
+    if (!customId || !customId.startsWith(PENDING_CHECKOUT_PREFIX)) {
+      throw new AppError(404, 'Orden no encontrada');
+    }
+
     const result = await capturePayPalOrder(orderId);
     if (result.status !== 'COMPLETED') {
       throw new AppError(400, `El pago de PayPal no se completo (status: ${result.status})`);
@@ -124,7 +139,7 @@ router.post('/paypal/capture', async (req, res, next) => {
     await createPurchaseFromPendingCheckout(result.customId, {
       amountPaid: Number(result.amount ?? 0),
       currency: result.currency ?? '',
-      providerRef: orderId,
+      providerRef: result.captureId ?? orderId,
     });
 
     res.json({ success: true });
