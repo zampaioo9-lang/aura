@@ -423,6 +423,48 @@ export const emailTemplates = {
     `),
   }),
 
+  // Comprador: confirmacion de compra de un Offering (taller/curso), con el link de acceso
+  offeringPurchaseConfirmation: (data: {
+    buyerName: string;
+    buyerEmail: string;
+    offeringTitle: string;
+    accessUrl: string;
+  }) => ({
+    to: data.buyerEmail,
+    subject: `Tu compra de "${data.offeringTitle}" está confirmada`,
+    html: baseTemplate('Compra confirmada', `
+      ${badge('Pago confirmado', '#16a34a')}
+      ${heading(`Gracias, ${data.buyerName}`)}
+      ${subtext(`Tu compra de "${data.offeringTitle}" quedó registrada. Guarda este correo: el siguiente enlace es tu única forma de acceder al contenido.`)}
+      ${ctaButton('Ver mi compra', data.accessUrl)}
+    `),
+  }),
+
+  // Admin: aviso de una venta nueva de Offering (taller/curso/webinar)
+  adminNewOfferingSale: (data: {
+    buyerName: string;
+    buyerEmail: string;
+    offeringTitle: string;
+    provider: 'Stripe' | 'PayPal';
+    amountPaid: number;
+    currency: string;
+  }) => ({
+    to: env.ADMIN_EMAIL,
+    subject: `💰 Venta de taller/curso (${data.provider}): ${data.offeringTitle}`,
+    html: baseTemplate('Venta confirmada', `
+      ${badge(`${data.provider} · ${data.currency} ${data.amountPaid.toFixed(2)}`, '#16a34a')}
+      ${heading('Se vendió un taller/curso')}
+      ${detailTable(
+        detailRow('Oferta', data.offeringTitle) +
+        detailRow('Comprador', data.buyerName) +
+        detailRow('Correo', data.buyerEmail) +
+        detailRow('Monto', `${data.currency} ${data.amountPaid.toFixed(2)}`) +
+        detailRow('Método de pago', data.provider)
+      )}
+      ${ctaButton('Ver en el Admin', 'https://www.aliax.io/admin')}
+    `),
+  }),
+
   // Admin: fallo inesperado al iniciar una transcripción de audio (clave inválida, AssemblyAI caído, cuota agotada, etc.)
   adminTranscriptionError: (data: {
     userName: string;

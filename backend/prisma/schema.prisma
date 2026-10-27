@@ -675,6 +675,8 @@ model Purchase {
   accessToken String    @unique
   paidAt      DateTime?
   amountPaid  Decimal?
+  currency    String
+  providerRef String    @unique
   createdAt   DateTime  @default(now())
 
   offering Offering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
@@ -682,6 +684,29 @@ model Purchase {
 
   @@index([offeringId])
   @@index([accessToken])
+}
+
+// Guarda los datos del comprador entre el momento en que se crea una orden de PayPal
+// (antes de que el comprador pague) y el momento en que se confirma el pago. PayPal no
+// soporta metadata libre como Stripe -- el custom_id de una orden tiene un limite de 127
+// caracteres, insuficiente para nombre+correo+telefono -- asi que se guarda aqui y se
+// referencia por id en el custom_id. Se borra en cuanto se lee (ver purchaseService.ts).
+// Stripe no necesita esto: su metadata permite pasar los datos del comprador directo.
+//
+// Limite conocido y aceptado por ahora (encontrado en la revision de Fase 3, Task 1): si
+// un invitado arranca un checkout de PayPal y nunca lo completa (cierra la pestana, la
+// aprobacion de PayPal expira), la fila queda huerfana sin fecha de expiracion ni limpieza
+// automatica -- contiene PII (buyerName/buyerEmail/buyerPhone) de alguien que nunca pago.
+// No bloquea esta fase (sin trafico real todavia), pero si este checkout se abusa o el
+// volumen crece, hay que agregar un campo de expiracion + un job de limpieza.
+model PendingOfferingCheckout {
+  id         String   @id @default(uuid())
+  offeringId String
+  buyerName  String
+  buyerEmail String
+  buyerPhone String?
+  currency   String
+  createdAt  DateTime @default(now())
 }
 
 model Answer {

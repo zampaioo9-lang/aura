@@ -59,7 +59,8 @@ export async function createPayPalOrder(
   returnUrl: string,
   cancelUrl: string,
   currency: 'USD' | 'MXN' = 'USD',
-  userId?: string,
+  customId?: string,
+  description: string = 'Aliax Pro Lifetime',
 ): Promise<{ orderId: string; approvalUrl: string }> {
   const token = await getAccessToken();
   const res = await fetch(`${env.PAYPAL_BASE_URL}/v2/checkout/orders`, {
@@ -81,8 +82,8 @@ export async function createPayPalOrder(
             currency_code: currency,
             value: amount,
           },
-          description: 'Aliax Pro Lifetime',
-          custom_id: userId,
+          description,
+          custom_id: customId,
         },
       ],
     }),
@@ -160,7 +161,13 @@ export async function verifyPayPalWebhookSignature(
   return data.verification_status === 'SUCCESS';
 }
 
-export async function capturePayPalOrder(orderId: string): Promise<{ status: string }> {
+export async function capturePayPalOrder(orderId: string): Promise<{
+  status: string;
+  amount?: string;
+  currency?: string;
+  customId?: string;
+  captureId?: string;
+}> {
   const token = await getAccessToken();
   const res = await fetch(`${env.PAYPAL_BASE_URL}/v2/checkout/orders/${orderId}/capture`, {
     method: 'POST',
@@ -174,6 +181,39 @@ export async function capturePayPalOrder(orderId: string): Promise<{ status: str
     throw new Error(`PayPal capture order failed: ${res.status}`);
   }
 
-  const data = await res.json() as { status: string };
-  return { status: data.status };
+  const data = await res.json() as {
+    status: string;
+    purchase_units?: Array<{
+      custom_id?: string;
+      payments?: { captures?: Array<{ id?: string; amount?: { value?: string; currency_code?: string } }> };
+    }>;
+  };
+
+  const unit = data.purchase_units?.[0];
+  const capture = unit?.payments?.captures?.[0];
+
+  return {
+    status: data.status,
+    amount: capture?.amount?.value,
+    currency: capture?.amount?.currency_code,
+    customId: unit?.custom_id,
+    captureId: capture?.id,
+  };
+}
+
+// Lectura NO mutable de una orden de PayPal -- usada por la ruta de captura de invitado
+// para confirmar que una orden realmente corresponde a un checkout de Offering (via el
+// prefijo reservado en custom_id) ANTES de llamar a la captura mutable, que capturePayPalOrder
+// comparte con el flujo autenticado de Lifetime-PRO. Sin este chequeo previo, cualquiera
+// podria pasar el orderId de la compra de otra persona (de cualquiera de los dos flujos) y
+// esta ruta sin auth terminaria finalizando un cargo ajeno que no deberia tocar.
+export async function getPayPalOrderCustomId(orderId: string): Promise<string | undefined> {
+  const token = await getAccessToken();
+  const res = await fetch(`${env.PAYPAL_BASE_URL}/v2/checkout/orders/${orderId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return undefined;
+
+  const data = await res.json() as { purchase_units?: Array<{ custom_id?: string }> };
+  return data.purchase_units?.[0]?.custom_id;
 }
