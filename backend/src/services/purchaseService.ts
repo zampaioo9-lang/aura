@@ -96,3 +96,80 @@ export async function resolvePendingOfferingCheckout(customId: string | undefine
     throw err; // cualquier otro error (ej. caida de conexion) no se debe enmascarar como race benigna
   }
 }
+
+// Usado solo por el flujo de PayPal (webhook y capture del comprador). A diferencia de
+// createPurchaseAndNotify (que Stripe usa directo, sin PendingOfferingCheckout), aqui el
+// borrado de la fila pendiente y la creacion del Purchase deben ser atomicos: si se borra
+// la fila pendiente y DESPUES falla la creacion del Purchase por cualquier razon que no sea
+// "ya existe", el pago queda cobrado por PayPal sin ningun Purchase, accessToken ni correo
+// -- y un reintento del webhook ya no encontraria la fila pendiente para resolverlo. Un
+// prisma.$transaction evita exactamente eso: si algo falla despues del borrado, el borrado
+// tambien se revierte, y un reintento posterior (de PayPal o del comprador) puede completarse
+// limpio.
+export async function createPurchaseFromPendingCheckout(
+  customId: string | undefined | null,
+  info: { amountPaid: number; currency: string; providerRef: string },
+): Promise<void> {
+  if (!customId || !customId.startsWith(PENDING_CHECKOUT_PREFIX)) return;
+
+  const existingPurchase = await prisma.purchase.findUnique({ where: { providerRef: info.providerRef } });
+  if (existingPurchase) return;
+
+  const id = customId.slice(PENDING_CHECKOUT_PREFIX.length);
+  const accessToken = crypto.randomUUID();
+
+  let result;
+  try {
+    result = await prisma.$transaction(async (tx) => {
+      const pending = await tx.pendingOfferingCheckout.delete({ where: { id } });
+      const purchase = await tx.purchase.create({
+        data: {
+          offeringId: pending.offeringId,
+          buyerName: pending.buyerName,
+          buyerEmail: pending.buyerEmail,
+          buyerPhone: pending.buyerPhone,
+          accessToken,
+          paidAt: new Date(),
+          amountPaid: info.amountPaid,
+          currency: info.currency || pending.currency,
+          providerRef: info.providerRef,
+        },
+      });
+      return { pending, purchase };
+    });
+  } catch (err: any) {
+    if (err.code === 'P2025' || err.code === 'P2002') return; // ya consumido por la otra ruta (webhook vs. capture del comprador, lo que llegue primero gana)
+    throw err;
+  }
+
+  const offering = await prisma.offering.findUnique({ where: { id: result.pending.offeringId } });
+  if (!offering) return;
+
+  const accessUrl = `${env.FRONTEND_URL}/mi-compra/${accessToken}`;
+
+  const buyerTpl = emailTemplates.offeringPurchaseConfirmation({
+    buyerName: result.pending.buyerName,
+    buyerEmail: result.pending.buyerEmail,
+    offeringTitle: offering.title,
+    accessUrl,
+  });
+  sendEmail(buyerTpl.to, buyerTpl.subject, buyerTpl.html).then((emailResult) => {
+    if (!emailResult.success) {
+      console.error(`[purchaseService] Failed to send buyer confirmation email: offeringId=${result.pending.offeringId} providerRef=${info.providerRef} buyerEmail=${result.pending.buyerEmail}`);
+    }
+  }).catch(() => {});
+
+  const adminTpl = emailTemplates.adminNewOfferingSale({
+    buyerName: result.pending.buyerName,
+    buyerEmail: result.pending.buyerEmail,
+    offeringTitle: offering.title,
+    provider: 'PayPal',
+    amountPaid: info.amountPaid,
+    currency: info.currency || result.pending.currency,
+  });
+  sendEmail(adminTpl.to, adminTpl.subject, adminTpl.html).then((emailResult) => {
+    if (!emailResult.success) {
+      console.error(`[purchaseService] Failed to send admin sale email: offeringId=${result.pending.offeringId} providerRef=${info.providerRef} buyerEmail=${result.pending.buyerEmail}`);
+    }
+  }).catch(() => {});
+}
