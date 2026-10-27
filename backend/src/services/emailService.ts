@@ -431,11 +431,11 @@ export const emailTemplates = {
     accessUrl: string;
   }) => ({
     to: data.buyerEmail,
-    subject: `Tu compra de "${data.offeringTitle}" esta confirmada`,
+    subject: `Tu compra de "${data.offeringTitle}" está confirmada`,
     html: baseTemplate('Compra confirmada', `
       ${badge('Pago confirmado', '#16a34a')}
       ${heading(`Gracias, ${data.buyerName}`)}
-      ${subtext(`Tu compra de "${data.offeringTitle}" quedo registrada. Guarda este correo: el siguiente enlace es tu unica forma de acceder al contenido.`)}
+      ${subtext(`Tu compra de "${data.offeringTitle}" quedó registrada. Guarda este correo: el siguiente enlace es tu única forma de acceder al contenido.`)}
       ${ctaButton('Ver mi compra', data.accessUrl)}
     `),
   }),
@@ -453,13 +453,13 @@ export const emailTemplates = {
     subject: `💰 Venta de taller/curso (${data.provider}): ${data.offeringTitle}`,
     html: baseTemplate('Venta confirmada', `
       ${badge(`${data.provider} · ${data.currency} ${data.amountPaid.toFixed(2)}`, '#16a34a')}
-      ${heading('Se vendio un taller/curso')}
+      ${heading('Se vendió un taller/curso')}
       ${detailTable(
         detailRow('Oferta', data.offeringTitle) +
         detailRow('Comprador', data.buyerName) +
         detailRow('Correo', data.buyerEmail) +
         detailRow('Monto', `${data.currency} ${data.amountPaid.toFixed(2)}`) +
-        detailRow('Metodo de pago', data.provider)
+        detailRow('Método de pago', data.provider)
       )}
       ${ctaButton('Ver en el Admin', 'https://www.aliax.io/admin')}
     `),
