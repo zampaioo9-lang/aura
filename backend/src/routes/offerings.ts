@@ -24,9 +24,12 @@ async function verifyOfferingOwnership(offeringId: string, userId: string) {
 // userId, in one atomic query. Closes the same class of IDOR that Fase 1's review found
 // on the Module routes (see the comments on PUT/DELETE /:offeringId/modules/:moduleId
 // below), but in a single query instead of two separate ones.
+// Includes offering.status so callers can enforce the publish-state delete gates below
+// without an extra round trip.
 async function verifyModuleOwnership(offeringId: string, moduleId: string, userId: string) {
   const module = await prisma.module.findFirst({
     where: { id: moduleId, offeringId, offering: { profile: { userId } } },
+    include: { offering: { select: { status: true } } },
   });
   if (!module) throw new AppError(404, 'Modulo no encontrado');
   return module;
@@ -198,18 +201,38 @@ router.patch('/:id/publish', authMiddleware, async (req: AuthRequest, res, next)
     if (existing.status === 'DRAFT') {
       const modules = await prisma.module.findMany({
         where: { offeringId: existing.id },
-        include: { _count: { select: { questions: true } } },
+        include: {
+          questions: { select: { type: true } },
+          _count: { select: { scoringRules: true } },
+        },
       });
       if (modules.length === 0) {
         throw new AppError(400, 'Agrega al menos un modulo antes de publicar');
       }
       const emptyQuestionnaire = modules.find(
-        (m) => m.type === 'QUESTIONNAIRE' && m._count.questions === 0
+        (m) => m.type === 'QUESTIONNAIRE' && m.questions.length === 0
       );
       if (emptyQuestionnaire) {
         throw new AppError(
           400,
           `El modulo de cuestionario "${emptyQuestionnaire.title}" necesita al menos una pregunta antes de publicar`
+        );
+      }
+      // Una pregunta de opcion (SINGLE_CHOICE/MULTIPLE_CHOICE) tiene un valor numerico
+      // que se suma a un puntaje total; sin al menos una ScoringRule, ese puntaje no
+      // coincide con ningun rango y el comprador no recibe mensaje de resultado en Fase 4.
+      // Las preguntas de texto libre no puntuan, asi que un cuestionario compuesto solo de
+      // esas no necesita reglas.
+      const questionnaireMissingScoring = modules.find(
+        (m) =>
+          m.type === 'QUESTIONNAIRE' &&
+          m._count.scoringRules === 0 &&
+          m.questions.some((q) => q.type === 'SINGLE_CHOICE' || q.type === 'MULTIPLE_CHOICE')
+      );
+      if (questionnaireMissingScoring) {
+        throw new AppError(
+          400,
+          `El modulo de cuestionario "${questionnaireMissingScoring.title}" tiene preguntas de opcion y necesita al menos una regla de puntuacion antes de publicar`
         );
       }
     }
@@ -321,7 +344,26 @@ router.put('/:offeringId/modules/:moduleId', authMiddleware, async (req: AuthReq
 // DELETE /api/offerings/:offeringId/modules/:moduleId — Delete module (auth, owner)
 router.delete('/:offeringId/modules/:moduleId', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
-    await verifyOfferingOwnership(req.params.offeringId, req.userId!);
+    // verifyModuleOwnership (not just verifyOfferingOwnership) so a moduleId that doesn't
+    // exist or doesn't belong to this offering 404s BEFORE the PUBLISHED-count gate below
+    // runs. Checking the gate first would wrongly return 400 (and leak the offering's
+    // module count) for a bad moduleId when the offering happens to have exactly 1 module.
+    const module = await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
+
+    // Resolved design question from Fase 2's final review: deleting the only module of an
+    // already-PUBLISHED offering would leave it in the exact invalid state that
+    // PATCH /:id/publish blocks at publish time (0 modules). Block it here too, symmetric
+    // with that gate, instead of silently allowing an invalid published offering to exist.
+    // NOTE: this count check and the delete below are separate, non-transactional queries
+    // (same as the rest of this file, e.g. order: currentCount + 1) — two concurrent
+    // deletes against a 2-module offering could both pass and leave 0 modules. Acceptable
+    // for now given no buyer flow exists yet; revisit if this becomes a real race.
+    if (module.offering.status === 'PUBLISHED') {
+      const moduleCount = await prisma.module.count({ where: { offeringId: req.params.offeringId } });
+      if (moduleCount <= 1) {
+        throw new AppError(400, 'No se puede borrar el unico modulo de una oferta ya publicada; despublica la oferta primero');
+      }
+    }
 
     // Scope the delete to offeringId as well (not just moduleId) to close the same
     // IDOR as above: without this, any offering owner could delete a module belonging
@@ -400,17 +442,30 @@ router.put('/:offeringId/modules/:moduleId/questions/:questionId', authMiddlewar
 });
 
 // DELETE /api/offerings/:offeringId/modules/:moduleId/questions/:questionId: Delete question (auth, owner). Cascades to its QuestionOption rows and any Answer rows via the schema's onDelete: Cascade.
-// TODO(Fase 4 - encontrado en la revision final de Fase 2): esta ruta no revisa el status del
-// Offering. Se puede borrar la ultima pregunta de un modulo QUESTIONNAIRE aunque el Offering ya
-// este PUBLISHED, dejandolo en el mismo estado invalido que PATCH /:id/publish esta disenado a
-// bloquear. No muerde hoy porque no existe todavia ningun comprador que consuma los modulos
-// (Fase 3/4), pero hay que decidir como manejarlo antes de que Fase 4 este en produccion:
-// bloquear el borrado si offering.status === 'PUBLISHED', o despublicar automaticamente, o algo
-// mas deliberado. Mismo gap existe para DELETE de Module en general, no es nuevo de esta ruta.
+// Resolved design question from Fase 2's final review: deleting the last question of an
+// already-PUBLISHED offering's QUESTIONNAIRE module would leave it in the exact invalid
+// state that PATCH /:id/publish blocks at publish time (0 questions). Block it here too,
+// symmetric with that gate and with the module-delete gate above.
 router.delete('/:offeringId/modules/:moduleId/questions/:questionId', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
-    await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
+    const module = await verifyModuleOwnership(req.params.offeringId, req.params.moduleId, req.userId!);
+    await verifyQuestionOwnership(req.params.moduleId, req.params.questionId, req.userId!);
 
+    // NOTE: same non-transactional race as the module-delete gate above (count check and
+    // delete are separate queries). Acceptable for now, same reasoning.
+    if (module.offering.status === 'PUBLISHED') {
+      const questionCount = await prisma.question.count({ where: { moduleId: req.params.moduleId } });
+      if (questionCount <= 1) {
+        throw new AppError(400, 'No se puede borrar la unica pregunta de un cuestionario ya publicado; despublica la oferta primero');
+      }
+    }
+
+    // deleteMany + count-check (not delete()) even though verifyQuestionOwnership just
+    // confirmed the row exists: delete() throws Prisma's P2025 if the row is gone by the
+    // time this runs (e.g. a double-click firing two identical DELETEs, or the parent
+    // Module being deleted concurrently, which cascades to its Questions), and P2025 isn't
+    // an AppError/ZodError so errorHandler.ts would turn it into a 500 instead of a clean
+    // 404. deleteMany can't throw on "not found", it just reports count: 0.
     const { count } = await prisma.question.deleteMany({
       where: { id: req.params.questionId, moduleId: req.params.moduleId },
     });
