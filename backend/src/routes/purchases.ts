@@ -102,4 +102,35 @@ router.post('/checkout', async (req, res, next) => {
   }
 });
 
+// POST /api/purchases/paypal/capture -- sin auth. El comprador vuelve aqui desde la pagina
+// de aprobacion de PayPal; el frontend llama esto con el orderId de la URL. El webhook de
+// /api/subscriptions/paypal/webhook es el respaldo servidor-a-servidor si el comprador
+// cierra la pestana antes de que esta llamada termine -- ambos caminos usan
+// createPurchaseFromPendingCheckout, que es atomico (delete de PendingOfferingCheckout +
+// create de Purchase en una sola transaccion), asi que da igual cual de los dos llegue
+// primero: el otro simplemente no encuentra nada que hacer.
+router.post('/paypal/capture', async (req, res, next) => {
+  try {
+    const { orderId } = req.body as { orderId?: string };
+    if (!orderId) throw new AppError(400, 'orderId is required');
+
+    const { capturePayPalOrder } = await import('../services/paypalService');
+    const result = await capturePayPalOrder(orderId);
+    if (result.status !== 'COMPLETED') {
+      throw new AppError(400, `El pago de PayPal no se completo (status: ${result.status})`);
+    }
+
+    const { createPurchaseFromPendingCheckout } = await import('../services/purchaseService');
+    await createPurchaseFromPendingCheckout(result.customId, {
+      amountPaid: Number(result.amount ?? 0),
+      currency: result.currency ?? '',
+      providerRef: orderId,
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
