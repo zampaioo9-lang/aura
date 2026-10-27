@@ -26,6 +26,7 @@ const PayPalReturn = lazy(() => import('./pages/PayPalReturn'));
 const Explorar = lazy(() => import('./pages/Explorar'));
 const PsicologosDirectory = lazy(() => import('./pages/PsicologosDirectory'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
+const OfferingPublic = lazy(() => import('./pages/OfferingPublic'));
 
 function PageLoader() {
   return (
@@ -89,6 +90,7 @@ function App() {
               <Route path="/psicologos/:countryCode/:citySlug/:approach" element={<PsicologosDirectory />} />
               <Route path="/book/:slug" element={<BookingPage />} />
               <Route path="/review/:token" element={<ReviewPage />} />
+              <Route path="/oferta/:offeringId" element={<OfferingPublic />} />
               <Route path="/:slug" element={<PublicProfile />} />
             </Routes>
           </Suspense>
