@@ -79,24 +79,6 @@ export async function createPurchaseAndNotify(params: CreatePurchaseParams): Pro
   }).catch(() => {});
 }
 
-// Usado solo por el flujo de PayPal (ver Tarea 6): resuelve un custom_id con el prefijo
-// "offering_checkout:" al registro de PendingOfferingCheckout que guarda los datos del
-// comprador, y lo borra (se consume una sola vez). Devuelve null si el custom_id no tiene
-// el prefijo esperado (es una orden/suscripcion de plan, no de Offering), o si el registro
-// ya no existe (ya fue consumido por el otro camino -- capture del comprador vs. webhook de
-// respaldo, lo que llegue primero gana, y el otro simplemente no encuentra nada que hacer).
-export async function resolvePendingOfferingCheckout(customId: string | undefined | null) {
-  if (!customId || !customId.startsWith(PENDING_CHECKOUT_PREFIX)) return null;
-
-  const id = customId.slice(PENDING_CHECKOUT_PREFIX.length);
-  try {
-    return await prisma.pendingOfferingCheckout.delete({ where: { id } });
-  } catch (err: any) {
-    if (err.code === 'P2025') return null; // ya consumido, o nunca existio
-    throw err; // cualquier otro error (ej. caida de conexion) no se debe enmascarar como race benigna
-  }
-}
-
 // Usado solo por el flujo de PayPal (webhook y capture del comprador). A diferencia de
 // createPurchaseAndNotify (que Stripe usa directo, sin PendingOfferingCheckout), aqui el
 // borrado de la fila pendiente y la creacion del Purchase deben ser atomicos: si se borra

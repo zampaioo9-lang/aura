@@ -298,9 +298,13 @@ export const updateScoringRuleSchema = z.object({
 
 export const checkoutSchema = z.object({
   offeringId: z.string().uuid('offeringId invalido'),
-  buyerName: z.string().min(2, 'Minimo 2 caracteres').max(100, 'Maximo 100 caracteres'),
-  buyerEmail: z.string().email('Correo invalido').max(150, 'Maximo 150 caracteres'),
-  buyerPhone: z.string().max(30, 'Maximo 30 caracteres').optional().or(z.literal('')),
+  // .trim() antes de validar longitud: este endpoint es publico y sin auth (invitados), asi
+  // que no se puede confiar en que el frontend ya haya recortado espacios -- sin esto, un
+  // nombre/correo con espacios de sobra llega tal cual a Purchase y a los correos de
+  // confirmacion/admin.
+  buyerName: z.string().trim().min(2, 'Minimo 2 caracteres').max(100, 'Maximo 100 caracteres'),
+  buyerEmail: z.string().trim().email('Correo invalido').max(150, 'Maximo 150 caracteres'),
+  buyerPhone: z.string().trim().max(30, 'Maximo 30 caracteres').optional().or(z.literal('')),
   currency: z.enum(['USD', 'MXN'], { errorMap: () => ({ message: 'currency debe ser USD o MXN' }) }),
   provider: z.enum(['stripe', 'paypal'], { errorMap: () => ({ message: 'provider debe ser stripe o paypal' }) }),
 });
