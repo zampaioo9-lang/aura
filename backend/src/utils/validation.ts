@@ -295,3 +295,12 @@ export const updateScoringRuleSchema = z.object({
   (data) => data.minScore === undefined || data.maxScore === undefined || data.maxScore >= data.minScore,
   { message: 'maxScore debe ser mayor o igual a minScore' }
 );
+
+export const checkoutSchema = z.object({
+  offeringId: z.string().uuid('offeringId invalido'),
+  buyerName: z.string().min(2, 'Minimo 2 caracteres').max(100, 'Maximo 100 caracteres'),
+  buyerEmail: z.string().email('Correo invalido').max(150, 'Maximo 150 caracteres'),
+  buyerPhone: z.string().max(30, 'Maximo 30 caracteres').optional().or(z.literal('')),
+  currency: z.enum(['USD', 'MXN'], { errorMap: () => ({ message: 'currency debe ser USD o MXN' }) }),
+  provider: z.enum(['stripe', 'paypal'], { errorMap: () => ({ message: 'provider debe ser stripe o paypal' }) }),
+});
