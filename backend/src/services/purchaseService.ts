@@ -122,6 +122,14 @@ export async function createPurchaseFromPendingCheckout(
   try {
     result = await prisma.$transaction(async (tx) => {
       const pending = await tx.pendingOfferingCheckout.delete({ where: { id } });
+
+      // Se busca el Offering DENTRO de la misma transaccion (no despues, con el prisma de
+      // afuera): asi, si esto falla por cualquier razon, el borrado de arriba tambien se
+      // revierte en vez de quedar confirmado con un Purchase que nunca se crea y ningun
+      // correo que se envia -- el mismo tipo de fuga que esta funcion existe para cerrar.
+      const offering = await tx.offering.findUnique({ where: { id: pending.offeringId } });
+      if (!offering) return null; // no deberia pasar: el Offering se borro entre el checkout y el pago
+
       const purchase = await tx.purchase.create({
         data: {
           offeringId: pending.offeringId,
@@ -135,15 +143,15 @@ export async function createPurchaseFromPendingCheckout(
           providerRef: info.providerRef,
         },
       });
-      return { pending, purchase };
+      return { pending, purchase, offering };
     });
   } catch (err: any) {
     if (err.code === 'P2025' || err.code === 'P2002') return; // ya consumido por la otra ruta (webhook vs. capture del comprador, lo que llegue primero gana)
     throw err;
   }
 
-  const offering = await prisma.offering.findUnique({ where: { id: result.pending.offeringId } });
-  if (!offering) return;
+  if (!result) return;
+  const { offering } = result;
 
   const accessUrl = `${env.FRONTEND_URL}/mi-compra/${accessToken}`;
 
