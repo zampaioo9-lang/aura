@@ -9,6 +9,8 @@ interface Offering {
   type: 'LIVE_WORKSHOP' | 'RECORDED_COURSE';
   priceUSD: string;
   priceMXN: string | null;
+  scheduledAt: string | null;
+  capacity: number | null;
   profile: { title: string; slug: string; avatar: string | null };
 }
 
@@ -32,8 +34,15 @@ export default function OfferingPublic() {
   }, [offeringId]);
 
   const startCheckout = async (provider: 'stripe' | 'paypal') => {
-    if (!buyerName.trim() || !buyerEmail.trim()) {
+    const trimmedName = buyerName.trim();
+    const trimmedEmail = buyerEmail.trim();
+    if (!trimmedName || !trimmedEmail) {
       setFormError('Nombre y correo son obligatorios');
+      return;
+    }
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(trimmedEmail)) {
+      setFormError('El correo no parece valido');
       return;
     }
     setFormError('');
@@ -41,15 +50,19 @@ export default function OfferingPublic() {
     try {
       const res = await api.post('/purchases/checkout', {
         offeringId,
-        buyerName,
-        buyerEmail,
+        buyerName: trimmedName,
+        buyerEmail: trimmedEmail,
         buyerPhone: buyerPhone || undefined,
         currency,
         provider,
       });
       window.location.href = res.data.redirectUrl;
     } catch (err: any) {
-      setFormError(err.response?.data?.error || 'No se pudo iniciar el pago');
+      const details = err.response?.data?.details;
+      const message = Array.isArray(details) && details.length > 0
+        ? details.join('. ')
+        : err.response?.data?.error || 'No se pudo iniciar el pago';
+      setFormError(message);
       setSubmitting(false);
     }
   };
@@ -65,6 +78,24 @@ export default function OfferingPublic() {
         <p className="text-sm text-teal-600 font-medium mb-1">{offering.profile.title}</p>
         <h1 className="text-2xl font-semibold text-slate-900 mb-3">{offering.title}</h1>
         {offering.description && <p className="text-slate-600 mb-6">{offering.description}</p>}
+
+        {offering.type === 'LIVE_WORKSHOP' && (
+          <div className="mb-6 p-4 bg-teal-50 rounded-lg text-sm text-teal-800 space-y-1">
+            {offering.scheduledAt && !isNaN(new Date(offering.scheduledAt).getTime()) ? (
+              <p>
+                <span className="font-medium">Fecha y hora: </span>
+                {new Date(offering.scheduledAt).toLocaleDateString('es-MX', { dateStyle: 'full' })}
+                {' · '}
+                {new Date(offering.scheduledAt).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' })}
+              </p>
+            ) : (
+              <p className="font-medium">Fecha por confirmar</p>
+            )}
+            {offering.capacity != null && (
+              <p><span className="font-medium">Cupo: </span>{offering.capacity} lugares</p>
+            )}
+          </div>
+        )}
 
         <div className="flex items-baseline gap-2 mb-6">
           <span className="text-3xl font-bold text-slate-900">${price}</span>
