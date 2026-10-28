@@ -155,6 +155,13 @@ router.post('/:accessToken/modules/:moduleId/answers', async (req, res, next) =>
         if (selected.length === 0) {
           throw new AppError(400, `La pregunta "${question.text}" requiere al menos una opcion`);
         }
+        // Sin este chequeo, repetir el mismo id de opcion varias veces inflaba el puntaje
+        // (calculateScore suma una vez por cada elemento del array, no por opcion distinta
+        // seleccionada) -- un comprador no podia afectar a otro comprador con esto, pero si
+        // manipular su propio resultado, que despues alimenta el PDF.
+        if (new Set(selected).size !== selected.length) {
+          throw new AppError(400, `La pregunta "${question.text}" tiene opciones repetidas`);
+        }
         if (question.type === 'SINGLE_CHOICE' && selected.length > 1) {
           throw new AppError(400, `La pregunta "${question.text}" acepta solo una opcion`);
         }
