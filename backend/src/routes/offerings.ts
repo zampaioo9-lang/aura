@@ -118,10 +118,6 @@ router.get('/profile/:profileId', async (req, res, next) => {
 });
 
 // GET /api/offerings/:id — Detail (public if PUBLISHED, owner can see any status)
-// TODO(Fase 3/4 — checkout y gating de acceso): esta ruta publica devuelve el contenido
-// completo de los modulos (fileUrl, textContent) sin verificar ninguna Purchase. Es el
-// alcance esperado de esta fase (no hay checkout todavia), pero en cuanto exista Purchase,
-// hay que dejar de incluir fileUrl/textContent aqui para quien no haya comprado.
 router.get('/:id', async (req, res, next) => {
   try {
     const offering = await prisma.offering.findUnique({
@@ -135,7 +131,7 @@ router.get('/:id', async (req, res, next) => {
 
     const authHeader = req.headers.authorization;
     let isOwner = false;
-    if (authHeader?.startsWith('Bearer ') && offering.status !== 'PUBLISHED') {
+    if (authHeader?.startsWith('Bearer ')) {
       const payload = verifyToken(authHeader.slice(7));
       isOwner = !!payload && payload.userId === offering.profile.userId;
     }
@@ -144,10 +140,18 @@ router.get('/:id', async (req, res, next) => {
       throw new AppError(404, 'Oferta no encontrada');
     }
 
+    // Cierra el TODO de Fase 1: ahora que Purchase existe y se usa de verdad (Fase 3/4),
+    // quien no es el dueno del Offering ya no ve el contenido completo de los modulos --
+    // solo lo esencial para decidir si comprar (titulo, descripcion, tipo, orden). El
+    // contenido real se sirve unicamente por accessToken (ver access.ts, Fase 4).
+    const sanitizedModules = isOwner
+      ? offering.modules
+      : offering.modules.map(({ textContent, fileUrl, ...rest }) => rest);
+
     // Do not leak the internal profile.userId to the client; it's only needed
     // above for the isOwner check.
     const { userId, ...publicProfile } = offering.profile;
-    res.json({ ...offering, profile: publicProfile });
+    res.json({ ...offering, modules: sanitizedModules, profile: publicProfile });
   } catch (err) {
     next(err);
   }
@@ -280,19 +284,33 @@ router.post('/:offeringId/modules', authMiddleware, async (req: AuthRequest, res
 });
 
 // GET /api/offerings/:offeringId/modules — List modules (public if offering PUBLISHED)
-// TODO(Fase 3/4 — checkout y gating de acceso): mismo pendiente que GET /:id — esta ruta
-// sirve fileUrl/textContent completos sin verificar Purchase. Alcance esperado de esta fase.
 router.get('/:offeringId/modules', async (req, res, next) => {
   try {
-    const offering = await prisma.offering.findUnique({ where: { id: req.params.offeringId } });
+    const offering = await prisma.offering.findUnique({
+      where: { id: req.params.offeringId },
+      include: { profile: { select: { userId: true } } },
+    });
     if (!offering) throw new AppError(404, 'Oferta no encontrada');
     if (offering.status !== 'PUBLISHED') throw new AppError(404, 'Oferta no encontrada');
+
+    const authHeader = req.headers.authorization;
+    let isOwner = false;
+    if (authHeader?.startsWith('Bearer ')) {
+      const payload = verifyToken(authHeader.slice(7));
+      isOwner = !!payload && payload.userId === offering.profile.userId;
+    }
 
     const modules = await prisma.module.findMany({
       where: { offeringId: req.params.offeringId },
       orderBy: { order: 'asc' },
     });
-    res.json(modules);
+
+    // Mismo cierre del TODO de Fase 1 que GET /:id (ver arriba).
+    const sanitizedModules = isOwner
+      ? modules
+      : modules.map(({ textContent, fileUrl, ...rest }) => rest);
+
+    res.json(sanitizedModules);
   } catch (err) {
     next(err);
   }
