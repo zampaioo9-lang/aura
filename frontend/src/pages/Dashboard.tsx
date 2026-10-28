@@ -776,7 +776,7 @@ export default function Dashboard() {
           {/* Perfil tab */}
           <button
             onClick={() => goMobile('perfil')}
-            className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors"
+            className="flex-1 min-w-0 flex flex-col items-center justify-center gap-1 relative transition-colors"
             style={{ color: mobileSection === 'perfil' ? C.accent : C.muted }}
           >
             <div style={{
@@ -799,7 +799,7 @@ export default function Dashboard() {
                 ? <img src={sidebarAvatar} className="w-full h-full object-cover" alt="" />
                 : <span>{initials}</span>}
             </div>
-            <span style={{ fontSize: 10, fontWeight: 500, lineHeight: 1 }}>Perfil</span>
+            <span className="truncate max-w-full" style={{ fontSize: 10, fontWeight: 500, lineHeight: 1 }}>Perfil</span>
           </button>
 
           {/* Other tabs */}
@@ -815,7 +815,7 @@ export default function Dashboard() {
               <button
                 key={section}
                 onClick={() => goMobile(section)}
-                className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors"
+                className="flex-1 min-w-0 flex flex-col items-center justify-center gap-1 relative transition-colors"
                 style={{ color: isActive ? C.accent : C.muted }}
               >
                 <div style={{
@@ -825,7 +825,7 @@ export default function Dashboard() {
                   transition: 'background 0.25s',
                 }} />
                 {icon}
-                <span style={{ fontSize: 10, fontWeight: 500, lineHeight: 1 }}>{label}</span>
+                <span className="truncate max-w-full" style={{ fontSize: 10, fontWeight: 500, lineHeight: 1 }}>{label}</span>
               </button>
             );
           })}
@@ -834,11 +834,11 @@ export default function Dashboard() {
           {profiles.length === 0 && (
             <Link
               to="/profile/new"
-              className="flex-1 flex flex-col items-center justify-center gap-1 relative transition-colors"
+              className="flex-1 min-w-0 flex flex-col items-center justify-center gap-1 relative transition-colors"
               style={{ color: C.accent, textDecoration: 'none' }}
             >
               <Plus className="h-6 w-6" />
-              <span style={{ fontSize: 10, fontWeight: 500, lineHeight: 1 }}>+Perfil</span>
+              <span className="truncate max-w-full" style={{ fontSize: 10, fontWeight: 500, lineHeight: 1 }}>+Perfil</span>
             </Link>
           )}
         </div>
