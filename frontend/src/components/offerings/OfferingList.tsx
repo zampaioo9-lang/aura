@@ -52,7 +52,13 @@ export default function OfferingList({ C, offerings, loading, emptyMessage, onEd
             padding: 14, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
           }}
         >
-          <div onClick={() => onOpen(offering)} style={{ flex: 1, minWidth: 180, cursor: 'pointer' }}>
+          <div
+            onClick={() => onOpen(offering)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(offering); } }}
+            role="button"
+            tabIndex={0}
+            style={{ flex: 1, minWidth: 180, cursor: 'pointer' }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <span style={{
                 fontSize: 10, fontWeight: 700, color: STATUS_COLOR[offering.status],
@@ -67,13 +73,14 @@ export default function OfferingList({ C, offerings, loading, emptyMessage, onEd
             </div>
             <p style={{ color: C.text, fontSize: 15, fontWeight: 700, margin: 0 }}>{offering.title}</p>
             <p style={{ color: C.muted, fontSize: 12, margin: '4px 0 0' }}>
-              ${offering.priceUSD} USD · {offering._count.modules} modulo{offering._count.modules === 1 ? '' : 's'} · {offering._count.purchases} compra{offering._count.purchases === 1 ? '' : 's'}
+              ${offering.priceUSD} USD · {offering._count.modules} módulo{offering._count.modules === 1 ? '' : 's'} · {offering._count.purchases} compra{offering._count.purchases === 1 ? '' : 's'}
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
             <button
               title="Editar datos basicos"
+              aria-label="Editar datos basicos"
               onClick={() => onEdit(offering)}
               style={{ background: 'none', border: `1px solid ${C.border}`, borderRadius: 8, padding: 8, cursor: 'pointer', display: 'flex', color: C.text }}
             >
@@ -82,6 +89,7 @@ export default function OfferingList({ C, offerings, loading, emptyMessage, onEd
             {offering.status !== 'ARCHIVED' && (
               <button
                 title={offering.status === 'PUBLISHED' ? 'Despublicar' : 'Publicar'}
+                aria-label={offering.status === 'PUBLISHED' ? 'Despublicar' : 'Publicar'}
                 onClick={() => onTogglePublish(offering)}
                 style={{ background: 'none', border: `1px solid ${C.border}`, borderRadius: 8, padding: 8, cursor: 'pointer', display: 'flex', color: C.text }}
               >
@@ -91,6 +99,7 @@ export default function OfferingList({ C, offerings, loading, emptyMessage, onEd
             {offering.status !== 'ARCHIVED' && (
               <button
                 title="Archivar"
+                aria-label="Archivar"
                 onClick={() => onArchive(offering)}
                 style={{ background: 'none', border: `1px solid ${C.border}`, borderRadius: 8, padding: 8, cursor: 'pointer', display: 'flex', color: '#ef4444' }}
               >
