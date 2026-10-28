@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useUpload } from '../../hooks/useUpload';
@@ -46,6 +46,8 @@ export default function ModuleFormModal({ C, isOpen, mode, module, offeringId, o
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [savedModuleId, setSavedModuleId] = useState<string | null>(null);
+  const typeRef = useRef(type);
+  useEffect(() => { typeRef.current = type; }, [type]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -69,9 +71,15 @@ export default function ModuleFormModal({ C, isOpen, mode, module, offeringId, o
 
   if (!isOpen) return null;
 
+  // handleFileUpload captura `type` al momento de llamar (uploadType), y typeRef siempre
+  // apunta al `type` mas reciente -- si el profesional cambia el tipo (VIDEO -> PDF, etc.)
+  // mientras una subida sigue en vuelo, al resolver comparamos ambos: si ya no coinciden, la
+  // subida se descarta en vez de guardar la URL de un archivo que ya no corresponde al tipo
+  // actualmente seleccionado (sin esto, un PDF podia terminar guardado con la URL de un video).
   const handleFileUpload = async (file: File) => {
-    const result = type === 'VIDEO' ? await uploadVideo(file) : await uploadPdf(file);
-    if (result) setFileUrl(result.url);
+    const uploadType = type;
+    const result = uploadType === 'VIDEO' ? await uploadVideo(file) : await uploadPdf(file);
+    if (result && typeRef.current === uploadType) setFileUrl(result.url);
   };
 
   const handleSubmit = async () => {
@@ -173,7 +181,7 @@ export default function ModuleFormModal({ C, isOpen, mode, module, offeringId, o
 
         <label style={lbl}>Tipo</label>
         {mode === 'create' ? (
-          <select style={inp} value={type} onChange={(e) => setType(e.target.value as ModuleType)}>
+          <select style={inp} value={type} onChange={(e) => { setType(e.target.value as ModuleType); setFileUrl(''); }}>
             <option value="TEXT">Texto</option>
             <option value="VIDEO">Video</option>
             <option value="PDF">PDF</option>
@@ -212,7 +220,7 @@ export default function ModuleFormModal({ C, isOpen, mode, module, offeringId, o
         {formError && <p style={{ color: '#ef4444', fontSize: 13, marginTop: 12 }}>{formError}</p>}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
-          <button style={btnSecondary} onClick={onClose}>{savedModuleId ? 'Cerrar' : 'Cancelar'}</button>
+          <button style={{ ...btnSecondary, opacity: submitting ? 0.6 : 1 }} onClick={onClose} disabled={submitting}>{savedModuleId ? 'Cerrar' : 'Cancelar'}</button>
           <button style={{ ...btnPrimary, opacity: submitting ? 0.6 : 1 }} onClick={handleSubmit} disabled={submitting}>
             {submitting ? 'Guardando...' : savedModuleId ? 'Guardar cambios' : 'Crear modulo'}
           </button>
