@@ -223,6 +223,13 @@ export default function Dashboard() {
     () => localStorage.getItem('aliax_accent') || 'aguamarina'
   );
 
+  const copySidebarProfileLink = () => {
+    if (profiles.length === 0) return;
+    navigator.clipboard.writeText(`${window.location.origin}/${profiles[0].slug}`).then(() => {
+      toast('Enlace copiado');
+    });
+  };
+
   const [dashStats, setDashStats] = useState<DashStats | null>(null);
   const [dashStatsError, setDashStatsError] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<AnalyticsPeriod>('month');
@@ -916,11 +923,20 @@ export default function Dashboard() {
               Mi cuenta
             </DashNavRow>
             {profiles.length > 0 && (
-              <a href={`/${profiles[0].slug}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                <DashNavRow icon={<ExternalLink className="h-4 w-4" />} isActive={false} C={C} onClick={() => {}}>
-                  Ver perfil público
-                </DashNavRow>
-              </a>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <a href={`/${profiles[0].slug}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', flex: 1, minWidth: 0 }}>
+                  <DashNavRow icon={<ExternalLink className="h-4 w-4" />} isActive={false} C={C} onClick={() => {}}>
+                    Ver perfil público
+                  </DashNavRow>
+                </a>
+                <button
+                  onClick={copySidebarProfileLink}
+                  style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', padding: 7, borderRadius: 8, color: C.muted, display: 'flex', alignItems: 'center' }}
+                  title="Copiar enlace"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
+              </div>
             )}
           </DashSection>
 

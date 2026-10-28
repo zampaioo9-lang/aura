@@ -151,6 +151,15 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
       .finally(() => setReviewsLoaded(true));
   }, [profile.id]);
 
+  const [offerings, setOfferings] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!profile.id) return;
+    api.get(`/offerings/profile/${profile.id}`)
+      .then(res => setOfferings(res.data))
+      .catch(() => {});
+  }, [profile.id]);
+
   const glassCard: React.CSSProperties = {
     background: darkMode ? 'rgba(15,22,36,0.92)' : 'rgba(255,255,255,0.88)',
     border: darkMode ? '1px solid rgba(255,255,255,0.09)' : 'none',
@@ -341,6 +350,17 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12, marginTop: 12 }}>
                 {activeServices.map((s: any) => (
                   <BoardServiceCard key={s.id} service={s} onBook={onBook} C={C} mobile />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {offerings.length > 0 && (
+            <div style={{ ...sectionCard, padding: '18px 20px' }}>
+              <SectionLabel>Talleres y Cursos</SectionLabel>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12, marginTop: 12 }}>
+                {offerings.map((o: any) => (
+                  <BoardOfferingCard key={o.id} offering={o} navigate={navigate} C={C} mobile />
                 ))}
               </div>
             </div>
@@ -607,6 +627,24 @@ export default function MinimalistTemplate({ profile, onBook }: TemplateProps) {
           </div>
         )}
 
+        {offerings.length > 0 && (
+          <div style={sectionCard}>
+            <SectionLabel>Talleres y Cursos</SectionLabel>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: offerings.length === 1
+                ? 'minmax(200px, 320px)'
+                : 'repeat(auto-fill, minmax(190px, 1fr))',
+              gap: 14,
+              marginTop: 14,
+            }}>
+              {offerings.map((o: any) => (
+                <BoardOfferingCard key={o.id} offering={o} navigate={navigate} C={C} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {activeDays.length > 0 && (
           <div style={sectionCard}>
             <SectionLabel>Horarios de atención</SectionLabel>
@@ -736,6 +774,52 @@ function BoardServiceCard({ service: s, onBook, C, mobile = false }: { service: 
             onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
           >
             Reservar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BoardOfferingCard({ offering: o, navigate, C, mobile = false }: { offering: any; navigate: (path: string) => void; C: any; mobile?: boolean }) {
+  void mobile;
+  return (
+    <div
+      style={{
+        borderRadius: 14, overflow: 'hidden',
+        background: C.card,
+        display: 'flex', flexDirection: 'column',
+        boxShadow: '0 4px 18px rgba(0,0,0,0.38)',
+        transition: 'transform .18s, box-shadow .18s',
+      }}
+      onMouseEnter={e => { const el = e.currentTarget as HTMLDivElement; el.style.transform = 'translateY(-2px)'; el.style.boxShadow = '0 8px 28px rgba(0,0,0,0.42)'; }}
+      onMouseLeave={e => { const el = e.currentTarget as HTMLDivElement; el.style.transform = 'none'; el.style.boxShadow = '0 2px 14px rgba(0,0,0,0.28)'; }}
+    >
+      <div style={{ height: 150, flexShrink: 0, overflow: 'hidden', position: 'relative' }}>
+        {o.coverImage ? (
+          <img src={o.coverImage} alt={o.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        ) : (
+          <div style={{ width: '100%', height: '100%', background: C.accentSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 52, fontWeight: 800, color: C.accent, opacity: 0.55 }}>
+            {o.title[0]?.toUpperCase()}
+          </div>
+        )}
+      </div>
+      <div style={{ padding: '12px 14px 14px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1, background: C.accentSoft }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: 0, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {o.title}
+        </p>
+        <span style={{ alignSelf: 'flex-start', fontSize: 10, fontWeight: 600, color: C.accent, background: 'rgba(45,212,191,0.15)', borderRadius: 6, padding: '2px 8px', letterSpacing: '0.3px' }}>
+          {o.type === 'LIVE_WORKSHOP' ? 'Taller en vivo' : 'Curso grabado'}
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 'auto' }}>
+          <p style={{ fontSize: 15, fontWeight: 700, color: C.accent, margin: 0, lineHeight: 1.1 }}>{formatPrice(o.priceUSD, 'USD')}</p>
+          <button
+            onClick={() => navigate(`/oferta/${o.id}`)}
+            style={{ flexShrink: 0, background: C.accent, color: 'white', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'opacity .15s', whiteSpace: 'nowrap' }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.82')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            Ver detalles
           </button>
         </div>
       </div>
