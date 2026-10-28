@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Pencil, Check, X as XIcon } from 'lucide-react';
 import { useOfferings, type Question, type ScoringRule } from '../../hooks/useOfferings';
 
@@ -35,28 +35,27 @@ export default function QuestionnaireEditor({ C, offeringId, moduleId }: Props) 
   const [loadingRules, setLoadingRules] = useState(true);
   const [error, setError] = useState('');
 
-  const loadQuestions = async () => {
+  const loadQuestions = useCallback(async () => {
     setLoadingQuestions(true);
     try {
       setQuestions(await fetchQuestions(offeringId, moduleId));
     } finally {
       setLoadingQuestions(false);
     }
-  };
-  const loadRules = async () => {
+  }, [fetchQuestions, offeringId, moduleId]);
+  const loadRules = useCallback(async () => {
     setLoadingRules(true);
     try {
       setRules(await fetchScoringRules(offeringId, moduleId));
     } finally {
       setLoadingRules(false);
     }
-  };
+  }, [fetchScoringRules, offeringId, moduleId]);
 
   useEffect(() => {
     loadQuestions();
     loadRules();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [moduleId]);
+  }, [loadQuestions, loadRules]);
 
   // ── Questions ──
   const [addingQuestion, setAddingQuestion] = useState(false);
@@ -83,13 +82,20 @@ export default function QuestionnaireEditor({ C, offeringId, moduleId }: Props) 
       if (qType === 'FREE_TEXT') {
         await createQuestion(offeringId, moduleId, { text: qText.trim(), type: qType });
       } else {
-        const parsedOptions = qOptions
-          .filter((o) => o.label.trim())
-          .map((o) => ({ label: o.label.trim(), value: Number(o.value) || 0 }));
-        if (parsedOptions.length < 2) {
-          setError('Las preguntas de opcion requieren al menos 2 opciones');
+        const withLabel = qOptions.filter((o) => o.label.trim());
+        if (withLabel.length < 2) {
+          setError(`Solo detectamos ${withLabel.length} opcion${withLabel.length === 1 ? '' : 'es'} con texto; agrega al menos 2`);
           return;
         }
+        // Validar el valor numerico de cada opcion ANTES de convertir con Number(...) || 0 --
+        // sin esto, dejar el campo Valor vacio (un descuido facil al redactar rapido) guardaba
+        // silenciosamente una opcion con 0 puntos, sin avisar que el valor se ignoro.
+        const missingValue = withLabel.find((o) => o.value.trim() === '' || Number.isNaN(Number(o.value)));
+        if (missingValue) {
+          setError(`La opcion "${missingValue.label.trim()}" necesita un valor numerico`);
+          return;
+        }
+        const parsedOptions = withLabel.map((o) => ({ label: o.label.trim(), value: Number(o.value) }));
         await createQuestion(offeringId, moduleId, { text: qText.trim(), type: qType, options: parsedOptions });
       }
       resetQuestionForm();
