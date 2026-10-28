@@ -30,6 +30,7 @@ const OfferingPublic = lazy(() => import('./pages/OfferingPublic'));
 const OfferingCheckoutSuccess = lazy(() => import('./pages/OfferingCheckoutSuccess'));
 const OfferingCheckoutCancel = lazy(() => import('./pages/OfferingCheckoutCancel'));
 const OfferingPayPalReturn = lazy(() => import('./pages/OfferingPayPalReturn'));
+const AccessPurchase = lazy(() => import('./pages/AccessPurchase'));
 
 function PageLoader() {
   return (
@@ -97,6 +98,7 @@ function App() {
               <Route path="/oferta/:offeringId/exito" element={<OfferingCheckoutSuccess />} />
               <Route path="/oferta/:offeringId/cancelado" element={<OfferingCheckoutCancel />} />
               <Route path="/oferta/:offeringId/paypal-retorno" element={<OfferingPayPalReturn />} />
+              <Route path="/mi-compra/:accessToken" element={<AccessPurchase />} />
               <Route path="/:slug" element={<PublicProfile />} />
             </Routes>
           </Suspense>

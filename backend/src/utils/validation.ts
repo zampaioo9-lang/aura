@@ -308,3 +308,11 @@ export const checkoutSchema = z.object({
   currency: z.enum(['USD', 'MXN'], { errorMap: () => ({ message: 'currency debe ser USD o MXN' }) }),
   provider: z.enum(['stripe', 'paypal'], { errorMap: () => ({ message: 'provider debe ser stripe o paypal' }) }),
 });
+
+export const submitAnswersSchema = z.object({
+  answers: z.array(z.object({
+    questionId: z.string().uuid('questionId invalido'),
+    valueText: z.string().max(2000, 'Maximo 2000 caracteres').optional(),
+    valueOptionIds: z.array(z.string().uuid('id de opcion invalido')).optional(),
+  })).min(1, 'Debes responder al menos una pregunta'),
+});
