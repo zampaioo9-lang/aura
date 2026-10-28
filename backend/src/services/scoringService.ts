@@ -6,6 +6,8 @@
 // no es un error: simplemente no hay nada que puntuar.
 const FALLBACK_MESSAGE = 'Gracias por completar el cuestionario.';
 
+// Estructural: una fila real de Answer (de Prisma) ya cumple esta forma -- se le puede
+// pasar directo, sin mapear campo por campo, a cualquiera de los tres llamadores de abajo.
 export interface ScoredAnswer {
   valueOptionIds: string[];
 }
@@ -21,6 +23,16 @@ export interface ScoreResult {
   message: string;
 }
 
+// Los tres llamadores de esta fase (GET /:accessToken leyendo respuestas ya guardadas,
+// POST .../answers justo despues de guardarlas, y GET .../result.pdf) comparten esta misma
+// funcion para no duplicar la logica de puntaje en ningun lado.
+//
+// - answers: cualquier lista con valueOptionIds por elemento (filas de Answer sirven tal cual).
+// - optionValues: id de QuestionOption -> su value numerico. Un id que no este en el mapa
+//   suma 0 (no es un error -- asi es como las preguntas FREE_TEXT, que no tienen opciones,
+//   terminan sin aportar nada al puntaje).
+// - scoringRules: se usa la PRIMERA regla cuyo rango [minScore, maxScore] (ambos inclusive)
+//   contenga el puntaje total; si ninguna coincide, se usa FALLBACK_MESSAGE.
 export function calculateScore(
   answers: ScoredAnswer[],
   optionValues: Map<string, number>,
