@@ -8,9 +8,13 @@ const prisma = new PrismaClient();
 
 // Helper compartido por las tres rutas de este archivo: el accessToken es la UNICA
 // credencial del comprador (sin login) -- quien lo tenga, tiene acceso a esta compra.
+// El chequeo de paidAt es un refuerzo: hoy siempre esta presente (purchaseService.ts es el
+// unico lugar que crea un Purchase, y siempre lo hace con paidAt ya puesto), pero el campo
+// es nullable en el schema -- este chequeo evita que el acceso dependa silenciosamente de
+// un invariante que solo otro archivo garantiza.
 async function getPurchaseOrThrow(accessToken: string) {
   const purchase = await prisma.purchase.findUnique({ where: { accessToken } });
-  if (!purchase) throw new AppError(404, 'Acceso no encontrado');
+  if (!purchase || !purchase.paidAt) throw new AppError(404, 'Acceso no encontrado');
   return purchase;
 }
 
@@ -54,10 +58,15 @@ router.get('/:accessToken', async (req, res, next) => {
           return { ...module, result };
         }
 
+        // select (no incluir `value`) en las opciones: el comprador todavia no respondio --
+        // mostrarle el peso numerico de cada opcion le permitiria reconstruir como se
+        // calcula el puntaje y elegir las respuestas que le den el resultado que quiera,
+        // en vez de responder honestamente. El `value` solo hace falta del lado del
+        // servidor (ver computeResultForModule), nunca en lo que se le manda al comprador.
         const questions = await prisma.question.findMany({
           where: { moduleId: module.id },
           orderBy: { order: 'asc' },
-          include: { options: true },
+          include: { options: { select: { id: true, label: true } } },
         });
         return { ...module, questions };
       }),
