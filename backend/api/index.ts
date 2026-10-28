@@ -56,6 +56,7 @@ try {
   const crisisReferralsRoutes = require('../src/routes/crisis-referrals').default;
   const offeringRoutes = require('../src/routes/offerings').default;
   const purchaseRoutes = require('../src/routes/purchases').default;
+  const accessRoutes = require('../src/routes/access').default;
   const { sendWhatsApp } = require('../src/services/whatsappService');
 
   app.use(activityLogger);
@@ -85,6 +86,7 @@ try {
   app.use('/api/crisis-referrals', crisisReferralsRoutes);
   app.use('/api/offerings', offeringRoutes);
   app.use('/api/purchases', purchaseRoutes);
+  app.use('/api/access', accessRoutes);
 
   app.get('/api/test/whatsapp', async (req, res) => {
     const to = req.query.to as string;
