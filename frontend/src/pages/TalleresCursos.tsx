@@ -105,7 +105,13 @@ export default function TalleresCursos({ C, isActive, isPro }: { C: Colors; isAc
 
   const handleTogglePublish = async (offering: Offering) => {
     try {
-      await togglePublish(offering.id);
+      const updated = await togglePublish(offering.id);
+      // togglePublish() ya refresca la lista `offerings` por dentro, pero `selectedOffering`
+      // es un state local separado (la oferta clickeada, no derivada de `offerings`) -- sin
+      // esto, publicar/despublicar desde dentro del editor actualiza el backend y la lista,
+      // pero el boton/badge del encabezado del editor se queda mostrando el estado viejo
+      // hasta salir y volver a entrar.
+      if (selectedOffering?.id === updated.id) setSelectedOffering(updated);
     } catch (err: any) {
       setError(err.message);
     }
