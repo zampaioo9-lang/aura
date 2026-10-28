@@ -291,13 +291,21 @@ router.get('/:offeringId/modules', async (req, res, next) => {
       include: { profile: { select: { userId: true } } },
     });
     if (!offering) throw new AppError(404, 'Oferta no encontrada');
-    if (offering.status !== 'PUBLISHED') throw new AppError(404, 'Oferta no encontrada');
 
     const authHeader = req.headers.authorization;
     let isOwner = false;
     if (authHeader?.startsWith('Bearer ')) {
       const payload = verifyToken(authHeader.slice(7));
       isOwner = !!payload && payload.userId === offering.profile.userId;
+    }
+
+    // Antes, el gate de PUBLISHED corria ANTES de calcular isOwner, asi que el dueno nunca
+    // podia ver los modulos de su propia oferta DRAFT/ARCHIVED (404 siempre) -- mismo bug ya
+    // cerrado en GET /:id arriba. Quedo sin cerrar aqui porque hasta la Fase 5 nada consumia
+    // esta ruta como dueno; el dashboard de gestion (Fase 5) si lo hace para listar modulos
+    // mientras la oferta sigue en DRAFT.
+    if (offering.status !== 'PUBLISHED' && !isOwner) {
+      throw new AppError(404, 'Oferta no encontrada');
     }
 
     const modules = await prisma.module.findMany({
