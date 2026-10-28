@@ -16,6 +16,7 @@ export default function BookingPage() {
   const [reviews, setReviews] = useState<{ id: string; rating: number; comment: string | null; clientName: string }[]>([]);
   const [reviewStats, setReviewStats] = useState<{ averageRating: number | null; reviewCount: number } | null>(null);
   const [reviewsLoaded, setReviewsLoaded] = useState(false);
+  const [offerings, setOfferings] = useState<any[]>([]);
 
   useEffect(() => {
     api.get(`/profiles/${slug}`)
@@ -33,6 +34,13 @@ export default function BookingPage() {
       })
       .catch(() => {})
       .finally(() => setReviewsLoaded(true));
+  }, [profile?.id]);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    api.get(`/offerings/profile/${profile.id}`)
+      .then(res => setOfferings(res.data))
+      .catch(() => {});
   }, [profile?.id]);
 
   if (loading) return (
@@ -151,6 +159,37 @@ export default function BookingPage() {
             </div>
           ))}
         </div>
+
+        {/* Talleres y Cursos */}
+        {offerings.length > 0 && (
+          <div style={{ marginTop: 32 }}>
+            <p className="bp-services-title">Talleres y Cursos</p>
+            <div>
+              {offerings.map((o: any) => (
+                <div key={o.id} className="bp-svc-card">
+                  <div style={{ minWidth: 0 }}>
+                    <p className="bp-svc-name">{o.title}</p>
+                    <div className="bp-svc-meta">
+                      {o.type === 'LIVE_WORKSHOP' ? 'Taller en vivo' : 'Curso grabado'}
+                    </div>
+                    {o.description && (
+                      <p className="bp-svc-desc">{o.description}</p>
+                    )}
+                  </div>
+                  <div className="bp-svc-right">
+                    <span className="bp-svc-price">{formatPrice(o.priceUSD, 'USD')}</span>
+                    <button
+                      className="bp-svc-btn"
+                      onClick={() => navigate(`/oferta/${o.id}`)}
+                    >
+                      Ver detalles
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Reviews */}
         {reviewsLoaded && (
