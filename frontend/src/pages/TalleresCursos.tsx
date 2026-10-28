@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, ArrowUp, ArrowDown, Pencil, Trash2, GraduationCap } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import api from '../api/client';
-import { useOfferings, type Offering, type Module, type CreateModuleData, type UpdateModuleData } from '../hooks/useOfferings';
+import { useOfferings, type Offering, type Module, type CreateModuleData, type UpdateModuleData, type CreateOfferingData, type UpdateOfferingData } from '../hooks/useOfferings';
 import ProGate from '../components/ProGate';
 import OfferingFormModal from '../components/offerings/OfferingFormModal';
 import OfferingList from '../components/offerings/OfferingList';
@@ -44,6 +44,8 @@ export default function TalleresCursos({ C, isActive, isPro }: { C: Colors; isAc
   const [moduleModalOpen, setModuleModalOpen] = useState(false);
   const [moduleModalMode, setModuleModalMode] = useState<'create' | 'edit'>('create');
   const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const [movingModuleId, setMovingModuleId] = useState<string | null>(null);
+  const [archiveError, setArchiveError] = useState('');
 
   useEffect(() => {
     if (isActive) fetchOfferings();
@@ -90,13 +92,13 @@ export default function TalleresCursos({ C, isActive, isPro }: { C: Colors; isAc
     setOfferingModalOpen(true);
   };
 
-  const handleOfferingSubmit = async (data: any) => {
+  const handleOfferingSubmit = async (data: CreateOfferingData | UpdateOfferingData) => {
     if (offeringModalMode === 'create') {
-      const created = await createOffering(data);
+      const created = await createOffering(data as CreateOfferingData);
       setOfferingModalOpen(false);
       await openOffering(created);
     } else if (editingOffering) {
-      const updated = await updateOffering(editingOffering.id, data);
+      const updated = await updateOffering(editingOffering.id, data as UpdateOfferingData);
       if (selectedOffering?.id === updated.id) setSelectedOffering(updated);
     }
   };
@@ -109,17 +111,23 @@ export default function TalleresCursos({ C, isActive, isPro }: { C: Colors; isAc
     }
   };
 
-  const confirmArchive = (offering: Offering) => setArchiveTarget(offering);
+  const confirmArchive = (offering: Offering) => { setArchiveTarget(offering); setArchiveError(''); };
 
   const handleArchive = async () => {
     if (!archiveTarget) return;
+    setArchiveError('');
     try {
       await archiveOffering(archiveTarget.id);
+      const wasSelected = selectedOffering?.id === archiveTarget.id;
       setArchiveTarget(null);
-      if (selectedOffering?.id === archiveTarget.id) backToList();
+      if (wasSelected) backToList();
     } catch (err: any) {
-      setError(err.message);
-      setArchiveTarget(null);
+      // A diferencia de handleTogglePublish/handleDeleteModule (donde el banner superior es
+      // suficiente), esta es una accion irreversible -- cerrar el dialogo de confirmacion
+      // tras una falla daria la falsa impresion de que se archivo. Se deja abierto, mismo
+      // patron que OfferingFormModal/ModuleFormModal (error inline donde el usuario ya esta
+      // mirando), en vez de delegar todo al banner superior que puede quedar fuera de vista.
+      setArchiveError(err.message);
     }
   };
 
@@ -160,18 +168,29 @@ export default function TalleresCursos({ C, isActive, isPro }: { C: Colors; isAc
   };
 
   const moveModule = async (module: Module, direction: 'up' | 'down') => {
-    if (!selectedOffering) return;
+    if (!selectedOffering || movingModuleId) return;
     const sorted = [...modules].sort((a, b) => a.order - b.order);
     const index = sorted.findIndex((m) => m.id === module.id);
     const swapIndex = direction === 'up' ? index - 1 : index + 1;
     if (swapIndex < 0 || swapIndex >= sorted.length) return;
     const other = sorted[swapIndex];
+    setMovingModuleId(module.id);
     try {
       await updateModule(selectedOffering.id, module.id, { order: other.order });
       await updateModule(selectedOffering.id, other.id, { order: module.order });
       await loadModules(selectedOffering.id);
     } catch (err: any) {
       setError(err.message);
+      // Las dos llamadas de arriba no son atomicas (ver nota de diseno del plan): si la
+      // primera tuvo exito y la segunda fallo, el servidor ya quedo con dos modulos
+      // compartiendo el mismo order. Sin este refetch, `modules` se queda con el orden viejo
+      // (pre-intento) mientras el servidor ya cambio -- un reintento recalcularia el swap
+      // sobre datos obsoletos y podria empeorar la inconsistencia. Refrescar aqui muestra el
+      // estado real del servidor, aunque siga teniendo el order duplicado hasta el proximo
+      // swap exitoso.
+      await loadModules(selectedOffering.id);
+    } finally {
+      setMovingModuleId(null);
     }
   };
 
@@ -276,14 +295,16 @@ export default function TalleresCursos({ C, isActive, isPro }: { C: Colors; isAc
                     }}>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <button
-                          disabled={i === 0}
+                          aria-label="Mover arriba"
+                          disabled={i === 0 || !!movingModuleId}
                           onClick={() => moveModule(module, 'up')}
                           style={{ background: 'none', border: 'none', cursor: i === 0 ? 'default' : 'pointer', color: i === 0 ? C.border : C.text, display: 'flex' }}
                         >
                           <ArrowUp size={14} />
                         </button>
                         <button
-                          disabled={i === sortedModules.length - 1}
+                          aria-label="Mover abajo"
+                          disabled={i === sortedModules.length - 1 || !!movingModuleId}
                           onClick={() => moveModule(module, 'down')}
                           style={{ background: 'none', border: 'none', cursor: i === sortedModules.length - 1 ? 'default' : 'pointer', color: i === sortedModules.length - 1 ? C.border : C.text, display: 'flex' }}
                         >
@@ -295,11 +316,12 @@ export default function TalleresCursos({ C, isActive, isPro }: { C: Colors; isAc
                         <p style={{ color: C.text, fontSize: 14, fontWeight: 600, margin: 0 }}>{module.title}</p>
                         {module.description && <p style={{ color: C.muted, fontSize: 12, margin: '2px 0 0' }}>{module.description}</p>}
                       </div>
-                      <button onClick={() => openEditModule(module)} style={{ background: 'none', border: `1px solid ${C.border}`, borderRadius: 8, padding: 7, cursor: 'pointer', display: 'flex', color: C.text }}>
+                      <button aria-label="Editar modulo" onClick={() => openEditModule(module)} style={{ background: 'none', border: `1px solid ${C.border}`, borderRadius: 8, padding: 7, cursor: 'pointer', display: 'flex', color: C.text }}>
                         <Pencil size={14} />
                       </button>
                       <button
                         title={deleteDisabled ? 'Despublica la oferta primero' : 'Eliminar'}
+                        aria-label={deleteDisabled ? 'Despublica la oferta primero' : 'Eliminar modulo'}
                         disabled={deleteDisabled}
                         onClick={() => handleDeleteModule(module)}
                         style={{ background: 'none', border: `1px solid ${C.border}`, borderRadius: 8, padding: 7, cursor: deleteDisabled ? 'default' : 'pointer', display: 'flex', color: deleteDisabled ? C.border : '#ef4444' }}
@@ -349,6 +371,7 @@ export default function TalleresCursos({ C, isActive, isPro }: { C: Colors; isAc
               <p style={{ color: C.muted, fontSize: 13, margin: '0 0 18px' }}>
                 Esta accion es <strong>permanente y no se puede deshacer</strong>. "{archiveTarget.title}" dejara de ser visible y no podra publicarse de nuevo.
               </p>
+              {archiveError && <p style={{ color: '#ef4444', fontSize: 13, margin: '0 0 14px' }}>{archiveError}</p>}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                 <button onClick={() => setArchiveTarget(null)} style={{ padding: '8px 14px', background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
                 <button onClick={handleArchive} style={{ padding: '8px 14px', background: '#ef4444', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>Archivar</button>
