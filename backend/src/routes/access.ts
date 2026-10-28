@@ -207,6 +207,9 @@ router.get('/:accessToken/modules/:moduleId/result.pdf', async (req, res, next) 
       include: { offering: { select: { title: true } } },
     });
     if (!module) throw new AppError(404, 'Modulo no encontrado');
+    if (module.type !== 'QUESTIONNAIRE') {
+      throw new AppError(400, 'Este modulo no es un cuestionario');
+    }
 
     const answers = await prisma.answer.findMany({
       where: { purchaseId: purchase.id, question: { moduleId: module.id } },
