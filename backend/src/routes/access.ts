@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
 import { calculateScore } from '../services/scoringService';
 import { submitAnswersSchema } from '../utils/validation';
+import { generateResultPdf } from '../services/pdfService';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -189,6 +190,41 @@ router.post('/:accessToken/modules/:moduleId/answers', async (req, res, next) =>
     );
 
     res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/access/:accessToken/modules/:moduleId/result.pdf -- sin auth. Solo funciona si
+// ya se respondio el cuestionario (404 si no). El PDF se genera al vuelo en cada peticion,
+// no se guarda ningun archivo.
+router.get('/:accessToken/modules/:moduleId/result.pdf', async (req, res, next) => {
+  try {
+    const purchase = await getPurchaseOrThrow(req.params.accessToken);
+
+    const module = await prisma.module.findFirst({
+      where: { id: req.params.moduleId, offeringId: purchase.offeringId },
+      include: { offering: { select: { title: true } } },
+    });
+    if (!module) throw new AppError(404, 'Modulo no encontrado');
+
+    const answers = await prisma.answer.findMany({
+      where: { purchaseId: purchase.id, question: { moduleId: module.id } },
+    });
+    if (answers.length === 0) throw new AppError(404, 'Todavia no respondiste este cuestionario');
+
+    const { totalScore, message } = await computeResultForModule(module.id, answers);
+
+    const pdfBuffer = await generateResultPdf({
+      offeringTitle: module.offering.title,
+      buyerName: purchase.buyerName,
+      totalScore,
+      message,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="resultado.pdf"');
+    res.send(pdfBuffer);
   } catch (err) {
     next(err);
   }
