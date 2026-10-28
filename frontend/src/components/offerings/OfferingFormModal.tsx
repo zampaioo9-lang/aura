@@ -92,9 +92,21 @@ export default function OfferingFormModal({ C, isOpen, mode, offering, profileId
       return;
     }
     const priceNum = Number(priceUSD);
-    if (!priceUSD || Number.isNaN(priceNum) || priceNum < 0) {
-      setFormError('El precio USD debe ser un numero valido');
+    // Limites espejo de createOfferingSchema/updateOfferingSchema (backend/src/utils/validation.ts):
+    // sin esto, un valor fuera de rango pasa esta validacion, viaja al backend, y vuelve como
+    // el {error: "Datos invalidos"} generico del ZodError (ver errorHandler.ts) -- el mensaje
+    // especifico solo vive en `details`, que useOfferings.errorMessage() no lee. Validar aqui
+    // evita ese viaje redondo sin feedback util.
+    if (!priceUSD || Number.isNaN(priceNum) || priceNum < 0 || priceNum > 10000) {
+      setFormError('El precio USD debe ser un numero entre 0 y 10,000');
       return;
+    }
+    if (priceMXN) {
+      const priceMXNNum = Number(priceMXN);
+      if (Number.isNaN(priceMXNNum) || priceMXNNum < 0 || priceMXNNum > 200000) {
+        setFormError('El precio MXN debe ser un numero entre 0 y 200,000');
+        return;
+      }
     }
     let scheduledAtIso: string | undefined;
     if (type === 'LIVE_WORKSHOP') {
@@ -105,6 +117,13 @@ export default function OfferingFormModal({ C, isOpen, mode, offering, profileId
       if (!externalLink.trim()) {
         setFormError('Un taller en vivo requiere un enlace externo');
         return;
+      }
+      if (capacity) {
+        const capacityNum = Number(capacity);
+        if (Number.isNaN(capacityNum) || capacityNum < 1 || capacityNum > 1000) {
+          setFormError('El cupo debe ser un numero entre 1 y 1,000');
+          return;
+        }
       }
       scheduledAtIso = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
     }
@@ -214,11 +233,11 @@ export default function OfferingFormModal({ C, isOpen, mode, offering, profileId
         <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ flex: 1 }}>
             <label style={lbl}>Precio USD</label>
-            <input style={inp} type="number" min={0} value={priceUSD} onChange={(e) => setPriceUSD(e.target.value)} placeholder="0" />
+            <input style={inp} type="number" min={0} max={10000} value={priceUSD} onChange={(e) => setPriceUSD(e.target.value)} placeholder="0" />
           </div>
           <div style={{ flex: 1 }}>
             <label style={lbl}>Precio MXN (opcional)</label>
-            <input style={inp} type="number" min={0} value={priceMXN} onChange={(e) => setPriceMXN(e.target.value)} placeholder="0" />
+            <input style={inp} type="number" min={0} max={200000} value={priceMXN} onChange={(e) => setPriceMXN(e.target.value)} placeholder="0" />
           </div>
         </div>
 
@@ -242,7 +261,7 @@ export default function OfferingFormModal({ C, isOpen, mode, offering, profileId
             </div>
 
             <label style={lbl}>Cupo (opcional)</label>
-            <input style={inp} type="number" min={1} value={capacity} onChange={(e) => setCapacity(e.target.value)} placeholder="Sin limite" />
+            <input style={inp} type="number" min={1} max={1000} value={capacity} onChange={(e) => setCapacity(e.target.value)} placeholder="Sin limite" />
 
             <label style={lbl}>Enlace externo (Zoom, Meet, etc.)</label>
             <input style={inp} value={externalLink} onChange={(e) => setExternalLink(e.target.value)} placeholder="https://..." />
@@ -252,7 +271,7 @@ export default function OfferingFormModal({ C, isOpen, mode, offering, profileId
         {formError && <p style={{ color: '#ef4444', fontSize: 13, marginTop: 12 }}>{formError}</p>}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
-          <button style={btnSecondary} onClick={onClose}>Cancelar</button>
+          <button style={{ ...btnSecondary, opacity: submitting ? 0.6 : 1 }} onClick={onClose} disabled={submitting}>Cancelar</button>
           <button style={{ ...btnPrimary, opacity: submitting ? 0.6 : 1 }} onClick={handleSubmit} disabled={submitting}>
             {submitting ? 'Guardando...' : mode === 'create' ? 'Crear oferta' : 'Guardar cambios'}
           </button>
