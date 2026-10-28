@@ -110,6 +110,23 @@ router.get('/profile/:profileId', async (req, res, next) => {
     const offerings = await prisma.offering.findMany({
       where: { profileId: req.params.profileId, status: 'PUBLISHED' },
       orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        profileId: true,
+        type: true,
+        title: true,
+        description: true,
+        coverImage: true,
+        priceUSD: true,
+        priceMXN: true,
+        status: true,
+        scheduledAt: true,
+        capacity: true,
+        createdAt: true,
+        updatedAt: true,
+        // externalLink deliberately excluded: it's gated behind a verified
+        // Purchase (see access.ts), not public even for a PUBLISHED offering.
+      },
     });
     res.json(offerings);
   } catch (err) {
