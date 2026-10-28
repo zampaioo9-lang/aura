@@ -27,7 +27,11 @@ async function getPurchaseOrThrow(accessToken: string) {
 // unico lugar que sabe como ir de "respuestas guardadas" a "puntaje y mensaje".
 async function computeResultForModule(moduleId: string, answers: Array<{ valueOptionIds: string[] }>) {
   const [scoringRules, optionRows] = await Promise.all([
-    prisma.scoringRule.findMany({ where: { moduleId } }),
+    // orderBy: igual que GET .../scoring-rules en offerings.ts, donde el profesional ve
+    // y configura sus reglas ordenadas por minScore -- si llega a crear rangos que se
+    // encimen (nada lo impide hoy), "la primera que aplica" debe ser consistente con ese
+    // mismo orden, no el que Postgres devuelva por default.
+    prisma.scoringRule.findMany({ where: { moduleId }, orderBy: { minScore: 'asc' } }),
     prisma.questionOption.findMany({ where: { question: { moduleId } } }),
   ]);
   const optionValues = new Map(optionRows.map((o) => [o.id, o.value]));
