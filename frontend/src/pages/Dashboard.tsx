@@ -7,12 +7,13 @@ import {
   Plus, LogOut, Calendar, Clock,
   CalendarDays, Facebook, Instagram, Linkedin, MessageCircle,
   Home, Star, Briefcase, Pencil, Camera,
-  Sun, Moon, Copy, ExternalLink, Users,
+  Sun, Moon, Copy, ExternalLink, Users, GraduationCap,
 } from 'lucide-react';
 import { SchedulingPanel } from './SchedulingConfig';
 import AccountSettings from './AccountSettings';
 import ProGate from '../components/ProGate';
 import Pacientes from './Pacientes';
+import TalleresCursos from './TalleresCursos';
 import { useUpload } from '../hooks/useUpload';
 import { useToast } from '../components/Toast';
 import { formatCurrency } from '../lib/utils';
@@ -62,7 +63,7 @@ interface Booking {
 }
 
 
-type Tab = 'inicio' | 'citas' | 'resenas' | 'agenda' | 'cuenta' | 'pacientes';
+type Tab = 'inicio' | 'citas' | 'resenas' | 'agenda' | 'cuenta' | 'pacientes' | 'talleres';
 type MobileSection = 'perfil' | Tab;
 
 interface Colors {
@@ -342,6 +343,7 @@ export default function Dashboard() {
     { id: 'inicio',     label: 'Inicio',           icon: <Home className="h-4 w-4" /> },
     { id: 'agenda',     label: 'Configurar Agenda', icon: <CalendarDays className="h-4 w-4" /> },
     { id: 'pacientes',  label: 'Pacientes',          icon: <Users className="h-4 w-4" /> },
+    { id: 'talleres',   label: 'Talleres y Cursos',  icon: <GraduationCap className="h-4 w-4" /> },
     { id: 'citas',      label: 'Mis Citas',         icon: <Calendar className="h-4 w-4" /> },
     { id: 'resenas',    label: 'Reseñas',            icon: <Star className="h-4 w-4" /> },
   ];
@@ -1025,6 +1027,11 @@ export default function Dashboard() {
             {visitedTabs.has('pacientes') && (
               <div style={{ display: activeTab === 'pacientes' ? undefined : 'none' }}>
                 <Pacientes C={C} isPairTherapist={isPairTherapist} isPro={(isPro ?? false) || canPacientes} isActive={activeTab === 'pacientes'} />
+              </div>
+            )}
+            {visitedTabs.has('talleres') && (
+              <div style={{ display: activeTab === 'talleres' ? undefined : 'none' }}>
+                <TalleresCursos C={C} isActive={activeTab === 'talleres'} isPro={isPro ?? false} />
               </div>
             )}
           </div>
