@@ -257,6 +257,7 @@ export const updateModuleSchema = z.object({
   description: z.string().max(500).optional().or(z.literal('')),
   textContent: z.string().max(10000).optional(),
   fileUrl: z.string().url().optional().or(z.literal('')),
+  order: z.number().int().min(1).optional(),
 });
 
 export const createQuestionSchema = z.object({
