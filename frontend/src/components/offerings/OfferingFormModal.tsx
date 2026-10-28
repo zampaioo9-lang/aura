@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import CustomDatePicker from '../CustomDatePicker';
 import { useUpload } from '../../hooks/useUpload';
+import { useExchangeRate } from '../../hooks/useExchangeRate';
 import type { Offering, CreateOfferingData, UpdateOfferingData } from '../../hooks/useOfferings';
 
 interface Colors {
@@ -35,6 +36,7 @@ function splitScheduledAt(scheduledAt: string | null): { date: string; time: str
 
 export default function OfferingFormModal({ C, isOpen, mode, offering, profileId, onClose, onSubmit }: Props) {
   const { uploadImage, uploading, progress } = useUpload();
+  const { rate: exchangeRate } = useExchangeRate();
 
   const [type, setType] = useState<'LIVE_WORKSHOP' | 'RECORDED_COURSE'>('RECORDED_COURSE');
   const [title, setTitle] = useState('');
@@ -83,6 +85,19 @@ export default function OfferingFormModal({ C, isOpen, mode, offering, profileId
   const handleCoverUpload = async (file: File) => {
     const result = await uploadImage(file);
     if (result) setCoverImage(result.url);
+  };
+
+  // Al escribir el precio en MXN, recalcula USD con el tipo de cambio del dia (si ya cargo).
+  // El campo USD se queda editable despues -- esto solo lo rellena como punto de partida,
+  // no bloquea que el profesional lo ajuste a mano (ej. redondear a $49 en vez de $48.72).
+  const handlePriceMXNChange = (value: string) => {
+    setPriceMXN(value);
+    if (exchangeRate && value) {
+      const mxnNum = Number(value);
+      if (!Number.isNaN(mxnNum)) {
+        setPriceUSD((mxnNum / exchangeRate).toFixed(2));
+      }
+    }
   };
 
   const handleSubmit = async () => {
@@ -237,9 +252,14 @@ export default function OfferingFormModal({ C, isOpen, mode, offering, profileId
           </div>
           <div style={{ flex: 1 }}>
             <label style={lbl}>Precio MXN (opcional)</label>
-            <input style={inp} type="number" min={0} max={200000} value={priceMXN} onChange={(e) => setPriceMXN(e.target.value)} placeholder="0" />
+            <input style={inp} type="number" min={0} max={200000} value={priceMXN} onChange={(e) => handlePriceMXNChange(e.target.value)} placeholder="0" />
           </div>
         </div>
+        {exchangeRate && (
+          <p style={{ fontSize: 11, color: C.muted, margin: '4px 0 0' }}>
+            Al escribir el precio en MXN, el precio USD se calcula automaticamente (1 USD ≈ ${exchangeRate.toFixed(2)} MXN). Puedes ajustarlo despues.
+          </p>
+        )}
 
         <label style={lbl}>Imagen de portada (opcional)</label>
         <input
