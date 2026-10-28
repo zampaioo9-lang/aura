@@ -743,6 +743,11 @@ export default function Dashboard() {
                 <Pacientes C={C} isPairTherapist={isPairTherapist} isPro={(isPro ?? false) || canPacientes} isActive={mobileSection === 'pacientes'} />
               </div>
             )}
+            {visitedMobile.has('talleres') && (
+              <div style={{ display: mobileSection === 'talleres' ? undefined : 'none' }}>
+                <TalleresCursos C={C} isActive={mobileSection === 'talleres'} isPro={isPro ?? false} />
+              </div>
+            )}
             <div className="mt-10 text-center" style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
               <Link to="/pricing" className="text-xs" style={{ color: 'rgb(45,212,191)' }}>Ver planes</Link>
               {user?.isAdmin && (
@@ -803,6 +808,7 @@ export default function Dashboard() {
             { section: 'citas'     as const, label: 'Citas',     icon: <Calendar className="h-6 w-6" /> },
             { section: 'agenda'    as const, label: 'Agenda',    icon: <CalendarDays className="h-6 w-6" /> },
             { section: 'pacientes' as const, label: 'Pacientes', icon: <Users className="h-6 w-6" /> },
+            { section: 'talleres'  as const, label: 'Talleres',  icon: <GraduationCap className="h-6 w-6" /> },
           ]).map(({ section, label, icon }) => {
             const isActive = mobileSection === section;
             return (
