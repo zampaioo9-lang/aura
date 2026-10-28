@@ -137,7 +137,7 @@ export function useOfferings() {
     }
   }, []);
 
-  const createOffering = async (data: CreateOfferingData): Promise<Offering> => {
+  const createOffering = useCallback(async (data: CreateOfferingData): Promise<Offering> => {
     try {
       const res = await api.post('/offerings', data);
       await fetchOfferings();
@@ -145,9 +145,9 @@ export function useOfferings() {
     } catch (err: any) {
       throw new Error(errorMessage(err, 'Error al crear la oferta'));
     }
-  };
+  }, [fetchOfferings]);
 
-  const updateOffering = async (id: string, data: UpdateOfferingData): Promise<Offering> => {
+  const updateOffering = useCallback(async (id: string, data: UpdateOfferingData): Promise<Offering> => {
     try {
       const res = await api.put(`/offerings/${id}`, data);
       await fetchOfferings();
@@ -155,9 +155,9 @@ export function useOfferings() {
     } catch (err: any) {
       throw new Error(errorMessage(err, 'Error al actualizar la oferta'));
     }
-  };
+  }, [fetchOfferings]);
 
-  const togglePublish = async (id: string): Promise<Offering> => {
+  const togglePublish = useCallback(async (id: string): Promise<Offering> => {
     try {
       const res = await api.patch(`/offerings/${id}/publish`);
       await fetchOfferings();
@@ -165,109 +165,121 @@ export function useOfferings() {
     } catch (err: any) {
       throw new Error(errorMessage(err, 'Error al publicar/despublicar la oferta'));
     }
-  };
+  }, [fetchOfferings]);
 
-  const archiveOffering = async (id: string): Promise<void> => {
+  const archiveOffering = useCallback(async (id: string): Promise<void> => {
     try {
       await api.delete(`/offerings/${id}`);
       await fetchOfferings();
     } catch (err: any) {
       throw new Error(errorMessage(err, 'Error al archivar la oferta'));
     }
-  };
+  }, [fetchOfferings]);
 
-  const fetchModules = async (offeringId: string): Promise<Module[]> => {
-    const res = await api.get(`/offerings/${offeringId}/modules`);
-    return res.data;
-  };
+  const fetchModules = useCallback(async (offeringId: string): Promise<Module[]> => {
+    try {
+      const res = await api.get(`/offerings/${offeringId}/modules`);
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al cargar los módulos'));
+    }
+  }, []);
 
-  const createModule = async (offeringId: string, data: CreateModuleData): Promise<Module> => {
+  const createModule = useCallback(async (offeringId: string, data: CreateModuleData): Promise<Module> => {
     try {
       const res = await api.post(`/offerings/${offeringId}/modules`, data);
       return res.data;
     } catch (err: any) {
-      throw new Error(errorMessage(err, 'Error al crear el modulo'));
+      throw new Error(errorMessage(err, 'Error al crear el módulo'));
     }
-  };
+  }, []);
 
-  const updateModule = async (offeringId: string, moduleId: string, data: UpdateModuleData): Promise<Module> => {
+  const updateModule = useCallback(async (offeringId: string, moduleId: string, data: UpdateModuleData): Promise<Module> => {
     try {
       const res = await api.put(`/offerings/${offeringId}/modules/${moduleId}`, data);
       return res.data;
     } catch (err: any) {
-      throw new Error(errorMessage(err, 'Error al actualizar el modulo'));
+      throw new Error(errorMessage(err, 'Error al actualizar el módulo'));
     }
-  };
+  }, []);
 
-  const deleteModule = async (offeringId: string, moduleId: string): Promise<void> => {
+  const deleteModule = useCallback(async (offeringId: string, moduleId: string): Promise<void> => {
     try {
       await api.delete(`/offerings/${offeringId}/modules/${moduleId}`);
     } catch (err: any) {
-      throw new Error(errorMessage(err, 'Error al eliminar el modulo'));
+      throw new Error(errorMessage(err, 'Error al eliminar el módulo'));
     }
-  };
+  }, []);
 
-  const fetchQuestions = async (offeringId: string, moduleId: string): Promise<Question[]> => {
-    const res = await api.get(`/offerings/${offeringId}/modules/${moduleId}/questions`);
-    return res.data;
-  };
+  const fetchQuestions = useCallback(async (offeringId: string, moduleId: string): Promise<Question[]> => {
+    try {
+      const res = await api.get(`/offerings/${offeringId}/modules/${moduleId}/questions`);
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al cargar las preguntas'));
+    }
+  }, []);
 
-  const createQuestion = async (offeringId: string, moduleId: string, data: CreateQuestionData): Promise<Question> => {
+  const createQuestion = useCallback(async (offeringId: string, moduleId: string, data: CreateQuestionData): Promise<Question> => {
     try {
       const res = await api.post(`/offerings/${offeringId}/modules/${moduleId}/questions`, data);
       return res.data;
     } catch (err: any) {
       throw new Error(errorMessage(err, 'Error al crear la pregunta'));
     }
-  };
+  }, []);
 
-  const updateQuestionText = async (offeringId: string, moduleId: string, questionId: string, text: string): Promise<Question> => {
+  const updateQuestionText = useCallback(async (offeringId: string, moduleId: string, questionId: string, text: string): Promise<Question> => {
     try {
       const res = await api.put(`/offerings/${offeringId}/modules/${moduleId}/questions/${questionId}`, { text });
       return res.data;
     } catch (err: any) {
       throw new Error(errorMessage(err, 'Error al actualizar la pregunta'));
     }
-  };
+  }, []);
 
-  const deleteQuestion = async (offeringId: string, moduleId: string, questionId: string): Promise<void> => {
+  const deleteQuestion = useCallback(async (offeringId: string, moduleId: string, questionId: string): Promise<void> => {
     try {
       await api.delete(`/offerings/${offeringId}/modules/${moduleId}/questions/${questionId}`);
     } catch (err: any) {
       throw new Error(errorMessage(err, 'Error al eliminar la pregunta'));
     }
-  };
+  }, []);
 
-  const fetchScoringRules = async (offeringId: string, moduleId: string): Promise<ScoringRule[]> => {
-    const res = await api.get(`/offerings/${offeringId}/modules/${moduleId}/scoring-rules`);
-    return res.data;
-  };
+  const fetchScoringRules = useCallback(async (offeringId: string, moduleId: string): Promise<ScoringRule[]> => {
+    try {
+      const res = await api.get(`/offerings/${offeringId}/modules/${moduleId}/scoring-rules`);
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al cargar las reglas de puntaje'));
+    }
+  }, []);
 
-  const createScoringRule = async (offeringId: string, moduleId: string, data: ScoringRuleData): Promise<ScoringRule> => {
+  const createScoringRule = useCallback(async (offeringId: string, moduleId: string, data: ScoringRuleData): Promise<ScoringRule> => {
     try {
       const res = await api.post(`/offerings/${offeringId}/modules/${moduleId}/scoring-rules`, data);
       return res.data;
     } catch (err: any) {
       throw new Error(errorMessage(err, 'Error al crear la regla de puntaje'));
     }
-  };
+  }, []);
 
-  const updateScoringRule = async (offeringId: string, moduleId: string, ruleId: string, data: ScoringRuleData): Promise<ScoringRule> => {
+  const updateScoringRule = useCallback(async (offeringId: string, moduleId: string, ruleId: string, data: ScoringRuleData): Promise<ScoringRule> => {
     try {
       const res = await api.put(`/offerings/${offeringId}/modules/${moduleId}/scoring-rules/${ruleId}`, data);
       return res.data;
     } catch (err: any) {
       throw new Error(errorMessage(err, 'Error al actualizar la regla de puntaje'));
     }
-  };
+  }, []);
 
-  const deleteScoringRule = async (offeringId: string, moduleId: string, ruleId: string): Promise<void> => {
+  const deleteScoringRule = useCallback(async (offeringId: string, moduleId: string, ruleId: string): Promise<void> => {
     try {
       await api.delete(`/offerings/${offeringId}/modules/${moduleId}/scoring-rules/${ruleId}`);
     } catch (err: any) {
       throw new Error(errorMessage(err, 'Error al eliminar la regla de puntaje'));
     }
-  };
+  }, []);
 
   return {
     offerings, loading, error, setError, fetchOfferings,
