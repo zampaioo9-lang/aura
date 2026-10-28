@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
 
@@ -50,11 +50,21 @@ export default function AccessPurchase() {
   const [data, setData] = useState<AccessData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const hasData = useRef(false);
 
   const load = () => {
     api.get(`/access/${accessToken}`)
-      .then((res) => setData(res.data))
-      .catch(() => setError('Acceso no encontrado'))
+      .then((res) => {
+        hasData.current = true;
+        setData(res.data);
+      })
+      .catch(() => {
+        // Si esto es un refetch tras responder un cuestionario (ya habia datos cargados),
+        // una falla de red no debe reemplazar el contenido ya mostrado por la pantalla de
+        // error completa -- la respuesta ya se guardo en el servidor, perder la vista actual
+        // seria enganoso para el comprador.
+        if (!hasData.current) setError('Acceso no encontrado');
+      })
       .finally(() => setLoading(false));
   };
 
