@@ -109,12 +109,21 @@ export default function OfferingPublic() {
         </div>
 
         <div className="space-y-3 mb-4">
-          <input value={buyerName} onChange={e => setBuyerName(e.target.value)} placeholder="Tu nombre"
-            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg" />
-          <input value={buyerEmail} onChange={e => setBuyerEmail(e.target.value)} placeholder="Tu correo" type="email"
-            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg" />
-          <input value={buyerPhone} onChange={e => setBuyerPhone(e.target.value)} placeholder="Telefono (opcional)"
-            className="w-full px-4 py-2.5 border border-slate-200 rounded-lg" />
+          <div>
+            <label htmlFor="buyerName" className="block text-sm font-medium text-slate-700 mb-1">Nombre</label>
+            <input id="buyerName" value={buyerName} onChange={e => setBuyerName(e.target.value)} placeholder="Tu nombre"
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg" />
+          </div>
+          <div>
+            <label htmlFor="buyerEmail" className="block text-sm font-medium text-slate-700 mb-1">Correo</label>
+            <input id="buyerEmail" value={buyerEmail} onChange={e => setBuyerEmail(e.target.value)} placeholder="Tu correo" type="email"
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg" />
+          </div>
+          <div>
+            <label htmlFor="buyerPhone" className="block text-sm font-medium text-slate-700 mb-1">Teléfono (opcional)</label>
+            <input id="buyerPhone" value={buyerPhone} onChange={e => setBuyerPhone(e.target.value)} placeholder="Tu teléfono"
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-lg" />
+          </div>
         </div>
 
         {formError && <p className="text-red-600 text-sm mb-3">{formError}</p>}
