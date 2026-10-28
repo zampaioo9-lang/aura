@@ -180,7 +180,13 @@ export default function ModuleFormModal({ C, isOpen, mode, module, offeringId, o
         </div>
 
         <label style={lbl}>Tipo</label>
-        {mode === 'create' ? (
+        {/* mode === 'create' por si solo no basta: para QUESTIONNAIRE el modal se queda
+            abierto despues del primer guardado (savedModuleId ya truthy) para agregar
+            preguntas/reglas, y el tipo ya quedo fijo en el servidor -- dejar el selector
+            activo en ese momento permitiria "cambiarlo" visualmente sin que el backend lo
+            acepte (UpdateModuleData no tiene `type`), dejando al profesional confundido de
+            por que sus preguntas siguen ahi tras "cambiar" a Video. */}
+        {mode === 'create' && !savedModuleId ? (
           <select style={inp} value={type} onChange={(e) => { setType(e.target.value as ModuleType); setFileUrl(''); }}>
             <option value="TEXT">Texto</option>
             <option value="VIDEO">Video</option>
