@@ -1486,6 +1486,7 @@ git commit -m "feat: add reorderable block editor (text/image/button) to Revista
 - Create: `frontend/scripts/generate-blog.ts`
 - Modify: `frontend/package.json`
 - Modify: `frontend/vercel.json`
+- Modify: `frontend/tsconfig.node.json`
 
 **Context:** This is the piece that makes the blog indexable. It runs once at the start of `npm run build`, fetches every published article from `GET /api/articles/public`, and writes static `.html` files that bake in the real `<title>`/`<meta description>`/`og:*` tags plus the rendered content — using the exact visual design already approved (dark `#080414` background, teal `#2dd4bf` accent, Bebas Neue + Urbanist fonts). `/barberia` and `/salon` in this same repo are the existing precedent for serving a static `.html` file outside the SPA.
 
@@ -1509,6 +1510,18 @@ import { fileURLToPath } from 'url';
 // under Node ESM -- this is the standard equivalent.
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Unlike frontend/src/api/client.ts (which defaults to a relative '/api' -- safe in a
+// browser, where it resolves against whatever host served the page), this script runs
+// in Node at build time with no "current host" to resolve against, so a relative
+// fallback makes no sense here. It falls back to the real production API so a plain
+// `npm run build` works out of the box on Vercel (where VITE_API_URL is configured as
+// a project env var) -- but that means a local/CI build that forgets to set
+// VITE_API_URL will silently read real production articles. Warn loudly so that's
+// never silent, even though we keep the fallback (removing it risks breaking the
+// actual Vercel build if its env var setup doesn't match what we assume here).
+if (!process.env.VITE_API_URL) {
+  console.warn('[Revista] VITE_API_URL no esta configurada -- usando la API de produccion por defecto.');
+}
 const API_URL = process.env.VITE_API_URL || 'https://api.aliax.io/api';
 const SITE_URL = 'https://www.aliax.io';
 const PUBLIC_DIR = join(__dirname, '..', 'public');
@@ -1577,9 +1590,10 @@ function renderBlock(block: ArticleBlock): string {
     return `<p style="margin:0 0 24px;font-size:17px;line-height:1.75;color:rgba(255,255,255,0.75)">${escapeHtml(block.text ?? '')}</p>`;
   }
   if (block.type === 'IMAGE') {
-    return `<img src="${block.imageUrl}" alt="${escapeHtml(block.imageAlt ?? '')}" style="width:100%;border-radius:20px;margin:24px 0">`;
+    if (!block.imageUrl) return '';
+    return `<img src="${escapeHtml(block.imageUrl)}" alt="${escapeHtml(block.imageAlt ?? '')}" style="width:100%;border-radius:20px;margin:24px 0">`;
   }
-  return `<div style="text-align:center;margin:32px 0"><a href="${block.buttonUrl}" style="display:inline-block;padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700">${escapeHtml(block.buttonLabel ?? '')}</a></div>`;
+  return `<div style="text-align:center;margin:32px 0"><a href="${escapeHtml(block.buttonUrl ?? '')}" style="display:inline-block;padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700">${escapeHtml(block.buttonLabel ?? '')}</a></div>`;
 }
 
 function renderArticleCard(a: Article): string {
@@ -1630,7 +1644,13 @@ function generateArticlePage(a: Article): string {
 }
 
 function generateSitemap(articles: Article[]): string {
-  const staticRoutes = ['', '/explorar', '/precios', '/revista'];
+  // This list is hand-maintained, separate from frontend/src/App.tsx's <Route> list --
+  // if a route is added/renamed/removed in App.tsx, it MUST be updated here too, or the
+  // sitemap silently drifts (exact failure mode already hit once on a WordPress->React
+  // migration for a different Aliax-family project: a hardcoded route list went stale
+  // and nobody noticed for weeks). Verified against App.tsx on 2026-10-29: real path is
+  // /pricing, not /precios -- this list previously had the wrong one.
+  const staticRoutes = ['', '/explorar', '/pricing', '/revista'];
   const articleRoutes = articles.map(a => `/revista/${a.slug}`);
   const urls = [...staticRoutes, ...articleRoutes]
     .map(path => `  <url><loc>${SITE_URL}${path}</loc></url>`)
@@ -1658,6 +1678,20 @@ async function main() {
 
 main().catch((err) => { console.error(err); process.exit(1); });
 ```
+
+- [ ] **Step 2b: Bring `scripts/` under `tsc -b`'s type-checking coverage**
+
+Without this, `tsc -b` (which runs AFTER this script in the build pipeline) never actually type-checks `generate-blog.ts` — `tsconfig.app.json` only includes `src`, `tsconfig.node.json` only includes `vite.config.ts`. A future type error in this file would pass the build silently (tsx transpiles-and-runs without type-checking) and only surface as a runtime crash during a real deploy.
+
+In `frontend/tsconfig.node.json`, change:
+```json
+  "include": ["vite.config.ts"]
+```
+to:
+```json
+  "include": ["vite.config.ts", "scripts"]
+```
+(This tsconfig already targets Node — `"types": ["node"]`, ES2023 — the right fit for a build script, same as `vite.config.ts`.)
 
 - [ ] **Step 3: Wire it into the build script**
 
@@ -1702,7 +1736,7 @@ cat frontend/public/robots.txt
 - [ ] **Step 6: Commit**
 
 ```bash
-git add frontend/scripts/generate-blog.ts frontend/package.json frontend/package-lock.json frontend/vercel.json
+git add frontend/scripts/generate-blog.ts frontend/package.json frontend/package-lock.json frontend/vercel.json frontend/tsconfig.node.json
 git commit -m "feat: generate static /revista pages, sitemap.xml and robots.txt at build time"
 ```
 
