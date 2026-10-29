@@ -333,6 +333,7 @@ export const updateCategorySchema = z.object({
 export const createArticleSchema = z.object({
   title: z.string().min(3, 'Minimo 3 caracteres').max(150, 'Maximo 150 caracteres'),
   excerpt: z.string().min(10, 'Minimo 10 caracteres').max(300, 'Maximo 300 caracteres'),
+  metaDescription: z.string().max(300, 'Maximo 300 caracteres').optional().or(z.literal('')),
   categoryId: z.string(),
   coverImage: z.string().url().optional().or(z.literal('')),
   featured: z.boolean().optional(),
@@ -341,6 +342,7 @@ export const createArticleSchema = z.object({
 export const updateArticleSchema = z.object({
   title: z.string().min(3).max(150).optional(),
   excerpt: z.string().min(10).max(300).optional(),
+  metaDescription: z.string().max(300).optional().or(z.literal('')),
   categoryId: z.string().optional(),
   coverImage: z.string().url().optional().or(z.literal('')),
   featured: z.boolean().optional(),

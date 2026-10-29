@@ -27,6 +27,7 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
   const [article, setArticle] = useState<Article | null>(null);
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
+  const [metaDescription, setMetaDescription] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [coverImage, setCoverImage] = useState('');
   const [featured, setFeatured] = useState(false);
@@ -38,6 +39,7 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
       setArticle(a);
       setTitle(a.title);
       setExcerpt(a.excerpt);
+      setMetaDescription(a.metaDescription || '');
       setCategoryId(a.categoryId);
       setCoverImage(a.coverImage || '');
       setFeatured(a.featured);
@@ -62,13 +64,13 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
     try {
       if (!article) {
         const created = await createArticle({
-          title: title.trim(), excerpt: excerpt.trim(), categoryId,
+          title: title.trim(), excerpt: excerpt.trim(), metaDescription: metaDescription.trim() || undefined, categoryId,
           coverImage: coverImage || undefined, featured,
         });
         setArticle(created);
       } else {
         const updated = await updateArticle(article.id, {
-          title: title.trim(), excerpt: excerpt.trim(), categoryId,
+          title: title.trim(), excerpt: excerpt.trim(), metaDescription: metaDescription.trim() || undefined, categoryId,
           coverImage: coverImage || undefined, featured,
         });
         setArticle(updated);
@@ -99,6 +101,9 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
 
       <label style={lbl}>Extracto</label>
       <textarea style={{ ...inp, minHeight: 70, resize: 'vertical' }} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} placeholder="Resumen corto, se usa en el listado" />
+
+      <label style={lbl}>Meta descripcion (SEO)</label>
+      <textarea style={{ ...inp, minHeight: 50, resize: 'vertical' }} value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} placeholder="Opcional. Si la dejas vacia, se usa el Extracto. Esto es lo que aparece en Google y al compartir el enlace." maxLength={300} />
 
       <label style={lbl}>Categoria</label>
       <select style={inp} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>

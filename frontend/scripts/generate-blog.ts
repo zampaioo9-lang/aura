@@ -29,7 +29,7 @@ interface ArticleBlock {
   buttonLabel: string | null; buttonUrl: string | null;
 }
 interface Article {
-  id: string; slug: string; title: string; excerpt: string;
+  id: string; slug: string; title: string; excerpt: string; metaDescription: string | null;
   coverImage: string | null; featured: boolean; publishedAt: string | null;
   category: Category; blocks: ArticleBlock[];
 }
@@ -130,7 +130,7 @@ function generateArticlePage(a: Article): string {
 </div>`;
   return pageShell(
     `${a.title} — Revista Aliax`,
-    a.excerpt,
+    a.metaDescription || a.excerpt,
     `${SITE_URL}/revista/${a.slug}`,
     a.coverImage || `${SITE_URL}/og-image.png`,
     body

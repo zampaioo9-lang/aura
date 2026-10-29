@@ -742,17 +742,18 @@ enum CategoryAudience {
 }
 
 model Article {
-  id          String        @id @default(cuid())
-  slug        String        @unique
-  title       String
-  excerpt     String
-  categoryId  String
-  coverImage  String?
-  featured    Boolean       @default(false)
-  status      ArticleStatus @default(DRAFT)
-  publishedAt DateTime?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  slug            String        @unique
+  title           String
+  excerpt         String
+  metaDescription String?
+  categoryId      String
+  coverImage      String?
+  featured        Boolean       @default(false)
+  status          ArticleStatus @default(DRAFT)
+  publishedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   category Category       @relation(fields: [categoryId], references: [id])
   blocks   ArticleBlock[]
