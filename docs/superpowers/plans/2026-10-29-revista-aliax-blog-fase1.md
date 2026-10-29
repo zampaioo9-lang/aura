@@ -1313,7 +1313,7 @@ export default function BlockEditor({ C, articleId }: Props) {
     setAdding(true);
     try {
       if (type === 'TEXT') await createBlock(articleId, { type, text: 'Escribe aqui...' });
-      else if (type === 'BUTTON') await createBlock(articleId, { type, buttonLabel: 'Ver mas', buttonUrl: 'https://' });
+      else if (type === 'BUTTON') await createBlock(articleId, { type, buttonLabel: 'Ver mas', buttonUrl: 'https://aliax.io' });
       else await createBlock(articleId, { type, imageUrl: '', imageAlt: '' }); // IMAGE needs upload before it can be saved as non-empty; see handleImageUpload below
       await loadBlocks();
     } catch {
