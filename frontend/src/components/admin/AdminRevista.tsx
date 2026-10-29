@@ -227,9 +227,13 @@ export default function AdminRevista({ C }: Props) {
                       </button>
                       <button
                         onClick={async () => {
-                          if (article.status === 'PUBLISHED') await unpublishArticle(article.id);
-                          else await publishArticle(article.id);
-                          await loadArticles();
+                          try {
+                            if (article.status === 'PUBLISHED') await unpublishArticle(article.id);
+                            else await publishArticle(article.id);
+                            await loadArticles();
+                          } catch (err: any) {
+                            toast(err.message, 'error');
+                          }
                         }}
                         style={{
                           fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8,
@@ -241,8 +245,12 @@ export default function AdminRevista({ C }: Props) {
                       <button
                         onClick={async () => {
                           if (!confirm(`¿Borrar "${article.title}"?`)) return;
-                          await deleteArticle(article.id);
-                          await loadArticles();
+                          try {
+                            await deleteArticle(article.id);
+                            await loadArticles();
+                          } catch (err: any) {
+                            toast(err.message, 'error');
+                          }
                         }}
                         style={{
                           fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8,
