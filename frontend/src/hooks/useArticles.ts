@@ -31,6 +31,7 @@ export interface Article {
   slug: string;
   title: string;
   excerpt: string;
+  metaDescription: string | null;
   categoryId: string;
   category?: Category;
   coverImage: string | null;
@@ -46,10 +47,10 @@ export interface CreateCategoryData { name: string; audience: CategoryAudience }
 export interface UpdateCategoryData { active?: boolean; order?: number }
 
 export interface CreateArticleData {
-  title: string; excerpt: string; categoryId: string; coverImage?: string; featured?: boolean;
+  title: string; excerpt: string; metaDescription?: string; categoryId: string; coverImage?: string; featured?: boolean;
 }
 export interface UpdateArticleData {
-  title?: string; excerpt?: string; categoryId?: string; coverImage?: string; featured?: boolean;
+  title?: string; excerpt?: string; metaDescription?: string; categoryId?: string; coverImage?: string; featured?: boolean;
 }
 
 export interface CreateArticleBlockData {

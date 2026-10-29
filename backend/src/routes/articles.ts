@@ -81,7 +81,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req: AuthRequest, res, 
     const slugExists = await prisma.article.findUnique({ where: { slug } });
     if (slugExists) throw new AppError(409, 'Ya existe un articulo con un titulo muy similar');
     const article = await prisma.article.create({
-      data: { ...data, slug, coverImage: data.coverImage || undefined },
+      data: { ...data, slug, coverImage: data.coverImage || undefined, metaDescription: data.metaDescription || undefined },
     });
     res.status(201).json(article);
   } catch (err) {
@@ -139,7 +139,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req: AuthRequest, res
     if (!existing) throw new AppError(404, 'Articulo no encontrado');
     const article = await prisma.article.update({
       where: { id: req.params.id },
-      data: { ...data, coverImage: data.coverImage || undefined },
+      data: { ...data, coverImage: data.coverImage || undefined, metaDescription: data.metaDescription || undefined },
     });
     res.json(article);
   } catch (err) {
