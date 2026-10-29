@@ -4,6 +4,18 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Unlike frontend/src/api/client.ts (which defaults to a relative '/api' -- safe in a
+// browser, where it resolves against whatever host served the page), this script runs
+// in Node at build time with no "current host" to resolve against, so a relative
+// fallback makes no sense here. It falls back to the real production API so a plain
+// `npm run build` works out of the box on Vercel (where VITE_API_URL is configured as
+// a project env var) -- but that means a local/CI build that forgets to set
+// VITE_API_URL will silently read real production articles. Warn loudly so that's
+// never silent, even though we keep the fallback (removing it risks breaking the
+// actual Vercel build if its env var setup doesn't match what we assume here).
+if (!process.env.VITE_API_URL) {
+  console.warn('[Revista] VITE_API_URL no esta configurada -- usando la API de produccion por defecto.');
+}
 const API_URL = process.env.VITE_API_URL || 'https://api.aliax.io/api';
 const SITE_URL = 'https://www.aliax.io';
 const PUBLIC_DIR = join(__dirname, '..', 'public');
@@ -72,9 +84,10 @@ function renderBlock(block: ArticleBlock): string {
     return `<p style="margin:0 0 24px;font-size:17px;line-height:1.75;color:rgba(255,255,255,0.75)">${escapeHtml(block.text ?? '')}</p>`;
   }
   if (block.type === 'IMAGE') {
-    return `<img src="${block.imageUrl}" alt="${escapeHtml(block.imageAlt ?? '')}" style="width:100%;border-radius:20px;margin:24px 0">`;
+    if (!block.imageUrl) return '';
+    return `<img src="${escapeHtml(block.imageUrl)}" alt="${escapeHtml(block.imageAlt ?? '')}" style="width:100%;border-radius:20px;margin:24px 0">`;
   }
-  return `<div style="text-align:center;margin:32px 0"><a href="${block.buttonUrl}" style="display:inline-block;padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700">${escapeHtml(block.buttonLabel ?? '')}</a></div>`;
+  return `<div style="text-align:center;margin:32px 0"><a href="${escapeHtml(block.buttonUrl ?? '')}" style="display:inline-block;padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700">${escapeHtml(block.buttonLabel ?? '')}</a></div>`;
 }
 
 function renderArticleCard(a: Article): string {
@@ -125,7 +138,13 @@ function generateArticlePage(a: Article): string {
 }
 
 function generateSitemap(articles: Article[]): string {
-  const staticRoutes = ['', '/explorar', '/precios', '/revista'];
+  // This list is hand-maintained, separate from frontend/src/App.tsx's <Route> list --
+  // if a route is added/renamed/removed in App.tsx, it MUST be updated here too, or the
+  // sitemap silently drifts (exact failure mode already hit once on a WordPress->React
+  // migration for a different Aliax-family project: a hardcoded route list went stale
+  // and nobody noticed for weeks). Verified against App.tsx on 2026-10-29: real path is
+  // /pricing, not /precios -- this list previously had the wrong one.
+  const staticRoutes = ['', '/explorar', '/pricing', '/revista'];
   const articleRoutes = articles.map(a => `/revista/${a.slug}`);
   const urls = [...staticRoutes, ...articleRoutes]
     .map(path => `  <url><loc>${SITE_URL}${path}</loc></url>`)
@@ -136,7 +155,7 @@ function generateSitemap(articles: Article[]): string {
 async function main() {
   const res = await fetch(`${API_URL}/articles/public`);
   if (!res.ok) throw new Error(`No se pudo obtener /articles/public: ${res.status}`);
-  const articles: Article[] = await res.json();
+  const articles = (await res.json()) as Article[];
 
   const revistaDir = join(PUBLIC_DIR, 'revista');
   if (!existsSync(revistaDir)) mkdirSync(revistaDir, { recursive: true });
