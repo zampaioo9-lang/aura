@@ -31,6 +31,7 @@ import offeringRoutes from './routes/offerings';
 import purchaseRoutes from './routes/purchases';
 import accessRoutes from './routes/access';
 import exchangeRateRoutes from './routes/exchangeRate';
+import articleRoutes from './routes/articles';
 import { startReminderJob } from './jobs/reminderJob';
 import { startTrialExpiryJob } from './jobs/trialExpiryJob';
 import { sendWhatsAppTemplate, templateComponents } from './services/whatsappService';
@@ -77,6 +78,7 @@ app.use('/api/offerings', offeringRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/access', accessRoutes);
 app.use('/api/exchange-rate', exchangeRateRoutes);
+app.use('/api/articles', articleRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
