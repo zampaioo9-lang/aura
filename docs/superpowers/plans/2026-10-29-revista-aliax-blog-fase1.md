@@ -1502,7 +1502,12 @@ Create `frontend/scripts/generate-blog.ts`:
 
 ```typescript
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// frontend/package.json has "type": "module", so plain __dirname doesn't exist
+// under Node ESM -- this is the standard equivalent.
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const API_URL = process.env.VITE_API_URL || 'https://api.aliax.io/api';
 const SITE_URL = 'https://www.aliax.io';
