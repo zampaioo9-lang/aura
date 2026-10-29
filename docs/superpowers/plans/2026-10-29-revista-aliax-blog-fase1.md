@@ -1127,7 +1127,7 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
       setCategoryId(a.categoryId);
       setCoverImage(a.coverImage || '');
       setFeatured(a.featured);
-    });
+    }).catch(() => toast('No se pudo cargar el articulo', 'error'));
   }, [articleId]);
 
   const activeCategories = categories.filter(c => c.active);
