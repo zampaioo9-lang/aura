@@ -61,68 +61,129 @@ export interface UpdateArticleBlockData {
   buttonLabel?: string; buttonUrl?: string; order?: number;
 }
 
+function errorMessage(err: any, fallback: string): string {
+  return err.response?.data?.error || fallback;
+}
+
+// Pura capa de acceso a datos: sin estado interno y sin auto-carga al montarse. El
+// AdminPanel del CMS (que consume este hook en tareas posteriores) mantiene su propio
+// estado (categorias, articulos, bloques) y decide cuando llamar cada funcion -- mismo
+// patron que QuestionnaireEditor.tsx consumiendo las funciones CRUD de useOfferings sin
+// tocar su estado interno `offerings`.
 export function useArticles() {
   const listCategories = useCallback(async (): Promise<Category[]> => {
-    const res = await api.get('/articles/categories');
-    return res.data;
+    try {
+      const res = await api.get('/articles/categories');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al cargar las categorias'));
+    }
   }, []);
 
   const createCategory = useCallback(async (data: CreateCategoryData): Promise<Category> => {
-    const res = await api.post('/articles/categories', data);
-    return res.data;
+    try {
+      const res = await api.post('/articles/categories', data);
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al crear la categoria'));
+    }
   }, []);
 
   const updateCategory = useCallback(async (id: string, data: UpdateCategoryData): Promise<Category> => {
-    const res = await api.put(`/articles/categories/${id}`, data);
-    return res.data;
+    try {
+      const res = await api.put(`/articles/categories/${id}`, data);
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al actualizar la categoria'));
+    }
   }, []);
 
   const listArticles = useCallback(async (): Promise<Article[]> => {
-    const res = await api.get('/articles');
-    return res.data;
+    try {
+      const res = await api.get('/articles');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al cargar los articulos'));
+    }
   }, []);
 
   const getArticle = useCallback(async (id: string): Promise<Article> => {
-    const res = await api.get(`/articles/${id}`);
-    return res.data;
+    try {
+      const res = await api.get(`/articles/${id}`);
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al cargar el articulo'));
+    }
   }, []);
 
   const createArticle = useCallback(async (data: CreateArticleData): Promise<Article> => {
-    const res = await api.post('/articles', data);
-    return res.data;
+    try {
+      const res = await api.post('/articles', data);
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al crear el articulo'));
+    }
   }, []);
 
   const updateArticle = useCallback(async (id: string, data: UpdateArticleData): Promise<Article> => {
-    const res = await api.put(`/articles/${id}`, data);
-    return res.data;
+    try {
+      const res = await api.put(`/articles/${id}`, data);
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al actualizar el articulo'));
+    }
   }, []);
 
   const publishArticle = useCallback(async (id: string): Promise<Article> => {
-    const res = await api.patch(`/articles/${id}/publish`);
-    return res.data;
+    try {
+      const res = await api.patch(`/articles/${id}/publish`);
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al publicar el articulo'));
+    }
   }, []);
 
   const unpublishArticle = useCallback(async (id: string): Promise<Article> => {
-    const res = await api.patch(`/articles/${id}/unpublish`);
-    return res.data;
+    try {
+      const res = await api.patch(`/articles/${id}/unpublish`);
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al despublicar el articulo'));
+    }
   }, []);
 
   const deleteArticle = useCallback(async (id: string): Promise<void> => {
-    await api.delete(`/articles/${id}`);
+    try {
+      await api.delete(`/articles/${id}`);
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al borrar el articulo'));
+    }
   }, []);
 
   const createBlock = useCallback(async (articleId: string, data: CreateArticleBlockData): Promise<ArticleBlock> => {
-    const res = await api.post(`/articles/${articleId}/blocks`, data);
-    return res.data;
+    try {
+      const res = await api.post(`/articles/${articleId}/blocks`, data);
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al agregar el bloque'));
+    }
   }, []);
 
   const updateBlock = useCallback(async (articleId: string, blockId: string, data: UpdateArticleBlockData): Promise<ArticleBlock> => {
-    const res = await api.put(`/articles/${articleId}/blocks/${blockId}`, data);
-    return res.data;
+    try {
+      const res = await api.put(`/articles/${articleId}/blocks/${blockId}`, data);
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al actualizar el bloque'));
+    }
   }, []);
 
   const deleteBlock = useCallback(async (articleId: string, blockId: string): Promise<void> => {
-    await api.delete(`/articles/${articleId}/blocks/${blockId}`);
+    try {
+      await api.delete(`/articles/${articleId}/blocks/${blockId}`);
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al borrar el bloque'));
+    }
   }, []);
 
   return {
