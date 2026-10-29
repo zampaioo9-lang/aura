@@ -22,6 +22,8 @@ router.post('/categories', authMiddleware, adminMiddleware, async (req: AuthRequ
   try {
     const data = createCategorySchema.parse(req.body);
     const slug = slugify(data.name);
+    const slugExists = await prisma.category.findUnique({ where: { slug } });
+    if (slugExists) throw new AppError(409, 'Ya existe una categoria con un nombre muy similar');
     const category = await prisma.category.create({ data: { ...data, slug } });
     res.status(201).json(category);
   } catch (err) {
@@ -43,6 +45,8 @@ router.get('/categories', authMiddleware, adminMiddleware, async (_req, res, nex
 router.put('/categories/:id', authMiddleware, adminMiddleware, async (req: AuthRequest, res, next) => {
   try {
     const data = updateCategorySchema.parse(req.body);
+    const existing = await prisma.category.findUnique({ where: { id: req.params.id } });
+    if (!existing) throw new AppError(404, 'Categoria no encontrada');
     const category = await prisma.category.update({ where: { id: req.params.id }, data });
     res.json(category);
   } catch (err) {

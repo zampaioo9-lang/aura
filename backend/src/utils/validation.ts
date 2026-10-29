@@ -326,7 +326,6 @@ export const createCategorySchema = z.object({
 });
 
 export const updateCategorySchema = z.object({
-  name: z.string().min(2).max(80).optional(),
   active: z.boolean().optional(),
   order: z.number().int().min(0).optional(),
 });
