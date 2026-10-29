@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Newspaper, Tag, Plus } from 'lucide-react';
 import { useArticles, type Category, type CategoryAudience, type Article } from '../../hooks/useArticles';
 import { useToast } from '../Toast';
+import ArticleEditor from './ArticleEditor';
 
 interface Colors {
   page: string; header: string; headerBorder: string; card: string; cardBorder: string;
@@ -182,7 +183,13 @@ export default function AdminRevista({ C }: Props) {
       {subTab === 'articulos' && (
         <div>
           {editingArticleId || creatingArticle ? (
-            <div>{/* Task 9/10 fill in the editor here */}</div>
+            <ArticleEditor
+              C={C}
+              articleId={creatingArticle ? null : editingArticleId}
+              categories={categories}
+              onClose={() => { setEditingArticleId(null); setCreatingArticle(false); }}
+              onSaved={loadArticles}
+            />
           ) : (
             <>
               <button
