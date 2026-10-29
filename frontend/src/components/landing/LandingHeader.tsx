@@ -9,6 +9,7 @@ interface Props {
 const NAV = [
   { label: 'Explorar', to: '/explorar' },
   { label: 'Precios',  to: '/pricing'  },
+  { label: 'Revista',  to: '/revista'  },
 ];
 
 export default function LandingHeader({ onNavigate }: Props) {
