@@ -50,7 +50,7 @@ function pageShell(title: string, description: string, canonical: string, ogImag
 <meta property="og:type" content="article">
 <meta property="og:title" content="${escapeHtml(title)}">
 <meta property="og:description" content="${escapeHtml(description)}">
-<meta property="og:image" content="${ogImage}">
+<meta property="og:image" content="${escapeHtml(ogImage)}">
 <meta property="og:url" content="${canonical}">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Urbanist:wght@300;400;500;600;700;800&display=swap">
 <style>
@@ -93,7 +93,7 @@ function renderBlock(block: ArticleBlock): string {
 function renderArticleCard(a: Article): string {
   return `<div style="border-radius:20px;overflow:hidden;background:#0e0920;box-shadow:0 10px 30px rgba(0,0,0,0.25)">
   <a href="/revista/${a.slug}">
-    ${a.coverImage ? `<img src="${a.coverImage}" alt="" style="width:100%;height:160px;object-fit:cover;display:block">` : `<div style="height:160px;background:linear-gradient(135deg,#160d30,#1e1240)"></div>`}
+    ${a.coverImage ? `<img src="${escapeHtml(a.coverImage)}" alt="" style="width:100%;height:160px;object-fit:cover;display:block">` : `<div style="height:160px;background:linear-gradient(135deg,#160d30,#1e1240)"></div>`}
   </a>
   <div style="padding:22px">
     <span style="display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(45,212,191,0.12);color:#2dd4bf;font-size:10px;font-weight:700;text-transform:uppercase">${escapeHtml(a.category.name)}</span>
@@ -125,7 +125,7 @@ function generateArticlePage(a: Article): string {
 <div style="max-width:680px;margin:0 auto;padding:64px 24px">
   <span style="display:inline-block;padding:5px 12px;border-radius:999px;background:rgba(45,212,191,0.12);color:#2dd4bf;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:18px">${escapeHtml(a.category.name)}</span>
   <h1 style="font-size:40px;line-height:1.1;margin:0 0 24px">${escapeHtml(a.title)}</h1>
-  ${a.coverImage ? `<img src="${a.coverImage}" alt="" style="width:100%;border-radius:24px;margin-bottom:32px">` : ''}
+  ${a.coverImage ? `<img src="${escapeHtml(a.coverImage)}" alt="" style="width:100%;border-radius:24px;margin-bottom:32px">` : ''}
   ${blocksHtml}
 </div>`;
   return pageShell(
