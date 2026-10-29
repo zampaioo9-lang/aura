@@ -1297,8 +1297,12 @@ export default function BlockEditor({ C, articleId }: Props) {
   const [movingBlockId, setMovingBlockId] = useState<string | null>(null);
 
   const loadBlocks = async () => {
-    const article = await getArticle(articleId);
-    setBlocks(article.blocks ?? []);
+    try {
+      const article = await getArticle(articleId);
+      setBlocks(article.blocks ?? []);
+    } catch {
+      toast('No se pudieron cargar los bloques', 'error');
+    }
   };
 
   useEffect(() => { loadBlocks(); }, [articleId]);
