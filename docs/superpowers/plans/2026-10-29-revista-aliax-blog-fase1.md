@@ -204,7 +204,7 @@ git commit -m "feat: add zod schemas for Category/Article/ArticleBlock"
 - Modify: `backend/src/index.ts`
 - Modify: `backend/api/index.ts`
 
-**Note on the slugify helper:** both `Category` and `Article` need a URL-safe slug derived from a name/title with Spanish accents (á, é, í, ó, ú, ñ). Create the shared utility first so it's written once instead of copy-pasted into every route handler. Use `\p{Diacritic}` (a Unicode property escape, needs the `u` regex flag) to strip accents — do NOT write out a literal `̀-ͯ` character range by hand in source, since that range easily gets mangled into literal combining-mark bytes when copied through different editors/tools; `\p{Diacritic}` expresses the same idea without needing any literal non-ASCII bytes in the file.
+**Note on the slugify helper:** both `Category` and `Article` need a URL-safe slug derived from a name/title with Spanish accents (á, é, í, ó, ú, ñ). Create the shared utility first so it's written once instead of copy-pasted into every route handler. Use `\p{Diacritic}` (a Unicode property escape, needs the `u` regex flag) to strip accents — do NOT write out a literal Unicode combining-mark character range by hand in source, since that range easily gets mangled into literal combining-mark bytes when copied through different editors/tools; `\p{Diacritic}` expresses the same idea without needing any literal non-ASCII bytes in the file.
 
 - [ ] **Step 0: Create the shared slugify utility**
 
