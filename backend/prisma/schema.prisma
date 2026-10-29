@@ -723,3 +723,67 @@ model Answer {
   @@index([purchaseId])
   @@index([questionId])
 }
+
+model Category {
+  id       String            @id @default(cuid())
+  name     String
+  slug     String            @unique
+  audience CategoryAudience
+  active   Boolean           @default(true)
+  order    Int               @default(0)
+  articles Article[]
+
+  @@index([audience])
+}
+
+enum CategoryAudience {
+  PACIENTES
+  TERAPEUTAS
+}
+
+model Article {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  excerpt     String
+  categoryId  String
+  coverImage  String?
+  featured    Boolean       @default(false)
+  status      ArticleStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  category Category       @relation(fields: [categoryId], references: [id])
+  blocks   ArticleBlock[]
+
+  @@index([categoryId])
+  @@index([status])
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model ArticleBlock {
+  id          String           @id @default(cuid())
+  articleId   String
+  order       Int
+  type        ArticleBlockType
+  text        String?
+  imageUrl    String?
+  imageAlt    String?
+  buttonLabel String?
+  buttonUrl   String?
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
+}
+
+enum ArticleBlockType {
+  TEXT
+  IMAGE
+  BUTTON
+}
