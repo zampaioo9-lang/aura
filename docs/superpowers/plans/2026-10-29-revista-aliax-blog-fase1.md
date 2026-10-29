@@ -1012,9 +1012,13 @@ Replace the `{subTab === 'articulos' && <div>{/* Task 8 fills this in */}</div>}
                 </button>
                 <button
                   onClick={async () => {
-                    if (article.status === 'PUBLISHED') await unpublishArticle(article.id);
-                    else await publishArticle(article.id);
-                    await loadArticles();
+                    try {
+                      if (article.status === 'PUBLISHED') await unpublishArticle(article.id);
+                      else await publishArticle(article.id);
+                      await loadArticles();
+                    } catch (err: any) {
+                      toast(err.message, 'error');
+                    }
                   }}
                   style={{
                     fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8,
@@ -1026,8 +1030,12 @@ Replace the `{subTab === 'articulos' && <div>{/* Task 8 fills this in */}</div>}
                 <button
                   onClick={async () => {
                     if (!confirm(`¿Borrar "${article.title}"?`)) return;
-                    await deleteArticle(article.id);
-                    await loadArticles();
+                    try {
+                      await deleteArticle(article.id);
+                      await loadArticles();
+                    } catch (err: any) {
+                      toast(err.message, 'error');
+                    }
                   }}
                   style={{
                     fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8,
