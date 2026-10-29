@@ -317,3 +317,58 @@ export const submitAnswersSchema = z.object({
     valueOptionIds: z.array(z.string().uuid('id de opcion invalido')).optional(),
   })).min(1, 'Debes responder al menos una pregunta'),
 });
+
+export const createCategorySchema = z.object({
+  name: z.string().min(2, 'Minimo 2 caracteres').max(80, 'Maximo 80 caracteres'),
+  audience: z.enum(['PACIENTES', 'TERAPEUTAS'], {
+    errorMap: () => ({ message: 'Audiencia no valida (PACIENTES o TERAPEUTAS)' }),
+  }),
+});
+
+export const updateCategorySchema = z.object({
+  name: z.string().min(2).max(80).optional(),
+  active: z.boolean().optional(),
+  order: z.number().int().min(0).optional(),
+});
+
+export const createArticleSchema = z.object({
+  title: z.string().min(3, 'Minimo 3 caracteres').max(150, 'Maximo 150 caracteres'),
+  excerpt: z.string().min(10, 'Minimo 10 caracteres').max(300, 'Maximo 300 caracteres'),
+  categoryId: z.string(),
+  coverImage: z.string().url().optional().or(z.literal('')),
+  featured: z.boolean().optional(),
+});
+
+export const updateArticleSchema = z.object({
+  title: z.string().min(3).max(150).optional(),
+  excerpt: z.string().min(10).max(300).optional(),
+  categoryId: z.string().optional(),
+  coverImage: z.string().url().optional().or(z.literal('')),
+  featured: z.boolean().optional(),
+});
+
+export const createArticleBlockSchema = z.object({
+  type: z.enum(['TEXT', 'IMAGE', 'BUTTON'], {
+    errorMap: () => ({ message: 'Tipo de bloque no valido (TEXT, IMAGE o BUTTON)' }),
+  }),
+  text: z.string().max(5000).optional(),
+  imageUrl: z.string().url().optional().or(z.literal('')),
+  imageAlt: z.string().max(200).optional(),
+  buttonLabel: z.string().max(60).optional(),
+  buttonUrl: z.string().url().optional().or(z.literal('')),
+}).refine(
+  (data) => data.type !== 'TEXT' || !!data.text?.trim(),
+  { message: 'Un bloque de texto requiere contenido' }
+).refine(
+  (data) => data.type !== 'BUTTON' || (!!data.buttonLabel?.trim() && !!data.buttonUrl),
+  { message: 'Un bloque de boton requiere texto y URL' }
+);
+
+export const updateArticleBlockSchema = z.object({
+  text: z.string().max(5000).optional(),
+  imageUrl: z.string().url().optional().or(z.literal('')),
+  imageAlt: z.string().max(200).optional(),
+  buttonLabel: z.string().max(60).optional(),
+  buttonUrl: z.string().url().optional().or(z.literal('')),
+  order: z.number().int().min(1).optional(),
+});
