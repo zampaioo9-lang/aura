@@ -1161,8 +1161,8 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
       }
       toast('Guardado', 'success');
       onSaved();
-    } catch {
-      toast('No se pudo guardar', 'error');
+    } catch (err: any) {
+      toast(err.message, 'error');
     } finally {
       setSaving(false);
     }
