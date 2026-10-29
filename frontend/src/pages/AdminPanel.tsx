@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, ChevronLeft, ChevronRight, CreditCard, Tag, Sun, Moon, Trash2, Mail, MailX, Send, User, Activity, Shield, BarChart3 } from 'lucide-react';
+import { Users, Search, ChevronLeft, ChevronRight, CreditCard, Tag, Sun, Moon, Trash2, Mail, MailX, Send, User, Activity, Shield, BarChart3, Newspaper } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
+import AdminRevista from '../components/admin/AdminRevista';
 
 interface Stats {
   users: { total: number; newThisMonth: number; inTrial: number; paid: number; withDiscount: number };
@@ -493,7 +494,7 @@ export default function AdminPanel() {
   const [userDetailTab, setUserDetailTab] = useState<'perfil' | 'actividad' | 'comunicacion'>('actividad');
   const [activitySummary, setActivitySummary] = useState<{ module: string; count: number }[]>([]);
   const [activityPeriod, setActivityPeriod] = useState<'30d' | '90d' | 'all'>('30d');
-  const [pageTab, setPageTab] = useState<'resumen' | 'usuarios' | 'comunicacion'>('usuarios');
+  const [pageTab, setPageTab] = useState<'resumen' | 'usuarios' | 'comunicacion' | 'revista'>('usuarios');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
@@ -911,6 +912,7 @@ export default function AdminPanel() {
             { id: 'resumen' as const, label: 'Resumen', icon: BarChart3 },
             { id: 'usuarios' as const, label: 'Usuarios', icon: Users },
             { id: 'comunicacion' as const, label: 'Comunicación', icon: Send },
+            { id: 'revista' as const, label: 'Revista', icon: Newspaper },
           ].map(tab => {
             const Icon = tab.icon;
             const isActive = pageTab === tab.id;
@@ -2084,6 +2086,8 @@ export default function AdminPanel() {
         </div>
         </>
         )}
+
+        {pageTab === 'revista' && <AdminRevista />}
 
         </div>
        </div>
