@@ -199,9 +199,27 @@ git commit -m "feat: add zod schemas for Category/Article/ArticleBlock"
 ### Task 3: Backend routes — categories
 
 **Files:**
+- Create: `backend/src/utils/slugify.ts`
 - Create: `backend/src/routes/articles.ts`
 - Modify: `backend/src/index.ts`
 - Modify: `backend/api/index.ts`
+
+**Note on the slugify helper:** both `Category` and `Article` need a URL-safe slug derived from a name/title with Spanish accents (á, é, í, ó, ú, ñ). Create the shared utility first so it's written once instead of copy-pasted into every route handler. Use `\p{Diacritic}` (a Unicode property escape, needs the `u` regex flag) to strip accents — do NOT write out a literal `̀-ͯ` character range by hand in source, since that range easily gets mangled into literal combining-mark bytes when copied through different editors/tools; `\p{Diacritic}` expresses the same idea without needing any literal non-ASCII bytes in the file.
+
+- [ ] **Step 0: Create the shared slugify utility**
+
+Create `backend/src/utils/slugify.ts`:
+
+```typescript
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+```
 
 - [ ] **Step 1: Create the router file with category routes**
 
@@ -218,6 +236,7 @@ import {
   createArticleBlockSchema, updateArticleBlockSchema,
 } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
+import { slugify } from '../utils/slugify';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -230,9 +249,7 @@ const prisma = new PrismaClient();
 router.post('/categories', authMiddleware, adminMiddleware, async (req: AuthRequest, res, next) => {
   try {
     const data = createCategorySchema.parse(req.body);
-    const slug = data.name.toLowerCase()
-      .normalize('NFD').replace(/[̀-ͯ]/g, '')
-      .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = slugify(data.name);
     const category = await prisma.category.create({ data: { ...data, slug } });
     res.status(201).json(category);
   } catch (err) {
@@ -314,9 +331,7 @@ In `backend/src/routes/articles.ts`, insert before the final `export default rou
 router.post('/', authMiddleware, adminMiddleware, async (req: AuthRequest, res, next) => {
   try {
     const data = createArticleSchema.parse(req.body);
-    const slug = data.title.toLowerCase()
-      .normalize('NFD').replace(/[̀-ͯ]/g, '')
-      .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = slugify(data.title);
     const article = await prisma.article.create({
       data: { ...data, slug, coverImage: data.coverImage || undefined },
     });
@@ -510,14 +525,9 @@ Create `backend/seed-revista-categories.tmp.ts`:
 
 ```typescript
 import { PrismaClient } from '@prisma/client';
+import { slugify } from './src/utils/slugify';
 
 const prisma = new PrismaClient();
-
-function slugify(name: string): string {
-  return name.toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
 
 const PACIENTES = [
   'Terapia', 'Ansiedad y estres', 'Animo y depresion', 'Pareja',
