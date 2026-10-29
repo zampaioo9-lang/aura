@@ -961,6 +961,8 @@ import { useArticles, type Category, type CategoryAudience, type Article } from 
 
 Replace the `{subTab === 'articulos' && <div>{/* Task 8 fills this in */}</div>}` block with:
 
+**Note:** use the same inline-style-with-`C`-prop convention Task 7's fix-up already established for this file (`AdminRevista` now takes `C: Colors` as a prop) — do NOT use Tailwind color classes here (no `bg-white`/`text-slate-*`/etc.), since AdminPanel.tsx has a real dark/light theme toggle that every tab must respect.
+
 ```tsx
 {subTab === 'articulos' && (
   <div>
@@ -970,24 +972,41 @@ Replace the `{subTab === 'articulos' && <div>{/* Task 8 fills this in */}</div>}
       <>
         <button
           onClick={() => setCreatingArticle(true)}
-          className="mb-4 px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium flex items-center gap-1.5"
+          style={{
+            marginBottom: 16, padding: '9px 18px', background: C.accent, border: 'none',
+            borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}
         >
           <Plus size={15} /> Nuevo articulo
         </button>
-        <div className="bg-white rounded-xl shadow-sm divide-y divide-slate-100">
-          {articles.map(article => (
-            <div key={article.id} className="flex items-center justify-between px-4 py-3">
+        <div style={{ background: C.card, border: `1px solid ${C.cardBorder}`, borderRadius: 12 }}>
+          {articles.map((article, i) => (
+            <div
+              key={article.id}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '12px 16px', borderTop: i === 0 ? 'none' : `1px solid ${C.cardBorder}`,
+              }}
+            >
               <div>
-                <p className="text-sm font-medium text-slate-800">{article.title}</p>
-                <p className="text-xs text-slate-400">{article.category?.name ?? ''}</p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: C.text, margin: 0 }}>{article.title}</p>
+                <p style={{ fontSize: 12, color: C.textFaint, margin: 0 }}>{article.category?.name ?? ''}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-medium px-3 py-1 rounded-full ${article.status === 'PUBLISHED' ? 'bg-teal-50 text-teal-700' : 'bg-amber-50 text-amber-700'}`}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  fontSize: 11, fontWeight: 600, padding: '4px 12px', borderRadius: 999,
+                  background: article.status === 'PUBLISHED' ? C.accentLight : C.tableRowAlt,
+                  color: article.status === 'PUBLISHED' ? C.accent : C.textMuted,
+                }}>
                   {article.status === 'PUBLISHED' ? 'Publicado' : 'Borrador'}
                 </span>
                 <button
                   onClick={() => setEditingArticleId(article.id)}
-                  className="text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600"
+                  style={{
+                    fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8,
+                    border: 'none', background: C.tableRowAlt, color: C.textMuted, cursor: 'pointer',
+                  }}
                 >
                   Editar
                 </button>
@@ -997,7 +1016,10 @@ Replace the `{subTab === 'articulos' && <div>{/* Task 8 fills this in */}</div>}
                     else await publishArticle(article.id);
                     await loadArticles();
                   }}
-                  className="text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600"
+                  style={{
+                    fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8,
+                    border: 'none', background: C.tableRowAlt, color: C.textMuted, cursor: 'pointer',
+                  }}
                 >
                   {article.status === 'PUBLISHED' ? 'Despublicar' : 'Publicar'}
                 </button>
@@ -1007,14 +1029,17 @@ Replace the `{subTab === 'articulos' && <div>{/* Task 8 fills this in */}</div>}
                     await deleteArticle(article.id);
                     await loadArticles();
                   }}
-                  className="text-xs font-medium px-3 py-1.5 rounded-lg bg-red-50 text-red-600"
+                  style={{
+                    fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8,
+                    border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', cursor: 'pointer',
+                  }}
                 >
                   Borrar
                 </button>
               </div>
             </div>
           ))}
-          {articles.length === 0 && <p className="px-4 py-3 text-sm text-slate-400">Sin articulos aun.</p>}
+          {articles.length === 0 && <p style={{ padding: '12px 16px', fontSize: 14, color: C.textFaint }}>Sin articulos aun.</p>}
         </div>
       </>
     )}
@@ -1046,6 +1071,8 @@ git commit -m "feat: add article list view with publish/unpublish/delete to Revi
 
 - [ ] **Step 1: Create the editor component (metadata fields only — blocks come in Task 10)**
 
+**Note:** use the same inline-style-with-`C`-prop convention as `AdminRevista.tsx` (not Tailwind color classes) — see Task 7's fix-up for why.
+
 Create `frontend/src/components/admin/ArticleEditor.tsx`:
 
 ```tsx
@@ -1055,14 +1082,22 @@ import { useUpload } from '../../hooks/useUpload';
 import { useToast } from '../Toast';
 import BlockEditor from './BlockEditor';
 
+interface Colors {
+  page: string; header: string; headerBorder: string; card: string; cardBorder: string;
+  text: string; textMuted: string; textFaint: string; tableHdr: string; tableRow: string;
+  tableRowAlt: string; tableRowHover: string; expandedBg: string; inputBg: string;
+  inputBorder: string; subCard: string; subCardShadow: string; accent: string; accentLight: string;
+}
+
 interface Props {
+  C: Colors;
   articleId: string | null; // null = creating a new one
   categories: Category[];
   onClose: () => void;
   onSaved: () => void;
 }
 
-export default function ArticleEditor({ articleId, categories, onClose, onSaved }: Props) {
+export default function ArticleEditor({ C, articleId, categories, onClose, onSaved }: Props) {
   const { getArticle, createArticle, updateArticle } = useArticles();
   const { uploadImage, uploading } = useUpload();
   const { toast } = useToast();
@@ -1125,21 +1160,26 @@ export default function ArticleEditor({ articleId, categories, onClose, onSaved 
     }
   };
 
-  const inp = 'w-full px-3 py-2 border border-slate-200 rounded-lg text-sm';
-  const lbl = 'block text-xs font-medium text-slate-500 mb-1 mt-3';
+  const inp: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8,
+    border: `1px solid ${C.inputBorder}`, background: C.inputBg, color: C.text, fontSize: 14, outline: 'none',
+  };
+  const lbl: React.CSSProperties = {
+    display: 'block', fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4, marginTop: 14,
+  };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <button onClick={onClose} className="text-sm text-slate-400 mb-4">← Volver a articulos</button>
+    <div style={{ background: C.card, border: `1px solid ${C.cardBorder}`, borderRadius: 12, padding: 24 }}>
+      <button onClick={onClose} style={{ fontSize: 13, color: C.textFaint, marginBottom: 16, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>← Volver a articulos</button>
 
-      <label className={lbl}>Titulo</label>
-      <input className={inp} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titulo del articulo" />
+      <label style={lbl}>Titulo</label>
+      <input style={inp} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titulo del articulo" />
 
-      <label className={lbl}>Extracto</label>
-      <textarea className={`${inp} min-h-[70px]`} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} placeholder="Resumen corto, se usa en el listado" />
+      <label style={lbl}>Extracto</label>
+      <textarea style={{ ...inp, minHeight: 70, resize: 'vertical' }} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} placeholder="Resumen corto, se usa en el listado" />
 
-      <label className={lbl}>Categoria</label>
-      <select className={inp} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+      <label style={lbl}>Categoria</label>
+      <select style={inp} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
         <option value="">Elige una categoria</option>
         <optgroup label="Pacientes">
           {pacientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -1149,12 +1189,12 @@ export default function ArticleEditor({ articleId, categories, onClose, onSaved 
         </optgroup>
       </select>
 
-      <label className={lbl}>Imagen de portada</label>
+      <label style={lbl}>Imagen de portada</label>
       <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleCoverUpload(e.target.files[0])} />
-      {uploading && <p className="text-xs text-slate-400 mt-1">Subiendo...</p>}
-      {coverImage && !uploading && <img src={coverImage} alt="" className="w-20 h-20 object-cover rounded-lg mt-2" />}
+      {uploading && <p style={{ fontSize: 12, color: C.textFaint, marginTop: 4 }}>Subiendo...</p>}
+      {coverImage && !uploading && <img src={coverImage} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
 
-      <label className="flex items-center gap-2 mt-3 text-sm text-slate-700">
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 14, color: C.text }}>
         <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
         Destacado (tarjeta grande en el listado)
       </label>
@@ -1162,12 +1202,15 @@ export default function ArticleEditor({ articleId, categories, onClose, onSaved 
       <button
         onClick={handleSave}
         disabled={saving}
-        className="mt-5 px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+        style={{
+          marginTop: 20, padding: '9px 18px', background: C.accent, border: 'none', borderRadius: 8,
+          color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1,
+        }}
       >
         {saving ? 'Guardando...' : article ? 'Guardar cambios' : 'Crear articulo'}
       </button>
 
-      {article && <BlockEditor articleId={article.id} />}
+      {article && <BlockEditor C={C} articleId={article.id} />}
     </div>
   );
 }
@@ -1179,12 +1222,15 @@ Replace `<div>{/* Task 9/10 fill in the editor here */}</div>` with:
 
 ```tsx
 <ArticleEditor
+  C={C}
   articleId={creatingArticle ? null : editingArticleId}
   categories={categories}
   onClose={() => { setEditingArticleId(null); setCreatingArticle(false); }}
   onSaved={loadArticles}
 />
 ```
+
+(`AdminRevista` already has `C` in scope as its own prop, per Task 7's fix-up — just pass it through.)
 
 Add the import at the top of `AdminRevista.tsx`:
 ```typescript
@@ -1211,6 +1257,8 @@ git commit -m "feat: add article metadata editor to Revista tab"
 
 - [ ] **Step 1: Create the block editor**
 
+**Note:** use the same inline-style-with-`C`-prop convention as `AdminRevista.tsx`/`ArticleEditor.tsx` (not Tailwind color classes) — see Task 7's fix-up for why.
+
 Create `frontend/src/components/admin/BlockEditor.tsx`:
 
 ```tsx
@@ -1220,11 +1268,19 @@ import { useArticles, type ArticleBlock, type ArticleBlockType } from '../../hoo
 import { useUpload } from '../../hooks/useUpload';
 import { useToast } from '../Toast';
 
+interface Colors {
+  page: string; header: string; headerBorder: string; card: string; cardBorder: string;
+  text: string; textMuted: string; textFaint: string; tableHdr: string; tableRow: string;
+  tableRowAlt: string; tableRowHover: string; expandedBg: string; inputBg: string;
+  inputBorder: string; subCard: string; subCardShadow: string; accent: string; accentLight: string;
+}
+
 interface Props {
+  C: Colors;
   articleId: string;
 }
 
-export default function BlockEditor({ articleId }: Props) {
+export default function BlockEditor({ C, articleId }: Props) {
   const { getArticle, createBlock, updateBlock, deleteBlock } = useArticles();
   const { uploadImage, uploading } = useUpload();
   const { toast } = useToast();
@@ -1305,23 +1361,23 @@ export default function BlockEditor({ articleId }: Props) {
   };
 
   return (
-    <div className="mt-6 border-t border-slate-100 pt-5">
-      <h3 className="text-sm font-semibold text-slate-700 mb-3">Contenido</h3>
+    <div style={{ marginTop: 24, borderTop: `1px solid ${C.cardBorder}`, paddingTop: 20 }}>
+      <h3 style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 12 }}>Contenido</h3>
 
       {blocks.map((block, i) => (
-        <div key={block.id} className="bg-slate-50 rounded-lg p-3 mb-2">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-slate-400 uppercase">
+        <div key={block.id} style={{ background: C.tableRowAlt, borderRadius: 8, padding: 12, marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: C.textFaint, textTransform: 'uppercase' }}>
               {block.type === 'TEXT' ? 'Texto' : block.type === 'IMAGE' ? 'Imagen' : 'Boton'}
             </span>
-            <div className="flex items-center gap-1">
-              <button disabled={i === 0 || movingBlockId === block.id} onClick={() => moveBlock(block, 'up')} className="p-1 disabled:opacity-30">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <button disabled={i === 0 || movingBlockId === block.id} onClick={() => moveBlock(block, 'up')} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, opacity: (i === 0 || movingBlockId === block.id) ? 0.3 : 1 }}>
                 <ArrowUp size={14} />
               </button>
-              <button disabled={i === blocks.length - 1 || movingBlockId === block.id} onClick={() => moveBlock(block, 'down')} className="p-1 disabled:opacity-30">
+              <button disabled={i === blocks.length - 1 || movingBlockId === block.id} onClick={() => moveBlock(block, 'down')} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, opacity: (i === blocks.length - 1 || movingBlockId === block.id) ? 0.3 : 1 }}>
                 <ArrowDown size={14} />
               </button>
-              <button onClick={() => handleDelete(block)} className="p-1 text-red-500">
+              <button onClick={() => handleDelete(block)} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>
                 <Trash2 size={14} />
               </button>
             </div>
@@ -1329,7 +1385,7 @@ export default function BlockEditor({ articleId }: Props) {
 
           {block.type === 'TEXT' && (
             <textarea
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm min-h-[80px]"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.inputBorder}`, background: C.inputBg, color: C.text, fontSize: 14, minHeight: 80, outline: 'none' }}
               value={block.text ?? ''}
               onChange={(e) => handleTextChange(block, e.target.value)}
               onBlur={() => handleTextBlur(block)}
@@ -1339,22 +1395,22 @@ export default function BlockEditor({ articleId }: Props) {
           {block.type === 'IMAGE' && (
             <div>
               <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleImageUpload(block, e.target.files[0])} />
-              {uploading && <p className="text-xs text-slate-400 mt-1">Subiendo...</p>}
-              {block.imageUrl && <img src={block.imageUrl} alt="" className="w-32 h-20 object-cover rounded-lg mt-2" />}
+              {uploading && <p style={{ fontSize: 12, color: C.textFaint, marginTop: 4 }}>Subiendo...</p>}
+              {block.imageUrl && <img src={block.imageUrl} alt="" style={{ width: 128, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
             </div>
           )}
 
           {block.type === 'BUTTON' && (
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: 8 }}>
               <input
-                className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.inputBorder}`, background: C.inputBg, color: C.text, fontSize: 14, outline: 'none' }}
                 placeholder="Texto del boton"
                 value={block.buttonLabel ?? ''}
                 onChange={(e) => handleButtonChange(block, 'buttonLabel', e.target.value)}
                 onBlur={() => handleButtonBlur(block)}
               />
               <input
-                className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.inputBorder}`, background: C.inputBg, color: C.text, fontSize: 14, outline: 'none' }}
                 placeholder="URL"
                 value={block.buttonUrl ?? ''}
                 onChange={(e) => handleButtonChange(block, 'buttonUrl', e.target.value)}
@@ -1365,14 +1421,14 @@ export default function BlockEditor({ articleId }: Props) {
         </div>
       ))}
 
-      <div className="flex gap-2 mt-3">
-        <button onClick={() => handleAddBlock('TEXT')} className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center gap-1">
+      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        <button onClick={() => handleAddBlock('TEXT')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
           <Plus size={13} /> Texto
         </button>
-        <button onClick={() => handleAddBlock('IMAGE')} className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center gap-1">
+        <button onClick={() => handleAddBlock('IMAGE')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
           <Plus size={13} /> Imagen
         </button>
-        <button onClick={() => handleAddBlock('BUTTON')} className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center gap-1">
+        <button onClick={() => handleAddBlock('BUTTON')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
           <Plus size={13} /> Boton
         </button>
       </div>
@@ -1381,31 +1437,19 @@ export default function BlockEditor({ articleId }: Props) {
 }
 ```
 
-**Important note for the implementer:** `createArticleBlockSchema` (Task 2) requires a non-empty `imageUrl` for an IMAGE block — so `handleAddBlock('IMAGE')` above, which creates one with `imageUrl: ''`, will be rejected by the backend as written. Fix this before committing: either (a) relax `createArticleBlockSchema` to allow an empty IMAGE block at creation time (since the editor immediately prompts for the upload after creating it) by removing that specific `.refine` check, or (b) change `handleAddBlock('IMAGE')` to not call `createBlock` until a file is chosen (e.g. show a file picker first, then create the block with the real URL in one step). Option (a) is simpler and matches how the editor is laid out above (create empty, then upload) — go back to `backend/src/utils/validation.ts` from Task 2 and remove the `IMAGE` refine clause from `createArticleBlockSchema`, keeping it only on `updateArticleBlockSchema`... but `updateArticleBlockSchema` has no such refine today either. Simplest consistent fix: remove the IMAGE-requires-imageUrl refine from `createArticleBlockSchema` entirely (TEXT and BUTTON refines stay), matching that an IMAGE block is allowed to exist briefly empty between being added and the upload finishing, the same way Module's VIDEO/PDF types work in the Offering editor (empty `fileUrl` until upload resolves, never validated at block-create time, only enforced by the frontend disabling publish — but there is no "publish a block" gate here, so just allow the empty state).
+**Note on the IMAGE block validation:** `createArticleBlockSchema` (Task 2) was already built WITHOUT a refine requiring `imageUrl` on IMAGE blocks (confirmed during Task 2's own review) — `handleAddBlock('IMAGE')` above, which creates one with `imageUrl: ''`, is already accepted by the backend as-is. No backend change needed for this task.
 
-- [ ] **Step 2: Apply that validation fix**
-
-In `backend/src/utils/validation.ts`, in `createArticleBlockSchema`, remove this refine clause:
-```typescript
-.refine(
-  (data) => data.type !== 'IMAGE' || !!data.imageUrl,
-  { message: 'Un bloque de imagen requiere subir una imagen primero (imageUrl)' }
-)
-```
-(Keep the TEXT and BUTTON refines as-is.)
-
-- [ ] **Step 3: Verify everything compiles together**
+- [ ] **Step 2: Verify it compiles**
 
 ```bash
-cd backend && npx tsc --noEmit
-cd ../frontend && npx tsc --noEmit
+cd frontend && npx tsc --noEmit
 ```
-Expected: no errors in either.
+Expected: no errors.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add frontend/src/components/admin/BlockEditor.tsx backend/src/utils/validation.ts
+git add frontend/src/components/admin/BlockEditor.tsx
 git commit -m "feat: add reorderable block editor (text/image/button) to Revista articles"
 ```
 
