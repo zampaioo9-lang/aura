@@ -23,6 +23,7 @@ export default function BlockEditor({ C, articleId }: Props) {
 
   const [blocks, setBlocks] = useState<ArticleBlock[]>([]);
   const [movingBlockId, setMovingBlockId] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
 
   const loadBlocks = async () => {
     try {
@@ -36,6 +37,8 @@ export default function BlockEditor({ C, articleId }: Props) {
   useEffect(() => { loadBlocks(); }, [articleId]);
 
   const handleAddBlock = async (type: ArticleBlockType) => {
+    if (adding) return;
+    setAdding(true);
     try {
       if (type === 'TEXT') await createBlock(articleId, { type, text: 'Escribe aqui...' });
       else if (type === 'BUTTON') await createBlock(articleId, { type, buttonLabel: 'Ver mas', buttonUrl: 'https://' });
@@ -43,6 +46,8 @@ export default function BlockEditor({ C, articleId }: Props) {
       await loadBlocks();
     } catch {
       toast('No se pudo agregar el bloque', 'error');
+    } finally {
+      setAdding(false);
     }
   };
 
@@ -79,9 +84,16 @@ export default function BlockEditor({ C, articleId }: Props) {
   };
 
   // Mirrors moveModule's pattern in TalleresCursos.tsx: swap `order` on two adjacent
-  // blocks via two PUT calls, with an in-flight guard against double-clicks, and a
-  // reload on failure so the UI never shows a stale order after a partial failure.
+  // blocks via two PUT calls. The two-PUT swap itself isn't atomic (first can succeed,
+  // second fail) -- same accepted tradeoff TalleresCursos.tsx documents, mitigated by
+  // reloading from the server on both the success and failure paths below. The
+  // in-flight guard is global (movingBlockId truthy, not "does this row match"),
+  // because a per-row guard would still let a SECOND, different row start its own
+  // moveBlock while the first is mid-flight -- both read `blocks`/`order` from the
+  // same stale state, so their four PUTs can interleave and scramble more than two
+  // blocks' order (there's no DB constraint preventing duplicate `order` values).
   const moveBlock = async (block: ArticleBlock, direction: 'up' | 'down') => {
+    if (movingBlockId) return;
     const index = blocks.findIndex(b => b.id === block.id);
     const swapIndex = direction === 'up' ? index - 1 : index + 1;
     if (swapIndex < 0 || swapIndex >= blocks.length) return;
@@ -111,10 +123,10 @@ export default function BlockEditor({ C, articleId }: Props) {
               {block.type === 'TEXT' ? 'Texto' : block.type === 'IMAGE' ? 'Imagen' : 'Boton'}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <button disabled={i === 0 || movingBlockId === block.id} onClick={() => moveBlock(block, 'up')} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, opacity: (i === 0 || movingBlockId === block.id) ? 0.3 : 1 }}>
+              <button aria-label="Mover arriba" disabled={i === 0 || !!movingBlockId} onClick={() => moveBlock(block, 'up')} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, opacity: (i === 0 || !!movingBlockId) ? 0.3 : 1 }}>
                 <ArrowUp size={14} />
               </button>
-              <button disabled={i === blocks.length - 1 || movingBlockId === block.id} onClick={() => moveBlock(block, 'down')} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, opacity: (i === blocks.length - 1 || movingBlockId === block.id) ? 0.3 : 1 }}>
+              <button aria-label="Mover abajo" disabled={i === blocks.length - 1 || !!movingBlockId} onClick={() => moveBlock(block, 'down')} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, opacity: (i === blocks.length - 1 || !!movingBlockId) ? 0.3 : 1 }}>
                 <ArrowDown size={14} />
               </button>
               <button onClick={() => handleDelete(block)} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>
@@ -162,13 +174,13 @@ export default function BlockEditor({ C, articleId }: Props) {
       ))}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-        <button onClick={() => handleAddBlock('TEXT')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+        <button disabled={adding} onClick={() => handleAddBlock('TEXT')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: adding ? 'not-allowed' : 'pointer', opacity: adding ? 0.5 : 1 }}>
           <Plus size={13} /> Texto
         </button>
-        <button onClick={() => handleAddBlock('IMAGE')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+        <button disabled={adding} onClick={() => handleAddBlock('IMAGE')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: adding ? 'not-allowed' : 'pointer', opacity: adding ? 0.5 : 1 }}>
           <Plus size={13} /> Imagen
         </button>
-        <button onClick={() => handleAddBlock('BUTTON')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+        <button disabled={adding} onClick={() => handleAddBlock('BUTTON')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: adding ? 'not-allowed' : 'pointer', opacity: adding ? 0.5 : 1 }}>
           <Plus size={13} /> Boton
         </button>
       </div>
