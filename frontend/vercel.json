@@ -2,6 +2,8 @@
   "rewrites": [
     { "source": "/barberia", "destination": "/barberia.html" },
     { "source": "/salon",    "destination": "/salon.html" },
+    { "source": "/revista",  "destination": "/revista/index.html" },
+    { "source": "/revista/:slug", "destination": "/revista/:slug.html" },
     { "source": "/(.*)",     "destination": "/index.html" }
   ]
 }

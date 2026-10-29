@@ -58,6 +58,7 @@ try {
   const purchaseRoutes = require('../src/routes/purchases').default;
   const accessRoutes = require('../src/routes/access').default;
   const exchangeRateRoutes = require('../src/routes/exchangeRate').default;
+  const articleRoutes = require('../src/routes/articles').default;
   const { sendWhatsApp } = require('../src/services/whatsappService');
 
   app.use(activityLogger);
@@ -89,6 +90,7 @@ try {
   app.use('/api/purchases', purchaseRoutes);
   app.use('/api/access', accessRoutes);
   app.use('/api/exchange-rate', exchangeRateRoutes);
+  app.use('/api/articles', articleRoutes);
 
   app.get('/api/test/whatsapp', async (req, res) => {
     const to = req.query.to as string;
