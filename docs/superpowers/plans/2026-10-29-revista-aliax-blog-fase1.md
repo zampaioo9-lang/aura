@@ -1485,7 +1485,7 @@ git commit -m "feat: add reorderable block editor (text/image/button) to Revista
 **Files:**
 - Create: `frontend/scripts/generate-blog.ts`
 - Modify: `frontend/package.json`
-- Modify: `frontend/vercel.json` (repo root `vercel.json`, not `backend/vercel.json`)
+- Modify: `frontend/vercel.json`
 
 **Context:** This is the piece that makes the blog indexable. It runs once at the start of `npm run build`, fetches every published article from `GET /api/articles/public`, and writes static `.html` files that bake in the real `<title>`/`<meta description>`/`og:*` tags plus the rendered content — using the exact visual design already approved (dark `#080414` background, teal `#2dd4bf` accent, Bebas Neue + Urbanist fonts). `/barberia` and `/salon` in this same repo are the existing precedent for serving a static `.html` file outside the SPA.
 
@@ -1665,9 +1665,9 @@ to:
 "build": "tsx scripts/generate-blog.ts && tsc -b && vite build",
 ```
 
-- [ ] **Step 4: Add rewrites to the root `vercel.json`**
+- [ ] **Step 4: Add rewrites to `frontend/vercel.json`**
 
-In `vercel.json` (repo root, not `backend/vercel.json`), add two entries before the existing catch-all, so the file reads:
+In `frontend/vercel.json` (confirmed via `find` — it lives in `frontend/`, not the repo root; the frontend's Vercel project root is the `frontend/` directory itself, not the monorepo root), add two entries before the existing catch-all, so the file reads:
 ```json
 {
   "rewrites": [
@@ -1687,7 +1687,7 @@ Use `tsc -b` (build mode), not bare `tsc --noEmit` — see the note in Task 10's
 cd frontend && npx tsc -b
 npx tsx scripts/generate-blog.ts
 ```
-Expected: no TypeScript errors, and a log line like `[Revista] Generados: 0 articulos, index, sitemap.xml, robots.txt` (0 because no articles have been published yet — that's expected and correct; Task 12 publishes real test data to verify the non-empty case). Confirm the files exist:
+Expected: no TypeScript errors, and a log line like `[Revista] Generados: 0 articulos, index, sitemap.xml, robots.txt` (0 because no articles have been published yet — that's expected and correct; Task 13 publishes real test data to verify the non-empty case). Confirm the files exist:
 ```bash
 ls frontend/public/revista/
 cat frontend/public/sitemap.xml
@@ -1697,7 +1697,7 @@ cat frontend/public/robots.txt
 - [ ] **Step 6: Commit**
 
 ```bash
-git add frontend/scripts/generate-blog.ts frontend/package.json frontend/package-lock.json vercel.json
+git add frontend/scripts/generate-blog.ts frontend/package.json frontend/package-lock.json frontend/vercel.json
 git commit -m "feat: generate static /revista pages, sitemap.xml and robots.txt at build time"
 ```
 
