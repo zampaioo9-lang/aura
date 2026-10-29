@@ -1449,10 +1449,11 @@ export default function BlockEditor({ C, articleId }: Props) {
 
 - [ ] **Step 2: Verify it compiles**
 
+**IMPORTANT:** this project's root `tsconfig.json` uses `"files": []` with project references — a bare `npx tsc --noEmit` silently checks ZERO files and exits 0 even with real errors present (confirmed empirically during Task 9: it produced no output at all while `npx tsc -b` correctly surfaced a real error in the same tree). Always use build mode instead:
 ```bash
-cd frontend && npx tsc --noEmit
+cd frontend && npx tsc -b
 ```
-Expected: no errors.
+Expected: no errors (exit code 0, no output). If you see "Cannot find module" or similar for a file that genuinely doesn't exist yet in a later task, that's a real error — don't ignore it.
 
 - [ ] **Step 3: Commit**
 
@@ -1665,8 +1666,9 @@ In `vercel.json` (repo root, not `backend/vercel.json`), add two entries before 
 
 - [ ] **Step 5: Verify it compiles and runs against the live API**
 
+Use `tsc -b` (build mode), not bare `tsc --noEmit` — see the note in Task 10's Step 2 for why the bare form silently checks nothing in this project.
 ```bash
-cd frontend && npx tsc --noEmit
+cd frontend && npx tsc -b
 npx tsx scripts/generate-blog.ts
 ```
 Expected: no TypeScript errors, and a log line like `[Revista] Generados: 0 articulos, index, sitemap.xml, robots.txt` (0 because no articles have been published yet — that's expected and correct; Task 12 publishes real test data to verify the non-empty case). Confirm the files exist:
@@ -1713,9 +1715,9 @@ const NAV = [
 - [ ] **Step 2: Verify it compiles**
 
 ```bash
-cd frontend && npx tsc --noEmit
+cd frontend && npx tsc -b
 ```
-Expected: no errors.
+Expected: no errors (see Task 10's Step 2 note — use `-b`, not bare `--noEmit`).
 
 - [ ] **Step 3: Commit**
 
