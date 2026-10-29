@@ -2087,7 +2087,7 @@ export default function AdminPanel() {
         </>
         )}
 
-        {pageTab === 'revista' && <AdminRevista />}
+        {pageTab === 'revista' && <AdminRevista C={C} />}
 
         </div>
        </div>
