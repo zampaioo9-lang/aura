@@ -747,6 +747,7 @@ model Article {
   title           String
   excerpt         String
   metaDescription String?
+  author          String?
   categoryId      String
   coverImage      String?
   featured        Boolean       @default(false)
