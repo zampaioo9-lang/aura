@@ -81,7 +81,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req: AuthRequest, res, 
     const slugExists = await prisma.article.findUnique({ where: { slug } });
     if (slugExists) throw new AppError(409, 'Ya existe un articulo con un titulo muy similar');
     const article = await prisma.article.create({
-      data: { ...data, slug, coverImage: data.coverImage || undefined, metaDescription: data.metaDescription || undefined },
+      data: { ...data, slug, coverImage: data.coverImage || undefined, metaDescription: data.metaDescription || undefined, author: data.author || undefined },
     });
     res.status(201).json(article);
   } catch (err) {
@@ -139,7 +139,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req: AuthRequest, res
     if (!existing) throw new AppError(404, 'Articulo no encontrado');
     const article = await prisma.article.update({
       where: { id: req.params.id },
-      data: { ...data, coverImage: data.coverImage || undefined, metaDescription: data.metaDescription || undefined },
+      data: { ...data, coverImage: data.coverImage || undefined, metaDescription: data.metaDescription || undefined, author: data.author || undefined },
     });
     if (existing.status === 'PUBLISHED') await triggerBlogRebuild();
     res.json(article);
@@ -153,6 +153,7 @@ router.patch('/:id/publish', authMiddleware, adminMiddleware, async (req: AuthRe
   try {
     const existing = await prisma.article.findUnique({ where: { id: req.params.id } });
     if (!existing) throw new AppError(404, 'Articulo no encontrado');
+    if (!existing.author?.trim()) throw new AppError(400, 'Agrega un autor antes de publicar');
     const article = await prisma.article.update({
       where: { id: req.params.id },
       data: { status: 'PUBLISHED', publishedAt: new Date() },
