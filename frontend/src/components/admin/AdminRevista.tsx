@@ -57,8 +57,8 @@ export default function AdminRevista({ C }: Props) {
       setNewName('');
       await loadCategories();
       toast('Categoria creada', 'success');
-    } catch {
-      toast('No se pudo crear la categoria', 'error');
+    } catch (err: any) {
+      toast(err.message || 'No se pudo crear la categoria', 'error');
     } finally {
       setCreating(false);
     }
