@@ -28,6 +28,7 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
+  const [author, setAuthor] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [coverImage, setCoverImage] = useState('');
   const [featured, setFeatured] = useState(false);
@@ -40,6 +41,7 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
       setTitle(a.title);
       setExcerpt(a.excerpt);
       setMetaDescription(a.metaDescription || '');
+      setAuthor(a.author || '');
       setCategoryId(a.categoryId);
       setCoverImage(a.coverImage || '');
       setFeatured(a.featured);
@@ -65,13 +67,13 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
     try {
       if (!article) {
         const created = await createArticle({
-          title: title.trim(), excerpt: excerpt.trim(), metaDescription: metaDescription.trim() || undefined, categoryId,
+          title: title.trim(), excerpt: excerpt.trim(), metaDescription: metaDescription.trim() || undefined, author: author.trim() || undefined, categoryId,
           coverImage: coverImage || undefined, featured,
         });
         setArticle(created);
       } else {
         const updated = await updateArticle(article.id, {
-          title: title.trim(), excerpt: excerpt.trim(), metaDescription: metaDescription.trim() || undefined, categoryId,
+          title: title.trim(), excerpt: excerpt.trim(), metaDescription: metaDescription.trim() || undefined, author: author.trim() || undefined, categoryId,
           coverImage: coverImage || undefined, featured,
         });
         setArticle(updated);
@@ -106,6 +108,9 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
       <label style={lbl}>Meta descripcion (SEO)</label>
       <textarea style={{ ...inp, minHeight: 50, resize: 'vertical' }} value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} placeholder="Opcional. Si la dejas vacia, se usa el Extracto. Esto es lo que aparece en Google y al compartir el enlace." maxLength={300} />
 
+      <label style={lbl}>Autor <span style={{ color: C.textFaint, fontWeight: 400 }}>(requerido para publicar)</span></label>
+      <input style={inp} value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Ej. Cesar A." />
+
       <label style={lbl}>Categoria</label>
       <select style={inp} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
         <option value="">Elige una categoria</option>
@@ -129,13 +134,13 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
 
       <button
         onClick={handleSave}
-        disabled={saving}
+        disabled={saving || uploading}
         style={{
           marginTop: 20, padding: '9px 18px', background: C.accent, border: 'none', borderRadius: 8,
-          color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1,
+          color: '#fff', fontSize: 13, fontWeight: 700, cursor: (saving || uploading) ? 'not-allowed' : 'pointer', opacity: (saving || uploading) ? 0.6 : 1,
         }}
       >
-        {saving ? 'Guardando...' : article ? 'Guardar cambios' : 'Crear articulo'}
+        {uploading ? 'Subiendo imagen...' : saving ? 'Guardando...' : article ? 'Guardar cambios' : 'Crear articulo'}
       </button>
 
       {article && <BlockEditor C={C} articleId={article.id} />}
