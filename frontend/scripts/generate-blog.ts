@@ -100,9 +100,10 @@ body{margin:0;background:#080414;font-family:'Urbanist',sans-serif;color:rgb(205
 a{color:#2dd4bf;text-decoration:none}
 h1,h2,h3{font-family:'Bebas Neue',sans-serif;color:#fff}
 .ra-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.ra-hero-grid{display:grid;grid-template-columns:1fr 1fr}
 .ra-pill{padding:8px 18px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:rgba(255,255,255,0.7);font-size:13px;font-weight:600;cursor:pointer;font-family:'Urbanist',sans-serif}
 .ra-pill-active{background:#2dd4bf;border-color:#2dd4bf;color:#04201c}
-@media (max-width:860px){.ra-grid3{grid-template-columns:1fr}#ra-hero{grid-template-columns:1fr !important}}
+@media (max-width:860px){.ra-grid3{grid-template-columns:1fr}.ra-hero-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -148,7 +149,10 @@ function renderBlock(block: ArticleBlock): string {
     if (!block.imageUrl) return '';
     return `<img src="${escapeHtml(block.imageUrl)}" alt="${escapeHtml(block.imageAlt ?? '')}" style="width:100%;border-radius:20px;margin:24px 0">`;
   }
-  return `<div style="text-align:center;margin:32px 0"><a href="${escapeHtml(block.buttonUrl ?? '')}" style="display:inline-block;padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700">${escapeHtml(block.buttonLabel ?? '')}</a></div>`;
+  if (block.type === 'BUTTON') {
+    return `<div style="text-align:center;margin:32px 0"><a href="${escapeHtml(block.buttonUrl ?? '')}" style="display:inline-block;padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700">${escapeHtml(block.buttonLabel ?? '')}</a></div>`;
+  }
+  throw new Error(`[Revista] Tipo de bloque desconocido: ${(block as ArticleBlock).type}`);
 }
 
 function renderArticleCard(a: Article): string {
@@ -242,7 +246,7 @@ function generateListingPage(articles: Article[]): string {
   const rest = hero ? articles.filter((a) => a.id !== hero.id) : articles;
   const categories = collectCategories(articles);
 
-  const heroHtml = hero ? `<div id="ra-hero" data-audience="${hero.category.audience}" data-category="${hero.category.slug}" style="border-radius:20px;overflow:hidden;background:#0e0920;box-shadow:0 10px 30px rgba(0,0,0,0.25);display:grid;grid-template-columns:1fr 1fr;margin-bottom:56px">
+  const heroHtml = hero ? `<div id="ra-hero" class="ra-hero-grid" data-audience="${hero.category.audience}" data-category="${hero.category.slug}" style="border-radius:20px;overflow:hidden;background:#0e0920;box-shadow:0 10px 30px rgba(0,0,0,0.25);margin-bottom:56px">
   <a href="/revista/${hero.slug}">
     ${hero.coverImage ? `<img src="${escapeHtml(hero.coverImage)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">` : `<div style="min-height:320px;background:linear-gradient(135deg,#160d30,#1e1240)"></div>`}
   </a>
