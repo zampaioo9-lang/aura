@@ -727,12 +727,13 @@ model Answer {
 model Category {
   id       String            @id @default(cuid())
   name     String
-  slug     String            @unique
+  slug     String
   audience CategoryAudience
   active   Boolean           @default(true)
   order    Int               @default(0)
   articles Article[]
 
+  @@unique([slug, audience])
   @@index([audience])
 }
 

@@ -41,8 +41,8 @@ router.post('/categories', authMiddleware, adminMiddleware, async (req: AuthRequ
   try {
     const data = createCategorySchema.parse(req.body);
     const slug = slugify(data.name);
-    const slugExists = await prisma.category.findUnique({ where: { slug } });
-    if (slugExists) throw new AppError(409, 'Ya existe una categoria con un nombre muy similar');
+    const slugExists = await prisma.category.findUnique({ where: { slug_audience: { slug, audience: data.audience } } });
+    if (slugExists) throw new AppError(409, 'Ya existe una categoria con un nombre muy similar para esta audiencia');
     const category = await prisma.category.create({ data: { ...data, slug } });
     res.status(201).json(category);
   } catch (err) {
