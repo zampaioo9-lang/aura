@@ -58,6 +58,7 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
   const handleSave = async () => {
     if (title.trim().length < 3) { toast('El titulo debe tener al menos 3 caracteres', 'error'); return; }
     if (excerpt.trim().length < 10) { toast('El extracto debe tener al menos 10 caracteres', 'error'); return; }
+    if (excerpt.trim().length > 300) { toast('El extracto no puede superar los 300 caracteres (es un resumen corto; el contenido completo va en los bloques de abajo)', 'error'); return; }
     if (!categoryId) { toast('Elige una categoria', 'error'); return; }
 
     setSaving(true);
@@ -99,8 +100,8 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
       <label style={lbl}>Titulo</label>
       <input style={inp} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titulo del articulo" />
 
-      <label style={lbl}>Extracto</label>
-      <textarea style={{ ...inp, minHeight: 70, resize: 'vertical' }} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} placeholder="Resumen corto, se usa en el listado" />
+      <label style={lbl}>Extracto <span style={{ color: C.textFaint, fontWeight: 400 }}>({excerpt.length}/300 — resumen corto, no el contenido completo)</span></label>
+      <textarea style={{ ...inp, minHeight: 70, resize: 'vertical' }} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} placeholder="Resumen corto, se usa en el listado" maxLength={300} />
 
       <label style={lbl}>Meta descripcion (SEO)</label>
       <textarea style={{ ...inp, minHeight: 50, resize: 'vertical' }} value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} placeholder="Opcional. Si la dejas vacia, se usa el Extracto. Esto es lo que aparece en Google y al compartir el enlace." maxLength={300} />

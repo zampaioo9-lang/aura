@@ -141,6 +141,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req: AuthRequest, res
       where: { id: req.params.id },
       data: { ...data, coverImage: data.coverImage || undefined, metaDescription: data.metaDescription || undefined },
     });
+    if (existing.status === 'PUBLISHED') await triggerBlogRebuild();
     res.json(article);
   } catch (err) {
     next(err);
@@ -202,6 +203,7 @@ router.post('/:id/blocks', authMiddleware, adminMiddleware, async (req: AuthRequ
     const block = await prisma.articleBlock.create({
       data: { ...data, articleId: req.params.id, order: currentCount + 1 },
     });
+    if (article.status === 'PUBLISHED') await triggerBlogRebuild();
     res.status(201).json(block);
   } catch (err) {
     next(err);
@@ -215,6 +217,8 @@ router.put('/:id/blocks/:blockId', authMiddleware, adminMiddleware, async (req: 
     if (!existing) throw new AppError(404, 'Bloque no encontrado');
     const data = updateArticleBlockSchema.parse(req.body);
     const block = await prisma.articleBlock.update({ where: { id: req.params.blockId }, data });
+    const article = await prisma.article.findUnique({ where: { id: existing.articleId } });
+    if (article?.status === 'PUBLISHED') await triggerBlogRebuild();
     res.json(block);
   } catch (err) {
     next(err);
@@ -227,6 +231,8 @@ router.delete('/:id/blocks/:blockId', authMiddleware, adminMiddleware, async (re
     const existing = await prisma.articleBlock.findUnique({ where: { id: req.params.blockId } });
     if (!existing) throw new AppError(404, 'Bloque no encontrado');
     await prisma.articleBlock.delete({ where: { id: req.params.blockId } });
+    const article = await prisma.article.findUnique({ where: { id: existing.articleId } });
+    if (article?.status === 'PUBLISHED') await triggerBlogRebuild();
     res.status(204).send();
   } catch (err) {
     next(err);
