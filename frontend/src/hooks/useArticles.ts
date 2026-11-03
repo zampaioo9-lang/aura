@@ -3,7 +3,7 @@ import api from '../api/client';
 
 export type CategoryAudience = 'PACIENTES' | 'TERAPEUTAS';
 export type ArticleStatus = 'DRAFT' | 'PUBLISHED';
-export type ArticleBlockType = 'TEXT' | 'IMAGE' | 'BUTTON';
+export type ArticleBlockType = 'TEXT' | 'IMAGE' | 'BUTTON' | 'SUBTITLE' | 'BULLET_LIST';
 
 export interface Category {
   id: string;
