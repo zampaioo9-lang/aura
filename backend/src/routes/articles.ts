@@ -29,11 +29,15 @@ async function triggerBlogRebuild(): Promise<void> {
     try {
       const res = await fetch(hookUrl, { method: 'POST' });
       if (res.ok) {
-        await prisma.blogRebuildState.upsert({
-          where: { id: 'singleton' },
-          create: { id: 'singleton', lastRebuiltAt: new Date() },
-          update: { lastRebuiltAt: new Date() },
-        });
+        try {
+          await prisma.blogRebuildState.upsert({
+            where: { id: 'singleton' },
+            create: { id: 'singleton', lastRebuiltAt: new Date() },
+            update: { lastRebuiltAt: new Date() },
+          });
+        } catch (err) {
+          console.warn('[Revista] Se disparó el deploy hook pero no se pudo registrar lastRebuiltAt', err);
+        }
         return;
       }
     } catch {
