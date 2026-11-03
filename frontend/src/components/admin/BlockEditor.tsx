@@ -41,6 +41,8 @@ export default function BlockEditor({ C, articleId }: Props) {
     setAdding(true);
     try {
       if (type === 'TEXT') await createBlock(articleId, { type, text: 'Escribe aqui...' });
+      else if (type === 'SUBTITLE') await createBlock(articleId, { type, text: 'Subtitulo' });
+      else if (type === 'BULLET_LIST') await createBlock(articleId, { type, text: 'Primer punto\nSegundo punto' });
       else if (type === 'BUTTON') await createBlock(articleId, { type, buttonLabel: 'Ver mas', buttonUrl: 'https://aliax.io' });
       else await createBlock(articleId, { type, imageUrl: '', imageAlt: '' }); // IMAGE needs upload before it can be saved as non-empty; see handleImageUpload below
       await loadBlocks();
@@ -120,7 +122,7 @@ export default function BlockEditor({ C, articleId }: Props) {
         <div key={block.id} style={{ background: C.tableRowAlt, borderRadius: 8, padding: 12, marginBottom: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <span style={{ fontSize: 11, fontWeight: 600, color: C.textFaint, textTransform: 'uppercase' }}>
-              {block.type === 'TEXT' ? 'Texto' : block.type === 'IMAGE' ? 'Imagen' : 'Boton'}
+              {block.type === 'TEXT' ? 'Texto' : block.type === 'SUBTITLE' ? 'Subtitulo' : block.type === 'BULLET_LIST' ? 'Lista' : block.type === 'IMAGE' ? 'Imagen' : 'Boton'}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <button aria-label="Mover arriba" disabled={i === 0 || !!movingBlockId} onClick={() => moveBlock(block, 'up')} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, opacity: (i === 0 || !!movingBlockId) ? 0.3 : 1 }}>
@@ -142,6 +144,27 @@ export default function BlockEditor({ C, articleId }: Props) {
               onChange={(e) => handleTextChange(block, e.target.value)}
               onBlur={() => handleTextBlur(block)}
             />
+          )}
+
+          {block.type === 'SUBTITLE' && (
+            <input
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.inputBorder}`, background: C.inputBg, color: C.text, fontSize: 14, outline: 'none' }}
+              value={block.text ?? ''}
+              onChange={(e) => handleTextChange(block, e.target.value)}
+              onBlur={() => handleTextBlur(block)}
+            />
+          )}
+
+          {block.type === 'BULLET_LIST' && (
+            <div>
+              <textarea
+                style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.inputBorder}`, background: C.inputBg, color: C.text, fontSize: 14, minHeight: 80, outline: 'none' }}
+                value={block.text ?? ''}
+                onChange={(e) => handleTextChange(block, e.target.value)}
+                onBlur={() => handleTextBlur(block)}
+              />
+              <p style={{ fontSize: 11, color: C.textFaint, marginTop: 4 }}>Un punto por linea</p>
+            </div>
           )}
 
           {block.type === 'IMAGE' && (
@@ -173,9 +196,15 @@ export default function BlockEditor({ C, articleId }: Props) {
         </div>
       ))}
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
         <button disabled={adding} onClick={() => handleAddBlock('TEXT')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: adding ? 'not-allowed' : 'pointer', opacity: adding ? 0.5 : 1 }}>
           <Plus size={13} /> Texto
+        </button>
+        <button disabled={adding} onClick={() => handleAddBlock('SUBTITLE')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: adding ? 'not-allowed' : 'pointer', opacity: adding ? 0.5 : 1 }}>
+          <Plus size={13} /> Subtitulo
+        </button>
+        <button disabled={adding} onClick={() => handleAddBlock('BULLET_LIST')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: adding ? 'not-allowed' : 'pointer', opacity: adding ? 0.5 : 1 }}>
+          <Plus size={13} /> Lista
         </button>
         <button disabled={adding} onClick={() => handleAddBlock('IMAGE')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: adding ? 'not-allowed' : 'pointer', opacity: adding ? 0.5 : 1 }}>
           <Plus size={13} /> Imagen
