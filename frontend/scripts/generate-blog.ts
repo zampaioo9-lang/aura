@@ -24,7 +24,7 @@ interface Category {
   id: string; name: string; slug: string; audience: 'PACIENTES' | 'TERAPEUTAS';
 }
 interface ArticleBlock {
-  type: 'TEXT' | 'IMAGE' | 'BUTTON';
+  type: 'TEXT' | 'IMAGE' | 'BUTTON' | 'SUBTITLE' | 'BULLET_LIST';
   text: string | null; imageUrl: string | null; imageAlt: string | null;
   buttonLabel: string | null; buttonUrl: string | null;
 }
@@ -103,6 +103,8 @@ h1,h2,h3{font-family:'Bebas Neue',sans-serif;color:#fff}
 .ra-hero-grid{display:grid;grid-template-columns:1fr 1fr}
 .ra-pill{padding:8px 18px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:rgba(255,255,255,0.7);font-size:13px;font-weight:600;cursor:pointer;font-family:'Urbanist',sans-serif}
 .ra-pill-active{background:#2dd4bf;border-color:#2dd4bf;color:#04201c}
+.ra-bullets li{font-size:17px;line-height:1.75;color:rgba(255,255,255,0.75);margin-bottom:8px}
+.ra-bullets li::marker{color:#2dd4bf}
 @media (max-width:860px){.ra-grid3{grid-template-columns:1fr}.ra-hero-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -151,6 +153,19 @@ function renderBlock(block: ArticleBlock): string {
   }
   if (block.type === 'BUTTON') {
     return `<div style="text-align:center;margin:32px 0"><a href="${escapeHtml(block.buttonUrl ?? '')}" style="display:inline-block;padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700">${escapeHtml(block.buttonLabel ?? '')}</a></div>`;
+  }
+  if (block.type === 'SUBTITLE') {
+    return `<h3 style="font-size:26px;margin:40px 0 16px">${escapeHtml(block.text ?? '')}</h3>`;
+  }
+  if (block.type === 'BULLET_LIST') {
+    const items = (block.text ?? '')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => `<li>${escapeHtml(line)}</li>`)
+      .join('\n');
+    if (!items) return '';
+    return `<ul class="ra-bullets" style="margin:0 0 24px;padding-left:20px">${items}</ul>`;
   }
   throw new Error(`[Revista] Tipo de bloque desconocido: ${(block as ArticleBlock).type}`);
 }
