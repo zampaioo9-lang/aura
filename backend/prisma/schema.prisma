@@ -789,4 +789,6 @@ enum ArticleBlockType {
   TEXT
   IMAGE
   BUTTON
+  SUBTITLE
+  BULLET_LIST
 }
