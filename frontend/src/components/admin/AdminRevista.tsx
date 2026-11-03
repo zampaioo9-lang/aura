@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function AdminRevista({ C }: Props) {
-  const { listCategories, createCategory, updateCategory, listArticles, deleteArticle, publishArticle, unpublishArticle } = useArticles();
+  const { listCategories, createCategory, updateCategory, listArticles, deleteArticle, publishArticle, unpublishArticle, publishSiteChanges, getRebuildStatus } = useArticles();
   const { toast } = useToast();
   const [subTab, setSubTab] = useState<'categorias' | 'articulos'>('articulos');
   const [categories, setCategories] = useState<Category[]>([]);
@@ -26,6 +26,8 @@ export default function AdminRevista({ C }: Props) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
   const [creatingArticle, setCreatingArticle] = useState(false);
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
+  const [publishingSite, setPublishingSite] = useState(false);
 
   const loadCategories = async () => {
     try {
@@ -43,8 +45,31 @@ export default function AdminRevista({ C }: Props) {
     }
   };
 
+  const loadRebuildStatus = async () => {
+    try {
+      const { hasPendingChanges } = await getRebuildStatus();
+      setHasPendingChanges(hasPendingChanges);
+    } catch {
+      // Silent -- this is just a status indicator, not worth a toast if it fails to load.
+    }
+  };
+
+  const handlePublishSiteChanges = async () => {
+    setPublishingSite(true);
+    try {
+      await publishSiteChanges();
+      toast('Cambios publicados en el sitio', 'success');
+      await loadRebuildStatus();
+    } catch (err: any) {
+      toast(err.message, 'error');
+    } finally {
+      setPublishingSite(false);
+    }
+  };
+
   useEffect(() => { loadCategories(); }, []);
   useEffect(() => { loadArticles(); }, []);
+  useEffect(() => { loadRebuildStatus(); }, []);
 
   const handleCreateCategory = async () => {
     if (newName.trim().length < 2) {
@@ -187,21 +212,44 @@ export default function AdminRevista({ C }: Props) {
               C={C}
               articleId={creatingArticle ? null : editingArticleId}
               categories={categories}
-              onClose={() => { setEditingArticleId(null); setCreatingArticle(false); }}
+              onClose={() => { setEditingArticleId(null); setCreatingArticle(false); loadRebuildStatus(); }}
               onSaved={loadArticles}
             />
           ) : (
             <>
-              <button
-                onClick={() => setCreatingArticle(true)}
-                style={{
-                  marginBottom: 16, padding: '9px 18px', background: C.accent, border: 'none',
-                  borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                }}
-              >
-                <Plus size={15} /> Nuevo articulo
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+                <button
+                  onClick={() => setCreatingArticle(true)}
+                  style={{
+                    padding: '9px 18px', background: C.accent, border: 'none',
+                    borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}
+                >
+                  <Plus size={15} /> Nuevo articulo
+                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {hasPendingChanges && (
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }} />
+                      Cambios sin publicar
+                    </span>
+                  )}
+                  <button
+                    onClick={handlePublishSiteChanges}
+                    disabled={!hasPendingChanges || publishingSite}
+                    style={{
+                      padding: '9px 18px', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700,
+                      background: hasPendingChanges ? C.accent : C.tableRowAlt,
+                      color: hasPendingChanges ? '#fff' : C.textMuted,
+                      cursor: (!hasPendingChanges || publishingSite) ? 'not-allowed' : 'pointer',
+                      opacity: publishingSite ? 0.6 : 1,
+                    }}
+                  >
+                    {publishingSite ? 'Publicando...' : hasPendingChanges ? 'Publicar cambios en el sitio' : 'Sin cambios pendientes'}
+                  </button>
+                </div>
+              </div>
               <div style={{ background: C.card, border: `1px solid ${C.cardBorder}`, borderRadius: 12 }}>
                 {articles.map((article, i) => (
                   <div
@@ -238,6 +286,7 @@ export default function AdminRevista({ C }: Props) {
                             if (article.status === 'PUBLISHED') await unpublishArticle(article.id);
                             else await publishArticle(article.id);
                             await loadArticles();
+                            await loadRebuildStatus();
                           } catch (err: any) {
                             toast(err.message, 'error');
                           }
@@ -255,6 +304,7 @@ export default function AdminRevista({ C }: Props) {
                           try {
                             await deleteArticle(article.id);
                             await loadArticles();
+                            await loadRebuildStatus();
                           } catch (err: any) {
                             toast(err.message, 'error');
                           }

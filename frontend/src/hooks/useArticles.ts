@@ -198,10 +198,30 @@ export function useArticles() {
     }
   }, []);
 
+  // Always triggers a real rebuild (the admin asked for it explicitly) -- what the
+  // "Publicar cambios en el sitio" button calls.
+  const publishSiteChanges = useCallback(async (): Promise<void> => {
+    try {
+      await api.post('/articles/publish-site-changes');
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al publicar los cambios en el sitio'));
+    }
+  }, []);
+
+  const getRebuildStatus = useCallback(async (): Promise<{ hasPendingChanges: boolean }> => {
+    try {
+      const res = await api.get('/articles/rebuild-status');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al consultar el estado de publicacion'));
+    }
+  }, []);
+
   return {
     listCategories, createCategory, updateCategory,
     listArticles, getArticle, createArticle, updateArticle,
     publishArticle, unpublishArticle, deleteArticle,
     createBlock, updateBlock, deleteBlock, swapBlockOrder,
+    publishSiteChanges, getRebuildStatus,
   };
 }
