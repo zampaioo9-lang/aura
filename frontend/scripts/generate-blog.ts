@@ -43,7 +43,7 @@ function escapeHtml(s: string): string {
 // it can never drift out of sync with the actual content.
 function calculateReadingTime(blocks: ArticleBlock[]): number {
   const words = blocks
-    .filter((b) => b.type === 'TEXT' && b.text)
+    .filter((b) => ['TEXT', 'SUBTITLE', 'BULLET_LIST'].includes(b.type) && b.text)
     .reduce((sum, b) => sum + (b.text as string).trim().split(/\s+/).filter(Boolean).length, 0);
   return Math.max(1, Math.ceil(words / 200));
 }
