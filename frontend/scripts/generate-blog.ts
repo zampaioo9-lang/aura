@@ -98,7 +98,7 @@ function pageShell(title: string, description: string, canonical: string, ogImag
 <style>
 body{margin:0;background:#080414;font-family:'Urbanist',sans-serif;color:rgb(205,192,224)}
 a{color:#2dd4bf;text-decoration:none}
-h1,h2,h3{font-family:'Bebas Neue',sans-serif;color:#fff}
+h1,h2,h3{font-family:'Bebas Neue',sans-serif;color:#fff;letter-spacing:0.02em}
 .ra-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
 .ra-hero-grid{display:grid;grid-template-columns:1fr 1fr}
 .ra-pill{padding:8px 18px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:rgba(255,255,255,0.7);font-size:13px;font-weight:600;cursor:pointer;font-family:'Urbanist',sans-serif}
