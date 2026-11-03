@@ -747,7 +747,7 @@ export default function Dashboard() {
             )}
             {visitedMobile.has('pacientes') && (
               <div style={{ display: mobileSection === 'pacientes' ? undefined : 'none' }}>
-                <Pacientes C={C} isPairTherapist={isPairTherapist} isPro={(isPro ?? false) || canPacientes} isActive={mobileSection === 'pacientes'} />
+                <Pacientes C={C} isPairTherapist={isPairTherapist} isPro={(isPro ?? false) || canPacientes} isActive={mobileSection === 'pacientes'} profiles={profiles} />
               </div>
             )}
             {visitedMobile.has('talleres') && (
@@ -1048,7 +1048,7 @@ export default function Dashboard() {
             )}
             {visitedTabs.has('pacientes') && (
               <div style={{ display: activeTab === 'pacientes' ? undefined : 'none' }}>
-                <Pacientes C={C} isPairTherapist={isPairTherapist} isPro={(isPro ?? false) || canPacientes} isActive={activeTab === 'pacientes'} />
+                <Pacientes C={C} isPairTherapist={isPairTherapist} isPro={(isPro ?? false) || canPacientes} isActive={activeTab === 'pacientes'} profiles={profiles} />
               </div>
             )}
             {visitedTabs.has('talleres') && (
