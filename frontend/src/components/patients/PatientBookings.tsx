@@ -54,16 +54,19 @@ export default function PatientBookings({ email, name, phone, profiles, C }: { e
 
   const loadData = () => {
     setLoading(true);
-    Promise.all([
+    Promise.allSettled([
       api.get(`/bookings/client/${encodeURIComponent(email)}`, { params: { name } }),
       api.get('/services/me'),
     ])
-      .then(([bookingsRes, servicesRes]) => {
-        setBookings(bookingsRes.data);
-        const allServices: Service[] = servicesRes.data.services ?? servicesRes.data;
-        setServices(allServices.filter(s => s.isActive));
+      .then(([bookingsResult, servicesResult]) => {
+        if (bookingsResult.status === 'fulfilled') {
+          setBookings(bookingsResult.value.data);
+        }
+        if (servicesResult.status === 'fulfilled') {
+          const allServices: Service[] = servicesResult.value.data.services ?? servicesResult.value.data;
+          setServices(allServices.filter(s => s.isActive));
+        }
       })
-      .catch(() => {})
       .finally(() => setLoading(false));
   };
 
