@@ -25,16 +25,17 @@ async function triggerBlogRebuild(): Promise<void> {
   const hookUrl = process.env.BLOG_DEPLOY_HOOK_URL;
   if (!hookUrl) return;
 
-  await prisma.blogRebuildState.upsert({
-    where: { id: 'singleton' },
-    create: { id: 'singleton', lastRebuiltAt: new Date() },
-    update: { lastRebuiltAt: new Date() },
-  });
-
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const res = await fetch(hookUrl, { method: 'POST' });
-      if (res.ok) return;
+      if (res.ok) {
+        await prisma.blogRebuildState.upsert({
+          where: { id: 'singleton' },
+          create: { id: 'singleton', lastRebuiltAt: new Date() },
+          update: { lastRebuiltAt: new Date() },
+        });
+        return;
+      }
     } catch {
       // fall through to retry/log below
     }
@@ -52,11 +53,15 @@ async function triggerBlogRebuild(): Promise<void> {
 // when via the "Publicar cambios en el sitio" button (POST /publish-site-changes
 // below), guided by the "cambios sin publicar" indicator (GET /rebuild-status below).
 async function markContentEdited(): Promise<void> {
-  await prisma.blogRebuildState.upsert({
-    where: { id: 'singleton' },
-    create: { id: 'singleton', lastEditAt: new Date() },
-    update: { lastEditAt: new Date() },
-  });
+  try {
+    await prisma.blogRebuildState.upsert({
+      where: { id: 'singleton' },
+      create: { id: 'singleton', lastEditAt: new Date() },
+      update: { lastEditAt: new Date() },
+    });
+  } catch (err) {
+    console.warn('[Revista] No se pudo registrar la edición pendiente', err);
+  }
 }
 
 // All routes in this file except GET /public require auth + admin, mirroring
@@ -149,7 +154,7 @@ router.get('/public', async (_req, res, next) => {
 // What the "Publicar cambios en el sitio" button calls. Unlike the 5 small-edit
 // routes (which only call markContentEdited()), this always triggers a real rebuild
 // regardless of whether anything is pending -- the admin asked for it explicitly.
-router.post('/publish-site-changes', authMiddleware, adminMiddleware, async (_req: AuthRequest, res, next) => {
+router.post('/publish-site-changes', authMiddleware, adminMiddleware, async (_req, res, next) => {
   try {
     await triggerBlogRebuild();
     res.status(204).send();
@@ -163,7 +168,7 @@ router.post('/publish-site-changes', authMiddleware, adminMiddleware, async (_re
 // true when content was saved (markContentEdited) more recently than the last real
 // rebuild (triggerBlogRebuild), or when content was saved and no rebuild has ever
 // happened. Drives the "Cambios sin publicar" indicator in the CMS.
-router.get('/rebuild-status', authMiddleware, adminMiddleware, async (_req: AuthRequest, res, next) => {
+router.get('/rebuild-status', authMiddleware, adminMiddleware, async (_req, res, next) => {
   try {
     const state = await prisma.blogRebuildState.findUnique({ where: { id: 'singleton' } });
     const hasPendingChanges = !!state?.lastEditAt && (!state.lastRebuiltAt || state.lastEditAt > state.lastRebuiltAt);
