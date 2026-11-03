@@ -18,6 +18,11 @@ const prisma = new PrismaClient();
 // A failure here must NEVER fail the request — the DB write already succeeded, and
 // the only consequence of a missed deploy is a stale public page, corrected by the
 // next publish action or a manual deploy. Retry once, then just log.
+//
+// Deliberately NOT awaited by callers: the deploy hook round-trip can take seconds,
+// and the admin's edit already succeeded in the DB by the time this fires — making
+// them wait for a background rebuild signal (especially painful for moveBlock, which
+// fires two of these in a row) adds latency with zero benefit to the request itself.
 async function triggerBlogRebuild(): Promise<void> {
   const hookUrl = process.env.BLOG_DEPLOY_HOOK_URL;
   if (!hookUrl) return;
@@ -141,7 +146,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req: AuthRequest, res
       where: { id: req.params.id },
       data: { ...data, coverImage: data.coverImage || undefined, metaDescription: data.metaDescription || undefined, author: data.author || undefined },
     });
-    if (existing.status === 'PUBLISHED') await triggerBlogRebuild();
+    if (existing.status === 'PUBLISHED') triggerBlogRebuild();
     res.json(article);
   } catch (err) {
     next(err);
@@ -158,7 +163,7 @@ router.patch('/:id/publish', authMiddleware, adminMiddleware, async (req: AuthRe
       where: { id: req.params.id },
       data: { status: 'PUBLISHED', publishedAt: new Date() },
     });
-    await triggerBlogRebuild();
+    triggerBlogRebuild();
     res.json(article);
   } catch (err) {
     next(err);
@@ -174,7 +179,7 @@ router.patch('/:id/unpublish', authMiddleware, adminMiddleware, async (req: Auth
       where: { id: req.params.id },
       data: { status: 'DRAFT' },
     });
-    await triggerBlogRebuild();
+    triggerBlogRebuild();
     res.json(article);
   } catch (err) {
     next(err);
@@ -187,7 +192,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req: AuthRequest, 
     const existing = await prisma.article.findUnique({ where: { id: req.params.id } });
     if (!existing) throw new AppError(404, 'Articulo no encontrado');
     await prisma.article.delete({ where: { id: req.params.id } });
-    if (existing.status === 'PUBLISHED') await triggerBlogRebuild();
+    if (existing.status === 'PUBLISHED') triggerBlogRebuild();
     res.status(204).send();
   } catch (err) {
     next(err);
@@ -204,7 +209,7 @@ router.post('/:id/blocks', authMiddleware, adminMiddleware, async (req: AuthRequ
     const block = await prisma.articleBlock.create({
       data: { ...data, articleId: req.params.id, order: currentCount + 1 },
     });
-    if (article.status === 'PUBLISHED') await triggerBlogRebuild();
+    if (article.status === 'PUBLISHED') triggerBlogRebuild();
     res.status(201).json(block);
   } catch (err) {
     next(err);
@@ -219,7 +224,7 @@ router.put('/:id/blocks/:blockId', authMiddleware, adminMiddleware, async (req: 
     const data = updateArticleBlockSchema.parse(req.body);
     const block = await prisma.articleBlock.update({ where: { id: req.params.blockId }, data });
     const article = await prisma.article.findUnique({ where: { id: existing.articleId } });
-    if (article?.status === 'PUBLISHED') await triggerBlogRebuild();
+    if (article?.status === 'PUBLISHED') triggerBlogRebuild();
     res.json(block);
   } catch (err) {
     next(err);
@@ -233,7 +238,7 @@ router.delete('/:id/blocks/:blockId', authMiddleware, adminMiddleware, async (re
     if (!existing) throw new AppError(404, 'Bloque no encontrado');
     await prisma.articleBlock.delete({ where: { id: req.params.blockId } });
     const article = await prisma.article.findUnique({ where: { id: existing.articleId } });
-    if (article?.status === 'PUBLISHED') await triggerBlogRebuild();
+    if (article?.status === 'PUBLISHED') triggerBlogRebuild();
     res.status(204).send();
   } catch (err) {
     next(err);
