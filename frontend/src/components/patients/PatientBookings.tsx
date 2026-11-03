@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, Loader } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, Loader, Plus } from 'lucide-react';
 import api from '../../api/client';
+import NewBookingModal from '../dashboard/NewBookingModal';
 
 interface Colors {
   text: string;
@@ -10,6 +11,7 @@ interface Colors {
   border: string;
   cardBg: string;
   isDark: boolean;
+  mainBg: string;
 }
 
 interface Booking {
@@ -19,6 +21,16 @@ interface Booking {
   endTime: string;
   status: string;
   service: { name: string; durationMinutes: number; price: number; currency: string; sessionModality?: string | null };
+}
+
+interface Service {
+  id: string;
+  name: string;
+  durationMinutes: number;
+  price: number;
+  currency: string;
+  profileId: string;
+  isActive: boolean;
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; Icon: any }> = {
@@ -34,15 +46,30 @@ function fmt12(t: string) {
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ampm}`;
 }
 
-export default function PatientBookings({ email, name, C }: { email: string; name: string; C: Colors }) {
+export default function PatientBookings({ email, name, phone, profiles, C }: { email: string; name: string; phone?: string; profiles: { id: string }[]; C: Colors }) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [services, setServices] = useState<Service[]>([]);
+  const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    api.get(`/bookings/client/${encodeURIComponent(email)}`, { params: { name } })
-      .then(r => setBookings(r.data))
+  const loadData = () => {
+    setLoading(true);
+    Promise.all([
+      api.get(`/bookings/client/${encodeURIComponent(email)}`, { params: { name } }),
+      api.get('/services/me'),
+    ])
+      .then(([bookingsRes, servicesRes]) => {
+        setBookings(bookingsRes.data);
+        const allServices: Service[] = servicesRes.data.services ?? servicesRes.data;
+        setServices(allServices.filter(s => s.isActive));
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email, name]);
 
   const upcoming = bookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED');
@@ -51,6 +78,19 @@ export default function PatientBookings({ email, name, C }: { email: string; nam
   const [_r, _g, _b] = _acNums.map(Number);
 
   return (
+    <>
+    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+      <button
+        onClick={() => setShowModal(true)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          padding: '8px 16px', background: C.accent, border: 'none',
+          borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+        }}
+      >
+        <Plus size={15} /> Nueva cita
+      </button>
+    </div>
     <div style={{
       background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.80)',
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
@@ -97,6 +137,18 @@ export default function PatientBookings({ email, name, C }: { email: string; nam
         </div>
       )}
     </div>
+    {showModal && (
+      <NewBookingModal
+        slot={{ date: new Date().toISOString().slice(0, 10), time: '' }}
+        services={services}
+        profiles={profiles}
+        prefillClient={{ name, email, phone: phone ?? '' }}
+        C={C}
+        onClose={() => setShowModal(false)}
+        onCreated={() => { setShowModal(false); loadData(); }}
+      />
+    )}
+    </>
   );
 }
 
