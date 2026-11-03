@@ -286,6 +286,7 @@ export default function AdminRevista({ C }: Props) {
                             if (article.status === 'PUBLISHED') await unpublishArticle(article.id);
                             else await publishArticle(article.id);
                             await loadArticles();
+                            await loadRebuildStatus();
                           } catch (err: any) {
                             toast(err.message, 'error');
                           }
@@ -303,6 +304,7 @@ export default function AdminRevista({ C }: Props) {
                           try {
                             await deleteArticle(article.id);
                             await loadArticles();
+                            await loadRebuildStatus();
                           } catch (err: any) {
                             toast(err.message, 'error');
                           }
