@@ -792,3 +792,13 @@ enum ArticleBlockType {
   SUBTITLE
   BULLET_LIST
 }
+
+// Single-row table (fixed id) tracking the last time the Revista static-site rebuild
+// was actually triggered, so block/article edits can be throttled to one rebuild per
+// REBUILD_THROTTLE_MS instead of one per edit. See triggerBlogRebuild() in
+// routes/articles.ts -- can't use an in-memory timer for this because the backend
+// runs as a Vercel serverless function with no state shared across invocations.
+model BlogRebuildState {
+  id              String    @id @default("singleton")
+  lastTriggeredAt DateTime?
+}

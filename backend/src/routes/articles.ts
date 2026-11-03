@@ -14,18 +14,47 @@ const router = Router();
 const prisma = new PrismaClient();
 
 // Publishing/unpublishing/deleting a published article must regenerate the static
-// /revista HTML (see a later task). We trigger that by calling a Vercel Deploy Hook.
-// A failure here must NEVER fail the request — the DB write already succeeded, and
-// the only consequence of a missed deploy is a stale public page, corrected by the
-// next publish action or a manual deploy. Retry once, then just log.
+// /revista HTML. We trigger that by calling a Vercel Deploy Hook. A failure here must
+// NEVER fail the request — the DB write already succeeded, and the only consequence
+// of a missed deploy is a stale public page, corrected by the next trigger or a
+// manual deploy. Retry once, then just log.
 //
 // Deliberately NOT awaited by callers: the deploy hook round-trip can take seconds,
 // and the admin's edit already succeeded in the DB by the time this fires — making
-// them wait for a background rebuild signal (especially painful for moveBlock, which
-// fires two of these in a row) adds latency with zero benefit to the request itself.
-async function triggerBlogRebuild(): Promise<void> {
+// them wait for a background rebuild signal adds latency with zero benefit to the
+// request itself.
+//
+// Throttled by default (force=false): editing a long article block-by-block used to
+// fire one full site rebuild per block, which on 2026-11-03 burned through Vercel's
+// daily deploy cap mid-edit and silently stopped updating the live page (the hook
+// failure is caught and only logged, so the admin never saw an error — the page just
+// stopped reflecting new edits). We can't debounce with an in-memory timer because
+// this backend runs as a Vercel serverless function with no state shared across
+// invocations (confirmed: api/index.ts, the production entry point, deliberately
+// does NOT start the node-cron jobs that src/index.ts starts for local dev, exactly
+// because that pattern doesn't survive here) — so the "wait" has to be a persisted
+// timestamp (BlogRebuildState) checked synchronously instead. force=true (used by
+// publish/unpublish/delete, deliberate rare actions where a stale page is worse than
+// an extra deploy) always fires regardless of the throttle window.
+const REBUILD_THROTTLE_MS = 2 * 60 * 1000;
+
+async function triggerBlogRebuild(options: { force?: boolean } = {}): Promise<void> {
   const hookUrl = process.env.BLOG_DEPLOY_HOOK_URL;
   if (!hookUrl) return;
+
+  if (!options.force) {
+    const state = await prisma.blogRebuildState.findUnique({ where: { id: 'singleton' } });
+    if (state?.lastTriggeredAt && Date.now() - state.lastTriggeredAt.getTime() < REBUILD_THROTTLE_MS) {
+      return;
+    }
+  }
+
+  await prisma.blogRebuildState.upsert({
+    where: { id: 'singleton' },
+    create: { id: 'singleton', lastTriggeredAt: new Date() },
+    update: { lastTriggeredAt: new Date() },
+  });
+
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const res = await fetch(hookUrl, { method: 'POST' });
@@ -163,7 +192,7 @@ router.patch('/:id/publish', authMiddleware, adminMiddleware, async (req: AuthRe
       where: { id: req.params.id },
       data: { status: 'PUBLISHED', publishedAt: new Date() },
     });
-    triggerBlogRebuild();
+    triggerBlogRebuild({ force: true });
     res.json(article);
   } catch (err) {
     next(err);
@@ -179,7 +208,7 @@ router.patch('/:id/unpublish', authMiddleware, adminMiddleware, async (req: Auth
       where: { id: req.params.id },
       data: { status: 'DRAFT' },
     });
-    triggerBlogRebuild();
+    triggerBlogRebuild({ force: true });
     res.json(article);
   } catch (err) {
     next(err);
@@ -192,7 +221,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req: AuthRequest, 
     const existing = await prisma.article.findUnique({ where: { id: req.params.id } });
     if (!existing) throw new AppError(404, 'Articulo no encontrado');
     await prisma.article.delete({ where: { id: req.params.id } });
-    if (existing.status === 'PUBLISHED') triggerBlogRebuild();
+    if (existing.status === 'PUBLISHED') triggerBlogRebuild({ force: true });
     res.status(204).send();
   } catch (err) {
     next(err);
