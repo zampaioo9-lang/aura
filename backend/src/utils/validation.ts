@@ -351,8 +351,8 @@ export const updateArticleSchema = z.object({
 });
 
 export const createArticleBlockSchema = z.object({
-  type: z.enum(['TEXT', 'IMAGE', 'BUTTON'], {
-    errorMap: () => ({ message: 'Tipo de bloque no valido (TEXT, IMAGE o BUTTON)' }),
+  type: z.enum(['TEXT', 'IMAGE', 'BUTTON', 'SUBTITLE', 'BULLET_LIST'], {
+    errorMap: () => ({ message: 'Tipo de bloque no valido (TEXT, IMAGE, BUTTON, SUBTITLE o BULLET_LIST)' }),
   }),
   text: z.string().max(5000).optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
@@ -360,7 +360,7 @@ export const createArticleBlockSchema = z.object({
   buttonLabel: z.string().max(60).optional(),
   buttonUrl: z.string().url().optional().or(z.literal('')),
 }).refine(
-  (data) => data.type !== 'TEXT' || !!data.text?.trim(),
+  (data) => !['TEXT', 'SUBTITLE', 'BULLET_LIST'].includes(data.type) || !!data.text?.trim(),
   { message: 'Un bloque de texto requiere contenido' }
 ).refine(
   (data) => data.type !== 'BUTTON' || (!!data.buttonLabel?.trim() && !!data.buttonUrl),
