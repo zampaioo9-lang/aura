@@ -11,7 +11,7 @@ import PatientBookings from '../components/patients/PatientBookings';
 import Step1Datos from '../components/patients/wizard/Step1Datos';
 import { WizardAccentContext, accentTokens } from '../components/patients/WizardAccentContext';
 
-interface Colors { text: string; muted: string; accent: string; accentLight: string; border: string; cardBg: string; isDark: boolean; }
+interface Colors { text: string; muted: string; accent: string; accentLight: string; border: string; cardBg: string; isDark: boolean; mainBg: string; }
 
 type WizardType = 'individual' | 'couple' | null;
 type DetailTab = 'notas' | 'citas' | 'datos';
