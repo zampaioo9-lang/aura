@@ -205,9 +205,16 @@ router.post('/:id/blocks', authMiddleware, adminMiddleware, async (req: AuthRequ
     const article = await prisma.article.findUnique({ where: { id: req.params.id } });
     if (!article) throw new AppError(404, 'Articulo no encontrado');
     const data = createArticleBlockSchema.parse(req.body);
-    const currentCount = await prisma.articleBlock.count({ where: { articleId: req.params.id } });
+    // Using count+1 here previously caused order collisions after any block was
+    // deleted (count drops but existing order values don't shift down), so a new
+    // block could land on an order value an existing block already had. Basing it
+    // on the current max is immune to gaps left by deletions.
+    const maxOrder = await prisma.articleBlock.aggregate({
+      where: { articleId: req.params.id },
+      _max: { order: true },
+    });
     const block = await prisma.articleBlock.create({
-      data: { ...data, articleId: req.params.id, order: currentCount + 1 },
+      data: { ...data, articleId: req.params.id, order: (maxOrder._max.order ?? 0) + 1 },
     });
     if (article.status === 'PUBLISHED') triggerBlogRebuild();
     res.status(201).json(block);
@@ -226,6 +233,44 @@ router.put('/:id/blocks/:blockId', authMiddleware, adminMiddleware, async (req: 
     const article = await prisma.article.findUnique({ where: { id: existing.articleId } });
     if (article?.status === 'PUBLISHED') triggerBlogRebuild();
     res.json(block);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/articles/:id/blocks/swap — Swap the order of two blocks (auth, admin)
+//
+// moveBlock previously did this as two separate PUT requests from the client (set
+// block A's order to block B's, then block B's to A's old order). If the second
+// request failed after the first succeeded -- a dropped connection, a transient
+// error -- the article was left with two blocks sharing the same order value,
+// which is exactly the kind of corruption that made the up/down arrows behave
+// unpredictably afterward (Postgres doesn't guarantee a stable tie-break order for
+// two equal `order` values, so which one "wins" on each reload becomes arbitrary).
+// Doing both updates in one transaction makes a partial swap impossible: either
+// both blocks get their new order, or neither does.
+router.patch('/:id/blocks/swap', authMiddleware, adminMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    const { blockAId, blockBId } = req.body as { blockAId?: string; blockBId?: string };
+    if (!blockAId || !blockBId) throw new AppError(400, 'Se requieren blockAId y blockBId');
+
+    const [blockA, blockB] = await Promise.all([
+      prisma.articleBlock.findUnique({ where: { id: blockAId } }),
+      prisma.articleBlock.findUnique({ where: { id: blockBId } }),
+    ]);
+    if (!blockA || !blockB) throw new AppError(404, 'Bloque no encontrado');
+    if (blockA.articleId !== req.params.id || blockB.articleId !== req.params.id) {
+      throw new AppError(400, 'Ambos bloques deben pertenecer a este articulo');
+    }
+
+    const [updatedA, updatedB] = await prisma.$transaction([
+      prisma.articleBlock.update({ where: { id: blockAId }, data: { order: blockB.order } }),
+      prisma.articleBlock.update({ where: { id: blockBId }, data: { order: blockA.order } }),
+    ]);
+
+    const article = await prisma.article.findUnique({ where: { id: req.params.id } });
+    if (article?.status === 'PUBLISHED') triggerBlogRebuild();
+    res.json([updatedA, updatedB]);
   } catch (err) {
     next(err);
   }

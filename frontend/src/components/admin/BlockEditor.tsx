@@ -17,7 +17,7 @@ interface Props {
 }
 
 export default function BlockEditor({ C, articleId }: Props) {
-  const { getArticle, createBlock, updateBlock, deleteBlock } = useArticles();
+  const { getArticle, createBlock, updateBlock, deleteBlock, swapBlockOrder } = useArticles();
   const { uploadImage, uploading } = useUpload();
   const { toast } = useToast();
 
@@ -85,15 +85,15 @@ export default function BlockEditor({ C, articleId }: Props) {
     } catch { toast('No se pudo borrar el bloque', 'error'); }
   };
 
-  // Mirrors moveModule's pattern in TalleresCursos.tsx: swap `order` on two adjacent
-  // blocks via two PUT calls. The two-PUT swap itself isn't atomic (first can succeed,
-  // second fail) -- same accepted tradeoff TalleresCursos.tsx documents, mitigated by
-  // reloading from the server on both the success and failure paths below. The
-  // in-flight guard is global (movingBlockId truthy, not "does this row match"),
-  // because a per-row guard would still let a SECOND, different row start its own
-  // moveBlock while the first is mid-flight -- both read `blocks`/`order` from the
-  // same stale state, so their four PUTs can interleave and scramble more than two
-  // blocks' order (there's no DB constraint preventing duplicate `order` values).
+  // swapBlockOrder does both updates in one backend transaction, so a failure can
+  // never leave two blocks sharing the same `order` value (the old two-PUT version
+  // could, if the second PUT failed after the first succeeded -- that's what caused
+  // the up/down arrows to misbehave on articles that already hit this: Postgres
+  // doesn't guarantee a stable tie-break order for two equal `order` values, so
+  // which block "wins" on each reload became arbitrary). The in-flight guard stays
+  // global (movingBlockId truthy, not "does this row match"), because a per-row
+  // guard would still let a SECOND, different row start its own moveBlock while the
+  // first is mid-flight, both reading `blocks`/`order` from the same stale state.
   const moveBlock = async (block: ArticleBlock, direction: 'up' | 'down') => {
     if (movingBlockId) return;
     const index = blocks.findIndex(b => b.id === block.id);
@@ -103,8 +103,7 @@ export default function BlockEditor({ C, articleId }: Props) {
 
     setMovingBlockId(block.id);
     try {
-      await updateBlock(articleId, block.id, { order: swapWith.order });
-      await updateBlock(articleId, swapWith.id, { order: block.order });
+      await swapBlockOrder(articleId, block.id, swapWith.id);
       await loadBlocks();
     } catch {
       toast('No se pudo reordenar', 'error');

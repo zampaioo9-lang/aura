@@ -188,10 +188,20 @@ export function useArticles() {
     }
   }, []);
 
+  // One request, swapped atomically server-side -- unlike two separate updateBlock
+  // calls, a failure here can never leave two blocks sharing the same order value.
+  const swapBlockOrder = useCallback(async (articleId: string, blockAId: string, blockBId: string): Promise<void> => {
+    try {
+      await api.patch(`/articles/${articleId}/blocks/swap`, { blockAId, blockBId });
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al reordenar'));
+    }
+  }, []);
+
   return {
     listCategories, createCategory, updateCategory,
     listArticles, getArticle, createArticle, updateArticle,
     publishArticle, unpublishArticle, deleteArticle,
-    createBlock, updateBlock, deleteBlock,
+    createBlock, updateBlock, deleteBlock, swapBlockOrder,
   };
 }
