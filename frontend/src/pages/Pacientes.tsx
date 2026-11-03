@@ -17,7 +17,7 @@ type WizardType = 'individual' | 'couple' | null;
 type DetailTab = 'notas' | 'citas' | 'datos';
 type DatosSection = 'basicos' | 'hc_ind' | 'hc_par' | null;
 
-export default function Pacientes({ C, isPro = false, isActive }: { C: Colors; isPairTherapist?: boolean; isPro?: boolean; isActive?: boolean }) {
+export default function Pacientes({ C, isPro = false, isActive, profiles }: { C: Colors; isPairTherapist?: boolean; isPro?: boolean; isActive?: boolean; profiles: { id: string }[] }) {
   const canHistoriaClinica = useFeature('historia_clinica');
   const canTerapiaPareja = useFeature('terapia_pareja');
   const { patients, loading, load, createPatient, updatePatient } = usePatients();
@@ -186,7 +186,7 @@ export default function Pacientes({ C, isPro = false, isActive }: { C: Colors; i
           {/* ── CITAS ── */}
           {detailTab === 'citas' && (
             selected.email
-              ? <PatientBookings email={selected.email} name={selected.name} C={C} />
+              ? <PatientBookings email={selected.email} name={selected.name} phone={selected.phone} profiles={profiles} C={C} />
               : <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: '32px 0' }}>
                   Agrega un email en la pestaña Datos para ver el historial de citas.
                 </p>
