@@ -235,4 +235,64 @@ router.post('/reminders', async (req: Request, res: Response): Promise<void> => 
   }
 });
 
+// POST /api/cron/trial-expiry — called once a day by the external cron (cron-job.org),
+// matching the original daily-at-9am design: unlike /reminders (hourly, needs Notification-
+// table dedup because the same window could be checked more than once), this job has no
+// dedup of its own, so it must be scheduled externally to fire once per day, not hourly.
+// Requires header: x-cron-secret = CRON_SECRET (variable de entorno)
+router.post('/trial-expiry', async (req: Request, res: Response): Promise<void> => {
+  const secret = req.headers['x-cron-secret'];
+  if (!secret || secret !== process.env.CRON_SECRET) {
+    res.status(401).json({ error: 'No autorizado' });
+    return;
+  }
+
+  try {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const users = await prisma.user.findMany({
+      where: {
+        trialEndsAt: {
+          gte: todayStart,
+          lte: todayEnd,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        socialLinks: true,
+        phone: true,
+      },
+    });
+
+    let sent = 0;
+
+    for (const user of users) {
+      const socialLinks = (user.socialLinks as Record<string, string>) || {};
+      const whatsappPhone = socialLinks.whatsapp || user.phone;
+
+      if (!whatsappPhone) continue;
+
+      const message =
+        `Hola ${user.name} 👋\n\n` +
+        `Tu período de prueba gratuita de *Aliax.io* ha finalizado hoy.\n\n` +
+        `Para seguir recibiendo reservas y mantener tu perfil activo, activá tu plan profesional.\n\n` +
+        `👉 https://www.aliax.io/dashboard`;
+
+      const result = await sendWhatsApp(whatsappPhone, message);
+      if (result.success) sent++;
+    }
+
+    res.json({ ok: true, usersChecked: users.length, sent, timestamp: new Date().toISOString() });
+  } catch (err: any) {
+    console.error('Error en cron de vencimiento de trial:', err);
+    res.status(500).json({ error: 'Error interno', message: err.message });
+  }
+});
+
 export default router;

@@ -33,7 +33,6 @@ import accessRoutes from './routes/access';
 import exchangeRateRoutes from './routes/exchangeRate';
 import articleRoutes from './routes/articles';
 import cronRoutes from './routes/cron';
-import { startTrialExpiryJob } from './jobs/trialExpiryJob';
 import { sendWhatsAppTemplate, templateComponents } from './services/whatsappService';
 
 const app = express();
@@ -106,5 +105,4 @@ app.use(errorHandler);
 
 app.listen(env.PORT, () => {
   console.log(`🚀 Aura API running on http://localhost:${env.PORT}`);
-  startTrialExpiryJob();
 });
