@@ -240,8 +240,14 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
   }, [selectedDay, slots]);
 
   const toggleDay = (day: number) => {
-    setActiveDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
-    setSelectedDay(day);
+    const isActive = activeDays.includes(day);
+    const next = isActive ? activeDays.filter(d => d !== day) : [...activeDays, day];
+    setActiveDays(next);
+    if (isActive) {
+      if (selectedDay === day) setSelectedDay(next.length > 0 ? next[0] : null);
+    } else {
+      setSelectedDay(day);
+    }
     if (!franjas.length) setFranjas([{ startTime: '09:00', endTime: '17:00' }]);
   };
 
@@ -539,8 +545,14 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
   };
 
   const toggleDay = (day: number) => {
-    setActiveDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
-    setSelectedDay(day);
+    const isActive = activeDays.includes(day);
+    const next = isActive ? activeDays.filter(d => d !== day) : [...activeDays, day];
+    setActiveDays(next);
+    if (isActive) {
+      if (selectedDay === day) setSelectedDay(next.length > 0 ? next[0] : null);
+    } else {
+      setSelectedDay(day);
+    }
     if (!franjasByDay[day]) setFranjasByDay(prev => ({ ...prev, [day]: [{ startTime: '09:00', endTime: '17:00' }] }));
   };
 
