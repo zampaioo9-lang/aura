@@ -96,15 +96,15 @@ function pageShell(title: string, description: string, canonical: string, ogImag
 <meta property="og:url" content="${canonical}">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Urbanist:wght@300;400;500;600;700;800&display=swap">
 <style>
-body{margin:0;background:#080414;font-family:'Urbanist',sans-serif;color:rgb(205,192,224)}
-a{color:#2dd4bf;text-decoration:none}
-h1,h2,h3{font-family:'Bebas Neue',sans-serif;color:#fff;letter-spacing:0.02em}
+body{margin:0;background:#f4f4f2;font-family:'Urbanist',sans-serif;color:#3f3f46}
+a{color:#0d9488;text-decoration:none}
+h1,h2,h3{font-family:'Bebas Neue',sans-serif;color:#080414;letter-spacing:0.02em}
 .ra-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
 .ra-hero-grid{display:grid;grid-template-columns:1fr 1fr}
-.ra-pill{padding:8px 18px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:rgba(255,255,255,0.7);font-size:13px;font-weight:600;cursor:pointer;font-family:'Urbanist',sans-serif}
+.ra-pill{padding:8px 18px;border-radius:999px;border:1px solid rgba(8,4,20,0.12);background:transparent;color:rgba(8,4,20,0.65);font-size:13px;font-weight:600;cursor:pointer;font-family:'Urbanist',sans-serif}
 .ra-pill-active{background:#2dd4bf;border-color:#2dd4bf;color:#04201c}
-.ra-bullets li{font-size:17px;line-height:1.75;color:rgba(255,255,255,0.75);margin-bottom:8px}
-.ra-bullets li::marker{color:#2dd4bf}
+.ra-bullets li{font-size:17px;line-height:1.75;color:#3f3f46;margin-bottom:8px}
+.ra-bullets li::marker{color:#0d9488}
 @media (max-width:860px){.ra-grid3{grid-template-columns:1fr}.ra-hero-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -115,12 +115,12 @@ ${body}
 }
 
 function renderNav(): string {
-  return `<div style="display:flex;align-items:center;justify-content:space-between;padding:24px 64px;border-bottom:1px solid rgba(255,255,255,0.06)">
+  return `<div style="display:flex;align-items:center;justify-content:space-between;padding:24px 64px;border-bottom:1px solid rgba(8,4,20,0.08)">
   <a href="/" style="display:flex;align-items:center;gap:12px">
-    <div style="width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(45,212,191,0.5);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:18px;color:#2dd4bf">A</div>
+    <div style="width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(45,212,191,0.5);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:18px;color:#0d9488">A</div>
     <div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#fff;line-height:1">ALIAX</div>
-      <div style="font-size:10px;letter-spacing:0.15em;color:rgba(255,255,255,0.45);text-transform:uppercase">Salud Mental</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#080414;line-height:1">ALIAX</div>
+      <div style="font-size:10px;letter-spacing:0.15em;color:rgba(8,4,20,0.45);text-transform:uppercase">Salud Mental</div>
     </div>
   </a>
 </div>`;
@@ -129,8 +129,8 @@ function renderNav(): string {
 function renderByline(a: Article): string {
   const name = a.author || 'Aliax';
   const minutes = calculateReadingTime(a.blocks);
-  return `<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,0.55)">
-  <span style="width:28px;height:28px;border-radius:50%;background:rgba(45,212,191,0.15);color:#2dd4bf;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${escapeHtml(initials(name))}</span>
+  return `<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#5b5b66">
+  <span style="width:28px;height:28px;border-radius:50%;background:#2dd4bf;color:#04201c;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${escapeHtml(initials(name))}</span>
   <span>${escapeHtml(name)} · ${formatDate(a.publishedAt)} · ${minutes} min de lectura</span>
 </div>`;
 }
@@ -138,14 +138,14 @@ function renderByline(a: Article): string {
 function renderTherapistCTA(): string {
   return `<div style="background:linear-gradient(135deg,rgba(45,212,191,0.08),rgba(13,148,136,0.04));border-radius:20px;padding:32px;text-align:center;margin:40px 0">
   <h3 style="font-size:20px;margin:0 0 8px">¿Quieres hablar con alguien?</h3>
-  <p style="font-size:14px;color:rgba(255,255,255,0.65);margin:0 0 20px">Explora psicologos verificados en Aliax y agenda tu primera sesion.</p>
+  <p style="font-size:14px;color:#4b4b55;margin:0 0 20px">Explora psicologos verificados en Aliax y agenda tu primera sesion.</p>
   <a href="/explorar" style="display:inline-block;padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700">Explorar terapeutas</a>
 </div>`;
 }
 
 function renderBlock(block: ArticleBlock): string {
   if (block.type === 'TEXT') {
-    return `<p style="margin:0 0 24px;font-size:17px;line-height:1.75;color:rgba(255,255,255,0.75)">${escapeHtml(block.text ?? '')}</p>`;
+    return `<p style="margin:0 0 24px;font-size:17px;line-height:1.75;color:#3f3f46">${escapeHtml(block.text ?? '')}</p>`;
   }
   if (block.type === 'IMAGE') {
     if (!block.imageUrl) return '';
@@ -171,24 +171,24 @@ function renderBlock(block: ArticleBlock): string {
 }
 
 function renderArticleCard(a: Article): string {
-  return `<div data-audience="${a.category.audience}" data-category="${a.category.slug}" style="border-radius:20px;overflow:hidden;background:#0e0920;box-shadow:0 10px 30px rgba(0,0,0,0.25)">
+  return `<div data-audience="${a.category.audience}" data-category="${a.category.slug}" style="border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 10px 30px rgba(8,4,20,0.10)">
   <a href="/revista/${a.slug}">
-    ${a.coverImage ? `<img src="${escapeHtml(a.coverImage)}" alt="" style="width:100%;height:160px;object-fit:cover;display:block">` : `<div style="height:160px;background:linear-gradient(135deg,#160d30,#1e1240)"></div>`}
+    ${a.coverImage ? `<img src="${escapeHtml(a.coverImage)}" alt="" style="width:100%;height:160px;object-fit:cover;display:block">` : `<div style="height:160px;background:linear-gradient(135deg,rgba(45,212,191,0.25),rgba(13,148,136,0.12))"></div>`}
   </a>
   <div style="padding:22px">
-    <span style="display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(45,212,191,0.12);color:#2dd4bf;font-size:10px;font-weight:700;text-transform:uppercase">${escapeHtml(a.category.name)}</span>
-    <h4 style="font-size:16px;color:#fff;margin:10px 0 8px"><a href="/revista/${a.slug}" style="color:#fff">${escapeHtml(a.title)}</a></h4>
-    <p style="font-size:13px;line-height:1.55;color:rgba(255,255,255,0.55);margin:0 0 12px">${escapeHtml(a.excerpt)}</p>
+    <span style="display:inline-block;padding:4px 10px;border-radius:999px;background:#2dd4bf;color:#04201c;font-size:10px;font-weight:700;text-transform:uppercase">${escapeHtml(a.category.name)}</span>
+    <h4 style="font-size:16px;color:#080414;margin:10px 0 8px"><a href="/revista/${a.slug}" style="color:#080414">${escapeHtml(a.title)}</a></h4>
+    <p style="font-size:13px;line-height:1.55;color:#5b5b66;margin:0 0 12px">${escapeHtml(a.excerpt)}</p>
     ${renderByline(a)}
   </div>
 </div>`;
 }
 
 function renderRelatedCard(a: Article): string {
-  return `<a href="/revista/${a.slug}" style="display:block;border-radius:16px;overflow:hidden;background:#0e0920">
-  ${a.coverImage ? `<img src="${escapeHtml(a.coverImage)}" alt="" style="width:100%;height:120px;object-fit:cover;display:block">` : `<div style="height:120px;background:linear-gradient(135deg,#160d30,#1e1240)"></div>`}
+  return `<a href="/revista/${a.slug}" style="display:block;border-radius:16px;overflow:hidden;background:#fff">
+  ${a.coverImage ? `<img src="${escapeHtml(a.coverImage)}" alt="" style="width:100%;height:120px;object-fit:cover;display:block">` : `<div style="height:120px;background:linear-gradient(135deg,rgba(45,212,191,0.25),rgba(13,148,136,0.12))"></div>`}
   <div style="padding:16px">
-    <h5 style="font-size:14px;color:#fff;margin:0">${escapeHtml(a.title)}</h5>
+    <h5 style="font-size:14px;color:#080414;margin:0">${escapeHtml(a.title)}</h5>
   </div>
 </a>`;
 }
@@ -261,16 +261,16 @@ function generateListingPage(articles: Article[]): string {
   const rest = hero ? articles.filter((a) => a.id !== hero.id) : articles;
   const categories = collectCategories(articles);
 
-  const heroHtml = hero ? `<div id="ra-hero" class="ra-hero-grid" data-audience="${hero.category.audience}" data-category="${hero.category.slug}" style="border-radius:20px;overflow:hidden;background:#0e0920;box-shadow:0 10px 30px rgba(0,0,0,0.25);margin-bottom:56px">
+  const heroHtml = hero ? `<div id="ra-hero" class="ra-hero-grid" data-audience="${hero.category.audience}" data-category="${hero.category.slug}" style="border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 10px 30px rgba(8,4,20,0.10);margin-bottom:56px">
   <a href="/revista/${hero.slug}">
-    ${hero.coverImage ? `<img src="${escapeHtml(hero.coverImage)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">` : `<div style="min-height:320px;background:linear-gradient(135deg,#160d30,#1e1240)"></div>`}
+    ${hero.coverImage ? `<img src="${escapeHtml(hero.coverImage)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">` : `<div style="min-height:320px;background:linear-gradient(135deg,rgba(45,212,191,0.25),rgba(13,148,136,0.12))"></div>`}
   </a>
   <div style="padding:40px;display:flex;flex-direction:column;justify-content:center">
-    <span style="display:inline-block;padding:4px 10px;border-radius:999px;background:rgba(45,212,191,0.12);color:#2dd4bf;font-size:10px;font-weight:700;text-transform:uppercase;width:fit-content">${escapeHtml(hero.category.name)}</span>
-    <h2 style="font-size:28px;margin:14px 0 10px"><a href="/revista/${hero.slug}" style="color:#fff">${escapeHtml(hero.title)}</a></h2>
-    <p style="font-size:14px;line-height:1.6;color:rgba(255,255,255,0.65);margin:0 0 20px">${escapeHtml(hero.excerpt)}</p>
+    <span style="display:inline-block;padding:4px 10px;border-radius:999px;background:#2dd4bf;color:#04201c;font-size:10px;font-weight:700;text-transform:uppercase;width:fit-content">${escapeHtml(hero.category.name)}</span>
+    <h2 style="font-size:28px;margin:14px 0 10px"><a href="/revista/${hero.slug}" style="color:#080414">${escapeHtml(hero.title)}</a></h2>
+    <p style="font-size:14px;line-height:1.6;color:#4b4b55;margin:0 0 20px">${escapeHtml(hero.excerpt)}</p>
     ${renderByline(hero)}
-    <a href="/revista/${hero.slug}" style="color:#2dd4bf;font-size:13px;font-weight:700;margin-top:16px;display:inline-block">Leer articulo completo →</a>
+    <a href="/revista/${hero.slug}" style="color:#0d9488;font-size:13px;font-weight:700;margin-top:16px;display:inline-block">Leer articulo completo →</a>
   </div>
 </div>` : '';
 
@@ -287,7 +287,7 @@ function generateListingPage(articles: Article[]): string {
   const body = `${renderNav()}
 <div style="max-width:1200px;margin:0 auto;padding:64px 24px">
   <h1 style="font-size:48px;text-align:center;margin-bottom:8px">Revista Aliax</h1>
-  <p style="text-align:center;color:rgba(255,255,255,0.6);margin-bottom:32px">Ideas y recursos para cuidar tu bienestar</p>
+  <p style="text-align:center;color:#55555f;margin-bottom:32px">Ideas y recursos para cuidar tu bienestar</p>
   ${pills}
   ${heroHtml}
   <h3 style="font-size:24px;margin-bottom:24px">Ultimos articulos</h3>
@@ -311,8 +311,8 @@ function generateArticlePage(a: Article, allArticles: Article[]): string {
 
   const body = `${renderNav()}
 <div style="max-width:680px;margin:0 auto;padding:64px 24px">
-  <a href="/revista" style="font-size:13px;color:rgba(255,255,255,0.5)">← Revista Aliax</a>
-  <span style="display:inline-block;margin-left:12px;padding:5px 12px;border-radius:999px;background:rgba(45,212,191,0.12);color:#2dd4bf;font-size:11px;font-weight:700;text-transform:uppercase">${escapeHtml(a.category.name)}</span>
+  <a href="/revista" style="font-size:13px;color:#0d9488">← Revista Aliax</a>
+  <span style="display:inline-block;margin-left:12px;padding:5px 12px;border-radius:999px;background:#2dd4bf;color:#04201c;font-size:11px;font-weight:700;text-transform:uppercase">${escapeHtml(a.category.name)}</span>
   <h1 style="font-size:40px;line-height:1.1;margin:18px 0 16px">${escapeHtml(a.title)}</h1>
   ${renderByline(a)}
   ${a.coverImage ? `<img src="${escapeHtml(a.coverImage)}" alt="" style="width:100%;border-radius:24px;margin:24px 0 32px">` : ''}
