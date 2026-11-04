@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, createContext, useContext, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, X, Plus, Power, Sparkles, GripVertical, Pencil, CalendarDays, Layers, Ban, Settings2, Bell, ChevronRight } from 'lucide-react';
+import { ArrowLeft, X, Plus, Power, Sparkles, GripVertical, Pencil, CalendarDays, Layers, Ban, Settings2, Bell, ChevronRight, Trash2 } from 'lucide-react';
 import DatePickerField from '../components/DatePickerField';
 import CustomSelect from '../components/CustomSelect';
 import api from '../api/client';
@@ -13,7 +13,7 @@ import {
   type AvailabilitySlot, type BookingSettings,
   type ScheduleBlock, type ServiceAvailabilitySlot, type RecurringScheduleBlock,
 } from '../types/availability';
-import { useServices, type Service } from '../hooks/useServices';
+import { useServices, type Service, type ServiceBookingCounts } from '../hooks/useServices';
 import ImageUpload from '../components/ImageUpload';
 import { ImagePositionPicker } from '../components/ServiceForm';
 import { useUpload } from '../hooks/useUpload';
@@ -127,12 +127,115 @@ function BtnGhost({ onClick, children, small = false, disabled = false }: { onCl
   );
 }
 
-function BtnDanger({ onClick, children }: { onClick?: () => void; children: React.ReactNode }) {
+function BtnDanger({ onClick, children, disabled = false }: { onClick?: () => void; children: React.ReactNode; disabled?: boolean }) {
   return (
-    <button onClick={onClick} style={{
+    <button onClick={onClick} disabled={disabled} style={{
       background: 'rgba(255,101,132,0.15)', color: '#ff6584', border: '1px solid rgba(255,101,132,0.3)',
-      borderRadius: 8, cursor: 'pointer', padding: '6px 12px', fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 500,
+      borderRadius: 8, cursor: disabled ? 'not-allowed' : 'pointer', padding: '6px 12px', fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 500,
+      opacity: disabled ? 0.6 : 1,
     }}>{children}</button>
+  );
+}
+
+function DeleteServicePermanentlyModal({ service, getBookingCounts, onDeletePermanently, onClose, onDeleted }: {
+  service: Service;
+  getBookingCounts: (id: string) => Promise<ServiceBookingCounts | null>;
+  onDeletePermanently: (id: string) => Promise<boolean>;
+  onClose: () => void;
+  onDeleted: () => void;
+}) {
+  const { toast } = useToast();
+  const [counts, setCounts] = useState<ServiceBookingCounts | null>(null);
+  const [countsError, setCountsError] = useState(false);
+  const [loadingCounts, setLoadingCounts] = useState(true);
+  const [confirmText, setConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const loadCounts = useCallback(async () => {
+    setLoadingCounts(true);
+    setCountsError(false);
+    const result = await getBookingCounts(service.id);
+    if (result) setCounts(result); else setCountsError(true);
+    setLoadingCounts(false);
+  }, [service.id, getBookingCounts]);
+
+  useEffect(() => { loadCounts(); }, [loadCounts]);
+
+  const STATUS_LABELS: [keyof ServiceBookingCounts['byStatus'], string][] = [
+    ['PENDING', 'pendiente'], ['CONFIRMED', 'confirmada'], ['CANCELLED', 'cancelada'],
+    ['COMPLETED', 'completada'], ['NO_SHOW', 'no-show'],
+  ];
+
+  const countsSummary = counts
+    ? STATUS_LABELS
+        .filter(([key]) => counts.byStatus[key] > 0)
+        .map(([key, label]) => `${counts.byStatus[key]} ${label}${counts.byStatus[key] === 1 ? '' : 's'}`)
+        .join(', ')
+    : '';
+
+  const canConfirm = !loadingCounts && !countsError && confirmText === service.name;
+
+  const handleDelete = async () => {
+    if (!canConfirm) return;
+    setDeleting(true);
+    try {
+      await onDeletePermanently(service.id);
+      toast('Servicio eliminado permanentemente');
+      onDeleted();
+    } catch (err: any) {
+      toast(err.message || 'Error al eliminar el servicio', 'error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--sc-side)', border: '1px solid var(--sc-border)', borderRadius: 16, boxShadow: '0 8px 40px rgba(0,0,0,0.3)', width: '100%', maxWidth: 440, padding: 24 }}>
+        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 17, color: 'var(--sc-text)', marginBottom: 8 }}>
+          Eliminar "{service.name}" permanentemente
+        </div>
+
+        {loadingCounts && (
+          <p style={{ fontSize: 13, color: 'var(--sc-muted)', margin: '16px 0' }}>Cargando información de citas asociadas...</p>
+        )}
+
+        {!loadingCounts && countsError && (
+          <div style={{ margin: '16px 0' }}>
+            <p style={{ fontSize: 13, color: '#ff6584' }}>No se pudo cargar la información de citas asociadas.</p>
+            <BtnGhost small onClick={loadCounts}>Reintentar</BtnGhost>
+          </div>
+        )}
+
+        {!loadingCounts && !countsError && counts && (
+          <p style={{ fontSize: 13, color: 'var(--sc-muted)', margin: '16px 0', lineHeight: 1.5 }}>
+            {counts.total === 0
+              ? 'Este servicio no tiene citas asociadas.'
+              : `Esto también eliminará ${counts.total} cita${counts.total === 1 ? '' : 's'} asociada${counts.total === 1 ? '' : 's'}: ${countsSummary}.`}
+          </p>
+        )}
+
+        <div style={{ marginTop: 8, marginBottom: 20 }}>
+          <label style={{ fontSize: 12, color: 'var(--sc-muted)', display: 'block', marginBottom: 6 }}>
+            Escribe el nombre del servicio para confirmar: <strong style={{ color: 'var(--sc-text)' }}>{service.name}</strong>
+          </label>
+          <input
+            type="text"
+            value={confirmText}
+            onChange={e => setConfirmText(e.target.value)}
+            disabled={loadingCounts || countsError}
+            style={{ background: 'var(--sc-inner)', border: '1px solid var(--sc-border)', borderRadius: 8, padding: '9px 12px', color: 'var(--sc-text)', fontFamily: 'DM Sans', fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <BtnGhost onClick={onClose}>Cancelar</BtnGhost>
+          <BtnDanger onClick={handleDelete} disabled={!canConfirm || deleting}>
+            {deleting ? 'Eliminando...' : 'Eliminar permanentemente'}
+          </BtnDanger>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -442,7 +545,7 @@ type SvcFilter = 'active' | 'inactive' | 'all';
 function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?: boolean }) {
   const { toast } = useToast();
   const sc = useSC();
-  const { services, stats, loading, createService, updateService, toggleService } = useServices();
+  const { services, stats, loading, createService, updateService, toggleService, getServiceBookingCounts, permanentlyDeleteService } = useServices();
   const { uploadImage } = useUpload();
   const changePicRef = useRef<HTMLInputElement>(null);
   const [filter, setFilter] = useState<SvcFilter>('active');
@@ -515,6 +618,7 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
   const [franjasByDay, setFranjasByDay] = useState<Record<number, { startTime: string; endTime: string }[]>>({});
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingService, setDeletingService] = useState<Service | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [order, setOrder] = useState<string[]>(() => {
@@ -895,11 +999,34 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
               >
                 <Power size={13} />
               </button>
+              {/* Botón Eliminar permanentemente (solo si está inactivo) */}
+              {!s.isActive && (
+                <button
+                  onClick={e => { e.stopPropagation(); setDeletingService(s); }}
+                  title="Eliminar permanentemente"
+                  style={{
+                    flexShrink: 0, background: 'rgba(255,101,132,0.12)', border: '1px solid rgba(255,101,132,0.3)',
+                    borderRadius: 8, cursor: 'pointer', padding: '6px 10px', color: '#ff6584',
+                    display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontFamily: 'DM Sans',
+                  }}
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
             </div>
           </div>
         ))}
       </div>
 
+      {deletingService && (
+        <DeleteServicePermanentlyModal
+          service={deletingService}
+          getBookingCounts={getServiceBookingCounts}
+          onDeletePermanently={permanentlyDeleteService}
+          onClose={() => setDeletingService(null)}
+          onDeleted={() => setDeletingService(null)}
+        />
+      )}
     </>
   );
 }
