@@ -290,7 +290,7 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
     if (selectedDay === null) return;
     const otherDays = activeDays.filter(d => d !== selectedDay);
     if (otherDays.length === 0) return;
-    const dayLabels = otherDays.map(d => DAY_NAMES_SHORT[d]).join(', ');
+    const dayLabels = DAY_ORDER.filter(d => otherDays.includes(d)).map(d => DAY_NAMES_SHORT[d]).join(', ');
     if (!confirm(`Esto reemplazará el horario de ${dayLabels} con el horario de ${DAY_NAMES_SHORT[selectedDay]}. ¿Continuar?`)) return;
     setSaving(true);
     try {
@@ -371,7 +371,7 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 16, borderTop: '1px solid var(--sc-border)', gap: 8, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <BtnGhost small onClick={addFranja}>+ Añadir franja</BtnGhost>
-                <BtnGhost small onClick={handleApplyToAllDays} disabled={saving || activeDays.filter(d => d !== selectedDay).length === 0}>
+                <BtnGhost small onClick={handleApplyToAllDays} disabled={saving || franjas.length === 0 || activeDays.filter(d => d !== selectedDay).length === 0}>
                   Aplicar a todos los días
                 </BtnGhost>
               </div>
