@@ -153,6 +153,46 @@ router.patch('/:id/toggle', authMiddleware, async (req: AuthRequest, res, next) 
   }
 });
 
+// GET /api/services/:id/booking-counts — Count of bookings by status (auth)
+router.get('/:id/booking-counts', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    await verifyServiceOwnership(req.params.id, req.userId!);
+
+    const grouped = await prisma.booking.groupBy({
+      by: ['status'],
+      where: { serviceId: req.params.id },
+      _count: { status: true },
+    });
+
+    const byStatus = { PENDING: 0, CONFIRMED: 0, CANCELLED: 0, COMPLETED: 0, NO_SHOW: 0 };
+    let total = 0;
+    for (const row of grouped) {
+      byStatus[row.status] = row._count.status;
+      total += row._count.status;
+    }
+
+    res.json({ total, byStatus });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/services/:id/permanent — Hard delete (auth, solo si ya está desactivado)
+router.delete('/:id/permanent', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    const service = await verifyServiceOwnership(req.params.id, req.userId!);
+
+    if (service.isActive) {
+      throw new AppError(400, 'El servicio debe estar desactivado antes de eliminarlo permanentemente.');
+    }
+
+    await prisma.service.delete({ where: { id: req.params.id } });
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/services/:id/images — Add image URL to service images[]
 router.post('/:id/images', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
