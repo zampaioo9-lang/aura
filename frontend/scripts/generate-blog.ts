@@ -101,10 +101,12 @@ a{color:#0d9488;text-decoration:none}
 h1,h2,h3{font-family:'Bebas Neue',sans-serif;color:#080414;letter-spacing:0.02em}
 .ra-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
 .ra-hero-grid{display:grid;grid-template-columns:1fr 1fr}
-.ra-pill{padding:8px 18px;border-radius:999px;border:1px solid rgba(139,92,246,0.25);background:rgba(139,92,246,0.12);color:rgba(8,4,20,0.65);font-size:13px;font-weight:600;cursor:pointer;font-family:'Urbanist',sans-serif}
+.ra-pill{padding:8px 18px;border-radius:999px;border:1px solid transparent;background:rgba(139,92,246,0.12);color:rgba(8,4,20,0.65);font-size:13px;font-weight:600;cursor:pointer;font-family:'Urbanist',sans-serif}
 .ra-pill-active{background:#2dd4bf;border-color:#2dd4bf;color:#04201c}
 .ra-bullets li{font-size:17px;line-height:1.75;color:#3f3f46;margin-bottom:8px}
 .ra-bullets li::marker{color:#0d9488}
+.ra-card{transition:transform 0.2s ease,box-shadow 0.2s ease}
+.ra-card:hover{transform:translateY(-6px);box-shadow:0 16px 40px rgba(8,4,20,0.16)}
 @media (max-width:860px){.ra-grid3{grid-template-columns:1fr}.ra-hero-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -171,7 +173,7 @@ function renderBlock(block: ArticleBlock): string {
 }
 
 function renderArticleCard(a: Article): string {
-  return `<div data-audience="${a.category.audience}" data-category="${a.category.slug}" style="border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 10px 30px rgba(8,4,20,0.10)">
+  return `<div data-audience="${a.category.audience}" data-category="${a.category.slug}" class="ra-card" style="border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 10px 30px rgba(8,4,20,0.10)">
   <a href="/revista/${a.slug}">
     ${a.coverImage ? `<img src="${escapeHtml(a.coverImage)}" alt="" style="width:100%;height:160px;object-fit:cover;display:block">` : `<div style="height:160px;background:linear-gradient(135deg,rgba(45,212,191,0.25),rgba(13,148,136,0.12))"></div>`}
   </a>
@@ -185,7 +187,7 @@ function renderArticleCard(a: Article): string {
 }
 
 function renderRelatedCard(a: Article): string {
-  return `<a href="/revista/${a.slug}" style="display:block;border-radius:16px;overflow:hidden;background:#fff">
+  return `<a href="/revista/${a.slug}" class="ra-card" style="display:block;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 4px 14px rgba(8,4,20,0.06)">
   ${a.coverImage ? `<img src="${escapeHtml(a.coverImage)}" alt="" style="width:100%;height:120px;object-fit:cover;display:block">` : `<div style="height:120px;background:linear-gradient(135deg,rgba(45,212,191,0.25),rgba(13,148,136,0.12))"></div>`}
   <div style="padding:16px">
     <h5 style="font-size:14px;color:#080414;margin:0">${escapeHtml(a.title)}</h5>
@@ -261,7 +263,7 @@ function generateListingPage(articles: Article[]): string {
   const rest = hero ? articles.filter((a) => a.id !== hero.id) : articles;
   const categories = collectCategories(articles);
 
-  const heroHtml = hero ? `<div id="ra-hero" class="ra-hero-grid" data-audience="${hero.category.audience}" data-category="${hero.category.slug}" style="border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 10px 30px rgba(8,4,20,0.10);margin-bottom:56px">
+  const heroHtml = hero ? `<div id="ra-hero" class="ra-hero-grid ra-card" data-audience="${hero.category.audience}" data-category="${hero.category.slug}" style="border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 10px 30px rgba(8,4,20,0.10);margin-bottom:56px">
   <a href="/revista/${hero.slug}">
     ${hero.coverImage ? `<img src="${escapeHtml(hero.coverImage)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">` : `<div style="min-height:320px;background:linear-gradient(135deg,rgba(45,212,191,0.25),rgba(13,148,136,0.12))"></div>`}
   </a>
