@@ -117,12 +117,12 @@ function BtnPrimary({ onClick, children, disabled = false, small = false }: {
   );
 }
 
-function BtnGhost({ onClick, children, small = false }: { onClick?: () => void; children: React.ReactNode; small?: boolean }) {
+function BtnGhost({ onClick, children, small = false, disabled = false }: { onClick?: () => void; children: React.ReactNode; small?: boolean; disabled?: boolean }) {
   return (
-    <button onClick={onClick} style={{
-      background: 'var(--sc-inner)', color: 'var(--sc-text)', border: '1px solid var(--sc-border)', borderRadius: 8, cursor: 'pointer',
+    <button onClick={onClick} disabled={disabled} style={{
+      background: 'var(--sc-inner)', color: 'var(--sc-text)', border: '1px solid var(--sc-border)', borderRadius: 8, cursor: disabled ? 'not-allowed' : 'pointer',
       padding: small ? '6px 12px' : '10px 20px', fontSize: small ? 13 : 14, fontFamily: 'DM Sans, sans-serif',
-      fontWeight: 500, transition: 'all .15s',
+      fontWeight: 500, transition: 'all .15s', opacity: disabled ? 0.6 : 1,
     }}>{children}</button>
   );
 }
@@ -283,6 +283,29 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
     await fetchSlots();
   };
 
+  // Copia las franjas visibles del día seleccionado a todos los demás días laborables,
+  // sobrescribiendo lo que cada uno tuviera antes. Reusa el mismo patrón de borrar-y-crear
+  // que ya usan handleSave/handleApplyTemplate.
+  const handleApplyToAllDays = async () => {
+    if (selectedDay === null) return;
+    const otherDays = activeDays.filter(d => d !== selectedDay);
+    if (otherDays.length === 0) return;
+    const dayLabels = otherDays.map(d => DAY_NAMES_SHORT[d]).join(', ');
+    if (!confirm(`Esto reemplazará el horario de ${dayLabels} con el horario de ${DAY_NAMES_SHORT[selectedDay]}. ¿Continuar?`)) return;
+    setSaving(true);
+    try {
+      const existing = slots.filter(s => activeDays.includes(s.dayOfWeek));
+      await Promise.all(existing.map(s => api.delete(`/availability/${s.id}`)));
+      if (franjas.length > 0) {
+        const bulkSlots = activeDays.flatMap(day => franjas.map(f => ({ dayOfWeek: day, startTime: f.startTime, endTime: f.endTime })));
+        await api.post('/availability/bulk', { profileId, slots: bulkSlots });
+      }
+      toast(`Horario aplicado a ${activeDays.length} días`);
+      fetchSlots();
+    } catch (err: any) { toast(err.response?.data?.error || 'Error al aplicar', 'error'); }
+    finally { setSaving(false); }
+  };
+
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><div style={{ width: 32, height: 32, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent-text)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} /></div>;
 
   const dayHours = (day: number) => slots.filter(s => s.dayOfWeek === day && s.isActive).reduce((acc, s) => acc + (t2m(s.endTime) - t2m(s.startTime)) / 60, 0);
@@ -346,7 +369,12 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
               );
             })}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 16, borderTop: '1px solid var(--sc-border)', gap: 8, flexWrap: 'wrap' }}>
-              <BtnGhost small onClick={addFranja}>+ Añadir franja</BtnGhost>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <BtnGhost small onClick={addFranja}>+ Añadir franja</BtnGhost>
+                <BtnGhost small onClick={handleApplyToAllDays} disabled={saving || activeDays.filter(d => d !== selectedDay).length === 0}>
+                  Aplicar a todos los días
+                </BtnGhost>
+              </div>
               <BtnPrimary onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</BtnPrimary>
             </div>
           </>
