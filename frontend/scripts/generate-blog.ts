@@ -305,9 +305,7 @@ ${renderPillsScript()}`;
 
 function generateArticlePage(a: Article, allArticles: Article[]): string {
   const renderedBlocks = a.blocks.map(renderBlock);
-  if (a.category.audience === 'PACIENTES') {
-    renderedBlocks.splice(Math.floor(a.blocks.length / 2), 0, renderTherapistCTA());
-  }
+  renderedBlocks.splice(Math.floor(a.blocks.length / 2), 0, renderTherapistCTA());
   const blocksHtml = renderedBlocks.join('\n');
   const related = relatedArticles(allArticles, a);
 
