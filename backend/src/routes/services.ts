@@ -186,7 +186,18 @@ router.delete('/:id/permanent', authMiddleware, async (req: AuthRequest, res, ne
       throw new AppError(400, 'El servicio debe estar desactivado antes de eliminarlo permanentemente.');
     }
 
-    await prisma.service.delete({ where: { id: req.params.id } });
+    // Review.booking no tiene onDelete: Cascade (ver schema.prisma) -- el cascade real
+    // Service -> Booking se rompe si algún booking tiene un Review asociado, y Prisma
+    // lanzaría un error de FK en vez de borrar. Se borran los reviews primero, en la misma
+    // transacción. deleteMany + count-check (no delete()) por el mismo motivo ya documentado
+    // en offerings.ts: delete() lanza P2025 si la fila ya no existe (doble clic), lo cual
+    // errorHandler.ts convertiría en 500 en vez de un 404 limpio.
+    const [, { count }] = await prisma.$transaction([
+      prisma.review.deleteMany({ where: { booking: { serviceId: req.params.id } } }),
+      prisma.service.deleteMany({ where: { id: req.params.id } }),
+    ]);
+    if (count === 0) throw new AppError(404, 'Servicio no encontrado');
+
     res.status(204).send();
   } catch (err) {
     next(err);
