@@ -285,7 +285,7 @@ Open `backend/src/services/emailService.ts`, find the end of the `emailTemplates
           : 'Confirma tu correo para empezar a recibir los artículos nuevos de Revista Aliax sobre salud mental.'
       )}
       ${ctaButton('Confirmar suscripción', data.confirmUrl)}
-      ${subtext('Si tú no pediste esto, puedes ignorar este correo — no se te suscribirá a nada.')}
+      ${subtext('Si tú no pediste esto, puedes ignorar este correo: no se te suscribirá a nada.')}
     `),
   }),
 
