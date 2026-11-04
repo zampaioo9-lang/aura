@@ -94,16 +94,17 @@ function pageShell(title: string, description: string, canonical: string, ogImag
 <meta property="og:description" content="${escapeHtml(description)}">
 <meta property="og:image" content="${escapeHtml(ogImage)}">
 <meta property="og:url" content="${canonical}">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Urbanist:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=Urbanist:wght@300;400;500;600;700;800&display=swap">
 <style>
 body{margin:0;background:#f4f4f2;font-family:'Urbanist',sans-serif;color:#3f3f46}
 a{color:#0d9488;text-decoration:none}
-h1,h2,h3{font-family:'Bebas Neue',sans-serif;color:#080414;letter-spacing:0.02em}
+h1,h2,h4,h5{font-family:'DM Sans',sans-serif;font-weight:700;color:#080414}
+h3{font-family:'DM Sans',sans-serif;font-weight:500;color:#080414}
 .ra-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
 .ra-hero-grid{display:grid;grid-template-columns:1fr 1fr}
 .ra-pill{padding:8px 18px;border-radius:999px;border:1px solid transparent;background:rgba(139,92,246,0.12);color:rgba(8,4,20,0.65);font-size:13px;font-weight:600;cursor:pointer;font-family:'Urbanist',sans-serif}
 .ra-pill-active{background:#2dd4bf;border-color:#2dd4bf;color:#04201c}
-.ra-bullets li{font-size:17px;line-height:1.75;color:#3f3f46;margin-bottom:8px}
+.ra-bullets li{font-family:'DM Sans',sans-serif;font-weight:400;font-size:17px;line-height:1.75;color:#3f3f46;margin-bottom:8px}
 .ra-bullets li::marker{color:#0d9488}
 .ra-card{transition:transform 0.2s ease,box-shadow 0.2s ease}
 .ra-card:hover{transform:translateY(-6px);box-shadow:0 16px 40px rgba(8,4,20,0.16)}
@@ -147,7 +148,7 @@ function renderTherapistCTA(): string {
 
 function renderBlock(block: ArticleBlock): string {
   if (block.type === 'TEXT') {
-    return `<p style="margin:0 0 24px;font-size:17px;line-height:1.75;color:#3f3f46">${escapeHtml(block.text ?? '')}</p>`;
+    return `<p style="margin:0 0 24px;font-family:'DM Sans',sans-serif;font-weight:400;font-size:17px;line-height:1.75;color:#3f3f46">${escapeHtml(block.text ?? '')}</p>`;
   }
   if (block.type === 'IMAGE') {
     if (!block.imageUrl) return '';
@@ -180,7 +181,7 @@ function renderArticleCard(a: Article): string {
   <div style="padding:22px">
     <span style="display:inline-block;padding:4px 10px;border-radius:999px;background:#2dd4bf;color:#04201c;font-size:10px;font-weight:700;text-transform:uppercase">${escapeHtml(a.category.name)}</span>
     <h4 style="font-size:16px;color:#080414;margin:10px 0 8px"><a href="/revista/${a.slug}" style="color:#080414">${escapeHtml(a.title)}</a></h4>
-    <p style="font-size:14px;font-weight:500;line-height:1.55;color:#45454f;margin:0 0 12px">${escapeHtml(a.excerpt)}</p>
+    <p style="font-family:'DM Sans',sans-serif;font-weight:400;font-size:14px;line-height:1.55;color:#45454f;margin:0 0 12px">${escapeHtml(a.excerpt)}</p>
     ${renderByline(a)}
   </div>
 </div>`;
@@ -270,7 +271,7 @@ function generateListingPage(articles: Article[]): string {
   <div style="padding:40px;display:flex;flex-direction:column;justify-content:center">
     <span style="display:inline-block;padding:4px 10px;border-radius:999px;background:#2dd4bf;color:#04201c;font-size:10px;font-weight:700;text-transform:uppercase;width:fit-content">${escapeHtml(hero.category.name)}</span>
     <h2 style="font-size:28px;margin:14px 0 10px"><a href="/revista/${hero.slug}" style="color:#080414">${escapeHtml(hero.title)}</a></h2>
-    <p style="font-size:15px;font-weight:500;line-height:1.6;color:#45454f;margin:0 0 20px">${escapeHtml(hero.excerpt)}</p>
+    <p style="font-family:'DM Sans',sans-serif;font-weight:400;font-size:15px;line-height:1.6;color:#45454f;margin:0 0 20px">${escapeHtml(hero.excerpt)}</p>
     ${renderByline(hero)}
     <a href="/revista/${hero.slug}" style="color:#0d9488;font-size:13px;font-weight:700;margin-top:16px;display:inline-block">Leer articulo completo →</a>
   </div>
