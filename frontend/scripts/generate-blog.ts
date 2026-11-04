@@ -180,7 +180,7 @@ function renderArticleCard(a: Article): string {
   <div style="padding:22px">
     <span style="display:inline-block;padding:4px 10px;border-radius:999px;background:#2dd4bf;color:#04201c;font-size:10px;font-weight:700;text-transform:uppercase">${escapeHtml(a.category.name)}</span>
     <h4 style="font-size:16px;color:#080414;margin:10px 0 8px"><a href="/revista/${a.slug}" style="color:#080414">${escapeHtml(a.title)}</a></h4>
-    <p style="font-size:13px;line-height:1.55;color:#5b5b66;margin:0 0 12px">${escapeHtml(a.excerpt)}</p>
+    <p style="font-size:14px;font-weight:500;line-height:1.55;color:#45454f;margin:0 0 12px">${escapeHtml(a.excerpt)}</p>
     ${renderByline(a)}
   </div>
 </div>`;
@@ -270,7 +270,7 @@ function generateListingPage(articles: Article[]): string {
   <div style="padding:40px;display:flex;flex-direction:column;justify-content:center">
     <span style="display:inline-block;padding:4px 10px;border-radius:999px;background:#2dd4bf;color:#04201c;font-size:10px;font-weight:700;text-transform:uppercase;width:fit-content">${escapeHtml(hero.category.name)}</span>
     <h2 style="font-size:28px;margin:14px 0 10px"><a href="/revista/${hero.slug}" style="color:#080414">${escapeHtml(hero.title)}</a></h2>
-    <p style="font-size:14px;line-height:1.6;color:#4b4b55;margin:0 0 20px">${escapeHtml(hero.excerpt)}</p>
+    <p style="font-size:15px;font-weight:500;line-height:1.6;color:#45454f;margin:0 0 20px">${escapeHtml(hero.excerpt)}</p>
     ${renderByline(hero)}
     <a href="/revista/${hero.slug}" style="color:#0d9488;font-size:13px;font-weight:700;margin-top:16px;display:inline-block">Leer articulo completo →</a>
   </div>
