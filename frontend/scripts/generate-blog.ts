@@ -101,7 +101,7 @@ a{color:#0d9488;text-decoration:none}
 h1,h2,h3{font-family:'Bebas Neue',sans-serif;color:#080414;letter-spacing:0.02em}
 .ra-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
 .ra-hero-grid{display:grid;grid-template-columns:1fr 1fr}
-.ra-pill{padding:8px 18px;border-radius:999px;border:1px solid rgba(8,4,20,0.12);background:transparent;color:rgba(8,4,20,0.65);font-size:13px;font-weight:600;cursor:pointer;font-family:'Urbanist',sans-serif}
+.ra-pill{padding:8px 18px;border-radius:999px;border:1px solid rgba(139,92,246,0.25);background:rgba(139,92,246,0.12);color:rgba(8,4,20,0.65);font-size:13px;font-weight:600;cursor:pointer;font-family:'Urbanist',sans-serif}
 .ra-pill-active{background:#2dd4bf;border-color:#2dd4bf;color:#04201c}
 .ra-bullets li{font-size:17px;line-height:1.75;color:#3f3f46;margin-bottom:8px}
 .ra-bullets li::marker{color:#0d9488}
@@ -115,7 +115,7 @@ ${body}
 }
 
 function renderNav(): string {
-  return `<div style="display:flex;align-items:center;justify-content:space-between;padding:24px 64px;border-bottom:1px solid rgba(8,4,20,0.08)">
+  return `<div style="display:flex;align-items:center;justify-content:space-between;padding:24px 64px;border-bottom:1px solid rgba(8,4,20,0.08);background:#ffffff">
   <a href="/" style="display:flex;align-items:center;gap:12px">
     <div style="width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(45,212,191,0.5);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:18px;color:#0d9488">A</div>
     <div>
@@ -287,7 +287,7 @@ function generateListingPage(articles: Article[]): string {
   const body = `${renderNav()}
 <div style="max-width:1200px;margin:0 auto;padding:64px 24px">
   <h1 style="font-size:48px;text-align:center;margin-bottom:8px">Revista Aliax</h1>
-  <p style="text-align:center;color:#55555f;margin-bottom:32px">Ideas y recursos para cuidar tu bienestar</p>
+  <p style="text-align:center;font-size:19px;color:#55555f;margin-bottom:32px">Ideas y recursos para cuidar tu bienestar</p>
   ${pills}
   ${heroHtml}
   <h3 style="font-size:24px;margin-bottom:24px">Ultimos articulos</h3>
