@@ -742,6 +742,25 @@ enum CategoryAudience {
   TERAPEUTAS
 }
 
+enum SubscriberStatus {
+  PENDING
+  CONFIRMED
+  UNSUBSCRIBED
+}
+
+model NewsletterSubscriber {
+  id           String            @id @default(cuid())
+  email        String
+  audience     CategoryAudience
+  status       SubscriberStatus  @default(PENDING)
+  confirmToken String?           @unique
+  confirmedAt  DateTime?
+  createdAt    DateTime          @default(now())
+
+  @@unique([email, audience])
+  @@index([confirmToken])
+}
+
 model Article {
   id              String        @id @default(cuid())
   slug            String        @unique
