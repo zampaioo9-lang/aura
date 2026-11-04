@@ -375,3 +375,8 @@ export const updateArticleBlockSchema = z.object({
   buttonUrl: z.string().url().optional().or(z.literal('')),
   order: z.number().int().min(1).optional(),
 });
+
+export const subscribeNewsletterSchema = z.object({
+  email: z.string().email(),
+  audience: z.enum(['PACIENTES', 'TERAPEUTAS']),
+});
