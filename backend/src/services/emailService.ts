@@ -568,11 +568,12 @@ export const emailTemplates = {
     `),
   }),
 
-  // HTML pre-llenado para "Enviar como newsletter" desde el CMS de Revista
+  // HTML pre-llenado para "Enviar como newsletter" desde el CMS de Revista.
+  // Sin `to`: no se envia directo, solo se devuelve subject+html para pre-llenar el formulario admin.
   articleNewsletter: (data: { title: string; excerpt: string; coverImage: string | null; articleUrl: string }) => ({
     subject: data.title,
     html: baseTemplate(data.title, `
-      ${data.coverImage ? `<img src="${data.coverImage}" alt="" style="width:100%;border-radius:12px;margin-bottom:20px;display:block;">` : ''}
+      ${data.coverImage ? `<img src="${data.coverImage}" alt="" width="560" style="width:100%;max-width:560px;border-radius:12px;margin-bottom:20px;display:block;">` : ''}
       ${heading(data.title)}
       ${subtext(data.excerpt)}
       ${ctaButton('Leer artículo completo', data.articleUrl)}
