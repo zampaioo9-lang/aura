@@ -183,7 +183,7 @@ function DeleteServicePermanentlyModal({ service, getBookingCounts, onDeletePerm
       toast('Servicio eliminado permanentemente');
       onDeleted();
     } catch (err: any) {
-      toast(err.message || 'Error al eliminar el servicio', 'error');
+      toast(err.response?.data?.error || err.message || 'Error al eliminar el servicio', 'error');
     } finally {
       setDeleting(false);
     }
@@ -229,7 +229,7 @@ function DeleteServicePermanentlyModal({ service, getBookingCounts, onDeletePerm
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <BtnGhost onClick={onClose}>Cancelar</BtnGhost>
+          <BtnGhost small onClick={onClose}>Cancelar</BtnGhost>
           <BtnDanger onClick={handleDelete} disabled={!canConfirm || deleting}>
             {deleting ? 'Eliminando...' : 'Eliminar permanentemente'}
           </BtnDanger>
