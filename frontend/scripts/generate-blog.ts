@@ -98,8 +98,8 @@ function pageShell(title: string, description: string, canonical: string, ogImag
 <style>
 body{margin:0;background:#f4f4f2;font-family:'Urbanist',sans-serif;color:#3f3f46}
 a{color:#0d9488;text-decoration:none}
-h1,h2,h4,h5{font-family:'DM Sans',sans-serif;font-weight:700;color:#080414}
-h3{font-family:'DM Sans',sans-serif;font-weight:500;color:#080414}
+h1,h2,h4,h5{font-family:'DM Sans',sans-serif;font-weight:700;color:#080414;letter-spacing:-0.02em}
+h3{font-family:'DM Sans',sans-serif;font-weight:500;color:#080414;letter-spacing:-0.015em}
 .ra-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
 .ra-hero-grid{display:grid;grid-template-columns:1fr 1fr}
 .ra-pill{padding:8px 18px;border-radius:999px;border:1px solid transparent;background:rgba(139,92,246,0.12);color:rgba(8,4,20,0.65);font-size:13px;font-weight:600;cursor:pointer;font-family:'Urbanist',sans-serif}
