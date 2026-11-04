@@ -276,7 +276,7 @@ Open `backend/src/services/emailService.ts`, find the end of the `emailTemplates
   // Confirmación de suscripción al newsletter de Revista (double opt-in)
   newsletterConfirm: (data: { email: string; confirmUrl: string; audience: 'PACIENTES' | 'TERAPEUTAS' }) => ({
     to: data.email,
-    subject: 'Confirma tu suscripción — Revista Aliax',
+    subject: 'Confirma tu suscripción a Revista Aliax',
     html: baseTemplate('Confirma tu suscripción', `
       ${heading('Un último paso')}
       ${subtext(
