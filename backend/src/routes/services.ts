@@ -153,6 +153,57 @@ router.patch('/:id/toggle', authMiddleware, async (req: AuthRequest, res, next) 
   }
 });
 
+// GET /api/services/:id/booking-counts — Count of bookings by status (auth)
+router.get('/:id/booking-counts', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    await verifyServiceOwnership(req.params.id, req.userId!);
+
+    const grouped = await prisma.booking.groupBy({
+      by: ['status'],
+      where: { serviceId: req.params.id },
+      _count: { status: true },
+    });
+
+    const byStatus = { PENDING: 0, CONFIRMED: 0, CANCELLED: 0, COMPLETED: 0, NO_SHOW: 0 };
+    let total = 0;
+    for (const row of grouped) {
+      byStatus[row.status] = row._count.status;
+      total += row._count.status;
+    }
+
+    res.json({ total, byStatus });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/services/:id/permanent — Hard delete (auth, solo si ya está desactivado)
+router.delete('/:id/permanent', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    const service = await verifyServiceOwnership(req.params.id, req.userId!);
+
+    if (service.isActive) {
+      throw new AppError(400, 'El servicio debe estar desactivado antes de eliminarlo permanentemente.');
+    }
+
+    // Review.booking no tiene onDelete: Cascade (ver schema.prisma) -- el cascade real
+    // Service -> Booking se rompe si algún booking tiene un Review asociado, y Prisma
+    // lanzaría un error de FK en vez de borrar. Se borran los reviews primero, en la misma
+    // transacción. deleteMany + count-check (no delete()) por el mismo motivo ya documentado
+    // en offerings.ts: delete() lanza P2025 si la fila ya no existe (doble clic), lo cual
+    // errorHandler.ts convertiría en 500 en vez de un 404 limpio.
+    const [, { count }] = await prisma.$transaction([
+      prisma.review.deleteMany({ where: { booking: { serviceId: req.params.id } } }),
+      prisma.service.deleteMany({ where: { id: req.params.id } }),
+    ]);
+    if (count === 0) throw new AppError(404, 'Servicio no encontrado');
+
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/services/:id/images — Add image URL to service images[]
 router.post('/:id/images', authMiddleware, async (req: AuthRequest, res, next) => {
   try {

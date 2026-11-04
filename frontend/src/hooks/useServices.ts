@@ -49,6 +49,17 @@ export interface UpdateServiceData {
   isActive?: boolean;
 }
 
+export interface ServiceBookingCounts {
+  total: number;
+  byStatus: {
+    PENDING: number;
+    CONFIRMED: number;
+    CANCELLED: number;
+    COMPLETED: number;
+    NO_SHOW: number;
+  };
+}
+
 export function useServices() {
   const [services, setServices] = useState<Service[]>([]);
   const [stats, setStats] = useState<ServiceStats | null>(null);
@@ -129,6 +140,28 @@ export function useServices() {
     }
   }, []);
 
+  const getServiceBookingCounts = useCallback(async (id: string): Promise<ServiceBookingCounts | null> => {
+    try {
+      const res = await api.get<ServiceBookingCounts>(`/services/${id}/booking-counts`);
+      return res.data;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const permanentlyDeleteService = useCallback(async (id: string): Promise<boolean> => {
+    try {
+      await api.delete(`/services/${id}/permanent`);
+      setServices(prev => prev.filter(s => s.id !== id));
+      setStats(prev => prev ? { ...prev, total: prev.total - 1, inactive: prev.inactive - 1 } : prev);
+      return true;
+    } catch (err: any) {
+      const msg = err.response?.data?.error || 'Error al eliminar el servicio permanentemente';
+      setError(msg);
+      throw new Error(msg);
+    }
+  }, []);
+
   const refetch = useCallback(() => {
     fetchServices();
   }, [fetchServices]);
@@ -147,6 +180,8 @@ export function useServices() {
     updateService,
     deleteService,
     toggleService,
+    getServiceBookingCounts,
+    permanentlyDeleteService,
     refetch,
   };
 }
