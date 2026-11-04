@@ -469,6 +469,9 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
       setFormData({ name: editingService.name, description: editingService.description || '', price: String(editingService.price), currency: editingService.currency, durationMinutes: editingService.durationMinutes, sessionModality: editingService.sessionModality || '' });
       setFormImage(editingService.image || '');
       setFormImagePosition(editingService.imagePosition || '50% 50%');
+      setActiveDays([]);
+      setSelectedDay(null);
+      setFranjasByDay({});
     } else if (modalOpen) {
       setFormData({ name: '', description: '', price: '0', currency: 'EUR', durationMinutes: 60, sessionModality: '' });
       setFormImage('');
