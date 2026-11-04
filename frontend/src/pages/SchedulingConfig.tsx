@@ -467,6 +467,9 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
       setFormData({ name: '', description: '', price: '0', currency: 'EUR', durationMinutes: 60, sessionModality: '' });
       setFormImage('');
       setFormImagePosition('50% 50%');
+      setActiveDays([]);
+      setSelectedDay(null);
+      setFranjasByDay({});
     }
     setFormError('');
   }, [modalOpen, editingService]);
@@ -478,7 +481,19 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
     setModalLoading(true);
     try {
       const payload = { name: formData.name.trim(), description: formData.description.trim() || undefined, price, currency: formData.currency, durationMinutes: formData.durationMinutes, sessionModality: formData.sessionModality || undefined, image: formImage || undefined, imagePosition: formImage ? formImagePosition : undefined, profileId };
-      if (modalMode === 'create') { await createService(payload); toast('Servicio creado'); }
+      if (modalMode === 'create') {
+        const created = await createService(payload);
+        toast('Servicio creado');
+        if (created && activeDays.length > 0) {
+          const slotsToSave: { dayOfWeek: number; startTime: string; endTime: string }[] = [];
+          activeDays.forEach(day => (franjasByDay[day] ?? []).forEach(f => slotsToSave.push({ dayOfWeek: day, ...f })));
+          try {
+            await api.post('/service-availability/bulk', { serviceId: created.id, slots: slotsToSave });
+          } catch {
+            toast('Servicio creado, pero no se pudo guardar su horario. Edítalo después.', 'error');
+          }
+        }
+      }
       else if (editingService) { await updateService(editingService.id, payload); toast('Servicio actualizado'); }
       setModalOpen(false);
     } catch (err: any) { setFormError(err.response?.data?.error || err.message || 'Error al guardar'); }
@@ -731,14 +746,13 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
               </div>
             </div>
 
-            {modalMode === 'edit' && editingService && (
-              <ProGate isPro={isPro}>
+            <ProGate isPro={isPro}>
                 <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--sc-border)' }}>
                   <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 15, color: 'var(--sc-text)', marginBottom: 4 }}>
                     Horario de este servicio
                   </div>
                   <p style={{ fontSize: 12, color: 'var(--sc-muted)', marginBottom: 12 }}>
-                    Días y horas disponibles solo para "{editingService.name}". Si no configuras nada aquí, se usa el horario general.
+                    Días y horas disponibles solo para "{editingService?.name || formData.name || 'este servicio'}". Si no configuras nada aquí, se usa el horario general.
                   </p>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
                     {DAY_ORDER.map(d => (
@@ -771,13 +785,14 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
                       ))}
                     </>
                   )}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingTop: 16, borderTop: '1px solid var(--sc-border)', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: modalMode === 'create' ? 'flex-start' : 'flex-end', paddingTop: 16, borderTop: '1px solid var(--sc-border)', gap: 8, flexWrap: 'wrap' }}>
                     <BtnGhost small onClick={addFranja}>+ Añadir franja</BtnGhost>
-                    <BtnPrimary onClick={handleSaveSlots} disabled={saving}>{saving ? 'Guardando...' : 'Guardar horario'}</BtnPrimary>
+                    {modalMode === 'edit' && (
+                      <BtnPrimary onClick={handleSaveSlots} disabled={saving}>{saving ? 'Guardando...' : 'Guardar horario'}</BtnPrimary>
+                    )}
                   </div>
                 </div>
               </ProGate>
-            )}
           </div>
         );
       })()}
