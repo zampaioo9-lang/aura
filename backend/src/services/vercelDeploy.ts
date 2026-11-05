@@ -27,7 +27,10 @@ export async function findNewProductionDeployment(afterTimestamp: number): Promi
   if (!isConfigured()) return null;
   const url = `${VERCEL_API_BASE}/v6/deployments?projectId=${env.VERCEL_PROJECT_ID}&target=production&teamId=${env.VERCEL_TEAM_ID}&limit=5`;
   try {
-    const res = await fetch(url, { headers: authHeaders() });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, { headers: authHeaders(), signal: controller.signal });
+    clearTimeout(timeout);
     if (!res.ok) return null;
     const data = (await res.json()) as { deployments: VercelDeploymentSummary[] };
     return data.deployments.find((d) => d.createdAt > afterTimestamp) || null;
@@ -41,9 +44,13 @@ export async function findNewProductionDeployment(afterTimestamp: number): Promi
 export async function waitForDeploymentReady(deploymentId: string, deadline: number): Promise<boolean> {
   while (Date.now() < deadline) {
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
       const res = await fetch(`${VERCEL_API_BASE}/v13/deployments/${deploymentId}?teamId=${env.VERCEL_TEAM_ID}`, {
         headers: authHeaders(),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       if (res.ok) {
         const data = (await res.json()) as { readyState: VercelDeploymentSummary['readyState'] };
         if (data.readyState === 'READY') return true;
@@ -64,7 +71,10 @@ export async function promoteDeployment(deploymentId: string): Promise<boolean> 
   const url = `${VERCEL_API_BASE}/v10/projects/${env.VERCEL_PROJECT_ID}/promote/${deploymentId}?teamId=${env.VERCEL_TEAM_ID}`;
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const res = await fetch(url, { method: 'POST', headers: authHeaders() });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(url, { method: 'POST', headers: authHeaders(), signal: controller.signal });
+      clearTimeout(timeout);
       if (res.ok) return true;
     } catch {
       // fall through to retry
