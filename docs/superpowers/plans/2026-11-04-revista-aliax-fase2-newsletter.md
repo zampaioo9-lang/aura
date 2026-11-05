@@ -1176,7 +1176,13 @@ Find:
 Add right after it:
 
 ```tsx
-              <li>Enviarte el newsletter de Revista Aliax, solo si te suscribes voluntariamente y confirmas tu correo</li>
+              <li>Enviarte el newsletter de Revista Aliax, solo si te suscribes voluntariamente y confirmas tu correo; puedes darte de baja cuando quieras desde el enlace incluido en cada envío</li>
+```
+
+Code review follow-up also updated the existing Resend provider bullet (section 5) to name the new Audience/contacts data flow, not just the already-disclosed transactional-email one:
+
+```tsx
+              <li><strong>Resend</strong>: envío de correos electrónicos transaccionales y de notificación; si te suscribes al newsletter de Revista Aliax, tu correo también se almacena en una lista de contactos (Audience) de Resend para ese envío</li>
 ```
 
 - [ ] **Step 2: Verify it compiles**
