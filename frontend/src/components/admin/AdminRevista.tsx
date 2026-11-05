@@ -13,10 +13,11 @@ interface Colors {
 
 interface Props {
   C: Colors;
+  onSendAsNewsletter: (preview: { subject: string; html: string; name: string }) => void;
 }
 
-export default function AdminRevista({ C }: Props) {
-  const { listCategories, createCategory, updateCategory, listArticles, deleteArticle, publishArticle, unpublishArticle, publishSiteChanges, getRebuildStatus } = useArticles();
+export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
+  const { listCategories, createCategory, updateCategory, listArticles, deleteArticle, publishArticle, unpublishArticle, publishSiteChanges, getRebuildStatus, getNewsletterPreview } = useArticles();
   const { toast } = useToast();
   const [subTab, setSubTab] = useState<'categorias' | 'articulos'>('articulos');
   const [categories, setCategories] = useState<Category[]>([]);
@@ -298,6 +299,24 @@ export default function AdminRevista({ C }: Props) {
                       >
                         {article.status === 'PUBLISHED' ? 'Despublicar' : 'Publicar'}
                       </button>
+                      {article.status === 'PUBLISHED' && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              const preview = await getNewsletterPreview(article.id);
+                              onSendAsNewsletter(preview);
+                            } catch (err: any) {
+                              toast(err.message, 'error');
+                            }
+                          }}
+                          style={{
+                            fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8,
+                            border: 'none', background: C.accentLight, color: C.accent, cursor: 'pointer',
+                          }}
+                        >
+                          Enviar como newsletter
+                        </button>
+                      )}
                       <button
                         onClick={async () => {
                           if (!confirm(`¿Borrar "${article.title}"?`)) return;
