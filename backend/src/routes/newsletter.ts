@@ -53,10 +53,12 @@ router.post('/subscribe', async (req, res, next) => {
 
     const confirmUrl = `${env.API_BASE_URL}/api/newsletter/confirm/${subscriber.confirmToken}`;
     const tpl = emailTemplates.newsletterConfirm({ email, confirmUrl, audience });
-    // No await: evita que la latencia del envio real (round-trip a Resend) sea un canal de
-    // tiempo que permita distinguir "ya confirmado" de "recien suscrito" por cuanto tarda la
-    // respuesta, igual que /auth/forgot-password con sendPasswordResetEmail.
-    sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {});
+    // Se espera el envio (a diferencia de un intento anterior sin await): en una funcion
+    // serverless, una promesa sin await puede quedar cortada a medias cuando la funcion se
+    // congela justo despues de responder, y el correo nunca sale -- confirmado en produccion
+    // (varias suscripciones de prueba no generaron ningun registro en Resend). El canal de
+    // tiempo que evitaba el await es un riesgo menor comparado con que el correo no se envie.
+    await sendEmail(tpl.to, tpl.subject, tpl.html);
 
     res.json({ ok: true });
   } catch (err) {
