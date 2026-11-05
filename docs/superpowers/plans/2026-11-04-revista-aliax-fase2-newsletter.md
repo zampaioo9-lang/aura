@@ -339,7 +339,7 @@ function toAudienceTarget(audience: 'PACIENTES' | 'TERAPEUTAS'): AudienceTarget 
   return audience === 'PACIENTES' ? 'PACIENTES' : 'GENERAL';
 }
 
-// POST /api/newsletter/subscribe — public, rate-limited by IP+email per day
+// POST /api/newsletter/subscribe: public, rate-limited by IP+email per day
 router.post('/subscribe', async (req, res, next) => {
   try {
     const { email, audience } = subscribeNewsletterSchema.parse(req.body);
@@ -362,7 +362,7 @@ router.post('/subscribe', async (req, res, next) => {
     });
 
     if (existing?.status === 'CONFIRMED') {
-      // Ya confirmado — responder éxito sin reenviar nada.
+      // Ya confirmado: responder éxito sin reenviar nada.
       return res.json({ ok: true });
     }
 
@@ -386,7 +386,7 @@ router.post('/subscribe', async (req, res, next) => {
   }
 });
 
-// GET /api/newsletter/confirm/:token — public, link from the confirmation email
+// GET /api/newsletter/confirm/:token: public, link from the confirmation email
 router.get('/confirm/:token', async (req, res, next) => {
   try {
     const subscriber = await prisma.newsletterSubscriber.findUnique({
@@ -409,7 +409,7 @@ router.get('/confirm/:token', async (req, res, next) => {
   }
 });
 
-// GET /api/newsletter/unsubscribe/:token — public
+// GET /api/newsletter/unsubscribe/:token: public
 router.get('/unsubscribe/:token', async (req, res, next) => {
   try {
     const subscriber = await prisma.newsletterSubscriber.findUnique({
@@ -696,7 +696,7 @@ Find the existing `router.get('/:id', ...)` handler (around line 186) and add th
 
 ```ts
 
-// GET /api/articles/:id/newsletter-preview — Subject+HTML to pre-fill the Newsletter form (auth, admin)
+// GET /api/articles/:id/newsletter-preview: Subject+HTML to pre-fill the Newsletter form (auth, admin)
 router.get('/:id/newsletter-preview', authMiddleware, adminMiddleware, async (req: AuthRequest, res, next) => {
   try {
     const article = await prisma.article.findUnique({ where: { id: req.params.id } });
