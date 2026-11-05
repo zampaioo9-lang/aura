@@ -378,7 +378,8 @@ router.post('/subscribe', async (req, res, next) => {
 
     const confirmUrl = `${env.API_BASE_URL}/api/newsletter/confirm/${subscriber.confirmToken}`;
     const tpl = emailTemplates.newsletterConfirm({ email, confirmUrl, audience });
-    await sendEmail(tpl.to, tpl.subject, tpl.html);
+    // No await: evita que la latencia del envio real sea un canal de tiempo (ver auth.ts /forgot-password).
+    sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {});
 
     res.json({ ok: true });
   } catch (err) {
@@ -393,6 +394,10 @@ router.get('/confirm/:token', async (req, res, next) => {
       where: { confirmToken: req.params.token },
     });
     if (!subscriber) {
+      return res.redirect(`${env.FRONTEND_URL}/revista?newsletter=invalido`);
+    }
+    if (subscriber.status === 'UNSUBSCRIBED') {
+      // Un link de confirmacion viejo no debe poder revivir a alguien ya dado de baja.
       return res.redirect(`${env.FRONTEND_URL}/revista?newsletter=invalido`);
     }
 
