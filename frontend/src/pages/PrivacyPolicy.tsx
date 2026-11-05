@@ -74,6 +74,7 @@ export default function PrivacyPolicy() {
               <li>Recordatorios de citas programadas</li>
               <li>Procesar pagos y suscripciones a través de Stripe y PayPal</li>
               <li>Enviar correos transaccionales y de notificación a través de Resend</li>
+              <li>Enviarte el newsletter de Revista Aliax, solo si te suscribes voluntariamente y confirmas tu correo</li>
               <li>Mejorar nuestros servicios</li>
             </ul>
           </section>
