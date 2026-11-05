@@ -378,8 +378,9 @@ router.post('/subscribe', async (req, res, next) => {
 
     const confirmUrl = `${env.API_BASE_URL}/api/newsletter/confirm/${subscriber.confirmToken}`;
     const tpl = emailTemplates.newsletterConfirm({ email, confirmUrl, audience });
-    // No await: evita que la latencia del envio real sea un canal de tiempo (ver auth.ts /forgot-password).
-    sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {});
+    // Se espera el envio: sin await, en produccion la funcion serverless puede congelarse
+    // justo despues de responder y el correo nunca sale (confirmado en vivo 2026-11-05).
+    await sendEmail(tpl.to, tpl.subject, tpl.html);
 
     res.json({ ok: true });
   } catch (err) {
