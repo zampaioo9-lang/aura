@@ -1050,7 +1050,7 @@ function renderSubscribeBand(): string {
     </div>
     <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#5b5b66;text-align:left;font-family:'DM Sans',sans-serif">
       <input id="ra-subscribe-consent" type="checkbox" required style="margin-top:2px">
-      Acepto recibir correos de Revista Aliax y el <a href="/privacidad">Aviso de Privacidad</a>.
+      <span>Acepto recibir correos de Revista Aliax y el <a href="/privacidad">Aviso de Privacidad</a>.</span>
     </label>
     <button type="submit" style="padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700;border:none;cursor:pointer">Suscribirme</button>
     <p id="ra-subscribe-msg" style="font-size:13px;margin:0;min-height:18px"></p>
