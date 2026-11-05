@@ -1064,6 +1064,8 @@ function renderSubscribeBand(): string {
   if (state === 'confirmado' && msgEl) { msgEl.style.color = '#0d9488'; msgEl.textContent = '¡Listo! Ya estás suscrito.'; }
   if (state === 'baja' && msgEl) { msgEl.style.color = '#5b5b66'; msgEl.textContent = 'Te diste de baja correctamente.'; }
   if (state === 'invalido' && msgEl) { msgEl.style.color = '#dc2626'; msgEl.textContent = 'Ese enlace ya no es válido.'; }
+  // Limpia el parametro de la URL para que un reload o un link compartido no repita el mensaje.
+  if (state) { history.replaceState(null, '', location.pathname); }
 
   var form = document.getElementById('ra-subscribe-form');
   if (!form) return;
