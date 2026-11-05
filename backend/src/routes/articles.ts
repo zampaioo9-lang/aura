@@ -47,6 +47,12 @@ async function waitAndPromoteBlogDeployment(triggeredAt: number): Promise<void> 
     return;
   }
 
+  const newer = await findNewProductionDeployment(deployment.createdAt);
+  if (newer) {
+    console.warn(`[Revista] El deployment ${deployment.uid} ya no es el mas reciente (existe ${newer.uid}) -- no se promueve, se deja que el disparo mas reciente lo haga`);
+    return;
+  }
+
   const promoted = await promoteDeployment(deployment.uid);
   if (!promoted) {
     console.warn(`[Revista] No se pudo promover el deployment ${deployment.uid} tras 2 intentos`);
@@ -56,8 +62,8 @@ async function waitAndPromoteBlogDeployment(triggeredAt: number): Promise<void> 
   try {
     await prisma.blogRebuildState.upsert({
       where: { id: 'singleton' },
-      create: { id: 'singleton', lastRebuiltAt: new Date() },
-      update: { lastRebuiltAt: new Date() },
+      create: { id: 'singleton', lastRebuiltAt: new Date(triggeredAt) },
+      update: { lastRebuiltAt: new Date(triggeredAt) },
     });
   } catch (err) {
     console.warn('[Revista] Se promovio el deployment pero no se pudo registrar lastRebuiltAt', err);
