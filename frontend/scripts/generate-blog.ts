@@ -138,6 +138,68 @@ function renderByline(a: Article): string {
 </div>`;
 }
 
+function renderSubscribeBand(): string {
+  return `<div style="background:#fff;border-radius:20px;padding:40px;text-align:center;margin:56px 0 0;box-shadow:0 10px 30px rgba(8,4,20,0.10)">
+  <h3 style="font-size:22px;margin:0 0 8px">Suscríbete a Revista Aliax</h3>
+  <p style="font-size:14px;color:#4b4b55;margin:0 0 20px;font-family:'DM Sans',sans-serif;font-weight:400">Recibe los artículos nuevos directo en tu correo.</p>
+  <form id="ra-subscribe-form" style="display:flex;flex-direction:column;gap:12px;max-width:380px;margin:0 auto">
+    <input id="ra-subscribe-email" type="email" required placeholder="tu@correo.com" style="padding:12px 16px;border-radius:12px;border:1px solid rgba(8,4,20,0.15);font-size:14px;font-family:'DM Sans',sans-serif">
+    <div style="display:flex;gap:16px;justify-content:center;font-size:13px;color:#3f3f46;font-family:'DM Sans',sans-serif">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="ra-audience" value="TERAPEUTAS" checked> Soy terapeuta</label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="ra-audience" value="PACIENTES"> Busco ayuda psicológica</label>
+    </div>
+    <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:#5b5b66;text-align:left;font-family:'DM Sans',sans-serif">
+      <input id="ra-subscribe-consent" type="checkbox" required style="margin-top:2px">
+      Acepto recibir correos de Revista Aliax y el <a href="/privacidad">Aviso de Privacidad</a>.
+    </label>
+    <button type="submit" style="padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700;border:none;cursor:pointer">Suscribirme</button>
+    <p id="ra-subscribe-msg" style="font-size:13px;margin:0;min-height:18px"></p>
+  </form>
+</div>
+<script>
+(function(){
+  var params = new URLSearchParams(location.search);
+  var state = params.get('newsletter');
+  var msgEl = document.getElementById('ra-subscribe-msg');
+  if (state === 'confirmado' && msgEl) { msgEl.style.color = '#0d9488'; msgEl.textContent = '¡Listo! Ya estás suscrito.'; }
+  if (state === 'baja' && msgEl) { msgEl.style.color = '#5b5b66'; msgEl.textContent = 'Te diste de baja correctamente.'; }
+  if (state === 'invalido' && msgEl) { msgEl.style.color = '#dc2626'; msgEl.textContent = 'Ese enlace ya no es válido.'; }
+
+  var form = document.getElementById('ra-subscribe-form');
+  if (!form) return;
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var email = document.getElementById('ra-subscribe-email').value;
+    var audience = document.querySelector('input[name="ra-audience"]:checked').value;
+    var btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+    fetch('${API_URL}/newsletter/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, audience: audience })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      btn.disabled = false;
+      btn.textContent = 'Suscribirme';
+      if (data.ok) {
+        msgEl.style.color = '#0d9488';
+        msgEl.textContent = 'Revisa tu correo para confirmar tu suscripción.';
+        form.reset();
+      } else {
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = data.error || 'Algo salió mal, intenta de nuevo.';
+      }
+    }).catch(function(){
+      btn.disabled = false;
+      btn.textContent = 'Suscribirme';
+      msgEl.style.color = '#dc2626';
+      msgEl.textContent = 'Algo salió mal, intenta de nuevo.';
+    });
+  });
+})();
+</script>`;
+}
+
 function renderTherapistCTA(): string {
   return `<div style="background:linear-gradient(135deg,rgba(45,212,191,0.08),rgba(13,148,136,0.04));border-radius:20px;padding:32px;text-align:center;margin:40px 0">
   <h3 style="font-size:20px;margin:0 0 8px">¿Quieres hablar con alguien?</h3>
@@ -295,6 +357,7 @@ function generateListingPage(articles: Article[]): string {
   ${heroHtml}
   <h3 style="font-size:24px;margin-bottom:24px">Ultimos articulos</h3>
   <div class="ra-grid3">${cards}</div>
+  ${renderSubscribeBand()}
 </div>
 ${renderPillsScript()}`;
   return pageShell(
@@ -321,6 +384,7 @@ function generateArticlePage(a: Article, allArticles: Article[]): string {
   ${a.coverImage ? `<img src="${escapeHtml(a.coverImage)}" alt="" style="width:100%;border-radius:24px;margin:24px 0 32px">` : ''}
   ${blocksHtml}
   ${renderRelatedSection(related)}
+  ${renderSubscribeBand()}
 </div>`;
   return pageShell(
     `${a.title} — Revista Aliax`,
