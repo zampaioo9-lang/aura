@@ -1100,7 +1100,7 @@ export default function AdminPanel() {
           </div>
 
           <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="text-xs font-medium block mb-1" style={{ color: C.textMuted }}>Nombre interno</label>
                 <input
@@ -2105,9 +2105,16 @@ export default function AdminPanel() {
           <AdminRevista
             C={C}
             onSendAsNewsletter={(preview) => {
+              if (nlHtml.trim() && nlHtml !== preview.html) {
+                const confirmed = window.confirm('Tienes contenido sin enviar en el newsletter. ¿Reemplazarlo con este articulo?');
+                if (!confirmed) return;
+              }
               setNlSubject(preview.subject);
               setNlHtml(preview.html);
               setNlName(preview.name);
+              // El preview del articulo no trae la audiencia de su categoria todavia,
+              // asi que siempre vuelve al default en vez de arrastrar la ultima seleccion manual.
+              setNlAudience('GENERAL');
               setNlResult(null);
               setPageTab('comunicacion');
             }}
