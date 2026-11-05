@@ -53,7 +53,10 @@ router.post('/subscribe', async (req, res, next) => {
 
     const confirmUrl = `${env.API_BASE_URL}/api/newsletter/confirm/${subscriber.confirmToken}`;
     const tpl = emailTemplates.newsletterConfirm({ email, confirmUrl, audience });
-    await sendEmail(tpl.to, tpl.subject, tpl.html);
+    // No await: evita que la latencia del envio real (round-trip a Resend) sea un canal de
+    // tiempo que permita distinguir "ya confirmado" de "recien suscrito" por cuanto tarda la
+    // respuesta, igual que /auth/forgot-password con sendPasswordResetEmail.
+    sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {});
 
     res.json({ ok: true });
   } catch (err) {
@@ -68,6 +71,12 @@ router.get('/confirm/:token', async (req, res, next) => {
       where: { confirmToken: req.params.token },
     });
     if (!subscriber) {
+      return res.redirect(`${env.FRONTEND_URL}/revista?newsletter=invalido`);
+    }
+    if (subscriber.status === 'UNSUBSCRIBED') {
+      // Un link de confirmacion viejo (reenviado, guardado en la bandeja) no debe poder
+      // revivir a alguien que ya se dio de baja -- para volver a suscribirse hay que pedir
+      // un token nuevo via /subscribe.
       return res.redirect(`${env.FRONTEND_URL}/revista?newsletter=invalido`);
     }
 
