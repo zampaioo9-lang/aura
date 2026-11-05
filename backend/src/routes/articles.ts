@@ -11,35 +11,82 @@ import { AppError } from '../middleware/errorHandler';
 import { slugify } from '../utils/slugify';
 import { emailTemplates } from '../services/emailService';
 import { env } from '../config/env';
+import { waitUntil } from '@vercel/functions';
+import { findNewProductionDeployment, waitForDeploymentReady, promoteDeployment } from '../services/vercelDeploy';
 
 const router = Router();
 const prisma = new PrismaClient();
 
+// Espera a que aparezca un deployment de producción nuevo del proyecto "aura" (más reciente
+// que `triggeredAt`), espera a que quede READY, y lo promueve -- en vez de depender de la
+// auto-asignación de dominio de Vercel (desactivada a propósito: con 3 disparadores de
+// deploy sin coordinar -- push de Git, CLI manual, y este mismo Deploy Hook -- Vercel podía
+// alinear el dominio al que terminara de construir primero, no al más reciente, causando
+// que una versión vieja apareciera brevemente en producción. Ver
+// docs/superpowers/specs/2026-11-05-deploy-race-fix-design.md).
+//
+// Si VERCEL_API_TOKEN/PROJECT_ID/TEAM_ID no están configurados (p. ej. en local), las
+// funciones de vercelDeploy.ts devuelven null/false de inmediato y esto solo loguea una
+// advertencia -- nunca lanza, nunca bloquea nada.
+async function waitAndPromoteBlogDeployment(triggeredAt: number): Promise<void> {
+  const deadline = triggeredAt + 150_000;
+
+  let deployment = await findNewProductionDeployment(triggeredAt);
+  while (!deployment && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    deployment = await findNewProductionDeployment(triggeredAt);
+  }
+  if (!deployment) {
+    console.warn('[Revista] No aparecio un deployment nuevo de produccion dentro del tiempo de espera');
+    return;
+  }
+
+  const ready = await waitForDeploymentReady(deployment.uid, deadline);
+  if (!ready) {
+    console.warn(`[Revista] El deployment ${deployment.uid} no quedo READY (fallo o se agoto el tiempo)`);
+    return;
+  }
+
+  const promoted = await promoteDeployment(deployment.uid);
+  if (!promoted) {
+    console.warn(`[Revista] No se pudo promover el deployment ${deployment.uid} tras 2 intentos`);
+    return;
+  }
+
+  try {
+    await prisma.blogRebuildState.upsert({
+      where: { id: 'singleton' },
+      create: { id: 'singleton', lastRebuiltAt: new Date() },
+      update: { lastRebuiltAt: new Date() },
+    });
+  } catch (err) {
+    console.warn('[Revista] Se promovio el deployment pero no se pudo registrar lastRebuiltAt', err);
+  }
+}
+
 // Publishing/unpublishing/deleting a published article, or clicking "Publicar cambios
 // en el sitio" in the CMS, regenerates the static /revista HTML by calling a Vercel
-// Deploy Hook. A failure here must NEVER fail the request — the DB write already
-// succeeded, and the only consequence of a missed deploy is a stale public page,
-// corrected by the next real trigger or a manual deploy. Retry once, then just log.
+// Deploy Hook, then waits for the resulting build and promotes it explicitly (see
+// waitAndPromoteBlogDeployment above). A failure here must NEVER fail the request -- the
+// DB write already succeeded, and the only consequence of a missed deploy is a stale
+// public page, corrected by the next real trigger or a manual deploy. Retry the hook
+// trigger once, then just log.
 //
-// Deliberately NOT awaited by callers: the deploy hook round-trip can take seconds,
-// and the caller's work already succeeded in the DB by the time this fires.
+// The wait-and-promote work runs inside waitUntil() (from @vercel/functions): it keeps
+// the serverless function alive in the background after the HTTP response is already
+// sent, without blocking that response -- the Vercel-native fix for the same class of
+// bug that silently dropped newsletter confirmation emails when a bare un-awaited
+// promise got cut off mid-flight (see project_aliax_revista_newsletter memory).
 async function triggerBlogRebuild(): Promise<void> {
   const hookUrl = process.env.BLOG_DEPLOY_HOOK_URL;
   if (!hookUrl) return;
 
+  const triggeredAt = Date.now();
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const res = await fetch(hookUrl, { method: 'POST' });
       if (res.ok) {
-        try {
-          await prisma.blogRebuildState.upsert({
-            where: { id: 'singleton' },
-            create: { id: 'singleton', lastRebuiltAt: new Date() },
-            update: { lastRebuiltAt: new Date() },
-          });
-        } catch (err) {
-          console.warn('[Revista] Se disparó el deploy hook pero no se pudo registrar lastRebuiltAt', err);
-        }
+        waitUntil(waitAndPromoteBlogDeployment(triggeredAt));
         return;
       }
     } catch {
