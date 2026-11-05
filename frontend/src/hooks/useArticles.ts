@@ -136,6 +136,15 @@ export function useArticles() {
     }
   }, []);
 
+  const getNewsletterPreview = useCallback(async (id: string): Promise<{ subject: string; html: string; name: string }> => {
+    try {
+      const res = await api.get(`/articles/${id}/newsletter-preview`);
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al generar la vista previa del newsletter'));
+    }
+  }, []);
+
   const publishArticle = useCallback(async (id: string): Promise<Article> => {
     try {
       const res = await api.patch(`/articles/${id}/publish`);
@@ -222,6 +231,6 @@ export function useArticles() {
     listArticles, getArticle, createArticle, updateArticle,
     publishArticle, unpublishArticle, deleteArticle,
     createBlock, updateBlock, deleteBlock, swapBlockOrder,
-    publishSiteChanges, getRebuildStatus,
+    publishSiteChanges, getRebuildStatus, getNewsletterPreview,
   };
 }
