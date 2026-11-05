@@ -32,6 +32,7 @@ import purchaseRoutes from './routes/purchases';
 import accessRoutes from './routes/access';
 import exchangeRateRoutes from './routes/exchangeRate';
 import articleRoutes from './routes/articles';
+import newsletterRoutes from './routes/newsletter';
 import cronRoutes from './routes/cron';
 import { sendWhatsAppTemplate, templateComponents } from './services/whatsappService';
 
@@ -78,6 +79,7 @@ app.use('/api/purchases', purchaseRoutes);
 app.use('/api/access', accessRoutes);
 app.use('/api/exchange-rate', exchangeRateRoutes);
 app.use('/api/articles', articleRoutes);
+app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/cron', cronRoutes);
 
 // Health check

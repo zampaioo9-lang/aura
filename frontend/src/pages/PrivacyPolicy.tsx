@@ -74,6 +74,7 @@ export default function PrivacyPolicy() {
               <li>Recordatorios de citas programadas</li>
               <li>Procesar pagos y suscripciones a través de Stripe y PayPal</li>
               <li>Enviar correos transaccionales y de notificación a través de Resend</li>
+              <li>Enviarte el newsletter de Revista Aliax, solo si te suscribes voluntariamente y confirmas tu correo; puedes darte de baja cuando quieras desde el enlace incluido en cada envío</li>
               <li>Mejorar nuestros servicios</li>
             </ul>
           </section>
@@ -97,7 +98,7 @@ export default function PrivacyPolicy() {
             </p>
             <ul className="list-disc ml-6 mt-2 space-y-1">
               <li><strong>Stripe</strong> y <strong>PayPal</strong>: procesamiento de pagos y suscripciones</li>
-              <li><strong>Resend</strong>: envío de correos electrónicos transaccionales y de notificación</li>
+              <li><strong>Resend</strong>: envío de correos electrónicos transaccionales y de notificación; si te suscribes al newsletter de Revista Aliax, tu correo también se almacena en una lista de contactos (Audience) de Resend para ese envío</li>
               <li><strong>Meta (WhatsApp Business API)</strong>: envío de notificaciones y recordatorios por WhatsApp</li>
               <li><strong>Neon</strong>: alojamiento de nuestra base de datos</li>
               <li><strong>Cloudinary</strong>: almacenamiento de imágenes y archivos multimedia</li>

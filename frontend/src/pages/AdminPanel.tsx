@@ -513,6 +513,7 @@ export default function AdminPanel() {
   const [nlSubject, setNlSubject] = useState('');
   const [nlHtml, setNlHtml] = useState('');
   const [nlName, setNlName] = useState('');
+  const [nlAudience, setNlAudience] = useState<'GENERAL' | 'PACIENTES'>('GENERAL');
   const [sendingNl, setSendingNl] = useState(false);
   const [nlResult, setNlResult] = useState<{ ok: boolean; broadcastId?: string; error?: string } | null>(null);
   const [syncingAudience, setSyncingAudience] = useState(false);
@@ -773,12 +774,13 @@ export default function AdminPanel() {
 
   const handleSendNewsletter = async () => {
     if (!nlSubject.trim() || !nlHtml.trim()) return;
-    const confirmed = window.confirm(`¿Enviar este newsletter a TODA la audiencia en Resend?\n\nEsto es irreversible.`);
+    const audienceLabel = nlAudience === 'PACIENTES' ? 'Pacientes (suscriptores de Revista)' : 'Terapeutas (audiencia general)';
+    const confirmed = window.confirm(`¿Enviar este newsletter a: ${audienceLabel}?\n\nEsto es irreversible.`);
     if (!confirmed) return;
     setSendingNl(true);
     setNlResult(null);
     try {
-      const res = await api.post('/admin/newsletter', { subject: nlSubject, html: nlHtml, name: nlName || undefined });
+      const res = await api.post('/admin/newsletter', { subject: nlSubject, html: nlHtml, name: nlName || undefined, audience: nlAudience });
       setNlResult({ ok: true, broadcastId: res.data.broadcastId });
     } catch (err: any) {
       setNlResult({ ok: false, error: err.response?.data?.error || 'Error al enviar' });
@@ -1098,7 +1100,7 @@ export default function AdminPanel() {
           </div>
 
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="text-xs font-medium block mb-1" style={{ color: C.textMuted }}>Nombre interno</label>
                 <input
@@ -1120,6 +1122,18 @@ export default function AdminPanel() {
                   className="w-full px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
                   style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text }}
                 />
+              </div>
+              <div>
+                <label className="text-xs font-medium block mb-1" style={{ color: C.textMuted }}>Audiencia</label>
+                <select
+                  value={nlAudience}
+                  onChange={e => setNlAudience(e.target.value as 'GENERAL' | 'PACIENTES')}
+                  className="w-full px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text }}
+                >
+                  <option value="GENERAL">Terapeutas (audiencia general)</option>
+                  <option value="PACIENTES">Pacientes (suscriptores de Revista)</option>
+                </select>
               </div>
             </div>
             <div>
@@ -2087,7 +2101,25 @@ export default function AdminPanel() {
         </>
         )}
 
-        {pageTab === 'revista' && <AdminRevista C={C} />}
+        {pageTab === 'revista' && (
+          <AdminRevista
+            C={C}
+            onSendAsNewsletter={(preview) => {
+              if (nlHtml.trim() && nlHtml !== preview.html) {
+                const confirmed = window.confirm('Tienes contenido sin enviar en el newsletter. ¿Reemplazarlo con este articulo?');
+                if (!confirmed) return;
+              }
+              setNlSubject(preview.subject);
+              setNlHtml(preview.html);
+              setNlName(preview.name);
+              // El preview del articulo no trae la audiencia de su categoria todavia,
+              // asi que siempre vuelve al default en vez de arrastrar la ultima seleccion manual.
+              setNlAudience('GENERAL');
+              setNlResult(null);
+              setPageTab('comunicacion');
+            }}
+          />
+        )}
 
         </div>
        </div>

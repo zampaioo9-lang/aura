@@ -3,18 +3,22 @@ import { env } from '../config/env';
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
-function getAudienceId(): string {
-  if (!env.RESEND_AUDIENCE_ID) throw new Error('RESEND_AUDIENCE_ID no configurado');
-  return env.RESEND_AUDIENCE_ID;
+export type AudienceTarget = 'GENERAL' | 'PACIENTES';
+
+export function resolveAudienceId(target: AudienceTarget): string {
+  const id = target === 'PACIENTES' ? env.RESEND_AUDIENCE_ID_PACIENTES : env.RESEND_AUDIENCE_ID;
+  if (!id) throw new Error(`Audience de Resend no configurada para "${target}"`);
+  return id;
 }
 
 // ── Contacts ───────────────────────────────────────────────────────
 
-export async function addContact(email: string, name: string): Promise<void> {
-  if (!resend || !env.RESEND_AUDIENCE_ID) return;
+export async function addContact(email: string, name: string, target: AudienceTarget = 'GENERAL'): Promise<void> {
+  if (!resend) return;
+  const audienceId = resolveAudienceId(target);
   const [firstName, ...rest] = name.trim().split(' ');
   const result = await resend.contacts.create({
-    audienceId: getAudienceId(),
+    audienceId,
     email,
     firstName: firstName || name,
     lastName: rest.join(' ') || undefined,
@@ -28,12 +32,13 @@ export async function addContact(email: string, name: string): Promise<void> {
   }
 }
 
-export async function removeContact(email: string): Promise<void> {
+export async function removeContact(email: string, target: AudienceTarget = 'GENERAL'): Promise<void> {
   if (!resend) return;
   try {
+    const audienceId = resolveAudienceId(target);
     // Mark as unsubscribed (Resend requires the contact id, so we update via email)
     await resend.contacts.update({
-      audienceId: getAudienceId(),
+      audienceId,
       email,
       unsubscribed: true,
     });
@@ -48,14 +53,16 @@ export interface BroadcastOptions {
   name: string;       // Internal name, not shown to recipients
   subject: string;
   html: string;
+  target?: AudienceTarget;
 }
 
 export async function sendBroadcast(opts: BroadcastOptions): Promise<{ id: string }> {
   if (!resend) throw new Error('Resend no configurado');
+  const audienceId = resolveAudienceId(opts.target ?? 'GENERAL');
 
   // 1. Create the broadcast
   const created = await resend.broadcasts.create({
-    audienceId: getAudienceId(),
+    audienceId,
     from: env.RESEND_FROM_EMAIL,
     name: opts.name,
     subject: opts.subject,

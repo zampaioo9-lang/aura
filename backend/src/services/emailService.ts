@@ -551,6 +551,34 @@ export const emailTemplates = {
       <p style="margin-top:20px;color:#a1a1aa;font-size:12px;line-height:1.5;">Este correo no incluye datos clínicos completos, solo lo necesario para el primer contacto. Actúa con tu criterio profesional habitual.</p>
     `),
   }),
+
+  // Confirmación de suscripción al newsletter de Revista (double opt-in)
+  newsletterConfirm: (data: { email: string; confirmUrl: string; audience: 'PACIENTES' | 'TERAPEUTAS' }) => ({
+    to: data.email,
+    subject: 'Confirma tu suscripción a Revista Aliax',
+    html: baseTemplate('Confirma tu suscripción', `
+      ${heading('Un último paso')}
+      ${subtext(
+        data.audience === 'TERAPEUTAS'
+          ? 'Confirma tu correo para empezar a recibir los artículos nuevos de Revista Aliax para terapeutas.'
+          : 'Confirma tu correo para empezar a recibir los artículos nuevos de Revista Aliax sobre salud mental.'
+      )}
+      ${ctaButton('Confirmar suscripción', data.confirmUrl)}
+      ${subtext('Si tú no pediste esto, puedes ignorar este correo: no se te suscribirá a nada.')}
+    `),
+  }),
+
+  // HTML pre-llenado para "Enviar como newsletter" desde el CMS de Revista.
+  // Sin `to`: no se envia directo, solo se devuelve subject+html para pre-llenar el formulario admin.
+  articleNewsletter: (data: { title: string; excerpt: string; coverImage: string | null; articleUrl: string }) => ({
+    subject: data.title,
+    html: baseTemplate(data.title, `
+      ${data.coverImage ? `<img src="${data.coverImage}" alt="" width="560" style="width:100%;max-width:560px;border-radius:12px;margin-bottom:20px;display:block;">` : ''}
+      ${heading(data.title)}
+      ${subtext(data.excerpt)}
+      ${ctaButton('Leer artículo completo', data.articleUrl)}
+    `),
+  }),
 };
 
 // ── Reseteo de contraseña — helper compartido ───────────────────────

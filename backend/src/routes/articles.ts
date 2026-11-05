@@ -9,6 +9,8 @@ import {
 } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
 import { slugify } from '../utils/slugify';
+import { emailTemplates } from '../services/emailService';
+import { env } from '../config/env';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -191,6 +193,26 @@ router.get('/:id', authMiddleware, adminMiddleware, async (req: AuthRequest, res
     });
     if (!article) throw new AppError(404, 'Articulo no encontrado');
     res.json(article);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/articles/:id/newsletter-preview: Subject+HTML to pre-fill the Newsletter form (auth, admin)
+router.get('/:id/newsletter-preview', authMiddleware, adminMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    const article = await prisma.article.findUnique({ where: { id: req.params.id } });
+    if (!article) throw new AppError(404, 'Articulo no encontrado');
+    if (article.status !== 'PUBLISHED') throw new AppError(400, 'Solo se puede enviar un articulo publicado');
+
+    const tpl = emailTemplates.articleNewsletter({
+      title: article.title,
+      excerpt: article.excerpt,
+      coverImage: article.coverImage,
+      articleUrl: `${env.FRONTEND_URL}/revista/${article.slug}`,
+    });
+
+    res.json({ subject: tpl.subject, html: tpl.html, name: `Articulo: ${article.title}` });
   } catch (err) {
     next(err);
   }

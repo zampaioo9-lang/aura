@@ -35,6 +35,12 @@ export const env = {
   RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || 'Aliax <notificaciones@aliax.io>',
   RESEND_AUDIENCE_ID: process.env.RESEND_AUDIENCE_ID || '',
+  RESEND_AUDIENCE_ID_PACIENTES: process.env.RESEND_AUDIENCE_ID_PACIENTES || '',
+  // Unlike FRONTEND_URL/PAYPAL_BASE_URL, this defaults to the real production domain on
+  // purpose: it only builds the newsletter confirm/unsubscribe link embedded in real emails,
+  // so a missing env var should still produce a working link rather than a broken one.
+  // Set API_BASE_URL=http://localhost:4000 in your own .env when testing double opt-in locally.
+  API_BASE_URL: process.env.API_BASE_URL || 'https://api.aliax.io',
   RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET || '',
   ASSEMBLYAI_API_KEY: process.env.ASSEMBLYAI_API_KEY || '',
   CRISIS_REFERRAL_SECRET: process.env.CRISIS_REFERRAL_SECRET || '',

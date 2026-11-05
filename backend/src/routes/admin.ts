@@ -521,10 +521,11 @@ router.post('/send-announcement', async (req, res, next) => {
 // POST /api/admin/newsletter  — send via Resend Broadcast (full audience, HTML, tracking)
 router.post('/newsletter', async (req, res, next) => {
   try {
-    const { subject, html, name } = req.body as {
+    const { subject, html, name, audience } = req.body as {
       subject: string;
       html: string;
       name?: string;
+      audience?: 'GENERAL' | 'PACIENTES';
     };
 
     if (!subject?.trim() || !html?.trim()) {
@@ -532,7 +533,7 @@ router.post('/newsletter', async (req, res, next) => {
     }
 
     const broadcastName = name?.trim() || `Newsletter ${new Date().toISOString().slice(0, 10)}`;
-    const result = await sendBroadcast({ name: broadcastName, subject, html });
+    const result = await sendBroadcast({ name: broadcastName, subject, html, target: audience === 'PACIENTES' ? 'PACIENTES' : 'GENERAL' });
 
     res.json({ ok: true, broadcastId: result.id });
   } catch (err: any) {
@@ -565,7 +566,7 @@ router.post('/newsletter/sync', async (_req, res, next) => {
     let failed = 0;
     for (const user of users) {
       try {
-        await addContact(user.email, user.name);
+        await addContact(user.email, user.name, 'GENERAL');
         added++;
       } catch (err: any) {
         console.error('[Sync] failed for', user.email, err?.message);
