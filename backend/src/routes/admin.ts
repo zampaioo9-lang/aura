@@ -604,7 +604,11 @@ router.get('/newsletter/subscribers', async (req, res, next) => {
 });
 
 function csvEscape(value: string): string {
-  if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+  // Neutraliza inyeccion de formulas CSV/Excel (CWE-1236): fullName/email vienen de un
+  // formulario publico sin restriccion de caracteres, y este endpoint existe justamente
+  // para que un admin abra el archivo en Excel.
+  if (/^[=+\-@\t\r]/.test(value)) value = `'${value}`;
+  if (/[",\n\r]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
   return value;
 }
 
@@ -615,6 +619,7 @@ router.get('/newsletter/subscribers/export', async (req, res, next) => {
     const subscribers = await prisma.newsletterSubscriber.findMany({
       where: audience ? { audience } : undefined,
       orderBy: { createdAt: 'desc' },
+      select: { fullName: true, email: true, audience: true, status: true, createdAt: true, confirmedAt: true },
     });
 
     const header = 'Nombre,Correo,Audiencia,Estado,Fecha de registro,Fecha de confirmacion';
