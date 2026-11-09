@@ -25,16 +25,25 @@ function isConfigured(): boolean {
 // `afterTimestamp` (ms epoch). Devuelve null si no hay ninguno todavía o si la llamada falla.
 export async function findNewProductionDeployment(afterTimestamp: number): Promise<VercelDeploymentSummary | null> {
   if (!isConfigured()) return null;
+  // limit=5: suficiente margen para los triggers que puedan coincidir (push a master, CLI
+  // manual, este mismo Deploy Hook) sin pedir una pagina completa de historial.
   const url = `${VERCEL_API_BASE}/v6/deployments?projectId=${env.VERCEL_PROJECT_ID}&target=production&teamId=${env.VERCEL_TEAM_ID}&limit=5`;
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
     const res = await fetch(url, { headers: authHeaders(), signal: controller.signal });
     clearTimeout(timeout);
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn(`[Revista] findNewProductionDeployment: la API de Vercel respondio ${res.status}`);
+      return null;
+    }
     const data = (await res.json()) as { deployments: VercelDeploymentSummary[] };
-    return data.deployments.find((d) => d.createdAt > afterTimestamp) || null;
-  } catch {
+    // La API normalmente ya devuelve mas reciente primero, pero no esta documentado como
+    // garantia -- se ordena explicitamente para no depender de eso.
+    const sorted = [...data.deployments].sort((a, b) => b.createdAt - a.createdAt);
+    return sorted.find((d) => d.createdAt > afterTimestamp) || null;
+  } catch (err) {
+    console.warn('[Revista] findNewProductionDeployment: fallo de red', err);
     return null;
   }
 }
@@ -42,6 +51,7 @@ export async function findNewProductionDeployment(afterTimestamp: number): Promi
 // Hace polling cada 3s del estado de un deployment hasta que quede READY (true), hasta que
 // falle con ERROR/CANCELED (false), o hasta `deadline` (ms epoch, false).
 export async function waitForDeploymentReady(deploymentId: string, deadline: number): Promise<boolean> {
+  let warnedBadStatus = false;
   while (Date.now() < deadline) {
     try {
       const controller = new AbortController();
@@ -55,6 +65,11 @@ export async function waitForDeploymentReady(deploymentId: string, deadline: num
         const data = (await res.json()) as { readyState: VercelDeploymentSummary['readyState'] };
         if (data.readyState === 'READY') return true;
         if (data.readyState === 'ERROR' || data.readyState === 'CANCELED') return false;
+      } else if (!warnedBadStatus) {
+        // Avisar una sola vez (no en cada poll de 3s) para distinguir "todavia construyendo"
+        // de un fallo real de credenciales/config (401/403) que se repetiria siempre igual.
+        console.warn(`[Revista] waitForDeploymentReady: la API de Vercel respondio ${res.status} para ${deploymentId}`);
+        warnedBadStatus = true;
       }
     } catch {
       // red transitoria: seguir intentando hasta el deadline
@@ -76,9 +91,11 @@ export async function promoteDeployment(deploymentId: string): Promise<boolean> 
       const res = await fetch(url, { method: 'POST', headers: authHeaders(), signal: controller.signal });
       clearTimeout(timeout);
       if (res.ok) return true;
-    } catch {
-      // fall through to retry
+      console.warn(`[Revista] promoteDeployment intento ${attempt}: la API de Vercel respondio ${res.status}`);
+    } catch (err) {
+      console.warn(`[Revista] promoteDeployment intento ${attempt}: fallo de red`, err);
     }
+    if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 1500));
   }
   return false;
 }
