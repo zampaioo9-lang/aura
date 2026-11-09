@@ -774,7 +774,7 @@ export default function AdminPanel() {
 
   const handleSendNewsletter = async () => {
     if (!nlSubject.trim() || !nlHtml.trim()) return;
-    const audienceLabel = nlAudience === 'PACIENTES' ? 'Pacientes (suscriptores de Revista)' : 'Terapeutas (audiencia general)';
+    const audienceLabel = nlAudience === 'PACIENTES' ? 'Pacientes (suscriptores de Revista)' : 'Terapeutas (usuarios de Aliax + suscriptores de Revista)';
     const confirmed = window.confirm(`¿Enviar este newsletter a: ${audienceLabel}?\n\nEsto es irreversible.`);
     if (!confirmed) return;
     setSendingNl(true);
@@ -1131,7 +1131,7 @@ export default function AdminPanel() {
                   className="w-full px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
                   style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: C.text }}
                 >
-                  <option value="GENERAL">Terapeutas (audiencia general)</option>
+                  <option value="GENERAL">Terapeutas (usuarios de Aliax + suscriptores de Revista)</option>
                   <option value="PACIENTES">Pacientes (suscriptores de Revista)</option>
                 </select>
               </div>

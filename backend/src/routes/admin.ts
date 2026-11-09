@@ -7,6 +7,7 @@ import { sendBroadcast, getBroadcasts, addContact, removeContact, type AudienceT
 import { sendWhatsApp } from '../services/whatsappService';
 import { env } from '../config/env';
 import { clinicoTrialExpiry } from '../lib/planUtils';
+import { AppError } from '../middleware/errorHandler';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -518,6 +519,36 @@ router.post('/send-announcement', async (req, res, next) => {
   }
 });
 
+// Usuarios de Aliax (terapeutas registrados en la plataforma) comparten la audiencia 'GENERAL'
+// de Resend con los suscriptores de Revista de audiencia TERAPEUTAS -- ver
+// [[project_aliax_revista_newsletter]]. Un usuario nuevo solo entra a esa audiencia si alguien
+// corre esta sincronizacion; antes solo pasaba con el boton manual "Sincronizar usuarios", asi
+// que un registro reciente podia quedarse fuera de un envio. Se extrae a funcion para poder
+// llamarla tambien automaticamente justo antes de enviar a la audiencia Terapeutas.
+async function syncUsersToGeneralAudience(): Promise<{ added: number; failed: number; total: number }> {
+  if (!env.RESEND_AUDIENCE_ID) {
+    throw new AppError(400, 'RESEND_AUDIENCE_ID no configurado en las variables de entorno');
+  }
+
+  const users = await prisma.user.findMany({
+    select: { email: true, name: true },
+  });
+
+  let added = 0;
+  let failed = 0;
+  for (const user of users) {
+    try {
+      await addContact(user.email, user.name, 'GENERAL');
+      added++;
+    } catch (err: any) {
+      console.error('[Sync] failed for', user.email, err?.message);
+      failed++;
+    }
+  }
+
+  return { added, failed, total: users.length };
+}
+
 // POST /api/admin/newsletter  — send via Resend Broadcast (full audience, HTML, tracking)
 router.post('/newsletter', async (req, res, next) => {
   try {
@@ -532,8 +563,16 @@ router.post('/newsletter', async (req, res, next) => {
       return res.status(400).json({ error: 'Asunto y HTML son requeridos' });
     }
 
+    const target = audience === 'PACIENTES' ? 'PACIENTES' : 'GENERAL';
+    // Los usuarios de Aliax no se agregan solos a la audiencia Terapeutas al registrarse --
+    // sincronizarlos aqui antes de enviar evita que alguien que se registro despues del ultimo
+    // "Sincronizar usuarios" manual se quede sin recibir este newsletter.
+    if (target === 'GENERAL') {
+      await syncUsersToGeneralAudience();
+    }
+
     const broadcastName = name?.trim() || `Newsletter ${new Date().toISOString().slice(0, 10)}`;
-    const result = await sendBroadcast({ name: broadcastName, subject, html, target: audience === 'PACIENTES' ? 'PACIENTES' : 'GENERAL' });
+    const result = await sendBroadcast({ name: broadcastName, subject, html, target });
 
     res.json({ ok: true, broadcastId: result.id });
   } catch (err: any) {
@@ -551,30 +590,12 @@ router.get('/newsletter', async (_req, res, next) => {
   }
 });
 
-// POST /api/admin/newsletter/sync  — sync all existing users to Resend audience
+// POST /api/admin/newsletter/sync  — sync all existing users to Resend audience (manual trigger,
+// se quedo tambien para poder sincronizar sin mandar un correo)
 router.post('/newsletter/sync', async (_req, res, next) => {
   try {
-    if (!env.RESEND_AUDIENCE_ID) {
-      return res.status(400).json({ error: 'RESEND_AUDIENCE_ID no configurado en las variables de entorno' });
-    }
-
-    const users = await prisma.user.findMany({
-      select: { email: true, name: true },
-    });
-
-    let added = 0;
-    let failed = 0;
-    for (const user of users) {
-      try {
-        await addContact(user.email, user.name, 'GENERAL');
-        added++;
-      } catch (err: any) {
-        console.error('[Sync] failed for', user.email, err?.message);
-        failed++;
-      }
-    }
-
-    res.json({ ok: true, added, failed, total: users.length });
+    const result = await syncUsersToGeneralAudience();
+    res.json({ ok: true, ...result });
   } catch (err) {
     next(err);
   }
