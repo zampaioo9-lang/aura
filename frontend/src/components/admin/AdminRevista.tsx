@@ -426,7 +426,7 @@ export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
                 {!loadingSubscribers && subscribers.length === 0 && (
                   <tr><td colSpan={6} style={{ padding: 20, textAlign: 'center', color: C.textMuted }}>Sin suscriptores todavia</td></tr>
                 )}
-                {subscribers.map((s, i) => {
+                {!loadingSubscribers && subscribers.map((s, i) => {
                   const audiencePill = s.audience === 'TERAPEUTAS'
                     ? { bg: 'rgba(13,148,136,0.12)', color: '#0d9488', label: 'Terapeuta' }
                     : { bg: 'rgba(139,92,246,0.12)', color: '#7c3aed', label: 'Paciente' };
