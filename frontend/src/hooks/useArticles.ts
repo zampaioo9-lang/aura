@@ -44,6 +44,18 @@ export interface Article {
   blocks?: ArticleBlock[];
 }
 
+export type SubscriberStatus = 'PENDING' | 'CONFIRMED' | 'UNSUBSCRIBED';
+
+export interface Subscriber {
+  id: string;
+  fullName: string;
+  email: string;
+  audience: CategoryAudience;
+  status: SubscriberStatus;
+  createdAt: string;
+  confirmedAt: string | null;
+}
+
 export interface CreateCategoryData { name: string; audience: CategoryAudience }
 export interface UpdateCategoryData { active?: boolean; order?: number }
 
@@ -226,11 +238,48 @@ export function useArticles() {
     }
   }, []);
 
+  const listSubscribers = useCallback(async (audience?: CategoryAudience): Promise<Subscriber[]> => {
+    try {
+      const res = await api.get('/admin/newsletter/subscribers', { params: audience ? { audience } : undefined });
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al cargar los suscriptores'));
+    }
+  }, []);
+
+  const exportSubscribersCsv = useCallback(async (audience?: CategoryAudience): Promise<void> => {
+    try {
+      const res = await api.get('/admin/newsletter/subscribers/export', {
+        params: audience ? { audience } : undefined,
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'suscriptores-revista.csv';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al exportar los suscriptores'));
+    }
+  }, []);
+
+  const unsubscribeSubscriber = useCallback(async (id: string): Promise<void> => {
+    try {
+      await api.post(`/admin/newsletter/subscribers/${id}/unsubscribe`);
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al dar de baja al suscriptor'));
+    }
+  }, []);
+
   return {
     listCategories, createCategory, updateCategory,
     listArticles, getArticle, createArticle, updateArticle,
     publishArticle, unpublishArticle, deleteArticle,
     createBlock, updateBlock, deleteBlock, swapBlockOrder,
     publishSiteChanges, getRebuildStatus, getNewsletterPreview,
+    listSubscribers, exportSubscribersCsv, unsubscribeSubscriber,
   };
 }
