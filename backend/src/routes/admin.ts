@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth';
 import { adminMiddleware } from '../middleware/adminAuth';
 import { sendEmail, emailTemplates, sendPasswordResetEmail } from '../services/emailService';
-import { sendBroadcast, getBroadcasts, addContact } from '../services/audienceService';
+import { sendBroadcast, getBroadcasts, addContact, removeContact, type AudienceTarget } from '../services/audienceService';
 import { sendWhatsApp } from '../services/whatsappService';
 import { env } from '../config/env';
 import { clinicoTrialExpiry } from '../lib/planUtils';
@@ -575,6 +575,82 @@ router.post('/newsletter/sync', async (_req, res, next) => {
     }
 
     res.json({ ok: true, added, failed, total: users.length });
+  } catch (err) {
+    next(err);
+  }
+});
+
+function toSubscriberAudienceTarget(audience: 'PACIENTES' | 'TERAPEUTAS'): AudienceTarget {
+  return audience === 'PACIENTES' ? 'PACIENTES' : 'GENERAL';
+}
+
+function parseSubscriberAudienceFilter(raw: unknown): 'PACIENTES' | 'TERAPEUTAS' | undefined {
+  return raw === 'PACIENTES' || raw === 'TERAPEUTAS' ? raw : undefined;
+}
+
+// GET /api/admin/newsletter/subscribers?audience=PACIENTES|TERAPEUTAS — list subscribers
+router.get('/newsletter/subscribers', async (req, res, next) => {
+  try {
+    const audience = parseSubscriberAudienceFilter(req.query.audience);
+    const subscribers = await prisma.newsletterSubscriber.findMany({
+      where: audience ? { audience } : undefined,
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, fullName: true, email: true, audience: true, status: true, createdAt: true, confirmedAt: true },
+    });
+    res.json(subscribers);
+  } catch (err) {
+    next(err);
+  }
+});
+
+function csvEscape(value: string): string {
+  if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+  return value;
+}
+
+// GET /api/admin/newsletter/subscribers/export?audience=PACIENTES|TERAPEUTAS — CSV download
+router.get('/newsletter/subscribers/export', async (req, res, next) => {
+  try {
+    const audience = parseSubscriberAudienceFilter(req.query.audience);
+    const subscribers = await prisma.newsletterSubscriber.findMany({
+      where: audience ? { audience } : undefined,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const header = 'Nombre,Correo,Audiencia,Estado,Fecha de registro,Fecha de confirmacion';
+    const rows = subscribers.map((s) =>
+      [
+        csvEscape(s.fullName),
+        csvEscape(s.email),
+        s.audience,
+        s.status,
+        s.createdAt.toISOString(),
+        s.confirmedAt ? s.confirmedAt.toISOString() : '',
+      ].join(',')
+    );
+    const csv = [header, ...rows].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="suscriptores-revista.csv"');
+    res.send(csv);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/admin/newsletter/subscribers/:id/unsubscribe — manual unsubscribe by an admin
+router.post('/newsletter/subscribers/:id/unsubscribe', async (req, res, next) => {
+  try {
+    const subscriber = await prisma.newsletterSubscriber.findUnique({ where: { id: req.params.id } });
+    if (!subscriber) return res.status(404).json({ error: 'Suscriptor no encontrado' });
+
+    await prisma.newsletterSubscriber.update({
+      where: { id: subscriber.id },
+      data: { status: 'UNSUBSCRIBED' },
+    });
+    await removeContact(subscriber.email, toSubscriberAudienceTarget(subscriber.audience));
+
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }
