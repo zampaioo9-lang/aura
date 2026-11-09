@@ -750,6 +750,7 @@ enum SubscriberStatus {
 
 model NewsletterSubscriber {
   id           String            @id @default(cuid())
+  fullName     String
   email        String
   audience     CategoryAudience
   status       SubscriberStatus  @default(PENDING)
