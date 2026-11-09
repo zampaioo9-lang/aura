@@ -6,10 +6,15 @@ interface Props {
   onNavigate?: (ratio: number) => void;
 }
 
+// Revista vive fuera del router de React: son paginas HTML estaticas generadas por
+// scripts/generate-blog.ts (prerender para SEO), sin ruta registrada en App.tsx. Un
+// <Link> de react-router-dom navegaria del lado del cliente, no encontraria ruta y caeria
+// en el catch-all "/:slug" (PublicProfile), mostrando "Perfil no encontrado" -- por eso
+// este item usa <a href> normal (recarga completa) en vez de <Link>.
 const NAV = [
   { label: 'Explorar', to: '/explorar' },
   { label: 'Precios',  to: '/pricing'  },
-  { label: 'Revista',  to: '/revista'  },
+  { label: 'Revista',  to: '/revista', external: true },
 ];
 
 export default function LandingHeader({ onNavigate }: Props) {
@@ -54,7 +59,13 @@ export default function LandingHeader({ onNavigate }: Props) {
 
       {/* Desktop nav */}
       <nav className="hidden md:flex items-center gap-1">
-        {NAV.map(l => (
+        {NAV.map(l => l.external ? (
+          <a key={l.to} href={l.to}
+            className="text-white text-[12px] font-medium tracking-wider px-4 py-2 rounded-full hover:bg-white hover:text-[#0f0a1a] transition-all duration-300"
+            style={{ fontFamily: 'Manrope, sans-serif' }}>
+            {l.label}
+          </a>
+        ) : (
           <Link key={l.to} to={l.to}
             className="text-white text-[12px] font-medium tracking-wider px-4 py-2 rounded-full hover:bg-white hover:text-[#0f0a1a] transition-all duration-300"
             style={{ fontFamily: 'Manrope, sans-serif' }}>
@@ -90,7 +101,13 @@ export default function LandingHeader({ onNavigate }: Props) {
             </button>
           </div>
           <div className="flex flex-col mt-8 px-6 gap-1">
-            {NAV.map(l => (
+            {NAV.map(l => l.external ? (
+              <a key={l.to} href={l.to} onClick={() => setOpen(false)}
+                className="py-4 px-6 border-b border-white/5 text-white text-[16px] uppercase tracking-widest"
+                style={{ fontFamily: 'Manrope, sans-serif' }}>
+                {l.label}
+              </a>
+            ) : (
               <Link key={l.to} to={l.to} onClick={() => setOpen(false)}
                 className="py-4 px-6 border-b border-white/5 text-white text-[16px] uppercase tracking-widest"
                 style={{ fontFamily: 'Manrope, sans-serif' }}>
