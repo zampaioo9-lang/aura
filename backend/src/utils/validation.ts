@@ -379,6 +379,7 @@ export const updateArticleBlockSchema = z.object({
 // Endpoint publico y sin auth (lectores anonimos de Revista), igual que checkoutSchema --
 // no se puede confiar en que el frontend ya haya recortado espacios.
 export const subscribeNewsletterSchema = z.object({
+  fullName: z.string().trim().min(2, 'El nombre es obligatorio'),
   email: z.string().trim().email(),
   audience: z.enum(['PACIENTES', 'TERAPEUTAS']),
 });

@@ -143,6 +143,7 @@ function renderSubscribeBand(): string {
   <h3 style="font-size:22px;margin:0 0 8px">Suscríbete a Revista Aliax</h3>
   <p style="font-size:14px;color:#4b4b55;margin:0 0 20px;font-family:'DM Sans',sans-serif;font-weight:400">Recibe los artículos nuevos directo en tu correo.</p>
   <form id="ra-subscribe-form" style="display:flex;flex-direction:column;gap:12px;max-width:380px;margin:0 auto">
+    <input id="ra-subscribe-fullname" type="text" required placeholder="Tu nombre completo" style="padding:12px 16px;border-radius:12px;border:1px solid rgba(8,4,20,0.15);font-size:14px;font-family:'DM Sans',sans-serif">
     <input id="ra-subscribe-email" type="email" required placeholder="tu@correo.com" style="padding:12px 16px;border-radius:12px;border:1px solid rgba(8,4,20,0.15);font-size:14px;font-family:'DM Sans',sans-serif">
     <div style="display:flex;gap:16px;justify-content:center;font-size:13px;color:#3f3f46;font-family:'DM Sans',sans-serif">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="ra-audience" value="TERAPEUTAS" checked> Soy terapeuta</label>
@@ -171,6 +172,7 @@ function renderSubscribeBand(): string {
   if (!form) return;
   form.addEventListener('submit', function(e){
     e.preventDefault();
+    var fullName = document.getElementById('ra-subscribe-fullname').value;
     var email = document.getElementById('ra-subscribe-email').value;
     var audience = document.querySelector('input[name="ra-audience"]:checked').value;
     var btn = form.querySelector('button[type="submit"]');
@@ -179,7 +181,7 @@ function renderSubscribeBand(): string {
     fetch('${API_URL}/newsletter/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, audience: audience })
+      body: JSON.stringify({ fullName: fullName, email: email, audience: audience })
     }).then(function(r){ return r.json(); }).then(function(data){
       btn.disabled = false;
       btn.textContent = 'Suscribirme';

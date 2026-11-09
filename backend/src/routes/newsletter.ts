@@ -17,7 +17,7 @@ function toAudienceTarget(audience: 'PACIENTES' | 'TERAPEUTAS'): AudienceTarget 
 // POST /api/newsletter/subscribe: public, rate-limited by IP+email per day
 router.post('/subscribe', async (req, res, next) => {
   try {
-    const { email, audience } = subscribeNewsletterSchema.parse(req.body);
+    const { fullName, email, audience } = subscribeNewsletterSchema.parse(req.body);
 
     const ip = ((req.headers['x-forwarded-for'] as string) || '').split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
     const today = new Date().toISOString().split('T')[0];
@@ -45,10 +45,10 @@ router.post('/subscribe', async (req, res, next) => {
     const subscriber = existing
       ? await prisma.newsletterSubscriber.update({
           where: { id: existing.id },
-          data: { status: 'PENDING', confirmToken },
+          data: { fullName, status: 'PENDING', confirmToken },
         })
       : await prisma.newsletterSubscriber.create({
-          data: { email, audience, status: 'PENDING', confirmToken },
+          data: { fullName, email, audience, status: 'PENDING', confirmToken },
         });
 
     const confirmUrl = `${env.API_BASE_URL}/api/newsletter/confirm/${subscriber.confirmToken}`;
@@ -87,7 +87,7 @@ router.get('/confirm/:token', async (req, res, next) => {
       data: { status: 'CONFIRMED', confirmedAt: new Date() },
     });
 
-    await addContact(subscriber.email, subscriber.email, toAudienceTarget(subscriber.audience));
+    await addContact(subscriber.email, subscriber.fullName, toAudienceTarget(subscriber.audience));
 
     res.redirect(`${env.FRONTEND_URL}/revista?newsletter=confirmado`);
   } catch (err) {
