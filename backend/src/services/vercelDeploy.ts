@@ -18,7 +18,7 @@ function authHeaders(): Record<string, string> {
 }
 
 function isConfigured(): boolean {
-  return !!(env.VERCEL_API_TOKEN && env.VERCEL_PROJECT_ID && env.VERCEL_TEAM_ID);
+  return !!(env.VERCEL_API_TOKEN && env.AURA_PROJECT_ID && env.VERCEL_TEAM_ID);
 }
 
 // Busca, entre los últimos deployments de producción del proyecto, uno creado después de
@@ -27,7 +27,7 @@ export async function findNewProductionDeployment(afterTimestamp: number): Promi
   if (!isConfigured()) return null;
   // limit=5: suficiente margen para los triggers que puedan coincidir (push a master, CLI
   // manual, este mismo Deploy Hook) sin pedir una pagina completa de historial.
-  const url = `${VERCEL_API_BASE}/v6/deployments?projectId=${env.VERCEL_PROJECT_ID}&target=production&teamId=${env.VERCEL_TEAM_ID}&limit=5`;
+  const url = `${VERCEL_API_BASE}/v6/deployments?projectId=${env.AURA_PROJECT_ID}&target=production&teamId=${env.VERCEL_TEAM_ID}&limit=5`;
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
@@ -83,7 +83,7 @@ export async function waitForDeploymentReady(deploymentId: string, deadline: num
 // Reintenta una vez. Devuelve false si ambos intentos fallan.
 export async function promoteDeployment(deploymentId: string): Promise<boolean> {
   if (!isConfigured()) return false;
-  const url = `${VERCEL_API_BASE}/v10/projects/${env.VERCEL_PROJECT_ID}/promote/${deploymentId}?teamId=${env.VERCEL_TEAM_ID}`;
+  const url = `${VERCEL_API_BASE}/v10/projects/${env.AURA_PROJECT_ID}/promote/${deploymentId}?teamId=${env.VERCEL_TEAM_ID}`;
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       const controller = new AbortController();

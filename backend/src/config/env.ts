@@ -50,6 +50,10 @@ export const env = {
   // docs/superpowers/specs/2026-11-05-deploy-race-fix-design.md). Sin estas 3 variables,
   // waitAndPromoteBlogDeployment() se degrada a solo loguear una advertencia y no promueve nada.
   VERCEL_API_TOKEN: process.env.VERCEL_API_TOKEN || '',
-  VERCEL_PROJECT_ID: process.env.VERCEL_PROJECT_ID || '',
+  // NOTA: no usar el nombre "VERCEL_PROJECT_ID" -- Vercel lo reserva como variable de
+  // sistema (siempre inyecta el ID del proyecto donde corre el codigo, "backend" en este
+  // caso) y una variable custom con ese mismo nombre nunca gana, sin importar cuantas veces
+  // se recree en el dashboard. Descubierto 2026-11-09 tras varias rondas de diagnostico.
+  AURA_PROJECT_ID: process.env.AURA_PROJECT_ID || '',
   VERCEL_TEAM_ID: process.env.VERCEL_TEAM_ID || '',
 };
