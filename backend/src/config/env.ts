@@ -44,4 +44,12 @@ export const env = {
   RESEND_WEBHOOK_SECRET: process.env.RESEND_WEBHOOK_SECRET || '',
   ASSEMBLYAI_API_KEY: process.env.ASSEMBLYAI_API_KEY || '',
   CRISIS_REFERRAL_SECRET: process.env.CRISIS_REFERRAL_SECRET || '',
+  // Usadas por backend/src/services/vercelDeploy.ts para promover manualmente el deployment
+  // correcto del proyecto "aura" tras un rebuild de Revista, en vez de depender de la
+  // auto-asignación de dominio de Vercel (desactivada a propósito -- ver
+  // docs/superpowers/specs/2026-11-05-deploy-race-fix-design.md). Sin estas 3 variables,
+  // waitAndPromoteBlogDeployment() se degrada a solo loguear una advertencia y no promueve nada.
+  VERCEL_API_TOKEN: process.env.VERCEL_API_TOKEN || '',
+  VERCEL_PROJECT_ID: process.env.VERCEL_PROJECT_ID || '',
+  VERCEL_TEAM_ID: process.env.VERCEL_TEAM_ID || '',
 };

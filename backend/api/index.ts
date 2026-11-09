@@ -2,6 +2,14 @@ import '../src/config/env';
 import express from 'express';
 import cors from 'cors';
 
+// waitAndPromoteBlogDeployment() en src/routes/articles.ts corre en segundo plano via
+// waitUntil() hasta 150s tras disparar el Deploy Hook de Revista -- waitUntil() solo protege
+// esa tarea de que la respuesta HTTP ya enviada la corte, pero el techo de ejecucion real de
+// la funcion serverless sigue siendo el limite de la plataforma (10-15s por defecto en
+// Vercel). maxDuration lo eleva explicitamente. Ver
+// docs/superpowers/specs/2026-11-05-deploy-race-fix-design.md.
+export const config = { maxDuration: 180 };
+
 const app = express();
 app.use(cors());
 
