@@ -757,7 +757,7 @@ export default function Explorar() {
                 <Sparkles size={18} color="#0d9488" />
                 <h2 style={{ margin: 0, color: '#111827', fontSize: 20, fontWeight: 700 }}>Matching inteligente</h2>
               </div>
-              <p style={{ margin: 0, color: 'rgba(31,41,55,0.6)', fontSize: 15.5 }}>
+              <p style={{ margin: 0, color: '#0f3b35', fontWeight: 500, fontSize: 15.5 }}>
                 Cuéntanos tu situación y la IA te dirá qué terapeuta encaja mejor contigo.
               </p>
             </div>
@@ -867,15 +867,15 @@ export default function Explorar() {
                   <button onClick={() => setMatchStep(s => Math.max(0, s - 1))} disabled={matchStep === 0} style={{
                     padding: '10px 20px', borderRadius: 10, border: 'none',
                     background: 'transparent',
-                    color: matchStep === 0 ? 'rgba(15,23,22,0.25)' : 'rgba(31,41,55,0.55)',
+                    color: matchStep === 0 ? 'rgba(13,148,136,0.35)' : 'rgba(13,100,88,0.75)',
                     fontSize: 14, fontFamily: 'inherit', cursor: matchStep === 0 ? 'not-allowed' : 'pointer',
                   }}>← Anterior</button>
 
                   {matchStep < 4 ? (
                     <button onClick={() => setMatchStep(s => s + 1)} disabled={!(currentQ as { optional?: boolean }).optional && !currentAnswer.trim()} style={{
                       padding: '10px 24px', borderRadius: 10, border: 'none',
-                      background: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#0d9488' : 'rgba(15,23,22,0.08)',
-                      color: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#fff' : 'rgba(15,23,22,0.3)',
+                      background: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#0d9488' : 'rgba(13,148,136,0.18)',
+                      color: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#fff' : 'rgba(13,100,88,0.55)',
                       fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
                       cursor: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? 'pointer' : 'not-allowed',
                     }}>Siguiente →</button>
