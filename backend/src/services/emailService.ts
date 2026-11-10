@@ -24,7 +24,7 @@ function formatDateES(date: Date | string): string {
 
 // ── Base HTML layout ───────────────────────────────────────────────
 
-function baseTemplate(title: string, content: string): string {
+function baseTemplate(title: string, content: string, headerLabel: string = 'Aliax'): string {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -41,7 +41,7 @@ function baseTemplate(title: string, content: string): string {
           <!-- Header -->
           <tr>
             <td style="background:#4c1d95;background:linear-gradient(135deg,#4c1d95 0%,#0d9488 100%);padding:24px 32px;">
-              <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">Aliax</span>
+              <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">${headerLabel}</span>
             </td>
           </tr>
 
@@ -577,7 +577,7 @@ export const emailTemplates = {
       ${heading(data.title)}
       ${subtext(data.excerpt)}
       ${ctaButton('Leer artículo completo', data.articleUrl)}
-    `),
+    `, 'Revista Aliax'),
   }),
 };
 
