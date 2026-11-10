@@ -769,7 +769,7 @@ export default function Explorar() {
                   {MATCH_QUESTIONS.map((_, i) => (
                     <div key={i} style={{
                       flex: 1, height: 3, borderRadius: 4,
-                      background: i <= matchStep ? '#0d9488' : 'rgba(15,23,22,0.1)',
+                      background: i <= matchStep ? '#0d9488' : '#e7f2ee',
                       transition: 'background 0.3s',
                     }} />
                   ))}
@@ -865,7 +865,7 @@ export default function Explorar() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
                   <button onClick={() => setMatchStep(s => Math.max(0, s - 1))} disabled={matchStep === 0} style={{
-                    padding: '10px 20px', borderRadius: 10, border: 'none',
+                    padding: '10px 20px', borderRadius: 10, border: '1px solid rgba(13,148,136,0.25)',
                     background: 'transparent',
                     color: matchStep === 0 ? 'rgba(13,148,136,0.35)' : 'rgba(13,100,88,0.75)',
                     fontSize: 14, fontFamily: 'inherit', cursor: matchStep === 0 ? 'not-allowed' : 'pointer',
@@ -874,8 +874,8 @@ export default function Explorar() {
                   {matchStep < 4 ? (
                     <button onClick={() => setMatchStep(s => s + 1)} disabled={!(currentQ as { optional?: boolean }).optional && !currentAnswer.trim()} style={{
                       padding: '10px 24px', borderRadius: 10, border: 'none',
-                      background: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#0d9488' : 'rgba(13,148,136,0.18)',
-                      color: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#fff' : 'rgba(13,100,88,0.55)',
+                      background: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#2dd4bf' : 'rgba(139,92,246,0.18)',
+                      color: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#fff' : 'rgba(124,58,237,0.55)',
                       fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
                       cursor: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? 'pointer' : 'not-allowed',
                     }}>Siguiente →</button>
@@ -885,7 +885,7 @@ export default function Explorar() {
                       handleMatchSubmit();
                     }} style={{
                       padding: '10px 24px', borderRadius: 10, border: 'none',
-                      background: '#0d9488',
+                      background: '#2dd4bf',
                       color: '#fff',
                       fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
                       cursor: 'pointer',
