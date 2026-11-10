@@ -56,6 +56,22 @@ export interface BroadcastOptions {
   target?: AudienceTarget;
 }
 
+// Resend solo agrega un link de baja VISIBLE en el cuerpo si el HTML incluye este placeholder
+// -- lo resuelve por contacto automaticamente, y tambien activa el manejo automatico de bajas
+// (marca el contacto como unsubscribed del lado de Resend sin que nuestro backend tenga que
+// hacer nada). Sin esto, el correo solo lleva el header tecnico List-Unsubscribe (que algunos
+// clientes de correo ni muestran), sin ningun link visible -- esto es lo que Cesar reporto no
+// ver en un envio real de prueba (2026-11-09).
+const UNSUBSCRIBE_FOOTER = `
+  <div style="text-align:center;padding:16px 32px;color:#a1a1aa;font-size:12px;">
+    <a href="{{{RESEND_UNSUBSCRIBE_URL}}}" style="color:#a1a1aa;text-decoration:underline;">Darte de baja de este correo</a>
+  </div>`;
+
+function withUnsubscribeFooter(html: string): string {
+  if (html.includes('</body>')) return html.replace('</body>', `${UNSUBSCRIBE_FOOTER}</body>`);
+  return html + UNSUBSCRIBE_FOOTER;
+}
+
 export async function sendBroadcast(opts: BroadcastOptions): Promise<{ id: string }> {
   if (!resend) throw new Error('Resend no configurado');
   const audienceId = resolveAudienceId(opts.target ?? 'GENERAL');
@@ -66,7 +82,7 @@ export async function sendBroadcast(opts: BroadcastOptions): Promise<{ id: strin
     from: env.RESEND_FROM_EMAIL,
     name: opts.name,
     subject: opts.subject,
-    html: opts.html,
+    html: withUnsubscribeFooter(opts.html),
   });
 
   if (!created.data?.id) {
