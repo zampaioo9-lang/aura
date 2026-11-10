@@ -73,7 +73,7 @@ Años de experiencia: ${p.yearsExperience ?? 'No especificados'}`
 2. Modalidad preferida → ${answers.q2}
 3. Para quién es la terapia → ${answers.q3}
 4. Ubicación donde busca terapeuta → ${answers.q4 || 'Sin preferencia de ubicación / abierto a cualquier lugar'}
-5. Otras preferencias (puede incluir enfoque terapéutico, idioma, horarios, etc.) → ${answers.q5}`.trim();
+5. Enfoque terapéutico preferido (puede incluir otras preferencias: idioma, horarios, etc.) → ${answers.q5}`.trim();
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 

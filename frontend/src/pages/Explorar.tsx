@@ -163,7 +163,7 @@ const MATCH_QUESTIONS = [
   { key: 'q2', label: '¿Cómo prefieres las sesiones?', type: 'options', options: ['Presencial', 'En línea', 'Me da igual'] },
   { key: 'q3', label: '¿La terapia es para ti, tu pareja, para ambos, tu familia o alguien más?', type: 'options', options: ['Para mí', 'Para mi pareja', 'Para ambos', 'Para mi familia', 'Para alguien más'] },
   { key: 'q4', label: '¿En qué ciudad te gustaría buscar terapeuta?', type: 'location', optional: true },
-  { key: 'q5', label: '¿Algo más que sea importante para ti en un terapeuta?', type: 'textarea', placeholder: 'Ej: que tenga enfoque cognitivo-conductual u otro, que hable inglés, experiencia con ansiedad, horarios...' },
+  { key: 'q5', label: '¿Prefieres algún enfoque terapéutico en particular?', type: 'textarea', placeholder: 'Ej: cognitivo-conductual, sistémico, humanista... o escribe "no sé". También puedes mencionar otras preferencias: idioma, horarios, etc.' },
 ] as const;
 
 type MatchAnswers = { q1: string; q2: string; q3: string; q4: string; q5: string };
@@ -801,7 +801,7 @@ export default function Explorar() {
                     style={{
                       width: '100%', padding: '12px 14px', borderRadius: 10,
                       background: '#eef7f5', border: 'none',
-                      color: '#111827', fontSize: 14, fontFamily: 'inherit', resize: 'vertical',
+                      color: '#111827', fontSize: 16, fontFamily: 'inherit', resize: 'vertical',
                       outline: 'none', boxSizing: 'border-box',
                     }}
                   />
