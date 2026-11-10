@@ -45,9 +45,9 @@ const MODALITY_LABEL: Record<string, string> = {
 
 const PROFESSIONS = ['Psicólogo/a', 'Psiquiatra', 'Psicoterapeuta', 'Terapeuta de Parejas', 'Neuropsicólogo/a', 'Trabajador/a Social'];
 
-function SearchSelect({ value, onChange, options, placeholder, icon, panelBg }: {
+function SearchSelect({ value, onChange, options, placeholder, icon, panelBg, light }: {
   value: string; onChange: (v: string) => void;
-  options: string[]; placeholder: string; icon?: React.ReactNode; panelBg?: string;
+  options: string[]; placeholder: string; icon?: React.ReactNode; panelBg?: string; light?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
@@ -84,7 +84,7 @@ function SearchSelect({ value, onChange, options, placeholder, icon, panelBg }: 
     <div ref={dropRef} style={{
       position: 'fixed', top: coords.top, left: coords.left, width: coords.width,
       background: panelBg ?? 'rgba(6,4,16,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
-      border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
+      border: light ? '1px solid rgba(13,148,136,0.18)' : '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
       zIndex: 99999, maxHeight: 300, overflowY: 'auto',
       boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
     }}>
@@ -92,8 +92,8 @@ function SearchSelect({ value, onChange, options, placeholder, icon, panelBg }: 
         <button type="button" onClick={() => { onChange(''); setOpen(false); }} style={{
           width: '100%', textAlign: 'left', padding: '10px 16px',
           background: 'transparent', border: 'none', cursor: 'pointer',
-          color: 'rgba(255,255,255,0.35)', fontSize: 13, fontFamily: 'inherit',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          color: light ? 'rgba(15,23,22,0.45)' : 'rgba(255,255,255,0.35)', fontSize: 13, fontFamily: 'inherit',
+          borderBottom: light ? '1px solid rgba(13,148,136,0.12)' : '1px solid rgba(255,255,255,0.06)',
         }}>
           Limpiar selección
         </button>
@@ -101,13 +101,13 @@ function SearchSelect({ value, onChange, options, placeholder, icon, panelBg }: 
       {options.map(opt => (
         <button key={opt} type="button" onClick={() => { onChange(opt); setOpen(false); }} style={{
           width: '100%', textAlign: 'left', padding: '11px 16px',
-          background: opt === value ? 'rgba(45,212,191,0.12)' : 'transparent',
+          background: opt === value ? (light ? 'rgba(13,148,136,0.1)' : 'rgba(45,212,191,0.12)') : 'transparent',
           border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14,
-          color: opt === value ? '#2dd4bf' : 'rgba(255,255,255,0.8)',
-          borderLeft: `3px solid ${opt === value ? '#2dd4bf' : 'transparent'}`,
+          color: opt === value ? '#0d9488' : (light ? '#1f2937' : 'rgba(255,255,255,0.8)'),
+          borderLeft: `3px solid ${opt === value ? '#0d9488' : 'transparent'}`,
           display: 'block',
         }}
-        onMouseEnter={e => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)'; }}
+        onMouseEnter={e => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = light ? 'rgba(13,148,136,0.06)' : 'rgba(255,255,255,0.07)'; }}
         onMouseLeave={e => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
         >
           {opt}
@@ -122,14 +122,14 @@ function SearchSelect({ value, onChange, options, placeholder, icon, panelBg }: 
       <button ref={btnRef} type="button" onClick={handleOpen} style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: 8,
         padding: '20px 16px', background: 'transparent', border: 'none',
-        color: value ? '#fff' : 'rgba(255,255,255,0.4)', fontSize: 15,
-        fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left',
+        color: light ? (value ? '#1f2937' : 'rgba(31,41,55,0.45)') : (value ? '#fff' : 'rgba(255,255,255,0.4)'),
+        fontSize: 15, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left',
       }}>
         {icon && <span style={{ flexShrink: 0 }}>{icon}</span>}
         <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {value || placeholder}
         </span>
-        <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.4, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
+        <ChevronDown size={14} style={{ flexShrink: 0, opacity: light ? 0.55 : 0.4, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
       </button>
       {dropdown}
     </div>
@@ -828,7 +828,7 @@ export default function Explorar() {
                   <div>
                     <div style={{
                       display: 'flex', borderRadius: 10, overflow: 'hidden',
-                      background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(139,92,246,0.4)',
+                      background: '#e7f2ee', border: '1px solid rgba(13,148,136,0.25)',
                     }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <SearchSelect
@@ -839,12 +839,13 @@ export default function Explorar() {
                           }}
                           options={Object.keys(COUNTRIES_CITIES)}
                           placeholder="País"
-                          icon={<MapPin size={14} color="rgba(255,255,255,0.35)" />}
-                          panelBg="rgba(16,32,30,0.98)"
+                          icon={<MapPin size={14} color="rgba(13,148,136,0.55)" />}
+                          panelBg="#e7f2ee"
+                          light
                         />
                       </div>
-                      <div style={{ width: 1, background: 'rgba(255,255,255,0.12)' }} />
-                      <div style={{ flex: 1, minWidth: 0, opacity: matchCountry ? 1 : 0.4, pointerEvents: matchCountry ? 'auto' : 'none' }}>
+                      <div style={{ width: 1, background: 'rgba(13,148,136,0.18)' }} />
+                      <div style={{ flex: 1, minWidth: 0, opacity: matchCountry ? 1 : 0.5, pointerEvents: matchCountry ? 'auto' : 'none' }}>
                         <SearchSelect
                           value={matchCity}
                           onChange={v => {
@@ -853,7 +854,8 @@ export default function Explorar() {
                           }}
                           options={matchCountry ? COUNTRIES_CITIES[matchCountry] : []}
                           placeholder="Ciudad"
-                          panelBg="rgba(16,32,30,0.98)"
+                          panelBg="#e7f2ee"
+                          light
                         />
                       </div>
                     </div>
