@@ -84,7 +84,7 @@ function SearchSelect({ value, onChange, options, placeholder, icon, panelBg, li
     <div ref={dropRef} style={{
       position: 'fixed', top: coords.top, left: coords.left, width: coords.width,
       background: panelBg ?? 'rgba(6,4,16,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
-      border: light ? '1px solid rgba(76,53,117,0.15)' : '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
+      border: light ? '1px solid rgba(13,148,136,0.15)' : '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
       zIndex: 99999, maxHeight: 300, overflowY: 'auto',
       boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
     }}>
@@ -92,8 +92,8 @@ function SearchSelect({ value, onChange, options, placeholder, icon, panelBg, li
         <button type="button" onClick={() => { onChange(''); setOpen(false); }} style={{
           width: '100%', textAlign: 'left', padding: '10px 16px',
           background: 'transparent', border: 'none', cursor: 'pointer',
-          color: light ? 'rgba(76,53,117,0.5)' : 'rgba(255,255,255,0.35)', fontSize: 13, fontFamily: 'inherit',
-          borderBottom: light ? '1px solid rgba(76,53,117,0.12)' : '1px solid rgba(255,255,255,0.06)',
+          color: light ? 'rgba(13,100,88,0.5)' : 'rgba(255,255,255,0.35)', fontSize: 13, fontFamily: 'inherit',
+          borderBottom: light ? '1px solid rgba(13,148,136,0.12)' : '1px solid rgba(255,255,255,0.06)',
         }}>
           Limpiar selección
         </button>
@@ -101,13 +101,13 @@ function SearchSelect({ value, onChange, options, placeholder, icon, panelBg, li
       {options.map(opt => (
         <button key={opt} type="button" onClick={() => { onChange(opt); setOpen(false); }} style={{
           width: '100%', textAlign: 'left', padding: '11px 16px',
-          background: opt === value ? (light ? 'rgba(124,58,237,0.12)' : 'rgba(45,212,191,0.12)') : 'transparent',
+          background: opt === value ? 'rgba(13,148,136,0.12)' : 'transparent',
           border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14,
-          color: opt === value ? (light ? '#7c3aed' : '#0d9488') : (light ? '#3b2b63' : 'rgba(255,255,255,0.8)'),
-          borderLeft: `3px solid ${opt === value ? (light ? '#7c3aed' : '#0d9488') : 'transparent'}`,
+          color: opt === value ? '#0d9488' : (light ? '#111827' : 'rgba(255,255,255,0.8)'),
+          borderLeft: `3px solid ${opt === value ? '#0d9488' : 'transparent'}`,
           display: 'block',
         }}
-        onMouseEnter={e => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = light ? 'rgba(76,53,117,0.08)' : 'rgba(255,255,255,0.07)'; }}
+        onMouseEnter={e => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = light ? 'rgba(13,148,136,0.08)' : 'rgba(255,255,255,0.07)'; }}
         onMouseLeave={e => { if (opt !== value) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
         >
           {opt}
@@ -122,7 +122,7 @@ function SearchSelect({ value, onChange, options, placeholder, icon, panelBg, li
       <button ref={btnRef} type="button" onClick={handleOpen} style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: 8,
         padding: '20px 16px', background: 'transparent', border: 'none',
-        color: light ? (value ? '#3b2b63' : 'rgba(76,53,117,0.55)') : (value ? '#fff' : 'rgba(255,255,255,0.4)'),
+        color: light ? (value ? '#111827' : 'rgba(13,100,88,0.5)') : (value ? '#fff' : 'rgba(255,255,255,0.4)'),
         fontSize: 15, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left',
       }}>
         {icon && <span style={{ flexShrink: 0 }}>{icon}</span>}
@@ -741,9 +741,9 @@ export default function Explorar() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
         }}>
           <div style={{
-            width: '100%', maxWidth: 560, background: '#e7f2ee',
+            width: '100%', maxWidth: 560, background: '#ffffff',
             border: 'none', borderRadius: 20,
-            boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
+            boxShadow: '0 0 0 1px rgba(45,212,191,0.25), 0 25px 70px rgba(13,148,136,0.28), 0 12px 32px rgba(0,0,0,0.35)',
             padding: 32, position: 'relative', maxHeight: '90vh', overflowY: 'auto',
           }}>
             <button onClick={closeMatch} style={{
@@ -769,7 +769,7 @@ export default function Explorar() {
                   {MATCH_QUESTIONS.map((_, i) => (
                     <div key={i} style={{
                       flex: 1, height: 3, borderRadius: 4,
-                      background: i <= matchStep ? '#c4b5fd' : 'rgba(15,23,22,0.1)',
+                      background: i <= matchStep ? '#0d9488' : 'rgba(15,23,22,0.1)',
                       transition: 'background 0.3s',
                     }} />
                   ))}
@@ -800,8 +800,8 @@ export default function Explorar() {
                     className="ex-match-textarea"
                     style={{
                       width: '100%', padding: '12px 14px', borderRadius: 10,
-                      background: '#ede9fe', border: 'none',
-                      color: '#3b2b63', fontSize: 14, fontFamily: 'inherit', resize: 'vertical',
+                      background: '#eef7f5', border: 'none',
+                      color: '#111827', fontSize: 14, fontFamily: 'inherit', resize: 'vertical',
                       outline: 'none', boxSizing: 'border-box',
                     }}
                   />
@@ -812,8 +812,8 @@ export default function Explorar() {
                     {(currentQ as { options: readonly string[] }).options.map(opt => (
                       <button key={opt} onClick={() => setMatchAnswers(a => ({ ...a, [currentQ.key]: opt }))} style={{
                         padding: '12px 16px', borderRadius: 10, textAlign: 'left', border: 'none',
-                        background: currentAnswer === opt ? '#2dd4bf' : '#ede9fe',
-                        color: currentAnswer === opt ? '#fff' : '#3b2b63',
+                        background: currentAnswer === opt ? '#0d9488' : '#eef7f5',
+                        color: currentAnswer === opt ? '#fff' : '#111827',
                         fontSize: 14, fontWeight: currentAnswer === opt ? 600 : 400, fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.15s',
                       }}>
                         {opt}
@@ -826,7 +826,7 @@ export default function Explorar() {
                   <div>
                     <div style={{
                       display: 'flex', borderRadius: 10, overflow: 'hidden',
-                      background: '#ede9fe', border: 'none',
+                      background: '#eef7f5', border: 'none',
                     }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <SearchSelect
@@ -837,12 +837,12 @@ export default function Explorar() {
                           }}
                           options={Object.keys(COUNTRIES_CITIES)}
                           placeholder="País"
-                          icon={<MapPin size={14} color="rgba(76,53,117,0.55)" />}
-                          panelBg="#ede9fe"
+                          icon={<MapPin size={14} color="rgba(13,148,136,0.55)" />}
+                          panelBg="#eef7f5"
                           light
                         />
                       </div>
-                      <div style={{ width: 1, background: 'rgba(76,53,117,0.15)' }} />
+                      <div style={{ width: 1, background: 'rgba(13,148,136,0.15)' }} />
                       <div style={{ flex: 1, minWidth: 0, opacity: matchCountry ? 1 : 0.5, pointerEvents: matchCountry ? 'auto' : 'none' }}>
                         <SearchSelect
                           value={matchCity}
@@ -852,7 +852,7 @@ export default function Explorar() {
                           }}
                           options={matchCountry ? COUNTRIES_CITIES[matchCountry] : []}
                           placeholder="Ciudad"
-                          panelBg="#ede9fe"
+                          panelBg="#eef7f5"
                           light
                         />
                       </div>
@@ -866,15 +866,15 @@ export default function Explorar() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
                   <button onClick={() => setMatchStep(s => Math.max(0, s - 1))} disabled={matchStep === 0} style={{
                     padding: '10px 20px', borderRadius: 10, border: 'none',
-                    background: matchStep === 0 ? 'rgba(139,92,246,0.06)' : 'rgba(139,92,246,0.15)',
-                    color: matchStep === 0 ? 'rgba(124,58,237,0.35)' : '#7c3aed',
+                    background: 'transparent',
+                    color: matchStep === 0 ? 'rgba(15,23,22,0.25)' : 'rgba(31,41,55,0.55)',
                     fontSize: 14, fontFamily: 'inherit', cursor: matchStep === 0 ? 'not-allowed' : 'pointer',
                   }}>← Anterior</button>
 
                   {matchStep < 4 ? (
                     <button onClick={() => setMatchStep(s => s + 1)} disabled={!(currentQ as { optional?: boolean }).optional && !currentAnswer.trim()} style={{
                       padding: '10px 24px', borderRadius: 10, border: 'none',
-                      background: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#2dd4bf' : 'rgba(15,23,22,0.08)',
+                      background: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#0d9488' : 'rgba(15,23,22,0.08)',
                       color: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#fff' : 'rgba(15,23,22,0.3)',
                       fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
                       cursor: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? 'pointer' : 'not-allowed',
@@ -885,7 +885,7 @@ export default function Explorar() {
                       handleMatchSubmit();
                     }} style={{
                       padding: '10px 24px', borderRadius: 10, border: 'none',
-                      background: '#2dd4bf',
+                      background: '#0d9488',
                       color: '#fff',
                       fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
                       cursor: 'pointer',
@@ -924,7 +924,7 @@ export default function Explorar() {
                       }}>
                         {m.profile.avatar
                           ? <img src={m.profile.avatar} alt={m.profile.title} style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />
-                          : <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(139,92,246,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#7c3aed', fontSize: 18, fontWeight: 700 }}>
+                          : <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(13,148,136,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#0d9488', fontSize: 18, fontWeight: 700 }}>
                               {m.profile.title.charAt(0)}
                             </div>
                         }
@@ -933,12 +933,12 @@ export default function Explorar() {
                             <span style={{ color: '#111827', fontSize: 15, fontWeight: 600 }}>{m.profile.title}</span>
                             <div style={{
                               display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
-                              background: i === 0 ? 'rgba(139,92,246,0.14)' : 'rgba(13,148,136,0.12)',
-                              border: `1px solid ${i === 0 ? 'rgba(139,92,246,0.4)' : 'rgba(13,148,136,0.3)'}`,
+                              background: i === 0 ? '#0d9488' : 'rgba(13,148,136,0.12)',
+                              border: 'none',
                               borderRadius: 20, padding: '3px 10px',
                             }}>
-                              <Star size={11} color={i === 0 ? '#7c3aed' : '#0d9488'} fill={i === 0 ? '#7c3aed' : '#0d9488'} />
-                              <span style={{ color: i === 0 ? '#7c3aed' : '#0d9488', fontSize: 12, fontWeight: 700 }}>{m.score}%</span>
+                              <Star size={11} color={i === 0 ? '#fff' : '#0d9488'} fill={i === 0 ? '#fff' : '#0d9488'} />
+                              <span style={{ color: i === 0 ? '#fff' : '#0d9488', fontSize: 12, fontWeight: 700 }}>{m.score}%</span>
                             </div>
                           </div>
                           <p style={{ color: 'rgba(31,41,55,0.6)', fontSize: 13, margin: 0, lineHeight: 1.5 }}>{m.reason}</p>
