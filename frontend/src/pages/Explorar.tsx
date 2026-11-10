@@ -741,22 +741,23 @@ export default function Explorar() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
         }}>
           <div style={{
-            width: '100%', maxWidth: 560, background: 'rgb(12,28,26)',
-            border: '1px solid rgba(139,92,246,0.35)', borderRadius: 20,
+            width: '100%', maxWidth: 560, background: '#ffffff',
+            border: '1px solid rgba(13,148,136,0.18)', borderRadius: 20,
+            boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
             padding: 32, position: 'relative', maxHeight: '90vh', overflowY: 'auto',
           }}>
             <button onClick={closeMatch} style={{
               position: 'absolute', top: 16, right: 16, background: 'none',
-              border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.45)', padding: 4,
+              border: 'none', cursor: 'pointer', color: 'rgba(15,23,22,0.4)', padding: 4,
             }}><X size={20} /></button>
 
             {/* Header */}
             <div style={{ marginBottom: 28 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <Sparkles size={18} color="#c4b5fd" />
-                <h2 style={{ margin: 0, color: '#fff', fontSize: 20, fontWeight: 700 }}>Matching inteligente</h2>
+                <Sparkles size={18} color="#0d9488" />
+                <h2 style={{ margin: 0, color: '#111827', fontSize: 20, fontWeight: 700 }}>Matching inteligente</h2>
               </div>
-              <p style={{ margin: 0, color: 'rgba(255,255,255,0.55)', fontSize: 14 }}>
+              <p style={{ margin: 0, color: 'rgba(31,41,55,0.6)', fontSize: 14 }}>
                 Cuéntanos tu situación y la IA te dirá qué terapeuta encaja mejor contigo.
               </p>
             </div>
@@ -768,23 +769,23 @@ export default function Explorar() {
                   {MATCH_QUESTIONS.map((_, i) => (
                     <div key={i} style={{
                       flex: 1, height: 3, borderRadius: 4,
-                      background: i <= matchStep ? '#c4b5fd' : 'rgba(255,255,255,0.12)',
+                      background: i <= matchStep ? '#0d9488' : 'rgba(15,23,22,0.1)',
                       transition: 'background 0.3s',
                     }} />
                   ))}
                 </div>
 
                 {(currentQ as { highlight?: boolean }).highlight ? (
-                  <p style={{ color: '#2dd4bf', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
+                  <p style={{ color: '#0d9488', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
                     Lo más importante — esto define tu match
                   </p>
                 ) : (
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
+                  <p style={{ color: 'rgba(31,41,55,0.5)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
                     Pregunta {matchStep + 1} de 5
                   </p>
                 )}
                 <h3 style={{
-                  color: '#fff', fontWeight: 600, margin: '0 0 20px', lineHeight: 1.4,
+                  color: '#111827', fontWeight: 600, margin: '0 0 20px', lineHeight: 1.4,
                   fontSize: (currentQ as { highlight?: boolean }).highlight ? 20 : 17,
                 }}>
                   {currentQ.label}
@@ -798,11 +799,11 @@ export default function Explorar() {
                     placeholder={(currentQ as { placeholder?: string }).placeholder}
                     style={{
                       width: '100%', padding: '12px 14px', borderRadius: 10,
-                      background: 'rgba(255,255,255,0.09)',
+                      background: '#f7faf9',
                       border: (currentQ as { highlight?: boolean }).highlight
-                        ? '1.5px solid rgba(45,212,191,0.55)'
-                        : '1px solid rgba(139,92,246,0.4)',
-                      color: '#fff', fontSize: 14, fontFamily: 'inherit', resize: 'vertical',
+                        ? '1.5px solid rgba(13,148,136,0.55)'
+                        : '1px solid rgba(15,23,22,0.15)',
+                      color: '#111827', fontSize: 14, fontFamily: 'inherit', resize: 'vertical',
                       outline: 'none', boxSizing: 'border-box',
                     }}
                   />
@@ -813,9 +814,9 @@ export default function Explorar() {
                     {(currentQ as { options: readonly string[] }).options.map(opt => (
                       <button key={opt} onClick={() => setMatchAnswers(a => ({ ...a, [currentQ.key]: opt }))} style={{
                         padding: '12px 16px', borderRadius: 10, textAlign: 'left',
-                        background: currentAnswer === opt ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.07)',
-                        border: `1.5px solid ${currentAnswer === opt ? 'rgba(139,92,246,0.7)' : 'rgba(255,255,255,0.15)'}`,
-                        color: currentAnswer === opt ? '#c4b5fd' : 'rgba(255,255,255,0.75)',
+                        background: currentAnswer === opt ? 'rgba(13,148,136,0.12)' : '#f7faf9',
+                        border: `1.5px solid ${currentAnswer === opt ? 'rgba(13,148,136,0.6)' : 'rgba(15,23,22,0.12)'}`,
+                        color: currentAnswer === opt ? '#0d9488' : 'rgba(31,41,55,0.75)',
                         fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.15s',
                       }}>
                         {opt}
@@ -859,7 +860,7 @@ export default function Explorar() {
                         />
                       </div>
                     </div>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, margin: '10px 0 0' }}>
+                    <p style={{ color: 'rgba(31,41,55,0.5)', fontSize: 12, margin: '10px 0 0' }}>
                       Opcional — si prefieres terapia en línea o no tienes preferencia, puedes dar clic en "Siguiente" sin llenar esto.
                     </p>
                   </div>
@@ -867,16 +868,16 @@ export default function Explorar() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
                   <button onClick={() => setMatchStep(s => Math.max(0, s - 1))} disabled={matchStep === 0} style={{
-                    padding: '10px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)',
-                    background: 'transparent', color: matchStep === 0 ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.7)',
+                    padding: '10px 20px', borderRadius: 10, border: '1px solid rgba(15,23,22,0.15)',
+                    background: 'transparent', color: matchStep === 0 ? 'rgba(15,23,22,0.25)' : 'rgba(31,41,55,0.7)',
                     fontSize: 14, fontFamily: 'inherit', cursor: matchStep === 0 ? 'not-allowed' : 'pointer',
                   }}>← Anterior</button>
 
                   {matchStep < 4 ? (
                     <button onClick={() => setMatchStep(s => s + 1)} disabled={!(currentQ as { optional?: boolean }).optional && !currentAnswer.trim()} style={{
                       padding: '10px 24px', borderRadius: 10, border: 'none',
-                      background: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? 'linear-gradient(135deg, #8b5cf6, #2dd4bf)' : 'rgba(255,255,255,0.1)',
-                      color: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#fff' : 'rgba(255,255,255,0.3)',
+                      background: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? 'linear-gradient(135deg, #8b5cf6, #2dd4bf)' : 'rgba(15,23,22,0.08)',
+                      color: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#fff' : 'rgba(15,23,22,0.3)',
                       fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
                       cursor: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? 'pointer' : 'not-allowed',
                     }}>Siguiente →</button>
@@ -900,49 +901,49 @@ export default function Explorar() {
             {/* Step: cargando */}
             {matchStep === 5 && (
               <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                <Loader2 size={40} color="#c4b5fd" style={{ animation: 'spin 1s linear infinite', marginBottom: 20 }} />
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, margin: 0 }}>Analizando compatibilidad...</p>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginTop: 8 }}>La IA está revisando todos los perfiles</p>
+                <Loader2 size={40} color="#0d9488" style={{ animation: 'spin 1s linear infinite', marginBottom: 20 }} />
+                <p style={{ color: 'rgba(31,41,55,0.75)', fontSize: 16, margin: 0 }}>Analizando compatibilidad...</p>
+                <p style={{ color: 'rgba(31,41,55,0.45)', fontSize: 13, marginTop: 8 }}>La IA está revisando todos los perfiles</p>
               </div>
             )}
 
             {/* Step: resultados */}
             {matchStep === 6 && matchResults && (
               <div>
-                <h3 style={{ color: '#fff', fontSize: 17, fontWeight: 700, margin: '0 0 6px' }}>
+                <h3 style={{ color: '#111827', fontSize: 17, fontWeight: 700, margin: '0 0 6px' }}>
                   {matchResults.length > 0 ? `${matchResults.length} terapeutas compatibles encontrados` : 'Sin resultados por ahora'}
                 </h3>
-                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, margin: '0 0 20px' }}>
+                <p style={{ color: 'rgba(31,41,55,0.5)', fontSize: 13, margin: '0 0 20px' }}>
                   Ordenados por compatibilidad con tus respuestas
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {matchResults.map((m, i) => (
                     <Link key={m.profileId} to={`/${m.profile.slug}`} onClick={closeMatch} style={{ textDecoration: 'none' }}>
                       <div style={{
-                        background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                        background: '#f7faf9', border: '1px solid rgba(15,23,22,0.1)',
                         borderRadius: 14, padding: '14px 16px', transition: 'border-color 0.2s',
                         display: 'flex', gap: 14, alignItems: 'flex-start',
                       }}>
                         {m.profile.avatar
                           ? <img src={m.profile.avatar} alt={m.profile.title} style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />
-                          : <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(139,92,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#c4b5fd', fontSize: 18, fontWeight: 700 }}>
+                          : <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(139,92,246,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#7c3aed', fontSize: 18, fontWeight: 700 }}>
                               {m.profile.title.charAt(0)}
                             </div>
                         }
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
-                            <span style={{ color: '#fff', fontSize: 15, fontWeight: 600 }}>{m.profile.title}</span>
+                            <span style={{ color: '#111827', fontSize: 15, fontWeight: 600 }}>{m.profile.title}</span>
                             <div style={{
                               display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
-                              background: i === 0 ? 'rgba(139,92,246,0.3)' : 'rgba(45,212,191,0.15)',
-                              border: `1px solid ${i === 0 ? 'rgba(139,92,246,0.6)' : 'rgba(45,212,191,0.3)'}`,
+                              background: i === 0 ? 'rgba(139,92,246,0.14)' : 'rgba(13,148,136,0.12)',
+                              border: `1px solid ${i === 0 ? 'rgba(139,92,246,0.4)' : 'rgba(13,148,136,0.3)'}`,
                               borderRadius: 20, padding: '3px 10px',
                             }}>
-                              <Star size={11} color={i === 0 ? '#c4b5fd' : '#2dd4bf'} fill={i === 0 ? '#c4b5fd' : '#2dd4bf'} />
-                              <span style={{ color: i === 0 ? '#c4b5fd' : '#2dd4bf', fontSize: 12, fontWeight: 700 }}>{m.score}%</span>
+                              <Star size={11} color={i === 0 ? '#7c3aed' : '#0d9488'} fill={i === 0 ? '#7c3aed' : '#0d9488'} />
+                              <span style={{ color: i === 0 ? '#7c3aed' : '#0d9488', fontSize: 12, fontWeight: 700 }}>{m.score}%</span>
                             </div>
                           </div>
-                          <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, margin: 0, lineHeight: 1.5 }}>{m.reason}</p>
+                          <p style={{ color: 'rgba(31,41,55,0.6)', fontSize: 13, margin: 0, lineHeight: 1.5 }}>{m.reason}</p>
                         </div>
                       </div>
                     </Link>
@@ -950,8 +951,8 @@ export default function Explorar() {
                 </div>
                 <button onClick={() => { setMatchStep(0); setMatchResults(null); setMatchAnswers({ q1: '', q2: '', q3: '', q4: '', q5: '' }); }} style={{
                   marginTop: 20, width: '100%', padding: '11px', borderRadius: 10,
-                  border: '1px solid rgba(255,255,255,0.2)', background: 'transparent',
-                  color: 'rgba(255,255,255,0.6)', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer',
+                  border: '1px solid rgba(15,23,22,0.15)', background: 'transparent',
+                  color: 'rgba(31,41,55,0.65)', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer',
                 }}>
                   Volver a responder
                 </button>
