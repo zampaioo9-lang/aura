@@ -874,8 +874,8 @@ export default function Explorar() {
                   {matchStep < 4 ? (
                     <button onClick={() => setMatchStep(s => s + 1)} disabled={!(currentQ as { optional?: boolean }).optional && !currentAnswer.trim()} style={{
                       padding: '10px 24px', borderRadius: 10, border: 'none',
-                      background: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#2dd4bf' : 'rgba(139,92,246,0.18)',
-                      color: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#fff' : 'rgba(124,58,237,0.55)',
+                      background: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#2dd4bf' : '#e7f2ee',
+                      color: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#fff' : 'rgba(13,100,88,0.45)',
                       fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
                       cursor: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? 'pointer' : 'not-allowed',
                     }}>Siguiente →</button>
