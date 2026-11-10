@@ -159,11 +159,11 @@ const COUNTRIES_CITIES: Record<string, string[]> = {
 };
 
 const MATCH_QUESTIONS = [
-  { key: 'q1', label: '¿Qué te motiva a buscar terapia?', type: 'textarea', placeholder: 'Cuéntanos brevemente lo que te trajo aquí...' },
+  { key: 'q1', label: 'Cuéntanos qué te trae a terapia', type: 'textarea', placeholder: 'Describe con el mayor detalle posible tu situación: cómo te sientes, qué quieres resolver...', highlight: true },
   { key: 'q2', label: '¿Cómo prefieres las sesiones?', type: 'options', options: ['Presencial', 'En línea', 'Me da igual'] },
   { key: 'q3', label: '¿La terapia es para ti, tu pareja, para ambos, tu familia o alguien más?', type: 'options', options: ['Para mí', 'Para mi pareja', 'Para ambos', 'Para mi familia', 'Para alguien más'] },
-  { key: 'q4', label: '¿Tienes preferencia de enfoque terapéutico?', type: 'textarea', placeholder: 'Ej: cognitivo-conductual, sistémico, humanista... o escribe "no sé"' },
-  { key: 'q5', label: '¿Algo más que sea importante para ti en un terapeuta?', type: 'textarea', placeholder: 'Ej: que hable inglés, experiencia con ansiedad, precio, horarios...' },
+  { key: 'q4', label: '¿En qué ciudad te gustaría buscar terapeuta?', type: 'location', optional: true },
+  { key: 'q5', label: '¿Algo más que sea importante para ti en un terapeuta?', type: 'textarea', placeholder: 'Ej: que tenga enfoque cognitivo-conductual u otro, que hable inglés, experiencia con ansiedad, horarios...' },
 ] as const;
 
 type MatchAnswers = { q1: string; q2: string; q3: string; q4: string; q5: string };
@@ -180,8 +180,15 @@ export default function Explorar() {
   const [matchStep, setMatchStep]       = useState(0);
   const [matchAnswers, setMatchAnswers] = useState<MatchAnswers>({ q1: '', q2: '', q3: '', q4: '', q5: '' });
   const [matchResults, setMatchResults] = useState<MatchResult[] | null>(null);
+  const [matchCountry, setMatchCountry] = useState('');
+  const [matchCity, setMatchCity]       = useState('');
 
-  const openMatch = () => { setShowMatch(true); setMatchStep(0); setMatchAnswers({ q1: '', q2: '', q3: '', q4: '', q5: '' }); setMatchResults(null); };
+  const openMatch = () => {
+    setShowMatch(true); setMatchStep(0);
+    setMatchAnswers({ q1: '', q2: '', q3: '', q4: '', q5: '' });
+    setMatchCountry(''); setMatchCity('');
+    setMatchResults(null);
+  };
   const closeMatch = () => setShowMatch(false);
 
   const handleMatchSubmit = async () => {
@@ -750,7 +757,7 @@ export default function Explorar() {
                 <h2 style={{ margin: 0, color: '#fff', fontSize: 20, fontWeight: 700 }}>Matching inteligente</h2>
               </div>
               <p style={{ margin: 0, color: 'rgba(255,255,255,0.55)', fontSize: 14 }}>
-                Responde 5 preguntas y la IA encontrará los terapeutas más compatibles contigo.
+                Cuéntanos tu situación y la IA te dirá qué terapeuta encaja mejor contigo.
               </p>
             </div>
 
@@ -767,10 +774,19 @@ export default function Explorar() {
                   ))}
                 </div>
 
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
-                  Pregunta {matchStep + 1} de 5
-                </p>
-                <h3 style={{ color: '#fff', fontSize: 17, fontWeight: 600, margin: '0 0 20px', lineHeight: 1.4 }}>
+                {(currentQ as { highlight?: boolean }).highlight ? (
+                  <p style={{ color: '#2dd4bf', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
+                    Lo más importante — esto define tu match
+                  </p>
+                ) : (
+                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px' }}>
+                    Pregunta {matchStep + 1} de 5
+                  </p>
+                )}
+                <h3 style={{
+                  color: '#fff', fontWeight: 600, margin: '0 0 20px', lineHeight: 1.4,
+                  fontSize: (currentQ as { highlight?: boolean }).highlight ? 20 : 17,
+                }}>
                   {currentQ.label}
                 </h3>
 
@@ -778,11 +794,14 @@ export default function Explorar() {
                   <textarea
                     value={currentAnswer}
                     onChange={e => setMatchAnswers(a => ({ ...a, [currentQ.key]: e.target.value }))}
-                    rows={3}
+                    rows={(currentQ as { highlight?: boolean }).highlight ? 5 : 3}
                     placeholder={(currentQ as { placeholder?: string }).placeholder}
                     style={{
                       width: '100%', padding: '12px 14px', borderRadius: 10,
-                      background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(139,92,246,0.4)',
+                      background: 'rgba(255,255,255,0.09)',
+                      border: (currentQ as { highlight?: boolean }).highlight
+                        ? '1.5px solid rgba(45,212,191,0.55)'
+                        : '1px solid rgba(139,92,246,0.4)',
                       color: '#fff', fontSize: 14, fontFamily: 'inherit', resize: 'vertical',
                       outline: 'none', boxSizing: 'border-box',
                     }}
@@ -805,6 +824,43 @@ export default function Explorar() {
                   </div>
                 )}
 
+                {currentQ.type === 'location' && (
+                  <div>
+                    <div style={{
+                      display: 'flex', borderRadius: 10, overflow: 'hidden',
+                      background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(139,92,246,0.4)',
+                    }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <SearchSelect
+                          value={matchCountry}
+                          onChange={v => {
+                            setMatchCountry(v); setMatchCity('');
+                            setMatchAnswers(a => ({ ...a, q4: '' }));
+                          }}
+                          options={Object.keys(COUNTRIES_CITIES)}
+                          placeholder="País"
+                          icon={<MapPin size={14} color="rgba(255,255,255,0.35)" />}
+                        />
+                      </div>
+                      <div style={{ width: 1, background: 'rgba(255,255,255,0.12)' }} />
+                      <div style={{ flex: 1, minWidth: 0, opacity: matchCountry ? 1 : 0.4, pointerEvents: matchCountry ? 'auto' : 'none' }}>
+                        <SearchSelect
+                          value={matchCity}
+                          onChange={v => {
+                            setMatchCity(v);
+                            setMatchAnswers(a => ({ ...a, q4: matchCountry ? `${v}, ${matchCountry}` : v }));
+                          }}
+                          options={matchCountry ? COUNTRIES_CITIES[matchCountry] : []}
+                          placeholder="Ciudad"
+                        />
+                      </div>
+                    </div>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, margin: '10px 0 0' }}>
+                      Opcional — si prefieres terapia en línea o no tienes preferencia, puedes dar clic en "Siguiente" sin llenar esto.
+                    </p>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
                   <button onClick={() => setMatchStep(s => Math.max(0, s - 1))} disabled={matchStep === 0} style={{
                     padding: '10px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)',
@@ -813,12 +869,12 @@ export default function Explorar() {
                   }}>← Anterior</button>
 
                   {matchStep < 4 ? (
-                    <button onClick={() => setMatchStep(s => s + 1)} disabled={!currentAnswer.trim()} style={{
+                    <button onClick={() => setMatchStep(s => s + 1)} disabled={!(currentQ as { optional?: boolean }).optional && !currentAnswer.trim()} style={{
                       padding: '10px 24px', borderRadius: 10, border: 'none',
-                      background: currentAnswer.trim() ? 'linear-gradient(135deg, #8b5cf6, #2dd4bf)' : 'rgba(255,255,255,0.1)',
-                      color: currentAnswer.trim() ? '#fff' : 'rgba(255,255,255,0.3)',
+                      background: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? 'linear-gradient(135deg, #8b5cf6, #2dd4bf)' : 'rgba(255,255,255,0.1)',
+                      color: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#fff' : 'rgba(255,255,255,0.3)',
                       fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
-                      cursor: currentAnswer.trim() ? 'pointer' : 'not-allowed',
+                      cursor: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? 'pointer' : 'not-allowed',
                     }}>Siguiente →</button>
                   ) : (
                     <button onClick={() => {

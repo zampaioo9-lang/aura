@@ -69,11 +69,11 @@ Años de experiencia: ${p.yearsExperience ?? 'No especificados'}`
     ).join('\n\n');
 
     const patientContext = `
-1. ¿Qué te motiva a buscar terapia? → ${answers.q1}
-2. ¿Cómo prefieres las sesiones? → ${answers.q2}
-3. ¿Para quién es la terapia? → ${answers.q3}
-4. ¿Tienes preferencia de enfoque terapéutico? → ${answers.q4}
-5. ¿Algo más que sea importante para ti? → ${answers.q5}`.trim();
+1. Motivo principal (su problemática, el dato MÁS importante) → ${answers.q1}
+2. Modalidad preferida → ${answers.q2}
+3. Para quién es la terapia → ${answers.q3}
+4. Ubicación donde busca terapeuta → ${answers.q4 || 'Sin preferencia de ubicación / abierto a cualquier lugar'}
+5. Otras preferencias (puede incluir enfoque terapéutico, idioma, horarios, etc.) → ${answers.q5}`.trim();
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -91,8 +91,9 @@ TERAPEUTAS DISPONIBLES:
 ${therapistList}
 
 Instrucciones:
-- Analiza la compatibilidad de cada terapeuta con el paciente
-- Considera: modalidad preferida, problemáticas, enfoques terapéuticos, poblaciones atendidas
+- El criterio MÁS IMPORTANTE es qué tan bien la bio, enfoques terapéuticos y problemáticas de cada terapeuta responden al motivo principal del paciente (punto 1). Prioriza esto por encima de todo lo demás.
+- Usa como criterios de refuerzo, no determinantes: modalidad preferida, para quién es la terapia, ubicación (si el paciente especificó ciudad y prefiere modalidad presencial o "me da igual", da preferencia a terapeutas de esa misma ciudad), y las otras preferencias mencionadas.
+- Un terapeuta muy compatible con el motivo principal pero en otra ciudad u modalidad distinta puede seguir rankeando alto, sobre todo si ofrece modalidad en línea.
 - Devuelve los TOP ${Math.min(qualifiedProfiles.length, 5)} más compatibles
 - Si hay menos de 5 terapeutas totales, devuelve todos
 - Para cada uno incluye un score del 0 al 100 y una razón breve (máx 2 oraciones en español) de por qué es compatible
