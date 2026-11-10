@@ -206,9 +206,9 @@ function renderSubscribeBand(): string {
 
 function renderTherapistCTA(): string {
   return `<div style="background:linear-gradient(135deg,rgba(45,212,191,0.08),rgba(13,148,136,0.04));border-radius:20px;padding:32px;text-align:center;margin:40px 0">
-  <h3 style="font-size:20px;margin:0 0 8px">¿Quieres hablar con alguien?</h3>
-  <p style="font-size:14px;color:#4b4b55;margin:0 0 20px">Explora psicologos verificados en Aliax y agenda tu primera sesion.</p>
-  <a href="/explorar" style="display:inline-block;padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700">Explorar terapeutas</a>
+  <h3 style="font-size:20px;margin:0 0 8px">¿Quieres hablar con un profesional?</h3>
+  <p style="font-size:16px;font-weight:500;color:#3f3f46;margin:0 0 20px">Explora psicologos verificados en Aliax y agenda tu primera sesion.</p>
+  <a href="/explorar" style="display:inline-block;padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700;box-shadow:0 6px 18px rgba(13,148,136,0.3)">Explorar terapeutas</a>
 </div>`;
 }
 
