@@ -374,8 +374,8 @@ export default function Explorar() {
               <span className="ex-match-cta" style={{
                 display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
                 padding: '8px 14px', borderRadius: 999,
-                background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.22)',
-                fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
+                background: 'linear-gradient(135deg, #2dd4bf 0%, #0d9488 100%)', border: '1px solid rgba(45,212,191,0.6)',
+                color: '#fff', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
               }}>
                 Comenzar
                 <ArrowRight size={14} className="ex-match-arrow" />
