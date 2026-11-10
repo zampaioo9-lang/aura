@@ -126,4 +126,23 @@ input:focus { outline: none; }
     justify-content: flex-start !important;
     border-top: 1px solid rgba(255,255,255,0.08) !important;
   }
+
+  /* Match IA — una sola columna en mobile (texto arriba, botón Comenzar abajo) */
+  .ex-match-btn {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 22px !important;
+    gap: 18px !important;
+  }
+  .ex-match-content {
+    width: 100% !important;
+  }
+  .ex-match-text {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+  .ex-match-cta {
+    width: 100% !important;
+    justify-content: center !important;
+  }
 }

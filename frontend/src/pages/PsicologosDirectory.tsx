@@ -102,7 +102,7 @@ export default function PsicologosDirectory() {
 
   // ── Breadcrumb ───────────────────────────────────────────────────
   const crumbs: { label: string; to: string }[] = [
-    { label: 'Explorar', to: '/explorar' },
+    { label: 'Encontrar psicólogo', to: '/explorar' },
     { label: 'Psicólogos', to: '/psicologos' },
   ];
   if (countryCode && countryName) crumbs.push({ label: countryName, to: `/psicologos/${countryCode}` });

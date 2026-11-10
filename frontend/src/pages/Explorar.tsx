@@ -369,9 +369,9 @@ export default function Explorar() {
               boxShadow: '0 12px 40px rgba(139,92,246,0.28), 0 6px 16px rgba(0,0,0,0.35)',
               transition: 'transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s, border-color 0.25s',
             }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+              <span className="ex-match-content" style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
                 <Sparkles size={24} color="#c4b5fd" style={{ flexShrink: 0 }} />
-                <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
+                <span className="ex-match-text" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
                   <span style={{ fontSize: 18, fontWeight: 700 }}>Encuentra tu match ideal con IA</span>
                   <span style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.65)', marginTop: 2 }}>
                     Responde 5 preguntas y te decimos qué psicólogo encaja contigo

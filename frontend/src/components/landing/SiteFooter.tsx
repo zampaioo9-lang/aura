@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
 const LINKS = [
-  { label: 'Explorar', to: '/explorar' },
+  { label: 'Encontrar psicólogo', to: '/explorar' },
   { label: 'Precios', to: '/pricing' },
   { label: 'Iniciar sesión', to: '/login' },
   { label: 'Registrarse', to: '/register' },

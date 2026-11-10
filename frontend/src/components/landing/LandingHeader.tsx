@@ -12,7 +12,7 @@ interface Props {
 // en el catch-all "/:slug" (PublicProfile), mostrando "Perfil no encontrado" -- por eso
 // este item usa <a href> normal (recarga completa) en vez de <Link>.
 const NAV = [
-  { label: 'Explorar', to: '/explorar' },
+  { label: 'Encontrar psicólogo', to: '/explorar' },
   { label: 'Precios',  to: '/pricing'  },
   { label: 'Revista',  to: '/revista', external: true },
 ];
