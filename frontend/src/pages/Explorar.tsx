@@ -45,9 +45,9 @@ const MODALITY_LABEL: Record<string, string> = {
 
 const PROFESSIONS = ['Psicólogo/a', 'Psiquiatra', 'Psicoterapeuta', 'Terapeuta de Parejas', 'Neuropsicólogo/a', 'Trabajador/a Social'];
 
-function SearchSelect({ value, onChange, options, placeholder, icon }: {
+function SearchSelect({ value, onChange, options, placeholder, icon, panelBg }: {
   value: string; onChange: (v: string) => void;
-  options: string[]; placeholder: string; icon?: React.ReactNode;
+  options: string[]; placeholder: string; icon?: React.ReactNode; panelBg?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
@@ -83,7 +83,7 @@ function SearchSelect({ value, onChange, options, placeholder, icon }: {
   const dropdown = open ? createPortal(
     <div ref={dropRef} style={{
       position: 'fixed', top: coords.top, left: coords.left, width: coords.width,
-      background: 'rgba(6,4,16,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+      background: panelBg ?? 'rgba(6,4,16,0.97)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
       border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12,
       zIndex: 99999, maxHeight: 300, overflowY: 'auto',
       boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
@@ -840,6 +840,7 @@ export default function Explorar() {
                           options={Object.keys(COUNTRIES_CITIES)}
                           placeholder="País"
                           icon={<MapPin size={14} color="rgba(255,255,255,0.35)" />}
+                          panelBg="rgba(16,32,30,0.98)"
                         />
                       </div>
                       <div style={{ width: 1, background: 'rgba(255,255,255,0.12)' }} />
@@ -852,6 +853,7 @@ export default function Explorar() {
                           }}
                           options={matchCountry ? COUNTRIES_CITIES[matchCountry] : []}
                           placeholder="Ciudad"
+                          panelBg="rgba(16,32,30,0.98)"
                         />
                       </div>
                     </div>
