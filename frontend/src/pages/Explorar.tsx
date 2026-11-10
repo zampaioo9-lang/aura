@@ -744,12 +744,14 @@ export default function Explorar() {
             width: '100%', maxWidth: 560, background: '#ffffff',
             border: 'none', borderRadius: 20,
             boxShadow: '0 0 0 1px rgba(45,212,191,0.25), 0 25px 70px rgba(13,148,136,0.28), 0 12px 32px rgba(0,0,0,0.35)',
-            padding: 32, position: 'relative', maxHeight: '90vh', overflowY: 'auto',
+            position: 'relative', maxHeight: '90vh', overflow: 'hidden',
           }}>
             <button onClick={closeMatch} style={{
               position: 'absolute', top: 16, right: 16, background: 'none',
-              border: 'none', cursor: 'pointer', color: 'rgba(15,23,22,0.4)', padding: 4,
+              border: 'none', cursor: 'pointer', color: 'rgba(15,23,22,0.4)', padding: 4, zIndex: 1,
             }}><X size={20} /></button>
+
+            <div style={{ padding: 32, maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box' }}>
 
             {/* Header */}
             <div style={{ marginBottom: 28 }}>
@@ -918,8 +920,9 @@ export default function Explorar() {
                   {matchResults.map((m, i) => (
                     <Link key={m.profileId} to={`/${m.profile.slug}`} onClick={closeMatch} style={{ textDecoration: 'none' }}>
                       <div style={{
-                        background: '#f7faf9', border: '1px solid rgba(15,23,22,0.1)',
-                        borderRadius: 14, padding: '14px 16px', transition: 'border-color 0.2s',
+                        background: '#f7faf9', border: 'none',
+                        boxShadow: '0 2px 10px rgba(15,23,22,0.08)',
+                        borderRadius: 14, padding: '14px 16px', transition: 'box-shadow 0.2s',
                         display: 'flex', gap: 14, alignItems: 'flex-start',
                       }}>
                         {m.profile.avatar
@@ -949,13 +952,14 @@ export default function Explorar() {
                 </div>
                 <button onClick={() => { setMatchStep(0); setMatchResults(null); setMatchAnswers({ q1: '', q2: '', q3: '', q4: '', q5: '' }); }} style={{
                   marginTop: 20, width: '100%', padding: '11px', borderRadius: 10,
-                  border: '1px solid rgba(15,23,22,0.15)', background: 'transparent',
+                  border: 'none', background: '#e7f2ee',
                   color: 'rgba(31,41,55,0.65)', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer',
                 }}>
                   Volver a responder
                 </button>
               </div>
             )}
+            </div>
           </div>
         </div>,
         document.body
