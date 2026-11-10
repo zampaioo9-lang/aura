@@ -757,7 +757,7 @@ export default function Explorar() {
                 <Sparkles size={18} color="#0d9488" />
                 <h2 style={{ margin: 0, color: '#111827', fontSize: 20, fontWeight: 700 }}>Matching inteligente</h2>
               </div>
-              <p style={{ margin: 0, color: 'rgba(31,41,55,0.6)', fontSize: 14 }}>
+              <p style={{ margin: 0, color: 'rgba(31,41,55,0.6)', fontSize: 15.5 }}>
                 Cuéntanos tu situación y la IA te dirá qué terapeuta encaja mejor contigo.
               </p>
             </div>
@@ -769,7 +769,7 @@ export default function Explorar() {
                   {MATCH_QUESTIONS.map((_, i) => (
                     <div key={i} style={{
                       flex: 1, height: 3, borderRadius: 4,
-                      background: i <= matchStep ? '#0d9488' : 'rgba(15,23,22,0.1)',
+                      background: i <= matchStep ? '#c4b5fd' : 'rgba(15,23,22,0.1)',
                       transition: 'background 0.3s',
                     }} />
                   ))}
@@ -799,10 +799,7 @@ export default function Explorar() {
                     placeholder={(currentQ as { placeholder?: string }).placeholder}
                     style={{
                       width: '100%', padding: '12px 14px', borderRadius: 10,
-                      background: '#f7faf9',
-                      border: (currentQ as { highlight?: boolean }).highlight
-                        ? '1.5px solid rgba(13,148,136,0.55)'
-                        : '1px solid rgba(15,23,22,0.15)',
+                      background: '#e7f2ee', border: 'none',
                       color: '#111827', fontSize: 14, fontFamily: 'inherit', resize: 'vertical',
                       outline: 'none', boxSizing: 'border-box',
                     }}
@@ -813,11 +810,10 @@ export default function Explorar() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {(currentQ as { options: readonly string[] }).options.map(opt => (
                       <button key={opt} onClick={() => setMatchAnswers(a => ({ ...a, [currentQ.key]: opt }))} style={{
-                        padding: '12px 16px', borderRadius: 10, textAlign: 'left',
-                        background: currentAnswer === opt ? 'rgba(13,148,136,0.12)' : '#f7faf9',
-                        border: `1.5px solid ${currentAnswer === opt ? 'rgba(13,148,136,0.6)' : 'rgba(15,23,22,0.12)'}`,
-                        color: currentAnswer === opt ? '#0d9488' : 'rgba(31,41,55,0.75)',
-                        fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.15s',
+                        padding: '12px 16px', borderRadius: 10, textAlign: 'left', border: 'none',
+                        background: currentAnswer === opt ? '#2dd4bf' : '#e7f2ee',
+                        color: currentAnswer === opt ? '#fff' : '#1f2937',
+                        fontSize: 14, fontWeight: currentAnswer === opt ? 600 : 400, fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.15s',
                       }}>
                         {opt}
                       </button>
@@ -829,7 +825,7 @@ export default function Explorar() {
                   <div>
                     <div style={{
                       display: 'flex', borderRadius: 10, overflow: 'hidden',
-                      background: '#e7f2ee', border: '1px solid rgba(13,148,136,0.25)',
+                      background: '#e7f2ee', border: 'none',
                     }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <SearchSelect
@@ -845,7 +841,7 @@ export default function Explorar() {
                           light
                         />
                       </div>
-                      <div style={{ width: 1, background: 'rgba(13,148,136,0.18)' }} />
+                      <div style={{ width: 1, background: 'rgba(13,148,136,0.15)' }} />
                       <div style={{ flex: 1, minWidth: 0, opacity: matchCountry ? 1 : 0.5, pointerEvents: matchCountry ? 'auto' : 'none' }}>
                         <SearchSelect
                           value={matchCity}
@@ -868,15 +864,16 @@ export default function Explorar() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
                   <button onClick={() => setMatchStep(s => Math.max(0, s - 1))} disabled={matchStep === 0} style={{
-                    padding: '10px 20px', borderRadius: 10, border: '1px solid rgba(15,23,22,0.15)',
-                    background: 'transparent', color: matchStep === 0 ? 'rgba(15,23,22,0.25)' : 'rgba(31,41,55,0.7)',
+                    padding: '10px 20px', borderRadius: 10, border: 'none',
+                    background: matchStep === 0 ? 'rgba(139,92,246,0.06)' : 'rgba(139,92,246,0.15)',
+                    color: matchStep === 0 ? 'rgba(124,58,237,0.35)' : '#7c3aed',
                     fontSize: 14, fontFamily: 'inherit', cursor: matchStep === 0 ? 'not-allowed' : 'pointer',
                   }}>← Anterior</button>
 
                   {matchStep < 4 ? (
                     <button onClick={() => setMatchStep(s => s + 1)} disabled={!(currentQ as { optional?: boolean }).optional && !currentAnswer.trim()} style={{
                       padding: '10px 24px', borderRadius: 10, border: 'none',
-                      background: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? 'linear-gradient(135deg, #8b5cf6, #2dd4bf)' : 'rgba(15,23,22,0.08)',
+                      background: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#2dd4bf' : 'rgba(15,23,22,0.08)',
                       color: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? '#fff' : 'rgba(15,23,22,0.3)',
                       fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
                       cursor: ((currentQ as { optional?: boolean }).optional || currentAnswer.trim()) ? 'pointer' : 'not-allowed',
@@ -887,7 +884,7 @@ export default function Explorar() {
                       handleMatchSubmit();
                     }} style={{
                       padding: '10px 24px', borderRadius: 10, border: 'none',
-                      background: 'linear-gradient(135deg, #8b5cf6, #2dd4bf)',
+                      background: '#2dd4bf',
                       color: '#fff',
                       fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
                       cursor: 'pointer',
