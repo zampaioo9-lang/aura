@@ -51,6 +51,8 @@
 .ex-match-cta { transition: filter 0.25s ease, box-shadow 0.25s ease; }
 .ex-match-btn:hover .ex-match-cta { filter: brightness(1.12); box-shadow: 0 4px 14px rgba(45,212,191,0.4); }
 
+.ex-match-textarea::placeholder { color: rgba(76,53,117,0.55); opacity: 1; }
+
 /* ── Cards ── */
 .ex-card {
   transition: transform 0.25s cubic-bezier(0.16,1,0.3,1),
