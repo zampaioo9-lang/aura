@@ -100,7 +100,7 @@ function SearchSelect({ value, onChange, options, placeholder, icon, panelBg, li
       )}
       {options.map(opt => (
         <button key={opt} type="button" onClick={() => { onChange(opt); setOpen(false); }} style={{
-          width: '100%', textAlign: 'left', padding: '11px 16px',
+          width: '100%', textAlign: 'left', padding: light ? '6px 16px' : '11px 16px',
           background: opt === value ? 'rgba(13,148,136,0.12)' : 'transparent',
           border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14,
           color: opt === value ? '#0d9488' : (light ? '#111827' : 'rgba(255,255,255,0.8)'),
