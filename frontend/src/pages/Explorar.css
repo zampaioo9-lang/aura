@@ -46,6 +46,10 @@
 .ex-match-btn:active {
   transform: translateY(-1px) scale(0.99);
 }
+.ex-match-arrow { transition: transform 0.25s cubic-bezier(0.16,1,0.3,1); }
+.ex-match-btn:hover .ex-match-arrow { transform: translateX(3px); }
+.ex-match-cta { transition: background 0.25s ease, border-color 0.25s ease; }
+.ex-match-btn:hover .ex-match-cta { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.35); }
 
 /* ── Cards ── */
 .ex-card {

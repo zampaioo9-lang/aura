@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, MapPin, Zap, SlidersHorizontal, X, ChevronDown, Sparkles, Loader2, Star, ShieldCheck } from 'lucide-react';
+import { Search, MapPin, Zap, SlidersHorizontal, X, ChevronDown, Sparkles, Loader2, Star, ShieldCheck, ArrowRight } from 'lucide-react';
 import api from '../api/client';
 import './Explorar.css';
 import LandingHeader from '../components/landing/LandingHeader';
@@ -353,7 +353,7 @@ export default function Explorar() {
           {/* ── Matching IA — protagonista ── */}
           <div className="ex-a4" style={{ maxWidth: 720, margin: '0 auto 16px' }}>
             <button onClick={openMatch} className="ex-match-btn" style={{
-              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14,
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,
               padding: '24px 32px', borderRadius: 18,
               background: 'linear-gradient(135deg, rgba(139,92,246,0.38) 0%, rgba(45,212,191,0.30) 100%)',
               border: '1px solid rgba(139,92,246,0.55)',
@@ -362,12 +362,23 @@ export default function Explorar() {
               boxShadow: '0 12px 40px rgba(139,92,246,0.28), 0 6px 16px rgba(0,0,0,0.35)',
               transition: 'transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s, border-color 0.25s',
             }}>
-              <Sparkles size={24} color="#c4b5fd" style={{ flexShrink: 0 }} />
-              <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
-                <span style={{ fontSize: 18, fontWeight: 700 }}>Encuentra tu match ideal con IA</span>
-                <span style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.65)', marginTop: 2 }}>
-                  Responde 5 preguntas y te decimos qué psicólogo encaja contigo
+              <span style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+                <Sparkles size={24} color="#c4b5fd" style={{ flexShrink: 0 }} />
+                <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
+                  <span style={{ fontSize: 18, fontWeight: 700 }}>Encuentra tu match ideal con IA</span>
+                  <span style={{ fontSize: 13, fontWeight: 400, color: 'rgba(255,255,255,0.65)', marginTop: 2 }}>
+                    Responde 5 preguntas y te decimos qué psicólogo encaja contigo
+                  </span>
                 </span>
+              </span>
+              <span className="ex-match-cta" style={{
+                display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+                padding: '8px 14px', borderRadius: 999,
+                background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.22)',
+                fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
+              }}>
+                Comenzar
+                <ArrowRight size={14} className="ex-match-arrow" />
               </span>
             </button>
           </div>
