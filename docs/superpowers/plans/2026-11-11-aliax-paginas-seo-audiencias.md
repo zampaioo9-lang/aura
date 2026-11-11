@@ -655,9 +655,11 @@ Abre `frontend/public/sitemap.xml` tras el build y confirma que aparecen las 2 l
 - [ ] **Step 3: Commit**
 
 ```bash
-git add frontend/scripts/generate-blog.ts frontend/public/sitemap.xml
+git add frontend/scripts/generate-blog.ts
 git commit -m "feat: agregar nuevas paginas al sitemap generado"
 ```
+
+**Corrección post-ejecución:** `frontend/public/sitemap.xml` está en `.gitignore` desde el commit `bc4bf8c` (2026-10-28) — es un artefacto generado en cada build, nunca se commitea al repo (ver `feedback_sitemap_fuente_unica`). Solo se commitea el script `generate-blog.ts`; el sitemap.xml regenerado se verifica localmente pero no entra a git.
 
 ---
 
