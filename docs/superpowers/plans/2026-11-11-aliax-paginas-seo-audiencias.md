@@ -262,6 +262,8 @@ git add frontend/src/components/landing/LandingHeader.tsx
 git commit -m "feat: header contextual segun audiencia (Home/para-psicologos/busco-terapia)"
 ```
 
+**Corrección post-revisión:** la primera versión de `getNav()` hacía caer a `NAV_HOME` (vacío) cualquier ruta no reconocida, lo cual rompía silenciosamente el header de 5 páginas ya en producción que también usan `LandingHeader` sin pasarle contexto (`Pricing.tsx`, `Explorar.tsx`, `Login.tsx`, `ForgotPassword.tsx`, `ResetPassword.tsx`). Se corrigió agregando `NAV_DEFAULT` (el menú que esas páginas ya tenían: Encontrar psicólogo · Precios · Revista + demo) como fallback, y haciendo que `/` sea el único caso explícito para `NAV_HOME`.
+
 ---
 
 ### Task 3: Footer unificado (`SiteFooter.tsx`)

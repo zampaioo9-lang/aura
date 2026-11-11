@@ -31,6 +31,8 @@ El array `NAV` actual (fijo para todo el sitio) se vuelve dependiente de la ruta
 
 El patrón de `Revista` como `<a href>` externo (no `<Link>`) se mantiene igual en las 3 variantes — ver `project_aliax_navbar_revista_link_bug`.
 
+**Nota importante:** `LandingHeader` también se usa hoy en otras páginas fuera de este proyecto (Pricing, Explorar, Login, ForgotPassword, ResetPassword). Esas páginas deben seguir mostrando exactamente el menú que tenían antes (Encontrar psicólogo · Precios · Revista · Demo · Entrar) — solo `/` cambia a mostrar el header vacío del nuevo repartidor.
+
 ## Footer (`SiteFooter.tsx`)
 
 El footer **no cambia según el contexto** — siempre muestra todos los enlaces, para que Google pueda rastrear el sitio completo sin importar en qué página esté el header contextual. Se actualiza `LINKS` para incluir las 5 páginas: Para psicólogos, Busco terapia, Encontrar psicólogo, Precios, Revista (hoy falta Revista en el footer — se agrega), más Privacidad/Login/Registro que ya existen.

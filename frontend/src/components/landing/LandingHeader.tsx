@@ -29,17 +29,24 @@ const NAV_BUSCO_TERAPIA: NavItem[] = [
   { label: 'Revista', to: '/revista', external: true },
 ];
 
+const NAV_DEFAULT: NavItem[] = [
+  { label: 'Encontrar psicólogo', to: '/explorar' },
+  { label: 'Precios', to: '/pricing' },
+  { label: 'Revista', to: '/revista', external: true },
+];
+
 function getNav(pathname: string): NavItem[] {
+  if (pathname === '/') return NAV_HOME;
   if (pathname.startsWith('/para-psicologos')) return NAV_PARA_PSICOLOGOS;
   if (pathname.startsWith('/busco-terapia')) return NAV_BUSCO_TERAPIA;
-  return NAV_HOME;
+  return NAV_DEFAULT;
 }
 
 export default function LandingHeader({ onNavigate }: Props) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const NAV = getNav(location.pathname);
-  const showDemo = location.pathname.startsWith('/para-psicologos');
+  const showDemo = location.pathname !== '/' && !location.pathname.startsWith('/busco-terapia');
 
   const logoContent = (
     <>
