@@ -1,8 +1,17 @@
 import { Link } from 'react-router-dom';
 
-const LINKS = [
+interface FooterLink {
+  label: string;
+  to: string;
+  external?: boolean;
+}
+
+const LINKS: FooterLink[] = [
+  { label: 'Soy psicólogo', to: '/para-psicologos' },
+  { label: 'Busco terapia', to: '/busco-terapia' },
   { label: 'Encontrar psicólogo', to: '/explorar' },
   { label: 'Precios', to: '/pricing' },
+  { label: 'Revista', to: '/revista', external: true },
   { label: 'Iniciar sesión', to: '/login' },
   { label: 'Registrarse', to: '/register' },
   { label: 'Privacidad', to: '/privacidad' },
@@ -25,7 +34,15 @@ export default function SiteFooter() {
           ALIAX
         </span>
         <nav style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
-          {LINKS.map(l => (
+          {LINKS.map(l => l.external ? (
+            <a
+              key={l.to}
+              href={l.to}
+              style={{ fontFamily: 'Manrope, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}
+            >
+              {l.label}
+            </a>
+          ) : (
             <Link
               key={l.to}
               to={l.to}
