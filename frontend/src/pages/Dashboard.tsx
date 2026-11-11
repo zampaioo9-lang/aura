@@ -19,6 +19,7 @@ import { useToast } from '../components/Toast';
 import { formatCurrency } from '../lib/utils';
 import ProfessionalCalendar from '../components/dashboard/ProfessionalCalendar';
 import NewBookingModal from '../components/dashboard/NewBookingModal';
+import RevistaSubscribeCard from '../components/dashboard/RevistaSubscribeCard';
 
 const SOCIAL_ICONS = [
   { key: 'facebook',  Icon: Facebook,      color: '#1877F2' },
@@ -714,7 +715,7 @@ export default function Dashboard() {
           <div className="p-4 pb-8">
             {visitedMobile.has('inicio') && (
               <div style={{ display: mobileSection === 'inicio' ? undefined : 'none' }}>
-                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} dashStats={dashStats} dashStatsError={dashStatsError} analyticsPeriod={analyticsPeriod} onPeriodChange={setAnalyticsPeriod} isLoadingStats={isLoadingStats} isPro={isPro ?? false} onGoToAccount={() => goMobile('cuenta')} onGoToAgenda={() => goMobile('agenda')} />
+                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} userEmail={user?.email} newsletterSubscribed={user?.newsletterSubscribed} C={C} dashStats={dashStats} dashStatsError={dashStatsError} analyticsPeriod={analyticsPeriod} onPeriodChange={setAnalyticsPeriod} isLoadingStats={isLoadingStats} isPro={isPro ?? false} onGoToAccount={() => goMobile('cuenta')} onGoToAgenda={() => goMobile('agenda')} />
               </div>
             )}
             {visitedMobile.has('citas') && (
@@ -1015,7 +1016,7 @@ export default function Dashboard() {
           <div className="flex-1 overflow-y-auto p-6">
             {visitedTabs.has('inicio') && (
               <div style={{ display: activeTab === 'inicio' ? undefined : 'none' }}>
-                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} C={C} dashStats={dashStats} dashStatsError={dashStatsError} analyticsPeriod={analyticsPeriod} onPeriodChange={setAnalyticsPeriod} isLoadingStats={isLoadingStats} isPro={isPro ?? false} twoCol onGoToAccount={() => goTab('cuenta')} onGoToAgenda={() => goTab('agenda')} />
+                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} userEmail={user?.email} newsletterSubscribed={user?.newsletterSubscribed} C={C} dashStats={dashStats} dashStatsError={dashStatsError} analyticsPeriod={analyticsPeriod} onPeriodChange={setAnalyticsPeriod} isLoadingStats={isLoadingStats} isPro={isPro ?? false} twoCol onGoToAccount={() => goTab('cuenta')} onGoToAgenda={() => goTab('agenda')} />
               </div>
             )}
             {visitedTabs.has('citas') && (
@@ -1100,10 +1101,12 @@ function DashNavRow({ icon, isActive, C, onClick, children }: { icon: React.Reac
 }
 
 /* ────────────────── Tab: Inicio ────────────────── */
-function TabInicio({ profiles, bookings, userName, C, dashStats, dashStatsError, analyticsPeriod, onPeriodChange, isLoadingStats, isPro, twoCol = false, onGoToAccount, onGoToAgenda }: {
+function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscribed, C, dashStats, dashStatsError, analyticsPeriod, onPeriodChange, isLoadingStats, isPro, twoCol = false, onGoToAccount, onGoToAgenda }: {
   profiles: Profile[];
   bookings: Booking[];
   userName?: string;
+  userEmail?: string;
+  newsletterSubscribed?: boolean;
   C: Colors;
   dashStats: DashStats | null;
   dashStatsError: boolean;
@@ -1529,6 +1532,12 @@ function TabInicio({ profiles, bookings, userName, C, dashStats, dashStatsError,
                 ))}
               </div>
             </div>
+            <RevistaSubscribeCard
+              C={C}
+              name={userName ?? ''}
+              email={userEmail ?? ''}
+              newsletterSubscribed={newsletterSubscribed}
+            />
           </div>
         )}
         </div>
@@ -1574,6 +1583,14 @@ function TabInicio({ profiles, bookings, userName, C, dashStats, dashStatsError,
             ))}
           </div>
         </div>
+      )}
+      {profiles.length > 0 && (
+        <RevistaSubscribeCard
+          C={C}
+          name={userName ?? ''}
+          email={userEmail ?? ''}
+          newsletterSubscribed={newsletterSubscribed}
+        />
       )}
       {analyticsBlock}
     </div>
