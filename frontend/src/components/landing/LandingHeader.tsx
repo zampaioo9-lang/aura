@@ -1,9 +1,15 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, CalendarClock } from 'lucide-react';
 
 interface Props {
   onNavigate?: (ratio: number) => void;
+}
+
+interface NavItem {
+  label: string;
+  to: string;
+  external?: boolean;
 }
 
 // Revista vive fuera del router de React: son paginas HTML estaticas generadas por
@@ -11,14 +17,29 @@ interface Props {
 // <Link> de react-router-dom navegaria del lado del cliente, no encontraria ruta y caeria
 // en el catch-all "/:slug" (PublicProfile), mostrando "Perfil no encontrado" -- por eso
 // este item usa <a href> normal (recarga completa) en vez de <Link>.
-const NAV = [
-  { label: 'Encontrar psicólogo', to: '/explorar' },
-  { label: 'Precios',  to: '/pricing'  },
-  { label: 'Revista',  to: '/revista', external: true },
+const NAV_HOME: NavItem[] = [];
+
+const NAV_PARA_PSICOLOGOS: NavItem[] = [
+  { label: 'Precios', to: '/pricing' },
+  { label: 'Revista', to: '/revista', external: true },
 ];
+
+const NAV_BUSCO_TERAPIA: NavItem[] = [
+  { label: 'Encontrar psicólogo', to: '/explorar' },
+  { label: 'Revista', to: '/revista', external: true },
+];
+
+function getNav(pathname: string): NavItem[] {
+  if (pathname.startsWith('/para-psicologos')) return NAV_PARA_PSICOLOGOS;
+  if (pathname.startsWith('/busco-terapia')) return NAV_BUSCO_TERAPIA;
+  return NAV_HOME;
+}
 
 export default function LandingHeader({ onNavigate }: Props) {
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const NAV = getNav(location.pathname);
+  const showDemo = location.pathname.startsWith('/para-psicologos');
 
   const logoContent = (
     <>
@@ -72,12 +93,14 @@ export default function LandingHeader({ onNavigate }: Props) {
             {l.label}
           </Link>
         ))}
-        <a href="https://www.aliax.io/demo"
-          className="ml-1 inline-flex items-center gap-1.5 text-[#2dd4bf] border border-[#2dd4bf]/50 text-[12px] font-medium tracking-wider px-4 py-2 rounded-full hover:bg-[#2dd4bf]/10 transition-all duration-300"
-          style={{ fontFamily: 'Manrope, sans-serif' }}>
-          <CalendarClock size={13} />
-          Reservar demo
-        </a>
+        {showDemo && (
+          <a href="https://www.aliax.io/demo"
+            className="ml-1 inline-flex items-center gap-1.5 text-[#2dd4bf] border border-[#2dd4bf]/50 text-[12px] font-medium tracking-wider px-4 py-2 rounded-full hover:bg-[#2dd4bf]/10 transition-all duration-300"
+            style={{ fontFamily: 'Manrope, sans-serif' }}>
+            <CalendarClock size={13} />
+            Reservar demo
+          </a>
+        )}
         <Link to="/login"
           className="ml-2 text-[#0f0a1a] bg-[#9b87f5] text-[12px] font-medium tracking-wider px-4 py-2 rounded-full hover:bg-white transition-all duration-300"
           style={{ fontFamily: 'Manrope, sans-serif' }}>
@@ -114,12 +137,14 @@ export default function LandingHeader({ onNavigate }: Props) {
                 {l.label}
               </Link>
             ))}
-            <a href="https://www.aliax.io/demo" onClick={() => setOpen(false)}
-              className="py-4 px-6 border-b border-white/5 text-[#2dd4bf] text-[16px] uppercase tracking-widest flex items-center gap-2"
-              style={{ fontFamily: 'Manrope, sans-serif' }}>
-              <CalendarClock size={16} />
-              Reservar demo
-            </a>
+            {showDemo && (
+              <a href="https://www.aliax.io/demo" onClick={() => setOpen(false)}
+                className="py-4 px-6 border-b border-white/5 text-[#2dd4bf] text-[16px] uppercase tracking-widest flex items-center gap-2"
+                style={{ fontFamily: 'Manrope, sans-serif' }}>
+                <CalendarClock size={16} />
+                Reservar demo
+              </a>
+            )}
             <Link to="/login" onClick={() => setOpen(false)}
               className="py-4 px-6 text-[#9b87f5] text-[16px] uppercase tracking-widest font-semibold"
               style={{ fontFamily: 'Manrope, sans-serif' }}>
