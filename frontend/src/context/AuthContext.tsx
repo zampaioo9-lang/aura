@@ -18,6 +18,7 @@ interface User {
   clinicoTrialEndsAt?: string | null;
   trialAudioSecondsUsed?: number;
   trialAiNotesUsed?: number;
+  newsletterSubscribed?: boolean;
 }
 
 interface UpdateAccountData {
