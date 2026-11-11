@@ -8,7 +8,6 @@ interface Colors {
   accent: string;
   muted: string;
   text: string;
-  border: string;
 }
 
 interface RevistaSubscribeCardProps {
@@ -42,7 +41,7 @@ export default function RevistaSubscribeCard({ C, name, email, newsletterSubscri
 
   const cardStyle: React.CSSProperties = {
     background: C.isDark ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.7)',
-    border: `1px solid ${C.border}`,
+    boxShadow: C.isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.08)',
     borderRadius: 16,
     padding: '16px 18px',
     marginTop: 12,
@@ -57,9 +56,9 @@ export default function RevistaSubscribeCard({ C, name, email, newsletterSubscri
             Ya estás suscrito a Revista Aliax
           </p>
         </div>
-        <Link to="/revista" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: C.accent, textDecoration: 'none' }}>
+        <a href="/revista" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: C.accent, textDecoration: 'none' }}>
           Ver la Revista →
-        </Link>
+        </a>
       </div>
     );
   }
