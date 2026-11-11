@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './components/Toast';
 
 const Landing = lazy(() => import('./pages/Landing'));
+const ParaPsicologos = lazy(() => import('./pages/ParaPsicologos'));
+const BuscoTerapia = lazy(() => import('./pages/BuscoTerapia'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -68,6 +70,8 @@ function App() {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Landing />} />
+              <Route path="/para-psicologos" element={<ParaPsicologos />} />
+              <Route path="/busco-terapia" element={<BuscoTerapia />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
