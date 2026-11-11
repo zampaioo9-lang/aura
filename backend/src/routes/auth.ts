@@ -96,7 +96,13 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res, next) => {
       select: { id: true, email: true, name: true, phone: true, bio: true, avatar: true, socialLinks: true, isAdmin: true, createdAt: true, trialEndsAt: true, plan: true, planInterval: true, planExpiresAt: true, blocked: true, featureOverrides: true, clinicoTrialEndsAt: true, trialAudioSecondsUsed: true, trialAiNotesUsed: true },
     });
     if (!user) throw new AppError(404, 'User not found');
-    res.json(user);
+
+    const subscriber = await prisma.newsletterSubscriber.findUnique({
+      where: { email_audience: { email: user.email, audience: 'TERAPEUTAS' } },
+      select: { status: true },
+    });
+
+    res.json({ ...user, newsletterSubscribed: subscriber?.status === 'CONFIRMED' });
   } catch (err) {
     next(err);
   }
