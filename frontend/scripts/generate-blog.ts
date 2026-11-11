@@ -406,7 +406,7 @@ function generateSitemap(articles: Article[]): string {
   // migration for a different Aliax-family project: a hardcoded route list went stale
   // and nobody noticed for weeks). Verified against App.tsx on 2026-10-29: real path is
   // /pricing, not /precios -- this list previously had the wrong one.
-  const staticRoutes = ['', '/explorar', '/pricing', '/revista'];
+  const staticRoutes = ['', '/explorar', '/pricing', '/revista', '/para-psicologos', '/busco-terapia'];
   const articleRoutes = articles.map((a) => `/revista/${a.slug}`);
   const urls = [...staticRoutes, ...articleRoutes]
     .map((path) => `  <url><loc>${SITE_URL}${path}</loc></url>`)
