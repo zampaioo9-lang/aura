@@ -41,7 +41,9 @@ export default function RevistaSubscribeCard({ C, name, email, newsletterSubscri
 
   const cardStyle: React.CSSProperties = {
     background: C.isDark ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.7)',
-    boxShadow: C.isDark ? '0 1px 4px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.08)',
+    boxShadow: C.isDark
+      ? '0 0 0 1px rgba(255,255,255,0.08), 0 4px 14px rgba(0,0,0,0.45)'
+      : '0 2px 8px rgba(0,0,0,0.12)',
     borderRadius: 16,
     padding: '16px 18px',
     marginTop: 12,
