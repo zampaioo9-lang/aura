@@ -26,7 +26,7 @@ César notó que su competencia (AgendeTerapia) aparece en Google con "sitelinks
 El array `NAV` actual (fijo para todo el sitio) se vuelve dependiente de la ruta actual (`useLocation().pathname`), con 3 variantes:
 
 - **En `/`:** sin enlaces de contenido — solo el botón "Entrar" (y los 2 CTAs grandes viven en el body de la página, no en el header).
-- **Dentro de `/para-psicologos` (o cualquier ruta que empiece así):** Precios · Revista · Reservar demo · Entrar — igual al header actual de hoy.
+- **Dentro de `/para-psicologos` (o cualquier ruta que empiece así):** Precios · Revista · Reservar demo · Entrar. Nota: ya NO incluye "Encontrar psicólogo" (ese enlace pasa a ser exclusivo del contexto `/busco-terapia`) — es el único cambio real respecto al header de hoy.
 - **Dentro de `/busco-terapia` (o cualquier ruta que empiece así):** Encontrar psicólogo · Revista · Entrar.
 
 El patrón de `Revista` como `<a href>` externo (no `<Link>`) se mantiene igual en las 3 variantes — ver `project_aliax_navbar_revista_link_bug`.
