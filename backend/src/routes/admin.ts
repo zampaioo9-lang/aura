@@ -159,6 +159,19 @@ router.get('/users', async (req, res, next) => {
   }
 });
 
+// GET /api/admin/users/list-all — lista completa sin paginar, para selectores (ej. Anuncios)
+router.get('/users/list-all', async (_req, res, next) => {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, email: true },
+    });
+    res.json({ users });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // DELETE /api/admin/users/:id
 router.delete('/users/:id', async (req: any, res, next) => {
   try {

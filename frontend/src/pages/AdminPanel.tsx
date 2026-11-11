@@ -471,6 +471,7 @@ export default function AdminPanel() {
   const [dark, setDark] = useState(() => localStorage.getItem('aliax_theme') === 'dark');
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [allUsers, setAllUsers] = useState<{ id: string; name: string; email: string }[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -713,6 +714,9 @@ export default function AdminPanel() {
       .finally(() => setLoadingStats(false));
     api.get('/admin/announcement-logs')
       .then(res => setAnnLogs(res.data))
+      .catch(() => {});
+    api.get('/admin/users/list-all')
+      .then(res => setAllUsers(res.data.users))
       .catch(() => {});
   }, []);
 
@@ -1268,7 +1272,7 @@ export default function AdminPanel() {
                     style={{ background: C.inputBg, border: `1px solid ${C.inputBorder}`, color: annUserId ? C.text : C.textFaint, colorScheme: dark ? 'dark' : 'light' }}
                   >
                     <option value="" style={{ background: dark ? '#0d2421' : '#fff', color: dark ? '#6aada8' : '#94a3a1' }}>— Elige un usuario —</option>
-                    {users.map(u => (
+                    {allUsers.map(u => (
                       <option key={u.id} value={u.id} style={{ background: dark ? '#0d2421' : '#fff', color: dark ? '#e8f0f0' : '#0a1f1e' }}>
                         {u.name} ({u.email})
                       </option>
