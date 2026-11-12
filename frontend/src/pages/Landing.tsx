@@ -44,7 +44,7 @@ export default function Landing() {
               Soy psicólogo <ArrowRight size={16} />
             </Link>
             <Link
-              to="/busco-terapia"
+              to="/explorar"
               className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-white font-semibold border border-white/20 bg-white/5 hover:border-[#2dd4bf] transition-all duration-300"
               style={{ fontFamily: 'Manrope, sans-serif', fontSize: 15 }}
             >
