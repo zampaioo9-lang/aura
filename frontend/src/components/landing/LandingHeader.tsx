@@ -35,20 +35,20 @@ const NAV_DEFAULT: NavItem[] = [
   { label: 'Revista', to: '/revista', external: true },
 ];
 
+// Aliax solo tiene cuentas de psicólogos (ver modelo User en Prisma): "Precios",
+// "Reservar demo" y "Entrar" son acciones exclusivas de esa audiencia, sin sentido
+// para quien busca terapia en /busco-terapia o en el directorio /explorar.
+function isBuscoTerapiaAudience(pathname: string): boolean {
+  return pathname.startsWith('/busco-terapia') || pathname.startsWith('/explorar');
+}
+
 function getNav(pathname: string): NavItem[] {
   const nav = pathname === '/' ? NAV_HOME
     : pathname.startsWith('/para-psicologos') ? NAV_PARA_PSICOLOGOS
-    : pathname.startsWith('/busco-terapia') ? NAV_BUSCO_TERAPIA
+    : isBuscoTerapiaAudience(pathname) ? NAV_BUSCO_TERAPIA
     : NAV_DEFAULT;
   // No mostrar un link que apunte a la página donde ya estás (clic muerto).
   return nav.filter(item => item.to !== pathname);
-}
-
-// Aliax solo tiene cuentas de psicólogos (ver modelo User en Prisma): "Reservar demo"
-// y "Entrar" son acciones exclusivas de esa audiencia, sin sentido para quien busca
-// terapia en /busco-terapia o en el directorio /explorar.
-function isBuscoTerapiaAudience(pathname: string): boolean {
-  return pathname.startsWith('/busco-terapia') || pathname.startsWith('/explorar');
 }
 
 export default function LandingHeader({ onNavigate }: Props) {
