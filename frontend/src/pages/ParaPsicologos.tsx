@@ -15,7 +15,7 @@ import { Helmet } from 'react-helmet-async';
 const c01 = (v: number) => Math.max(0, Math.min(1, v));
 
 export default function ParaPsicologos() {
-  const { scrollProgress, lerpedProgress, navigateTo } = useLandingScroll();
+  const { scrollProgress, lerpedProgress } = useLandingScroll();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth < 768);
@@ -172,8 +172,10 @@ export default function ParaPsicologos() {
           <HeroTitle scrollProgress={Math.min(1, lerpedProgress)} />
         </div>
 
-        {/* Header always on top */}
-        <LandingHeader onNavigate={navigateTo} />
+        {/* Header always on top. Sin onNavigate: el logo debe llevar a "/" (Home real
+            del sitio), no hacer scroll al inicio de esta página como cuando esta
+            página todavía era el Home. */}
+        <LandingHeader />
 
         {/* SECOND SCREEN */}
         <SecondScreen scrollProgress={scrollProgress} lerpedProgress={lerpedProgress} />
