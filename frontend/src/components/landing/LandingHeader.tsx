@@ -25,21 +25,23 @@ const NAV_PARA_PSICOLOGOS: NavItem[] = [
 ];
 
 const NAV_BUSCO_TERAPIA: NavItem[] = [
-  { label: 'Encontrar psicólogo', to: '/explorar' },
+  { label: 'Busco psicólogo', to: '/explorar' },
   { label: 'Revista', to: '/revista', external: true },
 ];
 
 const NAV_DEFAULT: NavItem[] = [
-  { label: 'Encontrar psicólogo', to: '/explorar' },
+  { label: 'Busco psicólogo', to: '/explorar' },
   { label: 'Precios', to: '/pricing' },
   { label: 'Revista', to: '/revista', external: true },
 ];
 
 function getNav(pathname: string): NavItem[] {
-  if (pathname === '/') return NAV_HOME;
-  if (pathname.startsWith('/para-psicologos')) return NAV_PARA_PSICOLOGOS;
-  if (pathname.startsWith('/busco-terapia')) return NAV_BUSCO_TERAPIA;
-  return NAV_DEFAULT;
+  const nav = pathname === '/' ? NAV_HOME
+    : pathname.startsWith('/para-psicologos') ? NAV_PARA_PSICOLOGOS
+    : pathname.startsWith('/busco-terapia') ? NAV_BUSCO_TERAPIA
+    : NAV_DEFAULT;
+  // No mostrar un link que apunte a la página donde ya estás (clic muerto).
+  return nav.filter(item => item.to !== pathname);
 }
 
 export default function LandingHeader({ onNavigate }: Props) {
