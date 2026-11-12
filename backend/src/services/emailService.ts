@@ -371,18 +371,26 @@ export const emailTemplates = {
     userEmail: string;
     subject: string;
     body: string;
-  }) => ({
-    to: data.userEmail,
-    subject: data.subject,
-    html: baseTemplate(data.subject, `
-      <h1 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#0d9488;background:linear-gradient(135deg,#7c3aed,#0d9488);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Hola ${data.userName} 👋</h1>
-      <div style="margin-top:16px;color:#52525b;font-size:15px;line-height:1.7;">
-        ${data.body.replace(/\n/g, '<br>')}
-      </div>
-      ${ctaButton('Ir a mi dashboard', 'https://www.aliax.io/dashboard')}
-      <p style="margin-top:24px;color:#a1a1aa;font-size:12px;">Recibes este correo porque tienes una cuenta registrada en Aliax.io.</p>
-    `),
-  }),
+  }) => {
+    // El boton "Ir a mi dashboard" va al final del cuerpo por default. Si el
+    // texto del anuncio incluye el marcador [[BOTON_DASHBOARD]], el boton se
+    // coloca ahi en su lugar (para ponerlo entre parrafos en vez de al final).
+    const dashboardButton = ctaButton('Ir a mi dashboard', 'https://www.aliax.io/dashboard');
+    const bodyHtml = data.body.replace(/\n/g, '<br>');
+    const hasInlineButton = bodyHtml.includes('[[BOTON_DASHBOARD]]');
+    return {
+      to: data.userEmail,
+      subject: data.subject,
+      html: baseTemplate(data.subject, `
+        <h1 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#0d9488;background:linear-gradient(135deg,#7c3aed,#0d9488);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Hola ${data.userName} 👋</h1>
+        <div style="margin-top:16px;color:#52525b;font-size:15px;line-height:1.7;">
+          ${hasInlineButton ? bodyHtml.replace('[[BOTON_DASHBOARD]]', dashboardButton) : bodyHtml}
+        </div>
+        ${hasInlineButton ? '' : dashboardButton}
+        <p style="margin-top:24px;color:#a1a1aa;font-size:12px;">Recibes este correo porque tienes una cuenta registrada en Aliax.io.</p>
+      `),
+    };
+  },
 
   // Admin: nuevo usuario registrado
   adminNewUser: (data: {
