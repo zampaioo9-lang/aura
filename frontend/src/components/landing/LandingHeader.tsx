@@ -44,11 +44,19 @@ function getNav(pathname: string): NavItem[] {
   return nav.filter(item => item.to !== pathname);
 }
 
+// Aliax solo tiene cuentas de psicólogos (ver modelo User en Prisma): "Reservar demo"
+// y "Entrar" son acciones exclusivas de esa audiencia, sin sentido para quien busca
+// terapia en /busco-terapia o en el directorio /explorar.
+function isBuscoTerapiaAudience(pathname: string): boolean {
+  return pathname.startsWith('/busco-terapia') || pathname.startsWith('/explorar');
+}
+
 export default function LandingHeader({ onNavigate }: Props) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const NAV = getNav(location.pathname);
-  const showDemo = location.pathname !== '/' && !location.pathname.startsWith('/busco-terapia');
+  const showDemo = location.pathname !== '/' && !isBuscoTerapiaAudience(location.pathname);
+  const showEntrar = !isBuscoTerapiaAudience(location.pathname);
 
   const logoContent = (
     <>
@@ -110,11 +118,13 @@ export default function LandingHeader({ onNavigate }: Props) {
             Reservar demo
           </a>
         )}
-        <Link to="/login"
-          className="ml-2 text-[#0f0a1a] bg-[#9b87f5] text-[12px] font-medium tracking-wider px-4 py-2 rounded-full hover:bg-white transition-all duration-300"
-          style={{ fontFamily: 'Manrope, sans-serif' }}>
-          Entrar
-        </Link>
+        {showEntrar && (
+          <Link to="/login"
+            className="ml-2 text-[#0f0a1a] bg-[#9b87f5] text-[12px] font-medium tracking-wider px-4 py-2 rounded-full hover:bg-white transition-all duration-300"
+            style={{ fontFamily: 'Manrope, sans-serif' }}>
+            Entrar
+          </Link>
+        )}
       </nav>
 
       {/* Mobile burger */}
@@ -154,11 +164,13 @@ export default function LandingHeader({ onNavigate }: Props) {
                 Reservar demo
               </a>
             )}
-            <Link to="/login" onClick={() => setOpen(false)}
-              className="py-4 px-6 text-[#9b87f5] text-[16px] uppercase tracking-widest font-semibold"
-              style={{ fontFamily: 'Manrope, sans-serif' }}>
-              Entrar
-            </Link>
+            {showEntrar && (
+              <Link to="/login" onClick={() => setOpen(false)}
+                className="py-4 px-6 text-[#9b87f5] text-[16px] uppercase tracking-widest font-semibold"
+                style={{ fontFamily: 'Manrope, sans-serif' }}>
+                Entrar
+              </Link>
+            )}
           </div>
         </div>
       )}
