@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Search, MapPin, Zap, SlidersHorizontal, X, ChevronDown, Sparkles, Loader2, Star, ShieldCheck, ArrowRight } from 'lucide-react';
 import api from '../api/client';
 import './Explorar.css';
@@ -171,6 +171,7 @@ type MatchAnswers = { q1: string; q2: string; q3: string; q4: string; q5: string
 type MatchResult = { profileId: string; score: number; reason: string; profile: { id: string; slug: string; title: string; bio?: string; avatar?: string; city?: string; country?: string; modality?: string; therapeuticApproaches: string[] } };
 
 export default function Explorar() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [profiles, setProfiles] = useState<DirectoryProfile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -188,6 +189,9 @@ export default function Explorar() {
   const [leadWhatsapp, setLeadWhatsapp] = useState('');
   const [leadError, setLeadError]       = useState('');
   const [submittingLead, setSubmittingLead] = useState(false);
+  const [selectedResult, setSelectedResult] = useState<MatchResult | null>(null);
+  const [confirmedSituation, setConfirmedSituation] = useState('');
+  const [submittingSelect, setSubmittingSelect] = useState(false);
 
   const openMatch = () => {
     setShowMatch(true); setMatchStep(0);
@@ -988,7 +992,11 @@ export default function Explorar() {
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {matchResults.map((m, i) => (
-                    <Link key={m.profileId} to={`/${m.profile.slug}`} onClick={closeMatch} style={{ textDecoration: 'none' }}>
+                    <div
+                      key={m.profileId}
+                      onClick={() => { setSelectedResult(m); setConfirmedSituation(matchAnswers.q1); setMatchStep(8); }}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <div style={{
                         background: '#f7faf9', border: 'none',
                         boxShadow: '0 2px 10px rgba(15,23,22,0.08)',
@@ -1017,7 +1025,7 @@ export default function Explorar() {
                           <p style={{ color: 'rgba(31,41,55,0.6)', fontSize: 13, margin: 0, lineHeight: 1.5 }}>{m.reason}</p>
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
                 <button onClick={() => { setMatchStep(0); setMatchResults(null); setMatchAnswers({ q1: '', q2: '', q3: '', q4: '', q5: '' }); }} style={{
@@ -1027,6 +1035,63 @@ export default function Explorar() {
                 }}>
                   Volver a responder
                 </button>
+              </div>
+            )}
+
+            {/* Step: confirmar situación antes de agendar */}
+            {matchStep === 8 && selectedResult && (
+              <div>
+                <h3 style={{ color: '#111827', fontSize: 17, fontWeight: 700, margin: '0 0 6px' }}>
+                  Agenda con {selectedResult.profile.title}
+                </h3>
+                <p style={{ color: 'rgba(31,41,55,0.5)', fontSize: 13, margin: '0 0 16px' }}>
+                  Esto es lo que le compartiremos para que ya sepa de qué quieres hablar. Puedes editarlo.
+                </p>
+
+                <textarea
+                  value={confirmedSituation}
+                  onChange={e => setConfirmedSituation(e.target.value)}
+                  rows={5}
+                  style={{
+                    width: '100%', padding: '12px 14px', borderRadius: 10,
+                    background: '#eef7f5', border: 'none',
+                    color: '#111827', fontSize: 15, fontFamily: 'inherit', resize: 'vertical',
+                    outline: 'none', boxSizing: 'border-box', marginBottom: 16,
+                  }}
+                />
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={() => setMatchStep(7)} style={{
+                    flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(13,148,136,0.25)',
+                    background: 'transparent', color: 'rgba(13,100,88,0.75)', fontSize: 14, fontFamily: 'inherit', cursor: 'pointer',
+                  }}>← Volver</button>
+                  <button
+                    disabled={submittingSelect}
+                    onClick={async () => {
+                      setSubmittingSelect(true);
+                      try {
+                        await api.patch(`/ai-matching/leads/${matchLeadId}/select`, { profileId: selectedResult.profileId });
+                        sessionStorage.setItem(`matchLeadData:${selectedResult.profile.slug}`, JSON.stringify({
+                          clientName: leadName,
+                          clientPhone: leadWhatsapp,
+                          notes: confirmedSituation,
+                          matchLeadId,
+                        }));
+                        closeMatch();
+                        navigate(`/book/${selectedResult.profile.slug}`);
+                      } catch {
+                        setSubmittingSelect(false);
+                      }
+                    }}
+                    style={{
+                      flex: 2, padding: '12px', borderRadius: 10, border: 'none',
+                      background: '#2dd4bf', color: '#fff', fontSize: 14, fontWeight: 600,
+                      fontFamily: 'inherit', cursor: submittingSelect ? 'wait' : 'pointer',
+                    }}
+                  >
+                    {submittingSelect ? 'Un momento...' : 'Continuar a la reserva'}
+                  </button>
+                </div>
               </div>
             )}
             </div>
