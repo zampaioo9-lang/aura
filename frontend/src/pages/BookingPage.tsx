@@ -25,7 +25,7 @@ export default function BookingPage() {
   // ejecutar el efecto, pero para entonces ya habríamos borrado la clave de
   // sessionStorage. El ref no se ve afectado por ese descarte, así que el
   // segundo (real) efecto puede reusar el dato ya parseado.
-  const matchLeadDataRef = useRef<{ initialValues: typeof initialValues; matchLeadId: string | undefined } | null>(null);
+  const matchLeadDataRef = useRef<{ slug: string; initialValues: typeof initialValues; matchLeadId: string | undefined } | null>(null);
 
   useEffect(() => {
     api.get(`/profiles/${slug}`)
@@ -36,25 +36,32 @@ export default function BookingPage() {
 
   useEffect(() => {
     if (!slug) return;
-    if (!matchLeadDataRef.current) {
+    if (!matchLeadDataRef.current || matchLeadDataRef.current.slug !== slug) {
+      matchLeadDataRef.current = null; // descarta cualquier cache de un slug distinto antes de releer
       const key = `matchLeadData:${slug}`;
       const raw = sessionStorage.getItem(key);
       if (raw) {
         try {
           const parsed = JSON.parse(raw);
+          const name = typeof parsed.clientName === 'string' ? parsed.clientName.trim() : parsed.clientName;
           const notes = typeof parsed.notes === 'string' ? parsed.notes.trim().slice(0, 500) : parsed.notes;
-          const phone = typeof parsed.clientPhone === 'string' && parsed.clientPhone.trim().length > 0 ? parsed.clientPhone : undefined;
+          const phone = typeof parsed.clientPhone === 'string' && parsed.clientPhone.trim().length > 0 ? parsed.clientPhone.trim() : undefined;
           matchLeadDataRef.current = {
-            initialValues: { clientName: parsed.clientName, clientPhone: phone, notes },
+            slug,
+            initialValues: { clientName: name, clientPhone: phone, notes },
             matchLeadId: parsed.matchLeadId || undefined,
           };
         } catch { /* dato corrupto, se ignora */ }
         sessionStorage.removeItem(key);
       }
     }
-    if (matchLeadDataRef.current) {
+    if (matchLeadDataRef.current && matchLeadDataRef.current.slug === slug) {
       setInitialValues(matchLeadDataRef.current.initialValues);
       setMatchLeadId(matchLeadDataRef.current.matchLeadId);
+    } else {
+      // Slug nuevo sin dato de Matching en sessionStorage: no reusar el prefill del slug anterior.
+      setInitialValues(undefined);
+      setMatchLeadId(undefined);
     }
   }, [slug]);
 
