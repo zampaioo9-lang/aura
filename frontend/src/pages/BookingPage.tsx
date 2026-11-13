@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Clock, MapPin, ArrowLeft, Award, Star, ShieldCheck } from 'lucide-react';
 import api from '../api/client';
@@ -17,12 +17,45 @@ export default function BookingPage() {
   const [reviewStats, setReviewStats] = useState<{ averageRating: number | null; reviewCount: number } | null>(null);
   const [reviewsLoaded, setReviewsLoaded] = useState(false);
   const [offerings, setOfferings] = useState<any[]>([]);
+  const [initialValues, setInitialValues] = useState<{ clientName?: string; clientPhone?: string; notes?: string } | undefined>(undefined);
+  const [matchLeadId, setMatchLeadId] = useState<string | undefined>(undefined);
+  // Cachea el dato ya leído de sessionStorage en un ref (no en useState) para que
+  // sobreviva al doble-invoke de efectos de React StrictMode en desarrollo: ese
+  // doble-invoke descarta el estado del primer "montaje de prueba" y vuelve a
+  // ejecutar el efecto, pero para entonces ya habríamos borrado la clave de
+  // sessionStorage. El ref no se ve afectado por ese descarte, así que el
+  // segundo (real) efecto puede reusar el dato ya parseado.
+  const matchLeadDataRef = useRef<{ initialValues: typeof initialValues; matchLeadId: string | undefined } | null>(null);
 
   useEffect(() => {
     api.get(`/profiles/${slug}`)
       .then(res => setProfile(res.data))
       .catch(() => setProfile(null))
       .finally(() => setLoading(false));
+  }, [slug]);
+
+  useEffect(() => {
+    if (!slug) return;
+    if (!matchLeadDataRef.current) {
+      const key = `matchLeadData:${slug}`;
+      const raw = sessionStorage.getItem(key);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          const notes = typeof parsed.notes === 'string' ? parsed.notes.trim().slice(0, 500) : parsed.notes;
+          const phone = typeof parsed.clientPhone === 'string' && parsed.clientPhone.trim().length > 0 ? parsed.clientPhone : undefined;
+          matchLeadDataRef.current = {
+            initialValues: { clientName: parsed.clientName, clientPhone: phone, notes },
+            matchLeadId: parsed.matchLeadId || undefined,
+          };
+        } catch { /* dato corrupto, se ignora */ }
+        sessionStorage.removeItem(key);
+      }
+    }
+    if (matchLeadDataRef.current) {
+      setInitialValues(matchLeadDataRef.current.initialValues);
+      setMatchLeadId(matchLeadDataRef.current.matchLeadId);
+    }
   }, [slug]);
 
   useEffect(() => {
@@ -227,6 +260,8 @@ export default function BookingPage() {
           serviceId={selectedService.id}
           serviceName={selectedService.name}
           primaryColor={profile.customization?.primaryColor || '#2dd4bf'}
+          initialValues={initialValues}
+          matchLeadId={matchLeadId}
           onClose={() => setSelectedService(null)}
           onSuccess={() => { setSuccess(true); setSelectedService(null); }}
         />
