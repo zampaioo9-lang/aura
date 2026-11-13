@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, ChevronLeft, ChevronRight, CreditCard, Tag, Sun, Moon, Trash2, Mail, MailX, Send, User, Activity, Shield, BarChart3, Newspaper } from 'lucide-react';
+import { Users, Search, ChevronLeft, ChevronRight, CreditCard, Tag, Sun, Moon, Trash2, Mail, MailX, Send, User, Activity, Shield, BarChart3, Newspaper, Sparkles } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
@@ -47,6 +47,16 @@ interface UserRow {
     published: boolean;
     _count: { bookings: number; services: number };
   }[];
+}
+
+interface MatchLeadRow {
+  id: string;
+  answers: { q1: string; q2: string; q3: string; q4: string; q5: string };
+  name: string | null;
+  whatsapp: string | null;
+  selectedProfileId: string | null;
+  createdAt: string;
+  booking: { id: string; status: string; date: string; startTime: string } | null;
 }
 
 const INTERVAL_LABEL: Record<string, string> = {
@@ -509,6 +519,7 @@ export default function AdminPanel() {
   const [sendingAnn, setSendingAnn] = useState(false);
   const [annResult, setAnnResult] = useState<{ ok: boolean; sent?: number; failed?: number; error?: string; recipients?: { name: string; email: string; ok: boolean }[] } | null>(null);
   const [annLogs, setAnnLogs] = useState<{ id: string; subject: string; audience: string; sentCount: number; failCount: number; recipients: { name: string; email: string; ok: boolean; emailId?: string; opened: boolean }[]; sentAt: string }[]>([]);
+  const [matchLeads, setMatchLeads] = useState<MatchLeadRow[]>([]);
 
   // Newsletter (Resend Broadcasts)
   const [nlSubject, setNlSubject] = useState('');
@@ -715,6 +726,7 @@ export default function AdminPanel() {
     api.get('/admin/announcement-logs')
       .then(res => setAnnLogs(res.data))
       .catch(() => {});
+    api.get('/admin/match-leads').then(r => setMatchLeads(r.data)).catch(() => {});
     api.get('/admin/users/list-all')
       .then(res => setAllUsers(res.data.users))
       .catch(() => {});
@@ -1841,6 +1853,40 @@ export default function AdminPanel() {
                                             color: rec?.opened ? '#2dd4bf' : C.textFaint,
                                           }}>
                                             {rec?.opened ? '👁 Abierto' : 'Sin abrir'}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
+                            {/* Leads de Matching que eligieron a este terapeuta */}
+                            {(() => {
+                              const profileIds = u.profiles.map(p => p.id);
+                              const leads = matchLeads.filter(l => l.selectedProfileId && profileIds.includes(l.selectedProfileId));
+                              if (leads.length === 0) return null;
+                              return (
+                                <div className="rounded-lg px-3 py-3 mt-3" style={{ background: C.subCard, boxShadow: C.subCardShadow }}>
+                                  <p className="text-xs font-semibold flex items-center gap-1.5 mb-2" style={{ color: C.textMuted }}>
+                                    <Sparkles className="w-3.5 h-3.5" /> Leads de Matching ({leads.length})
+                                  </p>
+                                  <div className="space-y-2">
+                                    {leads.map(lead => {
+                                      const dateStr = new Date(lead.createdAt).toLocaleString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                                      return (
+                                        <div key={lead.id} className="text-xs" style={{ borderBottom: `1px solid ${C.cardBorder}`, paddingBottom: 8 }}>
+                                          <div className="flex items-center justify-between mb-1">
+                                            <span className="font-medium" style={{ color: C.text }}>{lead.name ?? 'Sin nombre'} · {lead.whatsapp ?? 'Sin WhatsApp'}</span>
+                                            <span style={{ color: C.textFaint }}>{dateStr}</span>
+                                          </div>
+                                          <p className="mb-1" style={{ color: C.textFaint }}>{lead.answers.q1}</p>
+                                          <span className="px-2 py-0.5 rounded-full font-medium" style={{
+                                            background: lead.booking ? 'rgba(45,212,191,0.12)' : (dark ? 'rgba(255,255,255,0.08)' : 'rgba(15,50,60,0.07)'),
+                                            color: lead.booking ? '#2dd4bf' : C.textFaint,
+                                          }}>
+                                            {lead.booking ? `Cita agendada (${lead.booking.status})` : 'Sin cita todavía'}
                                           </span>
                                         </div>
                                       );
