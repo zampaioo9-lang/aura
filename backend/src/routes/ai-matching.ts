@@ -2,6 +2,7 @@ import { Router } from 'express';
 import Anthropic from '@anthropic-ai/sdk';
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
+import { matchLeadContactSchema, matchLeadSelectSchema } from '../utils/validation';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -132,6 +133,25 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown:
     res.json({ matches: enriched, leadId: lead.id });
   } catch (err: any) {
     console.error('AI MATCHING ERROR:', err?.message, err?.status, err?.stack?.slice(0, 500));
+    next(err);
+  }
+});
+
+router.patch('/leads/:id/contact', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, whatsapp } = matchLeadContactSchema.parse(req.body);
+
+    const lead = await prisma.matchLead.findUnique({ where: { id } });
+    if (!lead) throw new AppError(404, 'Lead no encontrado');
+
+    const updated = await prisma.matchLead.update({
+      where: { id },
+      data: { name, whatsapp, contactedAt: new Date() },
+    });
+
+    res.json({ id: updated.id });
+  } catch (err) {
     next(err);
   }
 });

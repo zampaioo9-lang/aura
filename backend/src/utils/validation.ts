@@ -383,3 +383,12 @@ export const subscribeNewsletterSchema = z.object({
   email: z.string().trim().email(),
   audience: z.enum(['PACIENTES', 'TERAPEUTAS']),
 });
+
+export const matchLeadContactSchema = z.object({
+  name: z.string().min(2, 'Nombre minimo 2 caracteres').max(100, 'Nombre maximo 100 caracteres'),
+  whatsapp: z.string().regex(/^\+[1-9]\d{1,14}$/, 'Formato: +34612345678'),
+});
+
+export const matchLeadSelectSchema = z.object({
+  profileId: z.string().min(1, 'profileId es requerido'),
+});
