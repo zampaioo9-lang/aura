@@ -55,6 +55,7 @@ interface MatchLeadRow {
   name: string | null;
   whatsapp: string | null;
   selectedProfileId: string | null;
+  selectedProfile?: { title: string; slug: string } | null;
   createdAt: string;
   booking: { id: string; status: string; date: string; startTime: string } | null;
 }
@@ -505,7 +506,7 @@ export default function AdminPanel() {
   const [userDetailTab, setUserDetailTab] = useState<'perfil' | 'actividad' | 'comunicacion'>('actividad');
   const [activitySummary, setActivitySummary] = useState<{ module: string; count: number }[]>([]);
   const [activityPeriod, setActivityPeriod] = useState<'30d' | '90d' | 'all'>('30d');
-  const [pageTab, setPageTab] = useState<'resumen' | 'usuarios' | 'comunicacion' | 'revista'>('usuarios');
+  const [pageTab, setPageTab] = useState<'resumen' | 'usuarios' | 'leads' | 'comunicacion' | 'revista'>('usuarios');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
@@ -930,6 +931,7 @@ export default function AdminPanel() {
           {[
             { id: 'resumen' as const, label: 'Resumen', icon: BarChart3 },
             { id: 'usuarios' as const, label: 'Usuarios', icon: Users },
+            { id: 'leads' as const, label: 'Leads Matching', icon: Sparkles },
             { id: 'comunicacion' as const, label: 'Comunicación', icon: Send },
             { id: 'revista' as const, label: 'Revista', icon: Newspaper },
           ].map(tab => {
@@ -2170,6 +2172,57 @@ export default function AdminPanel() {
           )}
         </div>
         </>
+        )}
+
+        {pageTab === 'leads' && (
+          <div className="rounded-2xl overflow-hidden" style={{ background: C.card, boxShadow: C.subCardShadow }}>
+            <div className="flex items-center justify-between px-5 py-3">
+              <h2 className="text-sm font-semibold flex items-center gap-1.5" style={{ color: C.text }}>
+                <Sparkles className="w-4 h-4" /> Leads del Matching ({matchLeads.length})
+              </h2>
+              <button
+                onClick={() => { setRefreshingMatchLeads(true); api.get('/admin/match-leads').then(r => setMatchLeads(r.data)).finally(() => setRefreshingMatchLeads(false)); }}
+                disabled={refreshingMatchLeads}
+                className="text-xs px-2 py-1 rounded-md disabled:opacity-50"
+                style={{ background: C.accentLight, color: C.accent }}
+              >
+                {refreshingMatchLeads ? '...' : '↻ Actualizar'}
+              </button>
+            </div>
+            {matchLeads.length === 0 ? (
+              <p className="px-5 py-8 text-sm text-center" style={{ color: C.textFaint }}>Todavía no hay leads del Matching.</p>
+            ) : (
+              <div className="px-5 pb-4 space-y-3">
+                {matchLeads.map(lead => {
+                  const dateStr = new Date(lead.createdAt).toLocaleString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                  const waDigits = lead.whatsapp ? lead.whatsapp.replace(/\D/g, '') : null;
+                  return (
+                    <div key={lead.id} className="rounded-lg px-3 py-3 text-xs" style={{ background: C.subCard, boxShadow: C.subCardShadow }}>
+                      <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
+                        <span className="font-medium" style={{ color: C.text }}>
+                          {lead.name ?? 'Sin nombre'} ·{' '}
+                          {lead.whatsapp && waDigits ? (
+                            <a href={`https://wa.me/${waDigits}`} target="_blank" rel="noopener noreferrer" style={{ color: C.accent }}>{lead.whatsapp}</a>
+                          ) : 'Sin WhatsApp'}
+                        </span>
+                        <span style={{ color: C.textFaint }}>{dateStr}</span>
+                      </div>
+                      <p className="mb-1" style={{ color: C.textMuted }}>
+                        Terapeuta elegido: {lead.selectedProfile?.title ?? 'Todavía no elige'}
+                      </p>
+                      <p className="mb-2 line-clamp-2" style={{ color: C.textFaint }}>{lead.answers.q1}</p>
+                      <span className="px-2 py-0.5 rounded-full font-medium" style={{
+                        background: lead.booking ? 'rgba(45,212,191,0.12)' : (dark ? 'rgba(255,255,255,0.08)' : 'rgba(15,50,60,0.07)'),
+                        color: lead.booking ? '#2dd4bf' : C.textFaint,
+                      }}>
+                        {lead.booking ? `Cita agendada (${lead.booking.status})` : 'Sin cita todavía'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
 
         {pageTab === 'revista' && (

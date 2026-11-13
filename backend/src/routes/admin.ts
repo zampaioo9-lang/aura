@@ -398,15 +398,16 @@ router.get('/bookings', async (req, res, next) => {
   }
 });
 
-// GET /api/admin/match-leads — leads del Matching con IA que ya eligieron un terapeuta
+// GET /api/admin/match-leads — leads del Matching con IA que dejaron sus datos de contacto o eligieron un terapeuta
 router.get('/match-leads', async (_req, res, next) => {
   try {
     const leads = await prisma.matchLead.findMany({
-      where: { selectedProfileId: { not: null } },
+      where: { OR: [{ selectedProfileId: { not: null } }, { name: { not: null } }] },
       orderBy: { createdAt: 'desc' },
       take: 500,
       include: {
         booking: { select: { id: true, status: true, date: true, startTime: true } },
+        selectedProfile: { select: { title: true, slug: true } },
       },
     });
     res.json(leads);

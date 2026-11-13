@@ -30,7 +30,8 @@ router.post('/match', async (req, res, next) => {
     });
 
     const profiles = await prisma.profile.findMany({
-      where: { published: true },
+      // Solo terapeutas con al menos un servicio activo: sin servicios la página de reserva queda vacía
+      where: { published: true, services: { some: { isActive: true } } },
       select: {
         id: true,
         slug: true,
