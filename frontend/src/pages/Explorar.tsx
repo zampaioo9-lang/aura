@@ -192,6 +192,7 @@ export default function Explorar() {
   const [selectedResult, setSelectedResult] = useState<MatchResult | null>(null);
   const [confirmedSituation, setConfirmedSituation] = useState('');
   const [submittingSelect, setSubmittingSelect] = useState(false);
+  const [selectError, setSelectError]   = useState('');
 
   const openMatch = () => {
     setShowMatch(true); setMatchStep(0);
@@ -199,6 +200,7 @@ export default function Explorar() {
     setMatchCountry(''); setMatchCity('');
     setMatchResults(null);
     setMatchLeadId(null); setLeadName(''); setLeadWhatsapp(''); setLeadError('');
+    setSelectError('');
   };
   const closeMatch = () => setShowMatch(false);
 
@@ -992,10 +994,15 @@ export default function Explorar() {
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {matchResults.map((m, i) => (
-                    <div
+                    <button
                       key={m.profileId}
+                      type="button"
                       onClick={() => { setSelectedResult(m); setConfirmedSituation(matchAnswers.q1); setMatchStep(8); }}
-                      style={{ cursor: 'pointer' }}
+                      style={{
+                        border: 'none', background: 'none', padding: 0, margin: 0,
+                        width: '100%', textAlign: 'left', display: 'block',
+                        font: 'inherit', cursor: 'pointer',
+                      }}
                     >
                       <div style={{
                         background: '#f7faf9', border: 'none',
@@ -1025,7 +1032,7 @@ export default function Explorar() {
                           <p style={{ color: 'rgba(31,41,55,0.6)', fontSize: 13, margin: 0, lineHeight: 1.5 }}>{m.reason}</p>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
                 <button onClick={() => { setMatchStep(0); setMatchResults(null); setMatchAnswers({ q1: '', q2: '', q3: '', q4: '', q5: '' }); }} style={{
@@ -1060,6 +1067,10 @@ export default function Explorar() {
                   }}
                 />
 
+                {selectError && (
+                  <p style={{ color: '#dc2626', fontSize: 13, margin: '0 0 12px' }}>{selectError}</p>
+                )}
+
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button onClick={() => setMatchStep(7)} style={{
                     flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(13,148,136,0.25)',
@@ -1068,6 +1079,7 @@ export default function Explorar() {
                   <button
                     disabled={submittingSelect}
                     onClick={async () => {
+                      setSelectError('');
                       setSubmittingSelect(true);
                       try {
                         await api.patch(`/ai-matching/leads/${matchLeadId}/select`, { profileId: selectedResult.profileId });
@@ -1079,7 +1091,8 @@ export default function Explorar() {
                         }));
                         closeMatch();
                         navigate(`/book/${selectedResult.profile.slug}`);
-                      } catch {
+                      } catch (err: any) {
+                        setSelectError(err?.response?.data?.error || 'No se pudo completar tu selección. Intenta de nuevo.');
                         setSubmittingSelect(false);
                       }
                     }}
