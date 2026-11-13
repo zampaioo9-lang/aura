@@ -100,6 +100,7 @@ export const bookingSchema = z.object({
     return d >= today;
   }, { message: 'La fecha debe ser hoy o futura' }),
   startTime: z.string().regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Formato: HH:mm'),
+  matchLeadId: z.string().optional(),
 });
 
 export const statusUpdateSchema = z.object({

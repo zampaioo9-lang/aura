@@ -265,6 +265,7 @@ export async function createBooking(data: {
   clientNotes?: string;
   date: string;
   startTime: string;
+  matchLeadId?: string;
 }) {
   const service = await prisma.service.findUnique({ where: { id: data.serviceId } });
   if (!service || !service.isActive) throw new AppError(404, 'Servicio no encontrado');
@@ -313,6 +314,7 @@ export async function createBooking(data: {
       startTime: data.startTime,
       endTime,
       status: 'PENDING',
+      matchLeadId: data.matchLeadId || null,
     },
     include: {
       service: true,
