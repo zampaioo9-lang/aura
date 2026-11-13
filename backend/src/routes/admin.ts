@@ -404,6 +404,7 @@ router.get('/match-leads', async (_req, res, next) => {
     const leads = await prisma.matchLead.findMany({
       where: { selectedProfileId: { not: null } },
       orderBy: { createdAt: 'desc' },
+      take: 500,
       include: {
         booking: { select: { id: true, status: true, date: true, startTime: true } },
       },
