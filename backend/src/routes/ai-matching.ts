@@ -142,8 +142,26 @@ router.patch('/leads/:id/contact', async (req, res, next) => {
     const { id } = req.params;
     const { name, whatsapp } = matchLeadContactSchema.parse(req.body);
 
+    const ip = ((req.headers['x-forwarded-for'] as string) || '').split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+    const today = new Date().toISOString().split('T')[0];
+    const rlKey = `contact:${ip}:${today}`;
+
+    const existingRl = await prisma.rateLimit.findUnique({ where: { key: rlKey } });
+    if (existingRl && existingRl.count >= 20) {
+      throw new AppError(429, 'Has alcanzado el límite de 20 intentos de contacto por día. Vuelve mañana.');
+    }
+    await prisma.rateLimit.upsert({
+      where: { key: rlKey },
+      update: { count: { increment: 1 } },
+      create: { key: rlKey, count: 1, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+    });
+
     const lead = await prisma.matchLead.findUnique({ where: { id } });
     if (!lead) throw new AppError(404, 'Lead no encontrado');
+
+    if (lead.contactedAt) {
+      return res.json({ id: lead.id });
+    }
 
     const updated = await prisma.matchLead.update({
       where: { id },
