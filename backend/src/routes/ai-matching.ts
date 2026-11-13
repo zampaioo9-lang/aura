@@ -174,4 +174,26 @@ router.patch('/leads/:id/contact', async (req, res, next) => {
   }
 });
 
+router.patch('/leads/:id/select', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { profileId } = matchLeadSelectSchema.parse(req.body);
+
+    const lead = await prisma.matchLead.findUnique({ where: { id } });
+    if (!lead) throw new AppError(404, 'Lead no encontrado');
+
+    const profile = await prisma.profile.findUnique({ where: { id: profileId }, select: { id: true } });
+    if (!profile) throw new AppError(404, 'Perfil no encontrado');
+
+    const updated = await prisma.matchLead.update({
+      where: { id },
+      data: { selectedProfileId: profileId, selectedAt: new Date() },
+    });
+
+    res.json({ id: updated.id });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
