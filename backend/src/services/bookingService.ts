@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
 import { sendWhatsApp, sendWhatsAppTemplate, templates, templateComponents } from './whatsappService';
 import { sendEmail, emailTemplates } from './emailService';
@@ -36,6 +36,28 @@ async function saveNotification(
       error: result.error || null,
     },
   });
+}
+
+// ── Helper: detectar si un error al crear la reserva fue causado específicamente
+// por el matchLeadId (FK inexistente → P2003, o ya vinculado a otra reserva → P2002,
+// por el @unique de Booking.matchLeadId). Cualquier otro error (p.ej. un conflicto
+// de disponibilidad real) debe propagarse normalmente. ──────────────────────────
+function isMatchLeadIdConstraintError(err: unknown): boolean {
+  if (!(err instanceof Prisma.PrismaClientKnownRequestError)) return false;
+
+  if (err.code === 'P2002') {
+    const target = err.meta?.target;
+    if (Array.isArray(target)) return target.includes('matchLeadId');
+    if (typeof target === 'string') return target.includes('matchLeadId');
+    return false;
+  }
+
+  if (err.code === 'P2003') {
+    const fieldName = err.meta?.field_name;
+    return typeof fieldName === 'string' && fieldName.includes('matchLeadId');
+  }
+
+  return false;
 }
 
 // ── checkAvailability ──────────────────────────────────────────────
@@ -301,26 +323,43 @@ export async function createBooking(data: {
   );
   if (!available) throw new AppError(409, reason || 'Horario no disponible');
 
-  const booking = await prisma.booking.create({
-    data: {
-      profileId: data.profileId,
-      serviceId: data.serviceId,
-      professionalId: profile.userId,
-      clientName: data.clientName,
-      clientEmail: data.clientEmail,
-      clientPhone: data.clientPhone || '',
-      clientNotes: data.clientNotes || null,
-      date: new Date(data.date),
-      startTime: data.startTime,
-      endTime,
-      status: 'PENDING',
-      matchLeadId: data.matchLeadId || null,
-    },
-    include: {
-      service: true,
-      profile: { include: { user: { select: { name: true, email: true, phone: true } } } },
-    },
-  });
+  const createBookingRow = (matchLeadId: string | null) =>
+    prisma.booking.create({
+      data: {
+        profileId: data.profileId,
+        serviceId: data.serviceId,
+        professionalId: profile.userId,
+        clientName: data.clientName,
+        clientEmail: data.clientEmail,
+        clientPhone: data.clientPhone || '',
+        clientNotes: data.clientNotes || null,
+        date: new Date(data.date),
+        startTime: data.startTime,
+        endTime,
+        status: 'PENDING',
+        matchLeadId,
+      },
+      include: {
+        service: true,
+        profile: { include: { user: { select: { name: true, email: true, phone: true } } } },
+      },
+    });
+
+  let booking;
+  try {
+    booking = await createBookingRow(data.matchLeadId || null);
+  } catch (err) {
+    // El matchLeadId es un dato secundario de atribución (viene del flujo de matching IA);
+    // nunca debe tumbar la reserva real de un paciente. Si ya no existe o ya fue vinculado
+    // a otra reserva, se reintenta la misma creación sin el lead.
+    if (!data.matchLeadId || !isMatchLeadIdConstraintError(err)) throw err;
+
+    console.warn(
+      `[Booking] matchLeadId invalido o ya vinculado a otra reserva (${(err as Prisma.PrismaClientKnownRequestError).code}); se crea la reserva sin vincular el lead. matchLeadId=${data.matchLeadId} profileId=${data.profileId} serviceId=${data.serviceId} date=${data.date} startTime=${data.startTime}`
+    );
+
+    booking = await createBookingRow(null);
+  }
 
   // Send WhatsApp to professional — priority: AccountSettings WhatsApp > profile.phone > user.phone
   const userSocialLinks = profile.user.socialLinks as Record<string, string> | null;
