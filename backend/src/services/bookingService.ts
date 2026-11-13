@@ -323,6 +323,23 @@ export async function createBooking(data: {
   );
   if (!available) throw new AppError(409, reason || 'Horario no disponible');
 
+  // El matchLeadId viene del flujo de Matching con IA y debe corresponder al mismo
+  // perfil que el lead eligió — si no, se ignora el vínculo (la reserva igual se crea).
+  let verifiedMatchLeadId: string | null = null;
+  if (data.matchLeadId) {
+    const lead = await prisma.matchLead.findUnique({
+      where: { id: data.matchLeadId },
+      select: { selectedProfileId: true },
+    });
+    if (lead && lead.selectedProfileId === data.profileId) {
+      verifiedMatchLeadId = data.matchLeadId;
+    } else {
+      console.warn(
+        `[Booking] matchLeadId ${data.matchLeadId} no corresponde al perfil ${data.profileId} (selectedProfileId=${lead?.selectedProfileId ?? 'lead no encontrado'}); se crea la reserva sin vincular el lead.`
+      );
+    }
+  }
+
   const createBookingRow = (matchLeadId: string | null) =>
     prisma.booking.create({
       data: {
@@ -347,15 +364,16 @@ export async function createBooking(data: {
 
   let booking;
   try {
-    booking = await createBookingRow(data.matchLeadId || null);
+    booking = await createBookingRow(verifiedMatchLeadId);
   } catch (err) {
     // El matchLeadId es un dato secundario de atribución (viene del flujo de matching IA);
-    // nunca debe tumbar la reserva real de un paciente. Si ya no existe o ya fue vinculado
-    // a otra reserva, se reintenta la misma creación sin el lead.
-    if (!data.matchLeadId || !isMatchLeadIdConstraintError(err)) throw err;
+    // nunca debe tumbar la reserva real de un paciente. Si justo en este instante ya no
+    // existe o ya fue vinculado a otra reserva (carrera entre la verificación de arriba
+    // y este create), se reintenta la misma creación sin el lead.
+    if (!verifiedMatchLeadId || !isMatchLeadIdConstraintError(err)) throw err;
 
     console.warn(
-      `[Booking] matchLeadId invalido o ya vinculado a otra reserva (${(err as Prisma.PrismaClientKnownRequestError).code}); se crea la reserva sin vincular el lead. matchLeadId=${data.matchLeadId} profileId=${data.profileId} serviceId=${data.serviceId} date=${data.date} startTime=${data.startTime}`
+      `[Booking] matchLeadId invalido o ya vinculado a otra reserva (${(err as Prisma.PrismaClientKnownRequestError).code}); se crea la reserva sin vincular el lead. matchLeadId=${verifiedMatchLeadId} profileId=${data.profileId} serviceId=${data.serviceId} date=${data.date} startTime=${data.startTime}`
     );
 
     booking = await createBookingRow(null);
