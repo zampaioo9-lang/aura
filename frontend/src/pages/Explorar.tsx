@@ -6,6 +6,7 @@ import api from '../api/client';
 import './Explorar.css';
 import LandingHeader from '../components/landing/LandingHeader';
 import SiteFooter from '../components/landing/SiteFooter';
+import PhoneInput from '../components/PhoneInput';
 import { PROBLEMATICS } from '../data/problematics';
 
 const VIDEO_URL =
@@ -213,12 +214,11 @@ export default function Explorar() {
 
   const handleLeadContact = async () => {
     setLeadError('');
-    const digits = leadWhatsapp.replace(/\D/g, '');
-    if (digits.length < 8) { setLeadError('WhatsApp inválido'); return; }
+    if (!/^\+\d{8,15}$/.test(leadWhatsapp)) { setLeadError('WhatsApp inválido'); return; }
     if (leadName.trim().length < 2) { setLeadError('Escribe tu nombre'); return; }
     setSubmittingLead(true);
     try {
-      await api.patch(`/ai-matching/leads/${matchLeadId}/contact`, { name: leadName.trim(), whatsapp: leadWhatsapp });
+      await api.patch(`/ai-matching/leads/${matchLeadId}/contact`, { name: leadName.trim(), whatsapp: leadWhatsapp.trim() });
       setMatchStep(7); // ahora sí, revelar resultados
     } catch (err: any) {
       setLeadError(err?.response?.data?.error || 'No se pudo guardar tu información. Intenta de nuevo.');
@@ -955,17 +955,12 @@ export default function Explorar() {
                     fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
                   }}
                 />
-                <input
-                  type="tel"
-                  value={leadWhatsapp}
-                  onChange={e => setLeadWhatsapp(e.target.value)}
-                  placeholder="WhatsApp, ej. +5215512345678"
-                  style={{
-                    width: '100%', padding: '12px 14px', borderRadius: 10, marginBottom: 8,
-                    background: '#eef7f5', border: 'none', color: '#111827', fontSize: 16,
-                    fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
-                  }}
-                />
+                <div style={{ marginBottom: 8 }}>
+                  <PhoneInput
+                    value={leadWhatsapp}
+                    onChange={setLeadWhatsapp}
+                  />
+                </div>
                 {leadError && (
                   <p style={{ color: '#dc2626', fontSize: 13, margin: '0 0 12px' }}>{leadError}</p>
                 )}
