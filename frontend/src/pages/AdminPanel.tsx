@@ -531,6 +531,7 @@ export default function AdminPanel() {
   const [syncingAudience, setSyncingAudience] = useState(false);
   const [syncResult, setSyncResult] = useState<{ ok: boolean; added?: number; total?: number; error?: string } | null>(null);
   const [refreshingLogs, setRefreshingLogs] = useState(false);
+  const [refreshingMatchLeads, setRefreshingMatchLeads] = useState(false);
   const [updatingPermissions, setUpdatingPermissions] = useState<string | null>(null);
   const [updatingBlock, setUpdatingBlock] = useState<string | null>(null);
   const [grantingPro, setGrantingPro] = useState<string | null>(null);
@@ -1869,19 +1870,39 @@ export default function AdminPanel() {
                               if (leads.length === 0) return null;
                               return (
                                 <div className="rounded-lg px-3 py-3 mt-3" style={{ background: C.subCard, boxShadow: C.subCardShadow }}>
-                                  <p className="text-xs font-semibold flex items-center gap-1.5 mb-2" style={{ color: C.textMuted }}>
-                                    <Sparkles className="w-3.5 h-3.5" /> Leads de Matching ({leads.length})
-                                  </p>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs font-semibold flex items-center gap-1.5" style={{ color: C.textMuted }}>
+                                      <Sparkles className="w-3.5 h-3.5" /> Leads de Matching ({leads.length})
+                                    </p>
+                                    <button
+                                      onClick={e => { e.stopPropagation(); setRefreshingMatchLeads(true); api.get('/admin/match-leads').then(r => setMatchLeads(r.data)).finally(() => setRefreshingMatchLeads(false)); }}
+                                      disabled={refreshingMatchLeads}
+                                      className="text-xs px-2 py-0.5 rounded-md disabled:opacity-50"
+                                      style={{ background: C.accentLight, color: C.accent, border: `1px solid ${C.cardBorder}` }}
+                                    >
+                                      {refreshingMatchLeads ? '...' : '↻ Actualizar'}
+                                    </button>
+                                  </div>
                                   <div className="space-y-2">
                                     {leads.map(lead => {
                                       const dateStr = new Date(lead.createdAt).toLocaleString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                                      const waDigits = lead.whatsapp ? lead.whatsapp.replace(/\D/g, '') : null;
                                       return (
                                         <div key={lead.id} className="text-xs" style={{ borderBottom: `1px solid ${C.cardBorder}`, paddingBottom: 8 }}>
                                           <div className="flex items-center justify-between mb-1">
-                                            <span className="font-medium" style={{ color: C.text }}>{lead.name ?? 'Sin nombre'} · {lead.whatsapp ?? 'Sin WhatsApp'}</span>
+                                            <span className="font-medium" style={{ color: C.text }}>
+                                              {lead.name ?? 'Sin nombre'} ·{' '}
+                                              {lead.whatsapp && waDigits ? (
+                                                <a href={`https://wa.me/${waDigits}`} target="_blank" rel="noopener noreferrer" style={{ color: C.accent }}>
+                                                  {lead.whatsapp}
+                                                </a>
+                                              ) : (
+                                                'Sin WhatsApp'
+                                              )}
+                                            </span>
                                             <span style={{ color: C.textFaint }}>{dateStr}</span>
                                           </div>
-                                          <p className="mb-1" style={{ color: C.textFaint }}>{lead.answers.q1}</p>
+                                          <p className="mb-1 line-clamp-2" style={{ color: C.textFaint }}>{lead.answers.q1}</p>
                                           <span className="px-2 py-0.5 rounded-full font-medium" style={{
                                             background: lead.booking ? 'rgba(45,212,191,0.12)' : (dark ? 'rgba(255,255,255,0.08)' : 'rgba(15,50,60,0.07)'),
                                             color: lead.booking ? '#2dd4bf' : C.textFaint,
