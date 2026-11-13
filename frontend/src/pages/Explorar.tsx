@@ -182,12 +182,18 @@ export default function Explorar() {
   const [matchResults, setMatchResults] = useState<MatchResult[] | null>(null);
   const [matchCountry, setMatchCountry] = useState('');
   const [matchCity, setMatchCity]       = useState('');
+  const [matchLeadId, setMatchLeadId]   = useState<string | null>(null);
+  const [leadName, setLeadName]         = useState('');
+  const [leadWhatsapp, setLeadWhatsapp] = useState('');
+  const [leadError, setLeadError]       = useState('');
+  const [submittingLead, setSubmittingLead] = useState(false);
 
   const openMatch = () => {
     setShowMatch(true); setMatchStep(0);
     setMatchAnswers({ q1: '', q2: '', q3: '', q4: '', q5: '' });
     setMatchCountry(''); setMatchCity('');
     setMatchResults(null);
+    setMatchLeadId(null); setLeadName(''); setLeadWhatsapp(''); setLeadError('');
   };
   const closeMatch = () => setShowMatch(false);
 
@@ -196,11 +202,28 @@ export default function Explorar() {
     try {
       const { data } = await api.post('/ai-matching/match', { answers: matchAnswers });
       setMatchResults(data.matches);
-      setMatchStep(6);
+      setMatchLeadId(data.leadId);
+      setMatchStep(6); // gate de nombre/whatsapp, antes de revelar resultados
     } catch (err: any) {
       const msg = err?.response?.data?.error || 'No se pudo procesar el matching. Intenta de nuevo.';
       alert(msg);
       setMatchStep(4);
+    }
+  };
+
+  const handleLeadContact = async () => {
+    setLeadError('');
+    const digits = leadWhatsapp.replace(/\D/g, '');
+    if (digits.length < 8) { setLeadError('WhatsApp inválido'); return; }
+    if (leadName.trim().length < 2) { setLeadError('Escribe tu nombre'); return; }
+    setSubmittingLead(true);
+    try {
+      await api.patch(`/ai-matching/leads/${matchLeadId}/contact`, { name: leadName.trim(), whatsapp: leadWhatsapp });
+      setMatchStep(7); // ahora sí, revelar resultados
+    } catch (err: any) {
+      setLeadError(err?.response?.data?.error || 'No se pudo guardar tu información. Intenta de nuevo.');
+    } finally {
+      setSubmittingLead(false);
     }
   };
 
@@ -911,8 +934,56 @@ export default function Explorar() {
               </div>
             )}
 
+            {/* Step: gate de contacto */}
+            {matchStep === 6 && (
+              <div>
+                <h3 style={{ color: '#111827', fontSize: 17, fontWeight: 700, margin: '0 0 6px' }}>
+                  Encontramos {matchResults?.length ?? 0} terapeutas compatibles contigo
+                </h3>
+                <p style={{ color: 'rgba(31,41,55,0.5)', fontSize: 13, margin: '0 0 20px' }}>
+                  Déjanos tu nombre y WhatsApp para mostrártelos
+                </p>
+
+                <input
+                  type="text"
+                  value={leadName}
+                  onChange={e => setLeadName(e.target.value)}
+                  placeholder="Tu nombre"
+                  style={{
+                    width: '100%', padding: '12px 14px', borderRadius: 10, marginBottom: 12,
+                    background: '#eef7f5', border: 'none', color: '#111827', fontSize: 16,
+                    fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
+                  }}
+                />
+                <input
+                  type="tel"
+                  value={leadWhatsapp}
+                  onChange={e => setLeadWhatsapp(e.target.value)}
+                  placeholder="WhatsApp, ej. +5215512345678"
+                  style={{
+                    width: '100%', padding: '12px 14px', borderRadius: 10, marginBottom: 8,
+                    background: '#eef7f5', border: 'none', color: '#111827', fontSize: 16,
+                    fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
+                  }}
+                />
+                {leadError && (
+                  <p style={{ color: '#dc2626', fontSize: 13, margin: '0 0 12px' }}>{leadError}</p>
+                )}
+
+                <button onClick={handleLeadContact} disabled={submittingLead} style={{
+                  width: '100%', padding: '12px', borderRadius: 10, border: 'none',
+                  background: '#2dd4bf', color: '#fff', fontSize: 14, fontWeight: 600,
+                  fontFamily: 'inherit', cursor: submittingLead ? 'wait' : 'pointer', marginTop: 8,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}>
+                  {submittingLead ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={14} />}
+                  Ver mis resultados
+                </button>
+              </div>
+            )}
+
             {/* Step: resultados */}
-            {matchStep === 6 && matchResults && (
+            {matchStep === 7 && matchResults && (
               <div>
                 <h3 style={{ color: '#111827', fontSize: 17, fontWeight: 700, margin: '0 0 6px' }}>
                   {matchResults.length > 0 ? `${matchResults.length} terapeutas compatibles encontrados` : 'Sin resultados por ahora'}
