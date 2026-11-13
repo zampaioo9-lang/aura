@@ -10,6 +10,8 @@ interface BookingFormProps {
   serviceId: string;
   serviceName: string;
   primaryColor?: string;
+  initialValues?: { clientName?: string; clientPhone?: string; notes?: string };
+  matchLeadId?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -21,14 +23,14 @@ function hexToDark(hex: string, amount: number): string {
   return `rgb(${Math.round(r * amount)},${Math.round(g * amount)},${Math.round(b * amount)})`;
 }
 
-export default function BookingForm({ profileId, serviceId, serviceName, primaryColor = '#2dd4bf', onClose, onSuccess }: BookingFormProps) {
+export default function BookingForm({ profileId, serviceId, serviceName, primaryColor = '#2dd4bf', initialValues, matchLeadId, onClose, onSuccess }: BookingFormProps) {
   const [form, setForm] = useState({
-    clientName: '',
+    clientName: initialValues?.clientName ?? '',
     clientEmail: '',
-    clientPhone: '',
+    clientPhone: initialValues?.clientPhone ?? '',
     date: '',
     startTime: '',
-    notes: '',
+    notes: initialValues?.notes ?? '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -106,6 +108,7 @@ export default function BookingForm({ profileId, serviceId, serviceName, primary
         clientNotes: form.notes || undefined,
         date: form.date,
         startTime: form.startTime,
+        matchLeadId: matchLeadId || undefined,
       });
       onSuccess();
     } catch (err: any) {
