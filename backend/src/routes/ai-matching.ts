@@ -122,7 +122,14 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown:
       profile: profileMap.get(m.profileId) ?? null,
     })).filter(m => m.profile !== null);
 
-    res.json({ matches: enriched });
+    const lead = await prisma.matchLead.create({
+      data: {
+        answers,
+        matchedProfileIds: enriched.map(m => m.profileId),
+      },
+    });
+
+    res.json({ matches: enriched, leadId: lead.id });
   } catch (err: any) {
     console.error('AI MATCHING ERROR:', err?.message, err?.status, err?.stack?.slice(0, 500));
     next(err);
