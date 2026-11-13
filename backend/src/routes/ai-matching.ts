@@ -179,8 +179,26 @@ router.patch('/leads/:id/select', async (req, res, next) => {
     const { id } = req.params;
     const { profileId } = matchLeadSelectSchema.parse(req.body);
 
+    const ip = ((req.headers['x-forwarded-for'] as string) || '').split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+    const today = new Date().toISOString().split('T')[0];
+    const rlKey = `select:${ip}:${today}`;
+
+    const existingRl = await prisma.rateLimit.findUnique({ where: { key: rlKey } });
+    if (existingRl && existingRl.count >= 20) {
+      throw new AppError(429, 'Has alcanzado el límite de 20 selecciones por día. Vuelve mañana.');
+    }
+    await prisma.rateLimit.upsert({
+      where: { key: rlKey },
+      update: { count: { increment: 1 } },
+      create: { key: rlKey, count: 1, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+    });
+
     const lead = await prisma.matchLead.findUnique({ where: { id } });
     if (!lead) throw new AppError(404, 'Lead no encontrado');
+
+    if (!lead.matchedProfileIds.includes(profileId)) {
+      throw new AppError(400, 'Ese terapeuta no estaba entre los sugeridos a este lead');
+    }
 
     const profile = await prisma.profile.findUnique({ where: { id: profileId }, select: { id: true } });
     if (!profile) throw new AppError(404, 'Perfil no encontrado');
