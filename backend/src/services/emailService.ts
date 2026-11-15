@@ -335,6 +335,62 @@ export const emailTemplates = {
     `),
   }),
 
+  // Recordatorio durante la prueba de Pro IA (48 a 72 horas despues del registro)
+  trialTryReminder: (data: {
+    userName: string;
+    userEmail: string;
+  }) => ({
+    to: data.userEmail,
+    subject: '¿Ya probaste las notas con IA en Aliax?',
+    html: baseTemplate('Tu prueba de Pro IA', `
+      ${heading(`Hola ${data.userName}`)}
+      ${subtext('Llevas un par de días en tu prueba de Pro IA y todavía te quedan unos 3. Aquí tienes tres cosas que puedes probar hoy:')}
+
+      <div style="margin-top:20px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Sube el audio de una sesión</strong> y recibe la nota lista para revisar (hasta 120 minutos de audio durante la prueba)</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Crea a un paciente</strong> y llena su historia clínica</td></tr>
+          <tr><td style="padding:7px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ <strong>Activa tu agenda</strong> para que tus pacientes reserven en línea</td></tr>
+        </table>
+      </div>
+
+      ${ctaButton('Ir a mi dashboard', 'https://www.aliax.io/dashboard')}
+
+      <p style="margin-top:24px;color:#a1a1aa;font-size:13px;">Si tienes dudas, responde a este correo y con gusto te ayudamos.</p>
+    `),
+  }),
+
+  // Aviso de que la prueba de Pro IA termina en menos de 24 horas
+  trialEndingReminder: (data: {
+    userName: string;
+    userEmail: string;
+  }) => ({
+    to: data.userEmail,
+    subject: 'Tu prueba de Pro IA vence mañana',
+    html: baseTemplate('Tu prueba de Pro IA vence mañana', `
+      ${heading(`Hola ${data.userName}`)}
+      ${subtext('Tu prueba de Pro IA termina en menos de 24 horas.')}
+
+      <div style="margin-top:20px;padding:16px;background:#f0fdf4;border-radius:8px;">
+        <p style="margin:0;color:#18181b;font-size:14px;">Tranquilo, al terminar tu cuenta pasa sola al plan Free. No pierdes tu perfil, tu agenda ni tus pacientes.</p>
+      </div>
+
+      <div style="margin-top:20px;">
+        <p style="margin:0 0 8px;color:#18181b;font-size:15px;font-weight:600;">Lo que dejarías de tener:</p>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:5px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ Notas con IA</td></tr>
+          <tr><td style="padding:5px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ Transcripción de audio</td></tr>
+          <tr><td style="padding:5px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ Historia clínica</td></tr>
+          <tr><td style="padding:5px 0;color:#52525b;font-size:14px;line-height:1.4;">✦ Analytics</td></tr>
+        </table>
+      </div>
+
+      ${subtext('Si quieres conservarlos, puedes elegir un plan en cualquier momento.')}
+
+      ${ctaButton('Ver planes', 'https://www.aliax.io/pricing')}
+    `),
+  }),
+
   // Solicitud de reseteo de contraseña (self-service o forzado por admin)
   passwordReset: (data: {
     userName: string;

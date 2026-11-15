@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { sendWhatsApp, sendWhatsAppTemplate, templates, templateComponents } from '../services/whatsappService';
 import { sendEmail, emailTemplates } from '../services/emailService';
+import { tryReminderWindow, endingReminderWindow } from '../lib/trialReminders';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -291,6 +292,96 @@ router.post('/trial-expiry', async (req: Request, res: Response): Promise<void> 
     res.json({ ok: true, usersChecked: users.length, sent, timestamp: new Date().toISOString() });
   } catch (err: any) {
     console.error('Error en cron de vencimiento de trial:', err);
+    res.status(500).json({ error: 'Error interno', message: err.message });
+  }
+});
+
+// POST /api/cron/trial-reminders: correos durante la prueba de Pro IA.
+//  - "prueba": a quienes se registraron hace entre 48 y 72 horas.
+//  - "vence": a quienes les quedan menos de 24 horas de prueba.
+// Debe programarse en el cron externo (cron-job.org) UNA vez al día, no cada hora.
+// No tiene deduplicación propia: las ventanas de 24 h garantizan que cada usuario
+// recibe cada correo una sola vez si el cron corre una vez al día.
+// Soporta ?dryRun=true (no envía nada, solo devuelve conteos).
+// Requires header: x-cron-secret = CRON_SECRET (variable de entorno)
+router.post('/trial-reminders', async (req: Request, res: Response): Promise<void> => {
+  const secret = req.headers['x-cron-secret'];
+  if (!secret || secret !== process.env.CRON_SECRET) {
+    res.status(401).json({ error: 'No autorizado' });
+    return;
+  }
+
+  try {
+    const dryRun = req.query.dryRun === 'true';
+    const now = new Date();
+    const tryWin = tryReminderWindow(now);
+    const endWin = endingReminderWindow(now);
+
+    const common = {
+      stripeSubscriptionId: null,
+      paypalSubscriptionId: null,
+      blocked: false,
+      isAdmin: false,
+    };
+
+    const tryUsers = await prisma.user.findMany({
+      where: {
+        ...common,
+        clinicoTrialStartedAt: { gte: tryWin.from, lt: tryWin.to },
+        clinicoTrialEndsAt: { gt: now },
+      },
+      select: { id: true, name: true, email: true },
+    });
+
+    const endingUsers = await prisma.user.findMany({
+      where: {
+        ...common,
+        clinicoTrialEndsAt: { gt: endWin.from, lte: endWin.to },
+      },
+      select: { id: true, name: true, email: true },
+    });
+
+    let tryEmailsSent = 0;
+    let endingEmailsSent = 0;
+    let failed = 0;
+
+    if (!dryRun) {
+      for (const user of tryUsers) {
+        try {
+          const tpl = emailTemplates.trialTryReminder({ userName: user.name, userEmail: user.email });
+          const result = await sendEmail(tpl.to, tpl.subject, tpl.html);
+          if (result.success) tryEmailsSent++;
+          else failed++;
+        } catch (e) {
+          console.error('Error enviando recordatorio de prueba a', user.id, e);
+          failed++;
+        }
+      }
+      for (const user of endingUsers) {
+        try {
+          const tpl = emailTemplates.trialEndingReminder({ userName: user.name, userEmail: user.email });
+          const result = await sendEmail(tpl.to, tpl.subject, tpl.html);
+          if (result.success) endingEmailsSent++;
+          else failed++;
+        } catch (e) {
+          console.error('Error enviando recordatorio de vencimiento a', user.id, e);
+          failed++;
+        }
+      }
+    }
+
+    res.json({
+      ok: true,
+      dryRun,
+      tryCandidates: tryUsers.length,
+      tryEmailsSent,
+      endingCandidates: endingUsers.length,
+      endingEmailsSent,
+      failed,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    console.error('Error en cron de recordatorios de prueba:', err);
     res.status(500).json({ error: 'Error interno', message: err.message });
   }
 });
