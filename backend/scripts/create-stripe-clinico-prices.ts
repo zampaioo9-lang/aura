@@ -7,24 +7,24 @@ async function main() {
   const isLive = env.STRIPE_SECRET_KEY.startsWith('sk_live_');
   console.log(`Creando precios contra Stripe ${isLive ? 'LIVE (producción real)' : 'TEST'}`);
 
-  const product = await stripe.products.create({ name: 'Aliax Clínico' });
+  const product = await stripe.products.create({ name: 'Aliax Pro IA' });
   console.log('Producto creado:', product.id);
 
   const priceUsd = await stripe.prices.create({
     product: product.id,
     currency: 'usd',
-    unit_amount: 6000, // $60.00 USD
+    unit_amount: 4400, // $44.00 USD
     recurring: { interval: 'month' },
-    nickname: 'Aliax Clínico Mensual USD',
+    nickname: 'Aliax Pro IA Mensual USD',
   });
   console.log('STRIPE_PRICE_CLINICO_MONTHLY =', priceUsd.id);
 
   const priceMxn = await stripe.prices.create({
     product: product.id,
     currency: 'mxn',
-    unit_amount: 90000, // $900.00 MXN
+    unit_amount: 66000, // $660.00 MXN
     recurring: { interval: 'month' },
-    nickname: 'Aliax Clínico Mensual MXN',
+    nickname: 'Aliax Pro IA Mensual MXN',
   });
   console.log('STRIPE_PRICE_CLINICO_MONTHLY_MXN =', priceMxn.id);
 

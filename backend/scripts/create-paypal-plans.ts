@@ -56,11 +56,11 @@ async function main() {
   const proMxnPlanId = await createPlan(token, proProductId, 'Aliax Pro Mensual MXN', 'MXN', '210.00');
   console.log('PAYPAL_PLAN_PRO_MONTHLY_MXN =', proMxnPlanId);
 
-  const clinicoProductId = await createProduct(token, 'Aliax Clínico');
-  const clinicoUsdPlanId = await createPlan(token, clinicoProductId, 'Aliax Clínico Mensual USD', 'USD', '60.00');
+  const clinicoProductId = await createProduct(token, 'Aliax Pro IA');
+  const clinicoUsdPlanId = await createPlan(token, clinicoProductId, 'Aliax Pro IA Mensual USD', 'USD', '44.00');
   console.log('PAYPAL_PLAN_CLINICO_MONTHLY =', clinicoUsdPlanId);
 
-  const clinicoMxnPlanId = await createPlan(token, clinicoProductId, 'Aliax Clínico Mensual MXN', 'MXN', '900.00');
+  const clinicoMxnPlanId = await createPlan(token, clinicoProductId, 'Aliax Pro IA Mensual MXN', 'MXN', '660.00');
   console.log('PAYPAL_PLAN_CLINICO_MONTHLY_MXN =', clinicoMxnPlanId);
 
   console.log('\nCopia estos 3 valores a tu .env (local y producción).');
