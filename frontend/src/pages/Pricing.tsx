@@ -198,12 +198,21 @@ export default function Pricing() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {!user ? (<>
+              <button onClick={() => navigate('/register')} style={{ width: '100%', padding: '12px 20px', borderRadius: 12, border: 'none', background: `linear-gradient(90deg, ${TEAL}, ${TEAL_D})`, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                Crear cuenta y probar 5 días gratis
+              </button>
+              <button onClick={() => navigate('/login?redirect=%2Fpricing')} style={{ background: 'none', border: 'none', color: MUTED, fontSize: 12.5, cursor: 'pointer', textDecoration: 'underline', padding: 4 }}>
+                ¿Ya tienes cuenta? Inicia sesión para pagar
+              </button>
+              </>) : (<>
               <button onClick={() => handleStripe('PRO')} disabled={!!loading} style={{ width: '100%', padding: '12px 20px', borderRadius: 12, border: 'none', background: `linear-gradient(90deg, ${TEAL}, ${TEAL_D})`, color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading === 'stripe-PRO' ? 0.7 : 1 }}>
                 {loading === 'stripe-PRO' ? 'Redirigiendo...' : `Pagar con tarjeta: ${proPrice.amount}/mes`}
               </button>
               <button onClick={() => handlePayPal('PRO')} disabled={!!loading} style={{ width: '100%', padding: '12px 20px', borderRadius: 12, border: 'none', background: '#FFC439', color: '#003087', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading === 'paypal-PRO' ? 0.7 : 1 }}>
                 {loading === 'paypal-PRO' ? 'Redirigiendo...' : `PayPal: ${proPrice.amount}/mes`}
               </button>
+              </>)}
             </div>
           )}
         </div>
@@ -236,12 +245,21 @@ export default function Pricing() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {!user ? (<>
+              <button onClick={() => navigate('/register')} style={{ width: '100%', padding: '12px 20px', borderRadius: 12, border: 'none', background: `linear-gradient(90deg, ${PURPLE}, #a855f7)`, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                Crear cuenta y probar 5 días gratis
+              </button>
+              <button onClick={() => navigate('/login?redirect=%2Fpricing')} style={{ background: 'none', border: 'none', color: MUTED, fontSize: 12.5, cursor: 'pointer', textDecoration: 'underline', padding: 4 }}>
+                ¿Ya tienes cuenta? Inicia sesión para pagar
+              </button>
+              </>) : (<>
               <button onClick={() => handleStripe('CLINICO')} disabled={!!loading} style={{ width: '100%', padding: '12px 20px', borderRadius: 12, border: 'none', background: `linear-gradient(90deg, ${PURPLE}, #a855f7)`, color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading === 'stripe-CLINICO' ? 0.7 : 1 }}>
                 {loading === 'stripe-CLINICO' ? 'Redirigiendo...' : `Pagar con tarjeta: ${clinicoPrice.amount}/mes`}
               </button>
               <button onClick={() => handlePayPal('CLINICO')} disabled={!!loading} style={{ width: '100%', padding: '12px 20px', borderRadius: 12, border: 'none', background: '#FFC439', color: '#003087', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading === 'paypal-CLINICO' ? 0.7 : 1 }}>
                 {loading === 'paypal-CLINICO' ? 'Redirigiendo...' : `PayPal: ${clinicoPrice.amount}/mes`}
               </button>
+              </>)}
             </div>
           )}
           <p style={{ color: DIM, fontSize: 11.5, textAlign: 'center', marginTop: 8 }}>Sin costo de instalación</p>

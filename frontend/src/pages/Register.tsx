@@ -104,10 +104,13 @@ export default function Register() {
             }}>
               <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#2dd4bf' }} />
               <span style={{ fontSize: 11, fontWeight: 600, color: '#2dd4bf' }}>
-                Gratis · Sin tarjeta
+                5 días de Pro IA gratis · Sin tarjeta
               </span>
             </div>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px' }}>Crea tu perfil gratis</h2>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '0 0 8px', lineHeight: 1.5 }}>
+              Al crear tu cuenta pruebas 5 días todo Pro IA: notas con IA, transcripción de audio, historia clínica y más. Después sigues gratis en el plan Free, con tu perfil y tu agenda intactos.
+            </p>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
               Aparece en búsquedas de Google desde hoy
             </p>
