@@ -1,6 +1,6 @@
 import {
-  Mic, Sparkles, ClipboardList, FileText, CalendarClock, BellRing,
-  Users, Link2, Palette, BarChart3, Search,
+  Mic, Sparkles, FileText, CalendarClock, BellRing,
+  Users, Link2, Palette, BarChart3, Search, UsersRound,
 } from 'lucide-react';
 
 interface Props {
@@ -11,15 +11,15 @@ const c01 = (v: number) => Math.max(0, Math.min(1, v));
 
 const FEATURES = [
   { icon: Search,        title: 'Matching inteligente',        desc: 'Encuentra al profesional ideal por enfoque y necesidad.', color: '#f97316' },
-  { icon: Sparkles,       title: 'Notas con IA',                desc: 'SOAP, Libre, Diamante TBCS y más, generadas por IA.',      color: '#a78bfa' },
-  { icon: ClipboardList,  title: 'Diferentes notas clínicas',   desc: 'Elige el formato que mejor se adapte a tu estilo.',        color: '#f472b6' },
+  { icon: Sparkles,       title: 'Notas con IA, en el formato que prefieras', desc: 'SOAP, Libre, Diamante TBCS y más, generadas por IA. Elige el que se adapte a tu estilo.', color: '#a78bfa' },
   { icon: FileText,       title: 'Historia Clínica',            desc: 'Expediente digital individual y de pareja.',              color: '#60a5fa' },
   { icon: CalendarClock,  title: 'Agenda y reservas',           desc: 'Tus pacientes reservan en línea, sin comisiones.',         color: '#34d399' },
-  { icon: BellRing,       title: 'Recordatorios automáticos',   desc: 'WhatsApp y correo antes de cada sesión.',                  color: '#fbbf24' },
+  { icon: BellRing,       title: 'Recordatorios automáticos',   desc: 'Recordatorios por correo electrónico antes de cada sesión.',                  color: '#fbbf24' },
   { icon: Users,          title: 'Directorio verificado',       desc: 'Aparece por especialidad, ciudad y modalidad.',            color: '#22d3ee' },
   { icon: Link2,          title: 'Enlace personalizado',        desc: 'Tu propia página: aliax.io/tu-nombre.',                    color: '#c084fc' },
   { icon: Palette,        title: 'Templates y colores',         desc: 'Varias plantillas y colores para tu perfil.',              color: '#f87171' },
   { icon: BarChart3,      title: 'Analytics',                   desc: 'Ingresos, clientes y progreso clínico.',                   color: '#4ade80' },
+  { icon: UsersRound, title: 'Comunidad de terapeutas', desc: 'Reunión mensual en vivo para reflexionar y revisar casos con colegas.', color: '#2dd4bf' },
 ];
 
 export default function ThirdScreen({ lerpedProgress }: Props) {
