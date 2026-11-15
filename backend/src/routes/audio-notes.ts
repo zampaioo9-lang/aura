@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { uploadAudio } from '../middleware/upload';
 import { AppError } from '../middleware/errorHandler';
-import { isClinicoUser, isInClinicoTrial, CLINICO_TRIAL_AUDIO_SECONDS } from '../lib/planUtils';
+import { isClinicoUser, isInClinicoTrial, CLINICO_TRIAL_AUDIO_SECONDS, monthlyAudioCapReached, startOfCurrentMonth } from '../lib/planUtils';
 import { uploadAndStartTranscription, getTranscriptionResult } from '../services/assemblyAiService';
 import { emailTemplates, sendEmail } from '../services/emailService';
 import { logActivity } from '../services/activityService';
@@ -30,6 +30,23 @@ async function verifyAudioNotesAccess(userId: string) {
 
   if (isInClinicoTrial(user) && user.trialAudioSecondsUsed >= CLINICO_TRIAL_AUDIO_SECONDS) {
     throw new AppError(403, 'Alcanzaste el límite de audio de tu periodo de prueba (2 horas). Actualiza tu plan para seguir transcribiendo.');
+  }
+
+  // Tope mensual solo para quien paga (el trial ya tiene su propio límite en segundos).
+  if (!isInClinicoTrial(user) && !user.isAdmin) {
+    const jobsThisMonth = await prisma.audioTranscriptionJob.count({
+      where: {
+        userId,
+        status: { in: ['processing', 'completed'] },
+        createdAt: { gte: startOfCurrentMonth() },
+      },
+    });
+    if (monthlyAudioCapReached(jobsThisMonth)) {
+      throw new AppError(
+        429,
+        'Alcanzaste el límite de transcripciones de este mes. Se reinicia el día 1. Escríbenos si necesitas más.',
+      );
+    }
   }
 }
 
