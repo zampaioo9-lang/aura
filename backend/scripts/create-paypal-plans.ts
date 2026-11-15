@@ -52,10 +52,7 @@ async function main() {
   console.log(`Creando planes contra: ${env.PAYPAL_BASE_URL}`);
   const token = await getAccessToken();
 
-  const proProductId = await createProduct(token, 'Aliax Pro (México)');
-  const proMxnPlanId = await createPlan(token, proProductId, 'Aliax Pro Mensual MXN', 'MXN', '210.00');
-  console.log('PAYPAL_PLAN_PRO_MONTHLY_MXN =', proMxnPlanId);
-
+  // El plan Pro MXN ya existe en producción (PAYPAL_PLAN_PRO_MONTHLY_MXN); este script solo crea Pro IA.
   const clinicoProductId = await createProduct(token, 'Aliax Pro IA');
   const clinicoUsdPlanId = await createPlan(token, clinicoProductId, 'Aliax Pro IA Mensual USD', 'USD', '44.00');
   console.log('PAYPAL_PLAN_CLINICO_MONTHLY =', clinicoUsdPlanId);
@@ -63,7 +60,7 @@ async function main() {
   const clinicoMxnPlanId = await createPlan(token, clinicoProductId, 'Aliax Pro IA Mensual MXN', 'MXN', '660.00');
   console.log('PAYPAL_PLAN_CLINICO_MONTHLY_MXN =', clinicoMxnPlanId);
 
-  console.log('\nCopia estos 3 valores a tu .env (local y producción).');
+  console.log('\nCopia estos 2 valores a tu .env (local y producción).');
 }
 
 main().catch(err => { console.error(err); process.exit(1); });
