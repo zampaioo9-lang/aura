@@ -74,7 +74,7 @@ export default function Pricing() {
   const priceOf = (tier: 'PRO' | 'CLINICO') => PRICES[tier][region];
 
   const handleStripe = async (tier: 'PRO' | 'CLINICO') => {
-    if (!user) { navigate('/register'); return; }
+    if (!user) { navigate('/login?redirect=%2Fpricing'); return; }
     setLoading(`stripe-${tier}`);
     try {
       const { currency } = priceOf(tier);
@@ -86,7 +86,7 @@ export default function Pricing() {
   };
 
   const handlePayPal = async (tier: 'PRO' | 'CLINICO') => {
-    if (!user) { navigate('/register'); return; }
+    if (!user) { navigate('/login?redirect=%2Fpricing'); return; }
     setLoading(`paypal-${tier}`);
     try {
       const { currency } = priceOf(tier);

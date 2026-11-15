@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { safeRedirect, redirectQuery } from '../lib/safeRedirect';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import LandingHeader from '../components/landing/LandingHeader';
@@ -17,6 +18,8 @@ const inp: React.CSSProperties = {
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = safeRedirect(searchParams.get('redirect'));
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
@@ -29,7 +32,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/dashboard');
+      navigate(redirectTo);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Email o contraseña incorrectos');
     } finally {
@@ -140,7 +143,7 @@ export default function Login() {
 
           <p style={{ marginTop: 20, textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>
             ¿No tienes cuenta?{' '}
-            <Link to="/register" style={{ color: '#2dd4bf', textDecoration: 'none', fontWeight: 500 }}>
+            <Link to={`/register${redirectQuery(searchParams.get('redirect'))}`} style={{ color: '#2dd4bf', textDecoration: 'none', fontWeight: 500 }}>
               Registrarse gratis
             </Link>
           </p>

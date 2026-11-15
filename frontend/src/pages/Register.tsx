@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { redirectQuery } from '../lib/safeRedirect';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 import PhoneInput from '../components/PhoneInput';
@@ -30,6 +31,7 @@ const inp: React.CSSProperties = {
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [name, setName]         = useState('');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
@@ -245,7 +247,7 @@ export default function Register() {
 
           <p style={{ marginTop: 16, textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>
             ¿Ya tienes cuenta?{' '}
-            <Link to="/login" style={{ color: '#2dd4bf', textDecoration: 'none', fontWeight: 500 }}>
+            <Link to={`/login${redirectQuery(searchParams.get('redirect'))}`} style={{ color: '#2dd4bf', textDecoration: 'none', fontWeight: 500 }}>
               Iniciar sesión
             </Link>
           </p>
