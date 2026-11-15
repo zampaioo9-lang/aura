@@ -5,36 +5,39 @@ import LandingHeader from '../components/landing/LandingHeader';
 import SiteFooter from '../components/landing/SiteFooter';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
+import { PLAN_LABEL } from '../lib/planNames';
 
 type Region = 'MX' | 'INTL';
 
 const FREE_FEATURES = [
   'Listado en el directorio de Aliax',
-  '1 perfil profesional',
-  'Agenda configurable',
+  'Agenda y reservas ilimitadas',
+  'Pacientes ilimitados',
+  'Recordatorios de cita por correo, sin límite',
   'Notas de sesión manuales',
-  'Servicios y reservas ilimitadas',
 ];
 
 const PRO_FEATURES = [
   'Todo lo del plan gratuito',
-  'Todos los templates y colores premium',
-  'Analytics completos',
   'Historia Clínica Individual y de Pareja',
+  'Analytics completos',
+  'Todos los templates y colores premium',
+  'Vende tus cursos y talleres en la tienda de Aliax, sin comisión',
+  'Comunidad: reunión mensual en vivo con otros terapeutas (reflexión y casos clínicos)',
   'Configuración avanzada de disponibilidad',
 ];
 
 const CLINICO_FEATURES = [
   'Todo lo del plan Pro',
   'Notas de sesión generadas con IA (Libre, SOAP, Diamante TBCS, Centrada en Soluciones)',
-  'Transcripción de audio de sesión → nota automática',
+  'Transcripción de audio de sesión a nota automática',
   'Separación de hablantes, consentimiento del paciente, el audio nunca se almacena',
   'Uso generoso para tu consulta de tiempo completo',
 ];
 
 const PRICES = {
   PRO:     { MX: { amount: '$210 MXN', currency: 'MXN' as const }, INTL: { amount: '$14 USD',  currency: 'USD' as const } },
-  CLINICO: { MX: { amount: '$900 MXN', currency: 'MXN' as const }, INTL: { amount: '$60 USD', currency: 'USD' as const } },
+  CLINICO: { MX: { amount: '$660 MXN', currency: 'MXN' as const }, INTL: { amount: '$44 USD',  currency: 'USD' as const } },
 };
 
 const TEAL   = '#2dd4bf';
@@ -61,7 +64,7 @@ export default function Pricing() {
   useEffect(() => {
     const resolved = detectRegion();
     setRegion(resolved);
-    if (!user) return; // /profiles requiere sesión — no llamar en la página pública sin login
+    if (!user) return; // /profiles requiere sesión: no llamar en la página pública sin login
     api.get('/profiles').then(res => {
       const country = res.data?.[0]?.country as string | undefined;
       if (country && /m[eé]xico|^mx$/i.test(country)) setRegion('MX');
@@ -176,9 +179,10 @@ export default function Pricing() {
             <Zap size={20} color={TEAL} />
             <span style={{ color: TEAL, fontSize: 14, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Pro</span>
           </div>
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '4px 8px' }}>
             <span style={{ color: TEXT, fontSize: 38, fontWeight: 800 }}>{proPrice.amount}</span>
-            <span style={{ color: MUTED, fontSize: 15 }}> / mes</span>
+            <span style={{ color: MUTED, fontSize: 15 }}>/ mes</span>
+            <span style={{ background: 'rgba(45,212,191,0.16)', color: TEAL, boxShadow: '0 1px 4px rgba(13,148,136,0.35)', borderRadius: 20, padding: '3px 10px', fontSize: 11.5, fontWeight: 700, whiteSpace: 'nowrap' }}>Precio de lanzamiento</span>
           </div>
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 9 }}>
             {PRO_FEATURES.map(f => (
@@ -195,27 +199,28 @@ export default function Pricing() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button onClick={() => handleStripe('PRO')} disabled={!!loading} style={{ width: '100%', padding: '12px 20px', borderRadius: 12, border: 'none', background: `linear-gradient(90deg, ${TEAL}, ${TEAL_D})`, color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading === 'stripe-PRO' ? 0.7 : 1 }}>
-                {loading === 'stripe-PRO' ? 'Redirigiendo...' : `Pagar con tarjeta — ${proPrice.amount}/mes`}
+                {loading === 'stripe-PRO' ? 'Redirigiendo...' : `Pagar con tarjeta: ${proPrice.amount}/mes`}
               </button>
               <button onClick={() => handlePayPal('PRO')} disabled={!!loading} style={{ width: '100%', padding: '12px 20px', borderRadius: 12, border: 'none', background: '#FFC439', color: '#003087', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading === 'paypal-PRO' ? 0.7 : 1 }}>
-                {loading === 'paypal-PRO' ? 'Redirigiendo...' : `PayPal — ${proPrice.amount}/mes`}
+                {loading === 'paypal-PRO' ? 'Redirigiendo...' : `PayPal: ${proPrice.amount}/mes`}
               </button>
             </div>
           )}
         </div>
 
-        {/* Clínico Card */}
+        {/* Pro IA Card */}
         <div style={{ flex: '1 1 320px', maxWidth: 360, background: 'linear-gradient(135deg, rgba(124,58,237,0.14) 0%, rgba(88,28,135,0.08) 100%)', border: `2px solid rgba(124,58,237,0.5)`, borderRadius: 20, padding: 28, position: 'relative' }}>
           <div style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', background: `linear-gradient(90deg, ${PURPLE}, #a855f7)`, borderRadius: 20, padding: '4px 16px', color: '#fff', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
             RECOMENDADO
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
             <Sparkles size={20} color={PURPLE} />
-            <span style={{ color: PURPLE, fontSize: 14, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Clínico</span>
+            <span style={{ color: PURPLE, fontSize: 14, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>{PLAN_LABEL.CLINICO}</span>
           </div>
           <div style={{ marginBottom: 20 }}>
             <span style={{ color: TEXT, fontSize: 38, fontWeight: 800 }}>{clinicoPrice.amount}</span>
             <span style={{ color: MUTED, fontSize: 15 }}> / mes</span>
+            <div style={{ color: MUTED, fontSize: 13, marginTop: 4 }}>Pro + Notas con IA</div>
           </div>
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 9 }}>
             {CLINICO_FEATURES.map(f => (
@@ -227,15 +232,15 @@ export default function Pricing() {
           </ul>
           {isClinico ? (
             <div style={{ width: '100%', padding: '12px 20px', borderRadius: 12, background: 'rgba(124,58,237,0.18)', color: PURPLE, fontSize: 14, fontWeight: 600, textAlign: 'center' }}>
-              ✓ Ya tienes Clínico activo
+              ✓ Ya tienes {PLAN_LABEL.CLINICO} activo
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button onClick={() => handleStripe('CLINICO')} disabled={!!loading} style={{ width: '100%', padding: '12px 20px', borderRadius: 12, border: 'none', background: `linear-gradient(90deg, ${PURPLE}, #a855f7)`, color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading === 'stripe-CLINICO' ? 0.7 : 1 }}>
-                {loading === 'stripe-CLINICO' ? 'Redirigiendo...' : `Pagar con tarjeta — ${clinicoPrice.amount}/mes`}
+                {loading === 'stripe-CLINICO' ? 'Redirigiendo...' : `Pagar con tarjeta: ${clinicoPrice.amount}/mes`}
               </button>
               <button onClick={() => handlePayPal('CLINICO')} disabled={!!loading} style={{ width: '100%', padding: '12px 20px', borderRadius: 12, border: 'none', background: '#FFC439', color: '#003087', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading === 'paypal-CLINICO' ? 0.7 : 1 }}>
-                {loading === 'paypal-CLINICO' ? 'Redirigiendo...' : `PayPal — ${clinicoPrice.amount}/mes`}
+                {loading === 'paypal-CLINICO' ? 'Redirigiendo...' : `PayPal: ${clinicoPrice.amount}/mes`}
               </button>
             </div>
           )}
