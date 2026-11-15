@@ -675,7 +675,7 @@ export default function Explorar() {
                               color: '#2dd4bf', fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
                               flexShrink: 0,
                             }}>
-                              <Zap size={8} /> CLÍNICO
+                              <Zap size={8} /> PRO IA
                             </span>
                           )}
                         </div>

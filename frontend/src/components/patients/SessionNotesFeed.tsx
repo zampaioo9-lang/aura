@@ -534,7 +534,7 @@ export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)',
                   }}>
                     <Lock size={15} style={{ color: isDark ? '#c4b5fd' : '#7c3aed' }} />
                     <span style={{ fontSize: 12.5, fontWeight: 700, color: isDark ? '#e9d5ff' : '#5b21b6' }}>
-                      Disponible en plan Clínico
+                      Disponible en plan Pro IA
                     </span>
                   </div>
                 </div>
@@ -568,10 +568,10 @@ export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)',
                     <Sparkles size={22} color="#fff" />
                   </div>
                   <h3 style={{ fontSize: 17, fontWeight: 700, color: isDark ? '#fff' : '#1a1030', margin: '0 0 8px' }}>
-                    Disponible en plan Clínico
+                    Disponible en plan Pro IA
                   </h3>
                   <p style={{ fontSize: 13.5, color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)', lineHeight: 1.6, margin: '0 0 20px' }}>
-                    Describe la sesión en tus palabras o sube hasta 1 hora de audio, y la IA genera tu nota clínica completa por ti. Disponible en el plan Clínico.
+                    Describe la sesión en tus palabras o sube hasta 1 hora de audio, y la IA genera tu nota clínica completa por ti. Disponible en el plan Pro IA.
                   </p>
                   <Link
                     to="/pricing"

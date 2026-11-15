@@ -20,6 +20,7 @@ import { formatCurrency } from '../lib/utils';
 import ProfessionalCalendar from '../components/dashboard/ProfessionalCalendar';
 import NewBookingModal from '../components/dashboard/NewBookingModal';
 import RevistaSubscribeCard from '../components/dashboard/RevistaSubscribeCard';
+import { PLAN_LABEL } from '../lib/planNames';
 
 const SOCIAL_ICONS = [
   { key: 'facebook',  Icon: Facebook,      color: '#1877F2' },
@@ -488,7 +489,7 @@ export default function Dashboard() {
             style={{ background: bg, borderBottom: `1px solid ${border}`, color }}
           >
             <span>
-              Prueba gratuita del plan Clínico · vence en {daysLeft} día{daysLeft === 1 ? '' : 's'} · {minutesUsed}/120 min de audio · {notesUsed}/10 notas con IA
+              Prueba gratuita del plan Pro IA · vence en {daysLeft} día{daysLeft === 1 ? '' : 's'} · {minutesUsed}/120 min de audio · {notesUsed}/10 notas con IA
             </span>
             <Link
               to="/pricing"
@@ -517,7 +518,7 @@ export default function Dashboard() {
             className="shrink-0 flex items-center justify-between gap-3 px-5 py-2 text-sm"
             style={{ background: '#7f1d1d', borderBottom: '1px solid #991b1b', color: '#fef2f2' }}
           >
-            <span>Tu prueba del plan Clínico terminó. Sigues con tu perfil, agenda y notas manuales gratis · actualiza tu plan para recuperar notas con IA y transcripción de audio.</span>
+            <span>Tu prueba del plan Pro IA terminó. Sigues con tu perfil, agenda y notas manuales gratis · actualiza tu plan para recuperar notas con IA y transcripción de audio.</span>
             <Link
               to="/pricing"
               className="shrink-0 font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity"
@@ -904,7 +905,7 @@ export default function Dashboard() {
                 {user?.name}
               </p>
               <span style={{ fontSize: 11, fontWeight: 600, background: 'rgba(45,212,191,0.15)', color: 'rgb(45,212,191)', borderRadius: 6, padding: '2px 8px' }}>
-                {isClinico ? 'Clínico' : isPro ? 'Pro' : 'Free'}
+                {isClinico ? PLAN_LABEL.CLINICO : isPro ? PLAN_LABEL.PRO : PLAN_LABEL.FREE}
               </span>
             </div>
           </div>

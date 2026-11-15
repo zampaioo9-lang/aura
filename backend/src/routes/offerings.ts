@@ -63,7 +63,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res, next) => {
       select: { isAdmin: true, plan: true, planExpiresAt: true },
     });
     if (!user || !isProUser(user)) {
-      throw new AppError(403, 'Vender talleres y cursos es un beneficio de los planes Pro y Clinico');
+      throw new AppError(403, 'Vender talleres y cursos es un beneficio de los planes Pro y Pro IA');
     }
 
     const data = createOfferingSchema.parse(req.body);

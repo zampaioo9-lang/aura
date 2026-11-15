@@ -307,12 +307,12 @@ export const emailTemplates = {
       ${subtext('Nos da mucho gusto que formes parte de Aliax. Tu cuenta ya está activa.')}
 
       <div style="margin-top:20px;padding:16px;background:#f5f3ff;border-radius:8px;border:1px solid #ddd6fe;">
-        <p style="margin:0 0 6px;color:#6d28d9;font-size:13px;font-weight:600;">De regalo: plan Clínico completo durante 5 días</p>
+        <p style="margin:0 0 6px;color:#6d28d9;font-size:13px;font-weight:600;">De regalo: plan Pro IA completo durante 5 días</p>
         <p style="margin:0;color:#18181b;font-size:15px;">Incluye el módulo de notas con IA: sube hasta 120 minutos de audio de sesión en total, o escribe hasta 10 notas sin audio, y la IA las transcribe y organiza en una nota clínica lista para revisar.</p>
       </div>
 
       <div style="margin-top:12px;padding:16px;background:#f0fdf4;border-radius:8px;">
-        <p style="margin:0;color:#18181b;font-size:14px;">Al terminar los 5 días tu cuenta pasa automáticamente al <strong>plan gratuito</strong>, sin límite de tiempo, y sigues con tu perfil en el directorio, tu agenda y tus notas manuales, todo sin costo. Puedes actualizar a Pro o Clínico cuando quieras.</p>
+        <p style="margin:0;color:#18181b;font-size:14px;">Al terminar los 5 días tu cuenta pasa automáticamente al <strong>plan gratuito</strong>, sin límite de tiempo, y sigues con tu perfil en el directorio, tu agenda y tus notas manuales, todo sin costo. Puedes actualizar a Pro o Pro IA cuando quieras.</p>
       </div>
 
       <div style="margin-top:24px;">

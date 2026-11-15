@@ -72,13 +72,13 @@ function PlanBadge({ u }: { u: UserRow }) {
     if (expired) {
       return (
         <span style={{ padding: '2px 8px', background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(8px)', color: 'rgba(255,255,255,0.4)', fontSize: 11, borderRadius: 99, border: '1px solid rgba(255,255,255,0.12)', whiteSpace: 'nowrap' }}>
-          Clínico vencido
+          Pro IA vencido
         </span>
       );
     }
     return (
       <span style={{ padding: '2px 8px', background: 'rgba(168,85,247,0.18)', backdropFilter: 'blur(8px)', color: '#a855f7', fontSize: 11, borderRadius: 99, fontWeight: 600, border: '1px solid rgba(168,85,247,0.3)', whiteSpace: 'nowrap' }}>
-        Clínico
+        Pro IA
       </span>
     );
   }
@@ -642,7 +642,7 @@ export default function AdminPanel() {
           : u
       ));
       const expiryStr = new Date(planExpiresAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-      toast(`Trial Clínico activado — vence el ${expiryStr}`, 'success');
+      toast(`Trial Pro IA activado — vence el ${expiryStr}`, 'success');
     } catch (err: any) {
       toast(err.response?.data?.error || 'Error al activar el trial', 'error');
     } finally {
@@ -1496,7 +1496,7 @@ export default function AdminPanel() {
                 <option value="all">Todos</option>
                 <option value="FREE">Free</option>
                 <option value="PRO">Pro</option>
-                <option value="CLINICO">Clínico</option>
+                <option value="CLINICO">Pro IA</option>
                 <option value="LIFETIME">Lifetime</option>
               </select>
             </div>
@@ -1697,7 +1697,7 @@ export default function AdminPanel() {
                                 </div>
                               ) : u.plan === 'CLINICO' ? (
                                 <div className="flex flex-wrap gap-3 text-sm" style={{ color: C.text }}>
-                                  <span>Clínico</span>
+                                  <span>Pro IA</span>
                                   {u.clinicoTrialStartedAt && (
                                     <span style={{ color: C.textMuted }}>
                                       Inicio: {new Date(u.clinicoTrialStartedAt).toLocaleDateString('es-ES')}
@@ -2086,14 +2086,14 @@ export default function AdminPanel() {
 
                                 {/* Activar trial Clínico */}
                                 <div className="mt-3 pt-3 flex items-center gap-2 flex-wrap" style={{ borderTop: `1px solid ${C.cardBorder}` }}>
-                                  <span className="text-xs font-semibold" style={{ color: C.textMuted }}>Trial Clínico (5 días):</span>
+                                  <span className="text-xs font-semibold" style={{ color: C.textMuted }}>Trial Pro IA (5 días):</span>
                                   <button
                                     disabled={activatingTrial === u.id}
                                     onClick={e => { e.stopPropagation(); handleActivateClinicoTrial(u.id); }}
                                     className="px-3 py-1 text-xs font-semibold rounded-md transition-colors disabled:opacity-50"
                                     style={{ background: 'rgba(168,85,247,0.18)', color: '#a855f7', border: '1px solid rgba(168,85,247,0.3)', cursor: 'pointer' }}
                                   >
-                                    {activatingTrial === u.id ? '...' : '✓ Activar trial Clínico'}
+                                    {activatingTrial === u.id ? '...' : '✓ Activar trial Pro IA'}
                                   </button>
                                 </div>
                               </div>
