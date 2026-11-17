@@ -24,37 +24,55 @@ function formatDateES(date: Date | string): string {
 
 // ── Base HTML layout ───────────────────────────────────────────────
 
-function baseTemplate(title: string, content: string, headerLabel: string = 'Aliax'): string {
+// Fuente de los articulos de la Revista (DM Sans) con respaldo: Apple Mail y el Mail del iPhone
+// la cargan; Gmail y Outlook de escritorio usan la de respaldo, que se parece (sans-serif limpia).
+const EMAIL_FONT = "'DM Sans','Helvetica Neue',Helvetica,Arial,sans-serif";
+const EMAIL_LOGO_URL = 'https://www.aliax.io/email/logo-aliax-blanco.png';
+
+export function baseTemplate(title: string, content: string, headerLabel: string = 'Aliax'): string {
+  // Si el correo trae una etiqueta propia (ej. "Revista Aliax"), se muestra a la derecha del logo.
+  const labelCell = headerLabel && headerLabel !== 'Aliax'
+    ? `<td align="right" style="padding-left:12px;font-family:${EMAIL_FONT};color:#ffffff;font-size:13px;font-weight:500;letter-spacing:0.02em;">${headerLabel}</td>`
+    : '';
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>${title}</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>body,table,td,p,a,h1,h2,h3,span{font-family:${EMAIL_FONT};}</style>
 </head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 16px;">
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:${EMAIL_FONT};">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 16px;font-family:${EMAIL_FONT};">
     <tr>
       <td align="center">
-        <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+        <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);font-family:${EMAIL_FONT};">
 
           <!-- Header -->
           <tr>
-            <td style="background:#4c1d95;background:linear-gradient(135deg,#4c1d95 0%,#0d9488 100%);padding:24px 32px;">
-              <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">${headerLabel}</span>
+            <td style="background:#4c1d95;background:linear-gradient(135deg,#4c1d95 0%,#0d9488 100%);padding:20px 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="left">
+                    <a href="https://www.aliax.io" style="text-decoration:none;"><img src="${EMAIL_LOGO_URL}" alt="Aliax" width="150" height="38" style="display:block;border:0;color:#ffffff;font-family:${EMAIL_FONT};font-size:22px;font-weight:700;"></a>
+                  </td>
+                  ${labelCell}
+                </tr>
+              </table>
             </td>
           </tr>
 
           <!-- Content -->
           <tr>
-            <td style="padding:32px 32px 24px;">
+            <td style="padding:32px 32px 24px;font-family:${EMAIL_FONT};">
               ${content}
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="padding:16px 32px 24px;border-top:1px solid #f0f0f0;">
+            <td style="padding:16px 32px 24px;border-top:1px solid #f0f0f0;font-family:${EMAIL_FONT};">
               <p style="margin:0;color:#a1a1aa;font-size:12px;line-height:1.5;">
                 Este correo fue enviado automáticamente por Aliax. Por favor no respondas a este mensaje.
               </p>

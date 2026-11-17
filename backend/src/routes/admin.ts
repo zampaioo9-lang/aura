@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth';
 import { adminMiddleware } from '../middleware/adminAuth';
-import { sendEmail, emailTemplates, sendPasswordResetEmail } from '../services/emailService';
+import { sendEmail, emailTemplates, sendPasswordResetEmail, baseTemplate } from '../services/emailService';
 import { sendBroadcast, getBroadcasts, addContact, removeContact, type AudienceTarget } from '../services/audienceService';
 import { sendWhatsApp } from '../services/whatsappService';
 import { env } from '../config/env';
@@ -474,16 +474,17 @@ router.post('/notify-expiring-pro', async (req: any, res, next) => {
         waSent = r.success;
       }
 
-      const html = `
-        <p>Hola <strong>${user.name}</strong>,</p>
-        <p>Te recordamos que tu plan <strong>Aliax Pro</strong> vence el <strong>${expiryDate}</strong> (en ${daysAhead} día${daysAhead !== 1 ? 's' : ''}).</p>
-        <p>Para continuar disfrutando de todas las funciones, recuerda renovar tu plan antes de que venza.</p>
-        <p style="margin-top:24px">
-          <a href="https://www.aliax.io/pricing" style="background:#0d9488;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">
+      const pStyle = 'margin:0 0 14px;color:#52525b;font-size:14px;line-height:1.6;';
+      const html = baseTemplate('Tu plan Aliax Pro vence pronto', `
+        <p style="${pStyle}">Hola <strong>${user.name}</strong>,</p>
+        <p style="${pStyle}">Te recordamos que tu plan <strong>Aliax Pro</strong> vence el <strong>${expiryDate}</strong> (en ${daysAhead} día${daysAhead !== 1 ? 's' : ''}).</p>
+        <p style="${pStyle}">Para continuar disfrutando de todas las funciones, recuerda renovar tu plan antes de que venza.</p>
+        <p style="margin:24px 0 0">
+          <a href="https://www.aliax.io/pricing" style="background:#0d9488;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">
             Renovar mi plan
           </a>
         </p>
-      `;
+      `);
       const emailResult = await sendEmail(user.email, `Tu plan Aliax Pro vence en ${daysAhead} día${daysAhead !== 1 ? 's' : ''}`, html);
       emailSent = emailResult.success;
 
