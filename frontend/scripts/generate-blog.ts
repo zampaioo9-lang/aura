@@ -102,6 +102,10 @@ function pageShell(title: string, description: string, canonical: string, ogImag
 <meta property="og:description" content="${escapeHtml(description)}">
 <meta property="og:image" content="${escapeHtml(ogImage)}">
 <meta property="og:url" content="${canonical}">
+<meta property="og:site_name" content="Revista Aliax">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escapeHtml(title)}">
+<meta name="twitter:image" content="${escapeHtml(ogImage)}">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=Urbanist:wght@300;400;500;600;700;800&display=swap">
 <style>
 body{margin:0;background:#f4f4f2;font-family:'Urbanist',sans-serif;color:#3f3f46}
@@ -116,6 +120,9 @@ h3{font-family:'DM Sans',sans-serif;font-weight:500;color:#080414;letter-spacing
 .ra-cat-active{background:#080414;color:#fff}
 .ra-bullets li{font-family:'DM Sans',sans-serif;font-weight:400;font-size:17px;line-height:1.75;color:#3f3f46;margin-bottom:8px}
 .ra-bullets li::marker{color:#0d9488}
+.ra-share{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ra-share-btn{display:inline-flex;align-items:center;padding:8px 16px;border-radius:999px;border:0;background:#fff;color:#080414;font-size:13px;font-weight:600;font-family:'Urbanist',sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(8,4,20,0.10);text-decoration:none;line-height:1.2}
+.ra-share-btn:hover{background:#2dd4bf;color:#04201c}
 .ra-card{transition:transform 0.2s ease,box-shadow 0.2s ease}
 .ra-card:hover{transform:translateY(-6px);box-shadow:0 16px 40px rgba(8,4,20,0.16)}
 @media (max-width:860px){.ra-grid3{grid-template-columns:1fr}.ra-hero-grid{grid-template-columns:1fr}}
@@ -154,8 +161,60 @@ function renderByline(a: Article): string {
 </div>`;
 }
 
+// Botones para compartir: enlaces directos a cada red (sin librerias ni rastreadores).
+// Instagram no tiene direccion de compartir para sitios web, por eso el boton "Compartir"
+// usa el menu nativo del celular (navigator.share), que si lista Instagram y demas apps.
+function renderShareBar(url: string, title: string, text: string, label: string, center = false): string {
+  const u = encodeURIComponent(url);
+  const t = encodeURIComponent(text);
+  const tu = encodeURIComponent(`${text} ${url}`);
+  const mailSubject = encodeURIComponent(title);
+  const mailBody = encodeURIComponent(`${text}
+
+${url}`);
+  return `<div class="ra-share" style="${center ? 'justify-content:center;' : ''}margin:20px 0">
+  <span style="font-size:13px;font-weight:700;color:#080414;margin-right:4px">${escapeHtml(label)}</span>
+  <button type="button" class="ra-share-btn" data-share-native data-title="${escapeHtml(title)}" data-text="${escapeHtml(text)}" data-url="${escapeHtml(url)}" style="display:none">Compartir</button>
+  <a class="ra-share-btn" href="https://wa.me/?text=${tu}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+  <a class="ra-share-btn" href="https://www.facebook.com/sharer/sharer.php?u=${u}" target="_blank" rel="noopener noreferrer">Facebook</a>
+  <a class="ra-share-btn" href="https://twitter.com/intent/tweet?text=${t}&url=${u}" target="_blank" rel="noopener noreferrer">X</a>
+  <a class="ra-share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=${u}" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+  <a class="ra-share-btn" href="mailto:?subject=${mailSubject}&body=${mailBody}">Correo</a>
+  <button type="button" class="ra-share-btn" data-share-copy data-url="${escapeHtml(url)}">Copiar enlace</button>
+</div>`;
+}
+
+function renderShareScript(): string {
+  return `<script>
+(function(){
+  document.querySelectorAll('[data-share-native]').forEach(function(b){
+    if (!navigator.share) return;
+    b.style.display = 'inline-flex';
+    b.addEventListener('click', function(){
+      navigator.share({ title: b.getAttribute('data-title'), text: b.getAttribute('data-text'), url: b.getAttribute('data-url') }).catch(function(){});
+    });
+  });
+  document.querySelectorAll('[data-share-copy]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var url = b.getAttribute('data-url');
+      var original = b.textContent;
+      function done(){ b.textContent = '¡Enlace copiado!'; setTimeout(function(){ b.textContent = original; }, 2000); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(function(){});
+      } else {
+        var i = document.createElement('input');
+        i.value = url; document.body.appendChild(i); i.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+        document.body.removeChild(i);
+      }
+    });
+  });
+})();
+</script>`;
+}
+
 function renderSubscribeBand(): string {
-  return `<div style="background:#fff;border-radius:20px;padding:40px;text-align:center;margin:56px 0 0;box-shadow:0 10px 30px rgba(8,4,20,0.10)">
+  return `<div id="suscribirse" style="background:#fff;border-radius:20px;padding:40px;text-align:center;margin:56px 0 0;box-shadow:0 10px 30px rgba(8,4,20,0.10)">
   <h3 style="font-size:22px;margin:0 0 8px">Suscríbete a Revista Aliax</h3>
   <p style="font-size:14px;color:#4b4b55;margin:0 0 20px;font-family:'DM Sans',sans-serif;font-weight:400">Recibe los artículos nuevos directo en tu correo.</p>
   <form id="ra-subscribe-form" style="display:flex;flex-direction:column;gap:12px;max-width:380px;margin:0 auto">
@@ -378,9 +437,11 @@ function generateListingPage(articles: Article[]): string {
   ${heroHtml}
   <h3 style="font-size:24px;margin-bottom:24px">Ultimos articulos</h3>
   <div class="ra-grid3">${cards}</div>
+  ${renderShareBar(`${SITE_URL}/revista#suscribirse`, 'Revista Aliax', 'Revista Aliax: artículos para terapeutas y pacientes. Suscríbete y recibe uno nuevo cada quincena.', 'Comparte la Revista:', true)}
   ${renderSubscribeBand()}
 </div>
-${renderPillsScript()}`;
+${renderPillsScript()}
+${renderShareScript()}`;
   return pageShell(
     'Revista Aliax — Ideas y recursos para tu bienestar',
     'Articulos escritos por psicologos de Aliax, para pacientes y terapeutas.',
@@ -405,11 +466,14 @@ function generateArticlePage(a: Article, allArticles: Article[]): string {
   <span style="display:inline-block;margin-left:12px;padding:5px 12px;border-radius:999px;background:#2dd4bf;color:#04201c;font-size:11px;font-weight:700;text-transform:uppercase">${escapeHtml(a.category.name)}</span>
   <h1 style="font-size:40px;line-height:1.1;margin:18px 0 16px">${escapeHtml(a.title)}</h1>
   ${renderByline(a)}
+  ${renderShareBar(`${SITE_URL}/revista/${a.slug}`, a.title, a.title, 'Compartir:')}
   ${safeImgSrc(a.coverImage) ? `<img src="${escapeHtml(safeImgSrc(a.coverImage))}" alt="" style="width:100%;border-radius:24px;margin:24px 0 32px">` : ''}
   ${blocksHtml}
+  ${renderShareBar(`${SITE_URL}/revista/${a.slug}`, a.title, a.title, '¿Te sirvió? Compártelo:')}
   ${renderRelatedSection(related)}
   ${renderSubscribeBand()}
-</div>`;
+</div>
+${renderShareScript()}`;
   return pageShell(
     `${a.title} — Revista Aliax`,
     a.metaDescription || a.excerpt,
