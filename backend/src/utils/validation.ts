@@ -377,6 +377,21 @@ export const updateArticleBlockSchema = z.object({
   order: z.number().int().min(1).optional(),
 });
 
+// Esquemas del terapeuta: sin categoria, sin autor y sin "destacado" (los asigna el admin).
+export const createMyArticleSchema = z.object({
+  title: z.string().min(3, 'Minimo 3 caracteres').max(150, 'Maximo 150 caracteres'),
+  excerpt: z.string().max(300, 'Maximo 300 caracteres').optional().or(z.literal('')),
+  metaDescription: z.string().max(300, 'Maximo 300 caracteres').optional().or(z.literal('')),
+  coverImage: z.string().url().optional().or(z.literal('')),
+});
+
+export const updateMyArticleSchema = z.object({
+  title: z.string().min(3).max(150).optional(),
+  excerpt: z.string().max(300).optional().or(z.literal('')),
+  metaDescription: z.string().max(300).optional().or(z.literal('')),
+  coverImage: z.string().url().optional().or(z.literal('')),
+});
+
 // Endpoint publico y sin auth (lectores anonimos de Revista), igual que checkoutSchema --
 // no se puede confiar en que el frontend ya haya recortado espacios.
 export const subscribeNewsletterSchema = z.object({
