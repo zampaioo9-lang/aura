@@ -330,7 +330,7 @@ function ArticleForm({ C, ring, articleId, authorName, onBack, onChanged }: Form
   const inp: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 10, border: 'none',
     background: C.isDark ? 'rgba(255,255,255,0.05)' : '#fff',
-    boxShadow: `inset 0 0 0 1px ${C.isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.16)'}`,
+    boxShadow: `inset 0 0 0 1px ${C.isDark ? 'rgba(255,255,255,0.14)' : `color-mix(in srgb, ${C.accent} 45%, transparent)`}`,
     color: C.text, fontSize: 14, outline: 'none', fontFamily: 'inherit',
     opacity: editable ? 1 : 0.75,
   };
@@ -349,7 +349,7 @@ function ArticleForm({ C, ring, articleId, authorName, onBack, onChanged }: Form
     text: C.text, textMuted: C.muted, textFaint: C.muted, tableHdr: C.accentLight, tableRow: C.cardBg,
     tableRowAlt: C.accentLight, tableRowHover: C.accentLight, expandedBg: C.cardBg,
     inputBg: C.isDark ? 'rgba(255,255,255,0.05)' : '#fff',
-    inputBorder: C.isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)',
+    inputBorder: C.isDark ? 'rgba(255,255,255,0.18)' : `color-mix(in srgb, ${C.accent} 45%, transparent)`,
     subCard: C.cardBg, subCardShadow: 'none', accent: C.accent, accentLight: C.accentLight,
   };
 
