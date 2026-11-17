@@ -30,7 +30,7 @@ interface ArticleBlock {
 }
 interface Article {
   id: string; slug: string; title: string; excerpt: string; metaDescription: string | null;
-  author: string | null; authorProfileSlug?: string | null; coverImage: string | null; featured: boolean; publishedAt: string | null;
+  author: string | null; authorProfileSlug?: string | null; authorAvatar?: string | null; coverImage: string | null; featured: boolean; publishedAt: string | null;
   category: Category; blocks: ArticleBlock[];
 }
 
@@ -112,6 +112,8 @@ h3{font-family:'DM Sans',sans-serif;font-weight:500;color:#080414;letter-spacing
 .ra-hero-grid{display:grid;grid-template-columns:1fr 1fr}
 .ra-pill{padding:8px 18px;border-radius:999px;border:1px solid transparent;background:rgba(139,92,246,0.12);color:rgba(8,4,20,0.65);font-size:13px;font-weight:600;cursor:pointer;font-family:'Urbanist',sans-serif}
 .ra-pill-active{background:#2dd4bf;border-color:#2dd4bf;color:#04201c}
+.ra-cat{padding:5px 13px;border-radius:999px;border:0;background:rgba(8,4,20,0.06);color:#45454f;font-size:12px;font-weight:600;cursor:pointer;font-family:'Urbanist',sans-serif}
+.ra-cat-active{background:#080414;color:#fff}
 .ra-bullets li{font-family:'DM Sans',sans-serif;font-weight:400;font-size:17px;line-height:1.75;color:#3f3f46;margin-bottom:8px}
 .ra-bullets li::marker{color:#0d9488}
 .ra-card{transition:transform 0.2s ease,box-shadow 0.2s ease}
@@ -145,7 +147,9 @@ function renderByline(a: Article): string {
     ? `<a href="https://www.aliax.io/${escapeHtml(a.authorProfileSlug)}" style="color:#0d9488;text-decoration:none">${escapeHtml(name)}</a>`
     : escapeHtml(name);
   return `<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#5b5b66">
-  <span style="width:28px;height:28px;border-radius:50%;background:#2dd4bf;color:#04201c;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${escapeHtml(initials(name))}</span>
+  ${safeImgSrc(a.authorAvatar)
+    ? `<img src="${escapeHtml(safeImgSrc(a.authorAvatar))}" alt="${escapeHtml(name)}" width="28" height="28" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block">`
+    : `<span style="width:28px;height:28px;border-radius:50%;background:#2dd4bf;color:#04201c;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${escapeHtml(initials(name))}</span>`}
   <span>${nameHtml} · ${formatDate(a.publishedAt)} · ${minutes} min de lectura</span>
 </div>`;
 }
@@ -321,7 +325,7 @@ function renderPillsScript(): string {
       activeAudience = btn.getAttribute('data-filter-audience');
       activeCategory = 'ALL';
       audienceBtns.forEach(function(b){ b.classList.toggle('ra-pill-active', b === btn); });
-      categoryBtns.forEach(function(b){ b.classList.remove('ra-pill-active'); });
+      categoryBtns.forEach(function(b){ b.classList.remove('ra-cat-active'); });
       updateCategoryRow();
       applyFilter();
     });
@@ -330,7 +334,7 @@ function renderPillsScript(): string {
   categoryBtns.forEach(function(btn){
     btn.addEventListener('click', function(){
       activeCategory = btn.getAttribute('data-filter-category');
-      categoryBtns.forEach(function(b){ b.classList.toggle('ra-pill-active', b === btn); });
+      categoryBtns.forEach(function(b){ b.classList.toggle('ra-cat-active', b === btn); });
       applyFilter();
     });
   });
@@ -361,8 +365,8 @@ function generateListingPage(articles: Article[]): string {
   <button class="ra-pill" data-filter-audience="PACIENTES">Para pacientes</button>
   <button class="ra-pill" data-filter-audience="TERAPEUTAS">Para terapeutas</button>
 </div>
-<div id="ra-category-row" style="display:none;gap:10px;justify-content:center;margin-bottom:40px;flex-wrap:wrap">
-  ${categories.map((c) => `<button class="ra-pill" data-filter-category="${c.slug}" data-category-audience="${c.audience}">${escapeHtml(c.name)}</button>`).join('\n')}
+<div id="ra-category-row" style="display:none;gap:8px;justify-content:center;margin-bottom:40px;flex-wrap:wrap">
+  ${categories.map((c) => `<button class="ra-cat" data-filter-category="${c.slug}" data-category-audience="${c.audience}">${escapeHtml(c.name)}</button>`).join('\n')}
 </div>`;
 
   const cards = rest.map(renderArticleCard).join('\n');

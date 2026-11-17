@@ -229,18 +229,24 @@ router.get('/public', async (_req, res, next) => {
     // Enlace a la firma: slug del primer perfil publicado del autor. Solo el slug, nunca datos del usuario.
     const authorIds = Array.from(new Set(articles.map(a => a.authorUserId).filter((id): id is string => !!id)));
     const slugByUser = new Map<string, string>();
+    const avatarByUser = new Map<string, string>();
     if (authorIds.length > 0) {
       const profiles = await prisma.profile.findMany({
         where: { userId: { in: authorIds }, published: true },
-        select: { userId: true, slug: true },
+        select: { userId: true, slug: true, avatar: true },
         orderBy: { createdAt: 'asc' },
       });
-      for (const p of profiles) if (!slugByUser.has(p.userId)) slugByUser.set(p.userId, p.slug);
+      for (const p of profiles) {
+        if (slugByUser.has(p.userId)) continue;
+        slugByUser.set(p.userId, p.slug);
+        if (p.avatar) avatarByUser.set(p.userId, p.avatar);
+      }
     }
     // No se exponen datos internos de revision ni el id del usuario en la API publica.
     res.json(articles.map(({ authorUserId, reviewNote, submittedAt, ...a }) => ({
       ...a,
       authorProfileSlug: authorUserId ? slugByUser.get(authorUserId) ?? null : null,
+      authorAvatar: authorUserId ? avatarByUser.get(authorUserId) ?? null : null,
     })));
   } catch (err) {
     next(err);
