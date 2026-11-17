@@ -1,3 +1,4 @@
+import { waitUntil } from '@vercel/functions';
 import { Router, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
@@ -7,9 +8,9 @@ import { slugify } from '../utils/slugify';
 import { emailTemplates, sendEmail } from '../services/emailService';
 import {
   createMyArticleSchema, updateMyArticleSchema,
-  createArticleBlockSchema, updateArticleBlockSchema,
+  createArticleBlockSchema, updateMyArticleBlockSchema,
 } from '../utils/validation';
-import { canAuthorEdit, canAuthorSubmit, canAuthorWithdraw, canAuthorDelete, validateForSubmit } from '../lib/articleWorkflow';
+import { canAuthorEdit, canAuthorSubmit, canAuthorWithdraw, canAuthorDelete, validateForSubmit, longestRealText } from '../lib/articleWorkflow';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -70,18 +71,28 @@ router.get('/', async (req: AuthorRequest, res, next) => {
 router.post('/', async (req: AuthorRequest, res, next) => {
   try {
     const data = createMyArticleSchema.parse(req.body);
-    const article = await prisma.article.create({
-      data: {
-        title: data.title,
-        excerpt: data.excerpt || '',
-        metaDescription: data.metaDescription || undefined,
-        coverImage: data.coverImage || undefined,
-        slug: await uniqueSlug(data.title),
-        author: req.author!.name,
-        authorUserId: req.author!.id,
-        status: 'DRAFT',
-      },
-    });
+    let article;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        article = await prisma.article.create({
+          data: {
+            title: data.title,
+            excerpt: data.excerpt || '',
+            metaDescription: data.metaDescription || undefined,
+            coverImage: data.coverImage || undefined,
+            slug: await uniqueSlug(data.title),
+            author: req.author!.name,
+            authorUserId: req.author!.id,
+            status: 'DRAFT',
+          },
+        });
+        break;
+      } catch (e) {
+        // Carrera de slug: otro articulo tomo el mismo slug entre la consulta y el insert.
+        if ((e as { code?: string })?.code === 'P2002' && attempt < 3) continue;
+        throw e;
+      }
+    }
     res.status(201).json(article);
   } catch (err) { next(err); }
 });
@@ -169,7 +180,7 @@ router.put('/:id/blocks/:blockId', async (req: AuthorRequest, res, next) => {
     if (!canAuthorEdit(article.status)) throw new AppError(409, 'Este articulo ya no se puede editar');
     const block = await prisma.articleBlock.findUnique({ where: { id: req.params.blockId } });
     if (!block || block.articleId !== article.id) throw new AppError(404, 'Bloque no encontrado');
-    const data = updateArticleBlockSchema.parse(req.body);
+    const data = updateMyArticleBlockSchema.parse(req.body);
     res.json(await prisma.articleBlock.update({ where: { id: block.id }, data }));
   } catch (err) { next(err); }
 });
@@ -191,23 +202,28 @@ router.post('/:id/submit', async (req: AuthorRequest, res, next) => {
   try {
     const article = await loadOwnArticle(req.params.id, req.author!.id);
     if (!canAuthorSubmit(article.status)) throw new AppError(409, 'Este articulo ya fue enviado');
-    const blocks = await prisma.articleBlock.findMany({ where: { articleId: article.id }, select: { type: true } });
+    const blocks = await prisma.articleBlock.findMany({ where: { articleId: article.id }, select: { type: true, text: true } });
     const problem = validateForSubmit({
       title: article.title,
       excerpt: article.excerpt,
       blockCount: blocks.length,
       textBlockCount: blocks.filter(b => b.type === 'TEXT').length,
+      maxTextLength: longestRealText(blocks.filter(b => b.type === 'TEXT').map(b => b.text)),
     });
     if (problem) throw new AppError(400, problem);
-    const updated = await prisma.article.update({
-      where: { id: article.id },
+    const result = await prisma.article.updateMany({
+      where: { id: article.id, status: { in: ['DRAFT', 'CHANGES_REQUESTED'] } },
       data: { status: 'PENDING_REVIEW', submittedAt: new Date(), reviewNote: null },
     });
+    if (result.count === 0) throw new AppError(409, 'El articulo cambio de estado, recarga la pagina');
+    const updated = await prisma.article.findUnique({ where: { id: article.id } });
     // El correo nunca bloquea el envio.
-    try {
-      const tpl = emailTemplates.articleSubmittedAdmin({ authorName: req.author!.name, title: article.title });
-      sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {});
-    } catch { /* ignorar */ }
+    if (result.count === 1) {
+      try {
+        const tpl = emailTemplates.articleSubmittedAdmin({ authorName: req.author!.name, title: article.title });
+        waitUntil(sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {}));
+      } catch { /* ignorar */ }
+    }
     res.json(updated);
   } catch (err) { next(err); }
 });
@@ -217,7 +233,9 @@ router.post('/:id/withdraw', async (req: AuthorRequest, res, next) => {
   try {
     const article = await loadOwnArticle(req.params.id, req.author!.id);
     if (!canAuthorWithdraw(article.status)) throw new AppError(409, 'Solo puedes retirar un articulo en revision');
-    res.json(await prisma.article.update({ where: { id: article.id }, data: { status: 'DRAFT' } }));
+    const result = await prisma.article.updateMany({ where: { id: article.id, status: 'PENDING_REVIEW' }, data: { status: 'DRAFT' } });
+    if (result.count === 0) throw new AppError(409, 'El articulo cambio de estado, recarga la pagina');
+    res.json(await prisma.article.findUnique({ where: { id: article.id } }));
   } catch (err) { next(err); }
 });
 

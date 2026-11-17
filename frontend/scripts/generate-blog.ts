@@ -60,6 +60,14 @@ function initials(name: string): string {
 
 // Articles arrive already ordered publishedAt desc (API orderBy), so the first match in
 // each of these is always the most recent one -- no extra sort needed here.
+// Defensa en profundidad: solo http(s) en href/src (bloquea javascript:, data:, etc.).
+export function safeHttpUrl(u?: string | null): string {
+  return u && /^https?:\/\//i.test(u) ? u : '#';
+}
+export function safeImgSrc(u?: string | null): string {
+  return u && /^https?:\/\//i.test(u) ? u : '';
+}
+
 function selectFeatured(articles: Article[]): Article | null {
   if (articles.length === 0) return null;
   const featured = articles.filter((a) => a.featured);
@@ -221,11 +229,11 @@ function renderBlock(block: ArticleBlock): string {
     return `<p style="margin:0 0 24px;font-family:'DM Sans',sans-serif;font-weight:400;font-size:17px;line-height:1.75;color:#3f3f46">${escapeHtml(block.text ?? '')}</p>`;
   }
   if (block.type === 'IMAGE') {
-    if (!block.imageUrl) return '';
-    return `<img src="${escapeHtml(block.imageUrl)}" alt="${escapeHtml(block.imageAlt ?? '')}" style="width:100%;border-radius:20px;margin:24px 0">`;
+    if (!safeImgSrc(block.imageUrl)) return '';
+    return `<img src="${escapeHtml(safeImgSrc(block.imageUrl))}" alt="${escapeHtml(block.imageAlt ?? '')}" style="width:100%;border-radius:20px;margin:24px 0">`;
   }
   if (block.type === 'BUTTON') {
-    return `<div style="text-align:center;margin:32px 0"><a href="${escapeHtml(block.buttonUrl ?? '')}" style="display:inline-block;padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700">${escapeHtml(block.buttonLabel ?? '')}</a></div>`;
+    return `<div style="text-align:center;margin:32px 0"><a href="${escapeHtml(safeHttpUrl(block.buttonUrl))}" style="display:inline-block;padding:12px 28px;border-radius:14px;background:linear-gradient(135deg,#2dd4bf,#0d9488);color:#04201c;font-size:14px;font-weight:700">${escapeHtml(block.buttonLabel ?? '')}</a></div>`;
   }
   if (block.type === 'SUBTITLE') {
     return `<h3 style="font-size:26px;margin:40px 0 16px">${escapeHtml(block.text ?? '')}</h3>`;
@@ -246,7 +254,7 @@ function renderBlock(block: ArticleBlock): string {
 function renderArticleCard(a: Article): string {
   return `<div data-audience="${a.category.audience}" data-category="${a.category.slug}" class="ra-card" style="border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 10px 30px rgba(8,4,20,0.10)">
   <a href="/revista/${a.slug}">
-    ${a.coverImage ? `<img src="${escapeHtml(a.coverImage)}" alt="" style="width:100%;height:160px;object-fit:cover;display:block">` : `<div style="height:160px;background:linear-gradient(135deg,rgba(45,212,191,0.25),rgba(13,148,136,0.12))"></div>`}
+    ${safeImgSrc(a.coverImage) ? `<img src="${escapeHtml(safeImgSrc(a.coverImage))}" alt="" style="width:100%;height:160px;object-fit:cover;display:block">` : `<div style="height:160px;background:linear-gradient(135deg,rgba(45,212,191,0.25),rgba(13,148,136,0.12))"></div>`}
   </a>
   <div style="padding:22px">
     <span style="display:inline-block;padding:4px 10px;border-radius:999px;background:#2dd4bf;color:#04201c;font-size:10px;font-weight:700;text-transform:uppercase">${escapeHtml(a.category.name)}</span>
@@ -259,7 +267,7 @@ function renderArticleCard(a: Article): string {
 
 function renderRelatedCard(a: Article): string {
   return `<a href="/revista/${a.slug}" class="ra-card" style="display:block;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 4px 14px rgba(8,4,20,0.06)">
-  ${a.coverImage ? `<img src="${escapeHtml(a.coverImage)}" alt="" style="width:100%;height:120px;object-fit:cover;display:block">` : `<div style="height:120px;background:linear-gradient(135deg,rgba(45,212,191,0.25),rgba(13,148,136,0.12))"></div>`}
+  ${safeImgSrc(a.coverImage) ? `<img src="${escapeHtml(safeImgSrc(a.coverImage))}" alt="" style="width:100%;height:120px;object-fit:cover;display:block">` : `<div style="height:120px;background:linear-gradient(135deg,rgba(45,212,191,0.25),rgba(13,148,136,0.12))"></div>`}
   <div style="padding:16px">
     <h5 style="font-size:14px;color:#080414;margin:0">${escapeHtml(a.title)}</h5>
   </div>
@@ -336,7 +344,7 @@ function generateListingPage(articles: Article[]): string {
 
   const heroHtml = hero ? `<div id="ra-hero" class="ra-hero-grid ra-card" data-audience="${hero.category.audience}" data-category="${hero.category.slug}" style="border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 10px 30px rgba(8,4,20,0.10);margin-bottom:56px">
   <a href="/revista/${hero.slug}">
-    ${hero.coverImage ? `<img src="${escapeHtml(hero.coverImage)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">` : `<div style="min-height:320px;background:linear-gradient(135deg,rgba(45,212,191,0.25),rgba(13,148,136,0.12))"></div>`}
+    ${safeImgSrc(hero.coverImage) ? `<img src="${escapeHtml(safeImgSrc(hero.coverImage))}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">` : `<div style="min-height:320px;background:linear-gradient(135deg,rgba(45,212,191,0.25),rgba(13,148,136,0.12))"></div>`}
   </a>
   <div style="padding:40px;display:flex;flex-direction:column;justify-content:center">
     <span style="display:inline-block;padding:4px 10px;border-radius:999px;background:#2dd4bf;color:#04201c;font-size:10px;font-weight:700;text-transform:uppercase;width:fit-content">${escapeHtml(hero.category.name)}</span>
@@ -389,7 +397,7 @@ function generateArticlePage(a: Article, allArticles: Article[]): string {
   <span style="display:inline-block;margin-left:12px;padding:5px 12px;border-radius:999px;background:#2dd4bf;color:#04201c;font-size:11px;font-weight:700;text-transform:uppercase">${escapeHtml(a.category.name)}</span>
   <h1 style="font-size:40px;line-height:1.1;margin:18px 0 16px">${escapeHtml(a.title)}</h1>
   ${renderByline(a)}
-  ${a.coverImage ? `<img src="${escapeHtml(a.coverImage)}" alt="" style="width:100%;border-radius:24px;margin:24px 0 32px">` : ''}
+  ${safeImgSrc(a.coverImage) ? `<img src="${escapeHtml(safeImgSrc(a.coverImage))}" alt="" style="width:100%;border-radius:24px;margin:24px 0 32px">` : ''}
   ${blocksHtml}
   ${renderRelatedSection(related)}
   ${renderSubscribeBand()}
@@ -398,7 +406,7 @@ function generateArticlePage(a: Article, allArticles: Article[]): string {
     `${a.title} — Revista Aliax`,
     a.metaDescription || a.excerpt,
     `${SITE_URL}/revista/${a.slug}`,
-    a.coverImage || `${SITE_URL}/og-image.png`,
+    safeImgSrc(a.coverImage) || `${SITE_URL}/og-image.png`,
     body
   );
 }
@@ -421,7 +429,7 @@ function generateSitemap(articles: Article[]): string {
 async function main() {
   const res = await fetch(`${API_URL}/articles/public`);
   if (!res.ok) throw new Error(`No se pudo obtener /articles/public: ${res.status}`);
-  const articles = (await res.json()) as Article[];
+  const articles = ((await res.json()) as Article[]).filter((a) => a.category);
 
   const revistaDir = join(PUBLIC_DIR, 'revista');
   if (!existsSync(revistaDir)) mkdirSync(revistaDir, { recursive: true });

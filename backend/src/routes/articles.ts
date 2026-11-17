@@ -310,10 +310,20 @@ router.patch('/:id/publish', authMiddleware, adminMiddleware, async (req: AuthRe
     if (!existing) throw new AppError(404, 'Articulo no encontrado');
     if (!existing.author?.trim()) throw new AppError(400, 'Agrega un autor antes de publicar');
     if (!existing.categoryId) throw new AppError(400, 'Asigna una categoria antes de publicar');
-    const article = await prisma.article.update({
-      where: { id: req.params.id },
-      data: { status: 'PUBLISHED', publishedAt: new Date(), reviewNote: null },
-    });
+    const publishData = { status: 'PUBLISHED' as const, publishedAt: new Date(), reviewNote: null };
+    let article;
+    if (existing.authorUserId) {
+      // Articulo de terapeuta: solo se publica desde revision, de forma atomica.
+      if (existing.status !== 'PENDING_REVIEW') throw new AppError(409, 'El articulo no esta en revision');
+      const result = await prisma.article.updateMany({
+        where: { id: existing.id, status: 'PENDING_REVIEW' },
+        data: publishData,
+      });
+      if (result.count === 0) throw new AppError(409, 'El articulo no esta en revision');
+      article = await prisma.article.findUnique({ where: { id: existing.id } });
+    } else {
+      article = await prisma.article.update({ where: { id: req.params.id }, data: publishData });
+    }
     triggerBlogRebuild();
     // Aviso de aprobacion al terapeuta: nunca bloquea ni rompe la respuesta.
     if (existing.authorUserId) {
@@ -321,7 +331,7 @@ router.patch('/:id/publish', authMiddleware, adminMiddleware, async (req: AuthRe
         const author = await prisma.user.findUnique({ where: { id: existing.authorUserId }, select: { name: true, email: true } });
         if (author) {
           const tpl = emailTemplates.articleApproved({ userName: author.name, userEmail: author.email, title: existing.title, slug: existing.slug });
-          sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {});
+          waitUntil(sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {}));
         }
       } catch { /* el correo nunca bloquea */ }
     }
@@ -340,16 +350,18 @@ router.patch('/:id/request-changes', authMiddleware, adminMiddleware, async (req
     const existing = await prisma.article.findUnique({ where: { id: req.params.id } });
     if (!existing) throw new AppError(404, 'Articulo no encontrado');
     if (existing.status !== 'PENDING_REVIEW') throw new AppError(409, 'Solo se pueden devolver articulos en revision');
-    const article = await prisma.article.update({
-      where: { id: existing.id },
+    const result = await prisma.article.updateMany({
+      where: { id: existing.id, status: 'PENDING_REVIEW' },
       data: { status: 'CHANGES_REQUESTED', reviewNote: note },
     });
-    if (existing.authorUserId) {
+    if (result.count === 0) throw new AppError(409, 'El articulo cambio de estado, recarga la pagina');
+    const article = await prisma.article.findUnique({ where: { id: existing.id } });
+    if (existing.authorUserId && result.count === 1) {
       try {
         const author = await prisma.user.findUnique({ where: { id: existing.authorUserId }, select: { name: true, email: true } });
         if (author) {
           const tpl = emailTemplates.articleChangesRequested({ userName: author.name, userEmail: author.email, title: existing.title, note });
-          sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {});
+          waitUntil(sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {}));
         }
       } catch { /* el correo nunca bloquea */ }
     }

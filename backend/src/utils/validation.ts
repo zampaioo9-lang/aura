@@ -331,13 +331,21 @@ export const updateCategorySchema = z.object({
   order: z.number().int().min(0).optional(),
 });
 
+// URL http(s) o vacia: rechaza javascript:, data: y otros esquemas peligrosos.
+const httpUrl = z
+  .string()
+  .url('La URL debe empezar con http:// o https://')
+  .refine((u) => /^https?:\/\//i.test(u), 'La URL debe empezar con http:// o https://')
+  .optional()
+  .or(z.literal(''));
+
 export const createArticleSchema = z.object({
   title: z.string().min(3, 'Minimo 3 caracteres').max(150, 'Maximo 150 caracteres'),
   excerpt: z.string().min(10, 'Minimo 10 caracteres').max(300, 'Maximo 300 caracteres'),
   metaDescription: z.string().max(300, 'Maximo 300 caracteres').optional().or(z.literal('')),
   author: z.string().max(100, 'Maximo 100 caracteres').optional().or(z.literal('')),
   categoryId: z.string(),
-  coverImage: z.string().url().optional().or(z.literal('')),
+  coverImage: httpUrl,
   featured: z.boolean().optional(),
 });
 
@@ -347,7 +355,7 @@ export const updateArticleSchema = z.object({
   metaDescription: z.string().max(300).optional().or(z.literal('')),
   author: z.string().max(100).optional().or(z.literal('')),
   categoryId: z.string().optional(),
-  coverImage: z.string().url().optional().or(z.literal('')),
+  coverImage: httpUrl,
   featured: z.boolean().optional(),
 });
 
@@ -356,10 +364,10 @@ export const createArticleBlockSchema = z.object({
     errorMap: () => ({ message: 'Tipo de bloque no valido (TEXT, IMAGE, BUTTON, SUBTITLE o BULLET_LIST)' }),
   }),
   text: z.string().max(5000).optional(),
-  imageUrl: z.string().url().optional().or(z.literal('')),
+  imageUrl: httpUrl,
   imageAlt: z.string().max(200).optional(),
   buttonLabel: z.string().max(60).optional(),
-  buttonUrl: z.string().url().optional().or(z.literal('')),
+  buttonUrl: httpUrl,
 }).refine(
   (data) => !['TEXT', 'SUBTITLE', 'BULLET_LIST'].includes(data.type) || !!data.text?.trim(),
   { message: 'Un bloque de texto requiere contenido' }
@@ -370,11 +378,20 @@ export const createArticleBlockSchema = z.object({
 
 export const updateArticleBlockSchema = z.object({
   text: z.string().max(5000).optional(),
-  imageUrl: z.string().url().optional().or(z.literal('')),
+  imageUrl: httpUrl,
   imageAlt: z.string().max(200).optional(),
   buttonLabel: z.string().max(60).optional(),
-  buttonUrl: z.string().url().optional().or(z.literal('')),
+  buttonUrl: httpUrl,
   order: z.number().int().min(1).optional(),
+});
+
+// El terapeuta no controla el orden de los bloques (se reordena con swap).
+export const updateMyArticleBlockSchema = z.object({
+  text: z.string().max(5000).optional(),
+  imageUrl: httpUrl,
+  imageAlt: z.string().max(200).optional(),
+  buttonLabel: z.string().max(60).optional(),
+  buttonUrl: httpUrl,
 });
 
 // Esquemas del terapeuta: sin categoria, sin autor y sin "destacado" (los asigna el admin).
@@ -382,14 +399,14 @@ export const createMyArticleSchema = z.object({
   title: z.string().min(3, 'Minimo 3 caracteres').max(150, 'Maximo 150 caracteres'),
   excerpt: z.string().max(300, 'Maximo 300 caracteres').optional().or(z.literal('')),
   metaDescription: z.string().max(300, 'Maximo 300 caracteres').optional().or(z.literal('')),
-  coverImage: z.string().url().optional().or(z.literal('')),
+  coverImage: httpUrl,
 });
 
 export const updateMyArticleSchema = z.object({
   title: z.string().min(3).max(150).optional(),
   excerpt: z.string().max(300).optional().or(z.literal('')),
   metaDescription: z.string().max(300).optional().or(z.literal('')),
-  coverImage: z.string().url().optional().or(z.literal('')),
+  coverImage: httpUrl,
 });
 
 // Endpoint publico y sin auth (lectores anonimos de Revista), igual que checkoutSchema --
