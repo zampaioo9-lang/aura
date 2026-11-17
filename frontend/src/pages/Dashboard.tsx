@@ -21,6 +21,7 @@ import { formatCurrency } from '../lib/utils';
 import ProfessionalCalendar from '../components/dashboard/ProfessionalCalendar';
 import NewBookingModal from '../components/dashboard/NewBookingModal';
 import RevistaSubscribeCard from '../components/dashboard/RevistaSubscribeCard';
+import ResenasResumenCard from '../components/dashboard/ResenasResumenCard';
 import { PLAN_LABEL } from '../lib/planNames';
 
 const SOCIAL_ICONS = [
@@ -718,7 +719,7 @@ export default function Dashboard() {
           <div className="p-4 pb-8">
             {visitedMobile.has('inicio') && (
               <div style={{ display: mobileSection === 'inicio' ? undefined : 'none' }}>
-                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} userEmail={user?.email} newsletterSubscribed={user?.newsletterSubscribed} C={C} dashStats={dashStats} dashStatsError={dashStatsError} analyticsPeriod={analyticsPeriod} onPeriodChange={setAnalyticsPeriod} isLoadingStats={isLoadingStats} isPro={isPro ?? false} onGoToAccount={() => goMobile('cuenta')} onGoToAgenda={() => goMobile('agenda')} />
+                <TabInicio profiles={profiles} bookings={bookings} userName={user?.name} userEmail={user?.email} newsletterSubscribed={user?.newsletterSubscribed} C={C} dashStats={dashStats} dashStatsError={dashStatsError} analyticsPeriod={analyticsPeriod} onPeriodChange={setAnalyticsPeriod} isLoadingStats={isLoadingStats} isPro={isPro ?? false} onGoToAccount={() => goMobile('cuenta')} onGoToAgenda={() => goMobile('agenda')} onGoToReviews={() => goMobile('resenas')} />
               </div>
             )}
             {visitedMobile.has('citas') && (
@@ -1115,7 +1116,7 @@ function DashNavRow({ icon, isActive, C, onClick, children }: { icon: React.Reac
 }
 
 /* ────────────────── Tab: Inicio ────────────────── */
-function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscribed, C, dashStats, dashStatsError, analyticsPeriod, onPeriodChange, isLoadingStats, isPro, twoCol = false, onGoToAccount, onGoToAgenda }: {
+function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscribed, C, dashStats, dashStatsError, analyticsPeriod, onPeriodChange, isLoadingStats, isPro, twoCol = false, onGoToAccount, onGoToAgenda, onGoToReviews }: {
   profiles: Profile[];
   bookings: Booking[];
   userName?: string;
@@ -1131,6 +1132,7 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
   twoCol?: boolean;
   onGoToAccount: () => void;
   onGoToAgenda: () => void;
+  onGoToReviews?: () => void;
 }) {
   const totalServices = profiles.reduce((sum, p) => sum + p.services.length, 0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -1606,6 +1608,7 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
           newsletterSubscribed={newsletterSubscribed}
         />
       )}
+      {onGoToReviews && <ResenasResumenCard C={C} isPro={isPro} onOpen={onGoToReviews} />}
       {analyticsBlock}
     </div>
   );
