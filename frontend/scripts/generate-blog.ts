@@ -30,7 +30,7 @@ interface ArticleBlock {
 }
 interface Article {
   id: string; slug: string; title: string; excerpt: string; metaDescription: string | null;
-  author: string | null; coverImage: string | null; featured: boolean; publishedAt: string | null;
+  author: string | null; authorProfileSlug?: string | null; coverImage: string | null; featured: boolean; publishedAt: string | null;
   category: Category; blocks: ArticleBlock[];
 }
 
@@ -132,9 +132,13 @@ function renderNav(): string {
 function renderByline(a: Article): string {
   const name = a.author || 'Aliax';
   const minutes = calculateReadingTime(a.blocks);
+  // Si el autor es un terapeuta con perfil publicado, la firma enlaza a su perfil.
+  const nameHtml = a.authorProfileSlug
+    ? `<a href="https://www.aliax.io/${escapeHtml(a.authorProfileSlug)}" style="color:#0d9488;text-decoration:none">${escapeHtml(name)}</a>`
+    : escapeHtml(name);
   return `<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#5b5b66">
   <span style="width:28px;height:28px;border-radius:50%;background:#2dd4bf;color:#04201c;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${escapeHtml(initials(name))}</span>
-  <span>${escapeHtml(name)} · ${formatDate(a.publishedAt)} · ${minutes} min de lectura</span>
+  <span>${nameHtml} · ${formatDate(a.publishedAt)} · ${minutes} min de lectura</span>
 </div>`;
 }
 
