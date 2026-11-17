@@ -173,6 +173,7 @@ export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
     padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.inputBorder}`,
     background: C.inputBg, color: C.text, fontSize: 14, outline: 'none',
   };
+  const optStyle: React.CSSProperties = { background: C.card.startsWith('#') ? C.card : '#0b1f1d', color: C.text };
   const lbl: React.CSSProperties = {
     fontSize: 11, fontWeight: 600, color: C.textMuted, display: 'block', marginBottom: 4,
   };
@@ -212,8 +213,8 @@ export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
                   onChange={(e) => setNewAudience(e.target.value as CategoryAudience)}
                   style={inp}
                 >
-                  <option value="PACIENTES">Pacientes</option>
-                  <option value="TERAPEUTAS">Terapeutas</option>
+                  <option style={optStyle} value="PACIENTES">Pacientes</option>
+                  <option style={optStyle} value="TERAPEUTAS">Terapeutas</option>
                 </select>
               </div>
               <button

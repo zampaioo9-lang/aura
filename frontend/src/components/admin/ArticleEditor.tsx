@@ -140,6 +140,8 @@ export default function ArticleEditor({ C, articleId, categories, authorName, on
     width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8,
     border: `1px solid ${C.inputBorder}`, background: C.inputBg, color: C.text, fontSize: 14, outline: 'none',
   };
+  // Las opciones nativas no heredan el fondo translucido: sin un fondo solido quedan blanco sobre blanco
+  const optStyle: React.CSSProperties = { background: C.card.startsWith('#') ? C.card : '#0b1f1d', color: C.text };
   const lbl: React.CSSProperties = {
     display: 'block', fontSize: 11, fontWeight: 600, color: C.textMuted, marginBottom: 4, marginTop: 14,
   };
@@ -233,12 +235,12 @@ export default function ArticleEditor({ C, articleId, categories, authorName, on
 
       <label style={lbl}>Categoria</label>
       <select style={inp} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-        <option value="">Elige una categoria</option>
-        <optgroup label="Pacientes">
-          {pacientes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        <option style={optStyle} value="">Elige una categoria</option>
+        <optgroup style={optStyle} label="Pacientes">
+          {pacientes.map(c => <option key={c.id} style={optStyle} value={c.id}>{c.name}</option>)}
         </optgroup>
-        <optgroup label="Terapeutas">
-          {terapeutas.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        <optgroup style={optStyle} label="Terapeutas">
+          {terapeutas.map(c => <option key={c.id} style={optStyle} value={c.id}>{c.name}</option>)}
         </optgroup>
       </select>
 
