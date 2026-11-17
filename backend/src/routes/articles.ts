@@ -9,7 +9,7 @@ import {
 } from '../utils/validation';
 import { AppError } from '../middleware/errorHandler';
 import { slugify } from '../utils/slugify';
-import { emailTemplates } from '../services/emailService';
+import { emailTemplates, sendEmail } from '../services/emailService';
 import { env } from '../config/env';
 import { waitUntil } from '@vercel/functions';
 import { findNewProductionDeployment, waitForDeploymentReady, promoteDeployment } from '../services/vercelDeploy';
@@ -184,7 +184,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req: AuthRequest, res, 
 router.get('/', authMiddleware, adminMiddleware, async (_req, res, next) => {
   try {
     const articles = await prisma.article.findMany({
-      include: { category: true },
+      include: { category: true, authorUser: { select: { id: true, name: true, email: true } } },
       orderBy: { createdAt: 'desc' },
     });
     res.json(articles);
@@ -202,7 +202,18 @@ router.get('/public', async (_req, res, next) => {
       include: { category: true, blocks: { orderBy: { order: 'asc' } } },
       orderBy: { publishedAt: 'desc' },
     });
-    res.json(articles);
+    // Enlace a la firma: slug del primer perfil publicado del autor. Solo el slug, nunca datos del usuario.
+    const authorIds = Array.from(new Set(articles.map(a => a.authorUserId).filter((id): id is string => !!id)));
+    const slugByUser = new Map<string, string>();
+    if (authorIds.length > 0) {
+      const profiles = await prisma.profile.findMany({
+        where: { userId: { in: authorIds }, published: true },
+        select: { userId: true, slug: true },
+        orderBy: { createdAt: 'asc' },
+      });
+      for (const p of profiles) if (!slugByUser.has(p.userId)) slugByUser.set(p.userId, p.slug);
+    }
+    res.json(articles.map(a => ({ ...a, authorProfileSlug: a.authorUserId ? slugByUser.get(a.authorUserId) ?? null : null })));
   } catch (err) {
     next(err);
   }
@@ -294,11 +305,50 @@ router.patch('/:id/publish', authMiddleware, adminMiddleware, async (req: AuthRe
     const existing = await prisma.article.findUnique({ where: { id: req.params.id } });
     if (!existing) throw new AppError(404, 'Articulo no encontrado');
     if (!existing.author?.trim()) throw new AppError(400, 'Agrega un autor antes de publicar');
+    if (!existing.categoryId) throw new AppError(400, 'Asigna una categoria antes de publicar');
     const article = await prisma.article.update({
       where: { id: req.params.id },
-      data: { status: 'PUBLISHED', publishedAt: new Date() },
+      data: { status: 'PUBLISHED', publishedAt: new Date(), reviewNote: null },
     });
     triggerBlogRebuild();
+    // Aviso de aprobacion al terapeuta: nunca bloquea ni rompe la respuesta.
+    if (existing.authorUserId) {
+      try {
+        const author = await prisma.user.findUnique({ where: { id: existing.authorUserId }, select: { name: true, email: true } });
+        if (author) {
+          const tpl = emailTemplates.articleApproved({ userName: author.name, userEmail: author.email, title: existing.title, slug: existing.slug });
+          sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {});
+        }
+      } catch { /* el correo nunca bloquea */ }
+    }
+    res.json(article);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/articles/:id/request-changes: devolver un articulo en revision al autor (auth, admin)
+router.patch('/:id/request-changes', authMiddleware, adminMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    const note = typeof req.body?.note === 'string' ? req.body.note.trim() : '';
+    if (note.length < 3) throw new AppError(400, 'Escribe una nota para el autor');
+    if (note.length > 2000) throw new AppError(400, 'La nota es demasiado larga (maximo 2000 caracteres)');
+    const existing = await prisma.article.findUnique({ where: { id: req.params.id } });
+    if (!existing) throw new AppError(404, 'Articulo no encontrado');
+    if (existing.status !== 'PENDING_REVIEW') throw new AppError(409, 'Solo se pueden devolver articulos en revision');
+    const article = await prisma.article.update({
+      where: { id: existing.id },
+      data: { status: 'CHANGES_REQUESTED', reviewNote: note },
+    });
+    if (existing.authorUserId) {
+      try {
+        const author = await prisma.user.findUnique({ where: { id: existing.authorUserId }, select: { name: true, email: true } });
+        if (author) {
+          const tpl = emailTemplates.articleChangesRequested({ userName: author.name, userEmail: author.email, title: existing.title, note });
+          sendEmail(tpl.to, tpl.subject, tpl.html).catch(() => {});
+        }
+      } catch { /* el correo nunca bloquea */ }
+    }
     res.json(article);
   } catch (err) {
     next(err);
