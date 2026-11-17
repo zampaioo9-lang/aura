@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PenLine, Plus, ArrowLeft, Lock, ExternalLink, MessageSquareWarning, Clock } from 'lucide-react';
+import { PenLine, Plus, ArrowLeft, Lock, ExternalLink, MessageSquareWarning, Clock, Trash2 } from 'lucide-react';
 import { useMyArticles, type MyArticleSummary } from '../../hooks/useMyArticles';
 import type { Article, ArticleStatus } from '../../hooks/useArticles';
 import { useUpload } from '../../hooks/useUpload';
 import { useToast } from '../Toast';
-import BlockEditor from '../admin/BlockEditor';
+import BlockEditor, { type BlockEditorHandle } from '../admin/BlockEditor';
 
 interface Colors {
   text: string;
@@ -204,7 +204,9 @@ function ArticleForm({ C, ring, articleId, authorName, onBack, onChanged }: Form
   const [excerpt, setExcerpt] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [coverImage, setCoverImage] = useState('');
-  const [busy, setBusy] = useState<'save' | 'submit' | 'withdraw' | null>(null);
+  const [busy, setBusy] = useState<'save' | 'submit' | 'withdraw' | 'delete' | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const editorRef = useRef<BlockEditorHandle>(null);
 
   const fill = (a: Article) => {
     setArticle(a);
@@ -232,6 +234,7 @@ function ArticleForm({ C, ring, articleId, authorName, onBack, onChanged }: Form
   const validateFields = (forSubmit: boolean): string | null => {
     if (title.trim().length < 3) return 'Escribe un título de al menos 3 caracteres';
     if (excerpt.length > 300) return 'El extracto no puede superar los 300 caracteres';
+    if (coverImage && !/^https?:\/\//i.test(coverImage)) return 'La URL debe empezar con http:// o https://';
     if (forSubmit && excerpt.trim().length < 10) return 'Escribe un extracto de al menos 10 caracteres';
     return null;
   };
@@ -270,6 +273,8 @@ function ArticleForm({ C, ring, articleId, authorName, onBack, onChanged }: Form
     if (problem) { toast(problem, 'error'); return; }
     setBusy('submit');
     try {
+      // Primero el contenido de los bloques: si algo no se guarda, no se envia.
+      await editorRef.current?.flush();
       const saved = await persist();
       const submitted = await api.submit(saved.id);
       setArticle((prev) => ({ ...(prev ?? ({} as Article)), ...submitted }));
@@ -292,6 +297,21 @@ function ArticleForm({ C, ring, articleId, authorName, onBack, onChanged }: Form
       onChanged();
     } catch (err: any) {
       toast(err.message, 'error');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!article) return;
+    setBusy('delete');
+    try {
+      await api.remove(article.id);
+      toast('Borrador eliminado', 'success');
+      onBack(); // vuelve a la lista y la recarga
+    } catch (err: any) {
+      toast(err.message, 'error');
+      setConfirmDelete(false);
     } finally {
       setBusy(null);
     }
@@ -394,6 +414,30 @@ function ArticleForm({ C, ring, articleId, authorName, onBack, onChanged }: Form
               </div>
             )}
 
+            {editable && article && (
+              <div style={{ marginTop: 14 }}>
+                {!confirmDelete ? (
+                  <button
+                    style={{ ...btnSecondary, background: 'rgba(239,68,68,0.10)', color: '#ef4444' }}
+                    disabled={working}
+                    onClick={() => setConfirmDelete(true)}
+                  >
+                    <Trash2 size={14} /> Eliminar borrador
+                  </button>
+                ) : (
+                  <div role="alertdialog" aria-label="Confirmar eliminación" style={{ background: 'rgba(239,68,68,0.08)', boxShadow: ring, borderRadius: 12, padding: '14px 16px' }}>
+                    <p style={{ color: C.text, fontSize: 14, fontWeight: 600, margin: '0 0 12px' }}>¿Eliminar este borrador? No se puede deshacer.</p>
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                      <button style={{ ...btnPrimary, background: '#ef4444' }} disabled={working} onClick={handleDelete}>
+                        {busy === 'delete' ? 'Eliminando...' : 'Sí, eliminar'}
+                      </button>
+                      <button style={btnSecondary} disabled={working} onClick={() => setConfirmDelete(false)}>Cancelar</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {article?.status === 'PENDING_REVIEW' && (
               <div style={{ marginTop: 22 }}>
                 <button style={btnSecondary} disabled={working} onClick={handleWithdraw}>
@@ -403,7 +447,7 @@ function ArticleForm({ C, ring, articleId, authorName, onBack, onChanged }: Form
             )}
 
             {article ? (
-              <BlockEditor C={blockColors} articleId={article.id} basePath="/my-articles" readOnly={!editable} />
+              <BlockEditor ref={editorRef} C={blockColors} articleId={article.id} basePath="/my-articles" readOnly={!editable} />
             ) : (
               <p style={{ color: C.muted, fontSize: 13, marginTop: 22, marginBottom: 0 }}>
                 Guarda el borrador para empezar a agregar el contenido de tu artículo.

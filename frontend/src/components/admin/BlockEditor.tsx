@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { ArrowUp, ArrowDown, Trash2, Plus } from 'lucide-react';
 import { useArticles, type ArticleBlock, type ArticleBlockType } from '../../hooks/useArticles';
 import { useMyArticles } from '../../hooks/useMyArticles';
@@ -21,7 +21,13 @@ interface Props {
   readOnly?: boolean;
 }
 
-export default function BlockEditor({ C, articleId, basePath = '/articles', readOnly = false }: Props) {
+/** Metodo expuesto por ref (lo usa el terapeuta antes de enviar a revision). */
+export interface BlockEditorHandle {
+  /** Espera los guardados en curso, guarda lo pendiente y LANZA un error si algo falla. */
+  flush: () => Promise<void>;
+}
+
+const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEditor({ C, articleId, basePath = '/articles', readOnly = false }, ref) {
   const admin = useArticles();
   const mine = useMyArticles();
   const mineMode = basePath === '/my-articles';
@@ -36,6 +42,18 @@ export default function BlockEditor({ C, articleId, basePath = '/articles', read
   const [blocks, setBlocks] = useState<ArticleBlock[]>([]);
   const [movingBlockId, setMovingBlockId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+
+  // Seguimiento de guardados para flush(): promesas en curso y bloques con cambios sin guardar.
+  const blocksRef = useRef<ArticleBlock[]>([]);
+  blocksRef.current = blocks;
+  const pendingRef = useRef<Set<Promise<unknown>>>(new Set());
+  const dirtyRef = useRef<Set<string>>(new Set());
+  const track = <T,>(p: Promise<T>): Promise<T> => {
+    pendingRef.current.add(p);
+    const done = () => { pendingRef.current.delete(p); };
+    p.then(done, done);
+    return p;
+  };
 
   // En modo terapeuta se muestra el mensaje real del backend; el admin conserva los textos de siempre.
   const fail = (e: any, fallback: string) => toast(mineMode && e?.message ? e.message : fallback, 'error');
@@ -68,27 +86,55 @@ export default function BlockEditor({ C, articleId, basePath = '/articles', read
     }
   };
 
-  const handleTextChange = async (block: ArticleBlock, text: string) => {
+  // Guarda los campos actuales del bloque (leidos del ref, no de un cierre viejo). Lanza si falla.
+  const saveBlockFields = (id: string): Promise<void> => track((async () => {
+    const block = blocksRef.current.find(b => b.id === id);
+    if (!block) { dirtyRef.current.delete(id); return; }
+    dirtyRef.current.delete(id);
+    try {
+      if (block.type === 'BUTTON') {
+        await updateBlock(articleId, id, { buttonLabel: block.buttonLabel ?? '', buttonUrl: block.buttonUrl ?? '' });
+      } else {
+        await updateBlock(articleId, id, { text: block.text ?? '' });
+      }
+    } catch (e) {
+      dirtyRef.current.add(id);
+      throw e;
+    }
+  })());
+
+  useImperativeHandle(ref, () => ({
+    flush: async () => {
+      // 1) esperar guardados en curso (sus errores se revisan abajo al reintentar lo sucio)
+      while (pendingRef.current.size > 0) await Promise.allSettled([...pendingRef.current]);
+      // 2) forzar el guardado de lo que siga con cambios sin guardar
+      const results = await Promise.allSettled([...dirtyRef.current].map(saveBlockFields));
+      const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+      if (failed) throw (failed.reason instanceof Error ? failed.reason : new Error('No se pudo guardar el contenido'));
+    },
+  }));
+
+  const handleTextChange = (block: ArticleBlock, text: string) => {
+    dirtyRef.current.add(block.id);
     setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, text } : b));
   };
   const handleTextBlur = async (block: ArticleBlock) => {
-    try { await updateBlock(articleId, block.id, { text: block.text ?? '' }); } catch (e) { fail(e, 'No se pudo guardar el texto'); }
+    try { await saveBlockFields(block.id); } catch (e) { fail(e, 'No se pudo guardar el texto'); }
   };
 
   const handleButtonChange = (block: ArticleBlock, field: 'buttonLabel' | 'buttonUrl', value: string) => {
+    dirtyRef.current.add(block.id);
     setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, [field]: value } : b));
   };
   const handleButtonBlur = async (block: ArticleBlock) => {
-    try {
-      await updateBlock(articleId, block.id, { buttonLabel: block.buttonLabel ?? '', buttonUrl: block.buttonUrl ?? '' });
-    } catch (e) { fail(e, 'No se pudo guardar el boton'); }
+    try { await saveBlockFields(block.id); } catch (e) { fail(e, 'No se pudo guardar el boton'); }
   };
 
   const handleImageUpload = async (block: ArticleBlock, file: File) => {
     const result = await uploadImage(file);
     if (!result) return;
     try {
-      const updated = await updateBlock(articleId, block.id, { imageUrl: result.url });
+      const updated = await track(updateBlock(articleId, block.id, { imageUrl: result.url }));
       setBlocks(prev => prev.map(b => b.id === block.id ? updated : b));
     } catch (e) { fail(e, 'No se pudo guardar la imagen'); }
   };
@@ -128,8 +174,13 @@ export default function BlockEditor({ C, articleId, basePath = '/articles', read
     }
   };
 
+  // Modo terapeuta: sin border; el contorno de los campos es una sombra inset sutil.
+  const fieldFrame: React.CSSProperties = mineMode
+    ? { border: 'none', boxShadow: `inset 0 0 0 1px ${C.inputBorder}` }
+    : { border: `1px solid ${C.inputBorder}` };
+
   return (
-    <div style={{ marginTop: 24, borderTop: `1px solid ${C.cardBorder}`, paddingTop: 20 }}>
+    <div style={mineMode ? { marginTop: 28, paddingTop: 4 } : { marginTop: 24, borderTop: `1px solid ${C.cardBorder}`, paddingTop: 20 }}>
       <h3 style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 12 }}>Contenido</h3>
 
       {blocks.map((block, i) => (
@@ -153,7 +204,8 @@ export default function BlockEditor({ C, articleId, basePath = '/articles', read
 
           {block.type === 'TEXT' && (
             <textarea
-              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.inputBorder}`, background: C.inputBg, color: C.text, fontSize: 14, minHeight: 80, outline: 'none' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8, ...fieldFrame, background: C.inputBg, color: C.text, fontSize: 14, minHeight: 80, outline: 'none' }}
+              maxLength={5000}
               value={block.text ?? ''}
               onChange={(e) => handleTextChange(block, e.target.value)}
               onBlur={() => handleTextBlur(block)}
@@ -163,7 +215,7 @@ export default function BlockEditor({ C, articleId, basePath = '/articles', read
 
           {block.type === 'SUBTITLE' && (
             <input
-              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.inputBorder}`, background: C.inputBg, color: C.text, fontSize: 14, outline: 'none' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8, ...fieldFrame, background: C.inputBg, color: C.text, fontSize: 14, outline: 'none' }}
               value={block.text ?? ''}
               onChange={(e) => handleTextChange(block, e.target.value)}
               onBlur={() => handleTextBlur(block)}
@@ -174,7 +226,8 @@ export default function BlockEditor({ C, articleId, basePath = '/articles', read
           {block.type === 'BULLET_LIST' && (
             <div>
               <textarea
-                style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.inputBorder}`, background: C.inputBg, color: C.text, fontSize: 14, minHeight: 80, outline: 'none' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 8, ...fieldFrame, background: C.inputBg, color: C.text, fontSize: 14, minHeight: 80, outline: 'none' }}
+                maxLength={5000}
                 value={block.text ?? ''}
                 onChange={(e) => handleTextChange(block, e.target.value)}
                 onBlur={() => handleTextBlur(block)}
@@ -195,7 +248,7 @@ export default function BlockEditor({ C, articleId, basePath = '/articles', read
           {block.type === 'BUTTON' && (
             <div style={{ display: 'flex', gap: 8 }}>
               <input
-                style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.inputBorder}`, background: C.inputBg, color: C.text, fontSize: 14, outline: 'none' }}
+                style={{ flex: 1, padding: '9px 12px', borderRadius: 8, ...fieldFrame, background: C.inputBg, color: C.text, fontSize: 14, outline: 'none' }}
                 placeholder="Texto del boton"
                 value={block.buttonLabel ?? ''}
                 onChange={(e) => handleButtonChange(block, 'buttonLabel', e.target.value)}
@@ -203,7 +256,7 @@ export default function BlockEditor({ C, articleId, basePath = '/articles', read
                 readOnly={readOnly}
               />
               <input
-                style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.inputBorder}`, background: C.inputBg, color: C.text, fontSize: 14, outline: 'none' }}
+                style={{ flex: 1, padding: '9px 12px', borderRadius: 8, ...fieldFrame, background: C.inputBg, color: C.text, fontSize: 14, outline: 'none' }}
                 placeholder="URL"
                 value={block.buttonUrl ?? ''}
                 onChange={(e) => handleButtonChange(block, 'buttonUrl', e.target.value)}
@@ -234,4 +287,6 @@ export default function BlockEditor({ C, articleId, basePath = '/articles', read
       </div>}
     </div>
   );
-}
+});
+
+export default BlockEditor;
