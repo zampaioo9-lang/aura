@@ -69,6 +69,7 @@ try {
   const articleRoutes = require('../src/routes/articles').default;
   const newsletterRoutes = require('../src/routes/newsletter').default;
   const cronRoutes = require('../src/routes/cron').default;
+  const myArticlesRouter = require('../src/routes/my-articles').default;
   const { sendWhatsApp } = require('../src/services/whatsappService');
 
   app.use(activityLogger);
@@ -103,6 +104,7 @@ try {
   app.use('/api/articles', articleRoutes);
   app.use('/api/newsletter', newsletterRoutes);
   app.use('/api/cron', cronRoutes);
+  app.use('/api/my-articles', myArticlesRouter);
 
   app.get('/api/test/whatsapp', async (req, res) => {
     const to = req.query.to as string;

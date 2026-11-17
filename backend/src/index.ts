@@ -34,6 +34,7 @@ import exchangeRateRoutes from './routes/exchangeRate';
 import articleRoutes from './routes/articles';
 import newsletterRoutes from './routes/newsletter';
 import cronRoutes from './routes/cron';
+import myArticlesRouter from './routes/my-articles';
 import { sendWhatsAppTemplate, templateComponents } from './services/whatsappService';
 
 const app = express();
@@ -81,6 +82,7 @@ app.use('/api/exchange-rate', exchangeRateRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/cron', cronRoutes);
+app.use('/api/my-articles', myArticlesRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {
