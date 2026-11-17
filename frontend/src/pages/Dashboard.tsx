@@ -1081,7 +1081,7 @@ export default function Dashboard() {
 function DashSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 18 }}>
-      <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(148,132,170,0.55)', margin: '0 0 4px 10px' }}>
+      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(148,132,170,0.55)', margin: '0 0 4px 10px' }}>
         {label}
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -1107,7 +1107,7 @@ function DashNavRow({ icon, isActive, C, onClick, children }: { icon: React.Reac
       <span style={{ color: isActive ? 'white' : C.isDark ? 'rgba(255,255,255,0.6)' : C.accent, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
         {icon}
       </span>
-      <span style={{ fontSize: 14, fontWeight: isActive ? 600 : 500, color: isActive ? 'white' : C.isDark ? 'rgba(255,255,255,0.85)' : C.text, lineHeight: 1 }}>
+      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: isActive ? 600 : 500, color: isActive ? 'white' : C.isDark ? 'rgba(255,255,255,0.85)' : C.text, lineHeight: 1 }}>
         {children}
       </span>
     </button>

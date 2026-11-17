@@ -42,6 +42,14 @@ function statusColors(status: ArticleStatus, isDark: boolean): { bg: string; fg:
   }
 }
 
+// Caja de artículos: en claro lleva el borde del color del tema; en oscuro se tiñe con el color del tema, translúcido.
+function cardRing(C: Colors): string {
+  return C.isDark ? '0 0 0 1px rgba(255,255,255,0.08)' : `0 0 0 1.5px ${C.accent}`;
+}
+function cardFill(C: Colors): string {
+  return C.isDark ? `color-mix(in srgb, ${C.accent} 14%, transparent)` : C.cardBg;
+}
+
 function formatDate(iso?: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
@@ -76,7 +84,8 @@ export default function MyArticles({ C, isActive, isPro, authorName }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, isPro]);
 
-  const ring = C.isDark ? '0 0 0 1px rgba(255,255,255,0.08)' : (C.cardShadow || '0 2px 8px rgba(0,0,0,0.06)');
+  const ring = cardRing(C);
+  const cardBg = cardFill(C);
   const btnPrimary: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '10px 18px',
     background: C.accent, border: 'none', borderRadius: 10, color: '#fff',
@@ -86,7 +95,7 @@ export default function MyArticles({ C, isActive, isPro, authorName }: Props) {
   // ---- Usuarios sin plan Pro: invitacion ----
   if (!isPro) {
     return (
-      <div style={{ background: C.cardBg, boxShadow: ring, borderRadius: 16, padding: '36px 24px', textAlign: 'center', maxWidth: 520, margin: '0 auto' }}>
+      <div style={{ background: cardBg, boxShadow: ring, borderRadius: 16, padding: '36px 24px', textAlign: 'center', maxWidth: 520, margin: '0 auto' }}>
         <div style={{ width: 48, height: 48, borderRadius: '50%', background: C.accentLight, color: C.accent, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
           <Lock size={22} />
         </div>
@@ -132,7 +141,7 @@ export default function MyArticles({ C, isActive, isPro, authorName }: Props) {
       {loading && articles.length === 0 && <p style={{ color: C.muted, fontSize: 14 }}>Cargando...</p>}
 
       {!loading && !error && articles.length === 0 && (
-        <div style={{ background: C.cardBg, boxShadow: ring, borderRadius: 14, padding: '32px 20px', textAlign: 'center' }}>
+        <div style={{ background: cardBg, boxShadow: ring, borderRadius: 14, padding: '32px 20px', textAlign: 'center' }}>
           <p style={{ color: C.text, fontSize: 15, fontWeight: 600, margin: '0 0 6px' }}>Aún no tienes artículos</p>
           <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>Escribe el primero y envíalo a revisión para que se publique en la Revista.</p>
         </div>
@@ -147,7 +156,7 @@ export default function MyArticles({ C, isActive, isPro, authorName }: Props) {
             <button
               key={a.id}
               onClick={() => setEditing(a.id)}
-              style={{ textAlign: 'left', width: '100%', background: C.cardBg, boxShadow: ring, borderRadius: 14, padding: 16, border: 'none', cursor: 'pointer', display: 'block' }}
+              style={{ textAlign: 'left', width: '100%', background: cardBg, boxShadow: ring, borderRadius: 14, padding: 16, border: 'none', cursor: 'pointer', display: 'block' }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
                 <span style={{ color: C.text, fontSize: 15, fontWeight: 700, flex: '1 1 200px', minWidth: 0, overflowWrap: 'anywhere' }}>{a.title}</span>
@@ -194,6 +203,7 @@ interface FormProps {
 }
 
 function ArticleForm({ C, ring, articleId, authorName, onBack, onChanged }: FormProps) {
+  const cardBg = cardFill(C);
   const api = useMyArticles();
   const { uploadImage, uploading, error: uploadError } = useUpload();
   const { toast } = useToast();
@@ -352,7 +362,7 @@ function ArticleForm({ C, ring, articleId, authorName, onBack, onChanged }: Form
         <ArrowLeft size={15} /> Volver a mis artículos
       </button>
 
-      <div style={{ background: C.cardBg, boxShadow: ring, borderRadius: 16, padding: 'clamp(16px, 4vw, 24px)' }}>
+      <div style={{ background: cardBg, boxShadow: ring, borderRadius: 16, padding: 'clamp(16px, 4vw, 24px)' }}>
         {loadingArticle ? (
           <p style={{ color: C.muted, fontSize: 14, margin: 0 }}>Cargando...</p>
         ) : (
