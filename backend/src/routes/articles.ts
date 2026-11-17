@@ -213,7 +213,11 @@ router.get('/public', async (_req, res, next) => {
       });
       for (const p of profiles) if (!slugByUser.has(p.userId)) slugByUser.set(p.userId, p.slug);
     }
-    res.json(articles.map(a => ({ ...a, authorProfileSlug: a.authorUserId ? slugByUser.get(a.authorUserId) ?? null : null })));
+    // No se exponen datos internos de revision ni el id del usuario en la API publica.
+    res.json(articles.map(({ authorUserId, reviewNote, submittedAt, ...a }) => ({
+      ...a,
+      authorProfileSlug: authorUserId ? slugByUser.get(authorUserId) ?? null : null,
+    })));
   } catch (err) {
     next(err);
   }
