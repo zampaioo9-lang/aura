@@ -42,7 +42,7 @@ export default function ArticleEditor({ C, articleId, categories, onClose, onSav
       setExcerpt(a.excerpt);
       setMetaDescription(a.metaDescription || '');
       setAuthor(a.author || '');
-      setCategoryId(a.categoryId);
+      setCategoryId(a.categoryId ?? '');
       setCoverImage(a.coverImage || '');
       setFeatured(a.featured);
     }).catch(() => toast('No se pudo cargar el articulo', 'error'));

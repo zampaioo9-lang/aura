@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowUp, ArrowDown, Trash2, Plus } from 'lucide-react';
 import { useArticles, type ArticleBlock, type ArticleBlockType } from '../../hooks/useArticles';
+import { useMyArticles } from '../../hooks/useMyArticles';
 import { useUpload } from '../../hooks/useUpload';
 import { useToast } from '../Toast';
 
@@ -14,10 +15,21 @@ interface Colors {
 interface Props {
   C: Colors;
   articleId: string;
+  /** '/articles' (admin, por defecto) o '/my-articles' (terapeuta). */
+  basePath?: '/articles' | '/my-articles';
+  /** Solo lectura: oculta controles de edicion (articulo en revision o publicado). */
+  readOnly?: boolean;
 }
 
-export default function BlockEditor({ C, articleId }: Props) {
-  const { getArticle, createBlock, updateBlock, deleteBlock, swapBlockOrder } = useArticles();
+export default function BlockEditor({ C, articleId, basePath = '/articles', readOnly = false }: Props) {
+  const admin = useArticles();
+  const mine = useMyArticles();
+  const mineMode = basePath === '/my-articles';
+  const getArticle = mineMode ? mine.get : admin.getArticle;
+  const createBlock = mineMode ? mine.addBlock : admin.createBlock;
+  const updateBlock = mineMode ? mine.updateBlock : admin.updateBlock;
+  const deleteBlock = mineMode ? mine.deleteBlock : admin.deleteBlock;
+  const swapBlockOrder = mineMode ? mine.swapBlocks : admin.swapBlockOrder;
   const { uploadImage, uploading } = useUpload();
   const { toast } = useToast();
 
@@ -25,12 +37,15 @@ export default function BlockEditor({ C, articleId }: Props) {
   const [movingBlockId, setMovingBlockId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
+  // En modo terapeuta se muestra el mensaje real del backend; el admin conserva los textos de siempre.
+  const fail = (e: any, fallback: string) => toast(mineMode && e?.message ? e.message : fallback, 'error');
+
   const loadBlocks = async () => {
     try {
       const article = await getArticle(articleId);
       setBlocks(article.blocks ?? []);
-    } catch {
-      toast('No se pudieron cargar los bloques', 'error');
+    } catch (e) {
+      fail(e, 'No se pudieron cargar los bloques');
     }
   };
 
@@ -46,8 +61,8 @@ export default function BlockEditor({ C, articleId }: Props) {
       else if (type === 'BUTTON') await createBlock(articleId, { type, buttonLabel: 'Ver mas', buttonUrl: 'https://aliax.io' });
       else await createBlock(articleId, { type, imageUrl: '', imageAlt: '' }); // IMAGE needs upload before it can be saved as non-empty; see handleImageUpload below
       await loadBlocks();
-    } catch {
-      toast('No se pudo agregar el bloque', 'error');
+    } catch (e) {
+      fail(e, 'No se pudo agregar el bloque');
     } finally {
       setAdding(false);
     }
@@ -57,7 +72,7 @@ export default function BlockEditor({ C, articleId }: Props) {
     setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, text } : b));
   };
   const handleTextBlur = async (block: ArticleBlock) => {
-    try { await updateBlock(articleId, block.id, { text: block.text ?? '' }); } catch { toast('No se pudo guardar el texto', 'error'); }
+    try { await updateBlock(articleId, block.id, { text: block.text ?? '' }); } catch (e) { fail(e, 'No se pudo guardar el texto'); }
   };
 
   const handleButtonChange = (block: ArticleBlock, field: 'buttonLabel' | 'buttonUrl', value: string) => {
@@ -66,7 +81,7 @@ export default function BlockEditor({ C, articleId }: Props) {
   const handleButtonBlur = async (block: ArticleBlock) => {
     try {
       await updateBlock(articleId, block.id, { buttonLabel: block.buttonLabel ?? '', buttonUrl: block.buttonUrl ?? '' });
-    } catch { toast('No se pudo guardar el boton', 'error'); }
+    } catch (e) { fail(e, 'No se pudo guardar el boton'); }
   };
 
   const handleImageUpload = async (block: ArticleBlock, file: File) => {
@@ -75,14 +90,14 @@ export default function BlockEditor({ C, articleId }: Props) {
     try {
       const updated = await updateBlock(articleId, block.id, { imageUrl: result.url });
       setBlocks(prev => prev.map(b => b.id === block.id ? updated : b));
-    } catch { toast('No se pudo guardar la imagen', 'error'); }
+    } catch (e) { fail(e, 'No se pudo guardar la imagen'); }
   };
 
   const handleDelete = async (block: ArticleBlock) => {
     try {
       await deleteBlock(articleId, block.id);
       await loadBlocks();
-    } catch { toast('No se pudo borrar el bloque', 'error'); }
+    } catch (e) { fail(e, 'No se pudo borrar el bloque'); }
   };
 
   // swapBlockOrder does both updates in one backend transaction, so a failure can
@@ -105,8 +120,8 @@ export default function BlockEditor({ C, articleId }: Props) {
     try {
       await swapBlockOrder(articleId, block.id, swapWith.id);
       await loadBlocks();
-    } catch {
-      toast('No se pudo reordenar', 'error');
+    } catch (e) {
+      fail(e, 'No se pudo reordenar');
       await loadBlocks();
     } finally {
       setMovingBlockId(null);
@@ -123,7 +138,7 @@ export default function BlockEditor({ C, articleId }: Props) {
             <span style={{ fontSize: 11, fontWeight: 600, color: C.textFaint, textTransform: 'uppercase' }}>
               {block.type === 'TEXT' ? 'Texto' : block.type === 'SUBTITLE' ? 'Subtitulo' : block.type === 'BULLET_LIST' ? 'Lista' : block.type === 'IMAGE' ? 'Imagen' : 'Boton'}
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            {!readOnly && <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <button aria-label="Mover arriba" disabled={i === 0 || !!movingBlockId} onClick={() => moveBlock(block, 'up')} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, opacity: (i === 0 || !!movingBlockId) ? 0.3 : 1 }}>
                 <ArrowUp size={14} />
               </button>
@@ -133,7 +148,7 @@ export default function BlockEditor({ C, articleId }: Props) {
               <button onClick={() => handleDelete(block)} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}>
                 <Trash2 size={14} />
               </button>
-            </div>
+            </div>}
           </div>
 
           {block.type === 'TEXT' && (
@@ -142,6 +157,7 @@ export default function BlockEditor({ C, articleId }: Props) {
               value={block.text ?? ''}
               onChange={(e) => handleTextChange(block, e.target.value)}
               onBlur={() => handleTextBlur(block)}
+              readOnly={readOnly}
             />
           )}
 
@@ -151,6 +167,7 @@ export default function BlockEditor({ C, articleId }: Props) {
               value={block.text ?? ''}
               onChange={(e) => handleTextChange(block, e.target.value)}
               onBlur={() => handleTextBlur(block)}
+              readOnly={readOnly}
             />
           )}
 
@@ -161,6 +178,7 @@ export default function BlockEditor({ C, articleId }: Props) {
                 value={block.text ?? ''}
                 onChange={(e) => handleTextChange(block, e.target.value)}
                 onBlur={() => handleTextBlur(block)}
+              readOnly={readOnly}
               />
               <p style={{ fontSize: 11, color: C.textFaint, marginTop: 4 }}>Un punto por linea</p>
             </div>
@@ -168,7 +186,7 @@ export default function BlockEditor({ C, articleId }: Props) {
 
           {block.type === 'IMAGE' && (
             <div>
-              <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleImageUpload(block, e.target.files[0])} />
+              {!readOnly && <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleImageUpload(block, e.target.files[0])} />}
               {uploading && <p style={{ fontSize: 12, color: C.textFaint, marginTop: 4 }}>Subiendo...</p>}
               {block.imageUrl && <img src={block.imageUrl} alt="" style={{ width: 128, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
             </div>
@@ -182,6 +200,7 @@ export default function BlockEditor({ C, articleId }: Props) {
                 value={block.buttonLabel ?? ''}
                 onChange={(e) => handleButtonChange(block, 'buttonLabel', e.target.value)}
                 onBlur={() => handleButtonBlur(block)}
+                readOnly={readOnly}
               />
               <input
                 style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.inputBorder}`, background: C.inputBg, color: C.text, fontSize: 14, outline: 'none' }}
@@ -189,13 +208,14 @@ export default function BlockEditor({ C, articleId }: Props) {
                 value={block.buttonUrl ?? ''}
                 onChange={(e) => handleButtonChange(block, 'buttonUrl', e.target.value)}
                 onBlur={() => handleButtonBlur(block)}
+                readOnly={readOnly}
               />
             </div>
           )}
         </div>
       ))}
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+      {!readOnly && <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
         <button disabled={adding} onClick={() => handleAddBlock('TEXT')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: adding ? 'not-allowed' : 'pointer', opacity: adding ? 0.5 : 1 }}>
           <Plus size={13} /> Texto
         </button>
@@ -211,7 +231,7 @@ export default function BlockEditor({ C, articleId }: Props) {
         <button disabled={adding} onClick={() => handleAddBlock('BUTTON')} style={{ padding: '7px 12px', background: C.tableRowAlt, color: C.textMuted, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, cursor: adding ? 'not-allowed' : 'pointer', opacity: adding ? 0.5 : 1 }}>
           <Plus size={13} /> Boton
         </button>
-      </div>
+      </div>}
     </div>
   );
 }

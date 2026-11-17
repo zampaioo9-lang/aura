@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import api from '../api/client';
 
 export type CategoryAudience = 'PACIENTES' | 'TERAPEUTAS';
-export type ArticleStatus = 'DRAFT' | 'PUBLISHED';
+export type ArticleStatus = 'DRAFT' | 'PENDING_REVIEW' | 'CHANGES_REQUESTED' | 'PUBLISHED';
 export type ArticleBlockType = 'TEXT' | 'IMAGE' | 'BUTTON' | 'SUBTITLE' | 'BULLET_LIST';
 
 export interface Category {
@@ -33,8 +33,12 @@ export interface Article {
   excerpt: string;
   metaDescription: string | null;
   author: string | null;
-  categoryId: string;
+  categoryId: string | null;
   category?: Category;
+  authorUserId?: string | null;
+  reviewNote?: string | null;
+  submittedAt?: string | null;
+  authorUser?: { id: string; name: string; email: string } | null;
   coverImage: string | null;
   featured: boolean;
   status: ArticleStatus;

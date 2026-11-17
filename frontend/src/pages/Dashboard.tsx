@@ -7,13 +7,14 @@ import {
   Plus, LogOut, Calendar, Clock,
   CalendarDays, Facebook, Instagram, Linkedin, MessageCircle,
   Home, Star, Briefcase, Pencil, Camera,
-  Sun, Moon, Copy, ExternalLink, Users, GraduationCap,
+  Sun, Moon, Copy, ExternalLink, Users, GraduationCap, PenLine,
 } from 'lucide-react';
 import { SchedulingPanel } from './SchedulingConfig';
 import AccountSettings from './AccountSettings';
 import ProGate from '../components/ProGate';
 import Pacientes from './Pacientes';
 import TalleresCursos from './TalleresCursos';
+import MyArticles from '../components/articles/MyArticles';
 import { useUpload } from '../hooks/useUpload';
 import { useToast } from '../components/Toast';
 import { formatCurrency } from '../lib/utils';
@@ -65,7 +66,7 @@ interface Booking {
 }
 
 
-type Tab = 'inicio' | 'citas' | 'resenas' | 'agenda' | 'cuenta' | 'pacientes' | 'talleres';
+type Tab = 'inicio' | 'citas' | 'resenas' | 'agenda' | 'cuenta' | 'pacientes' | 'talleres' | 'articulos';
 type MobileSection = 'perfil' | Tab;
 
 interface Colors {
@@ -353,6 +354,7 @@ export default function Dashboard() {
     { id: 'agenda',     label: 'Configurar Agenda', icon: <CalendarDays className="h-4 w-4" /> },
     { id: 'pacientes',  label: 'Pacientes',          icon: <Users className="h-4 w-4" /> },
     { id: 'talleres',   label: 'Talleres y Cursos',  icon: <GraduationCap className="h-4 w-4" /> },
+    { id: 'articulos',  label: 'Mis artículos',      icon: <PenLine className="h-4 w-4" /> },
     { id: 'citas',      label: 'Mis Citas',         icon: <Calendar className="h-4 w-4" /> },
     { id: 'resenas',    label: 'Reseñas',            icon: <Star className="h-4 w-4" /> },
   ];
@@ -757,6 +759,11 @@ export default function Dashboard() {
                 <TalleresCursos C={C} isActive={mobileSection === 'talleres'} isPro={isPro ?? false} />
               </div>
             )}
+            {visitedMobile.has('articulos') && (
+              <div style={{ display: mobileSection === 'articulos' ? undefined : 'none' }}>
+                <MyArticles C={C} isActive={mobileSection === 'articulos'} isPro={isPro ?? false} authorName={user?.name} />
+              </div>
+            )}
             <div className="mt-10 text-center" style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
               <Link to="/pricing" className="text-xs" style={{ color: 'rgb(45,212,191)' }}>Ver planes</Link>
               {user?.isAdmin && (
@@ -818,6 +825,7 @@ export default function Dashboard() {
             { section: 'agenda'    as const, label: 'Agenda',    icon: <CalendarDays className="h-6 w-6" /> },
             { section: 'pacientes' as const, label: 'Pacientes', icon: <Users className="h-6 w-6" /> },
             { section: 'talleres'  as const, label: 'Talleres',  icon: <GraduationCap className="h-6 w-6" /> },
+            { section: 'articulos' as const, label: 'Artículos', icon: <PenLine className="h-6 w-6" /> },
           ]).map(({ section, label, icon }) => {
             const isActive = mobileSection === section;
             return (
@@ -1056,6 +1064,11 @@ export default function Dashboard() {
             {visitedTabs.has('talleres') && (
               <div style={{ display: activeTab === 'talleres' ? undefined : 'none' }}>
                 <TalleresCursos C={C} isActive={activeTab === 'talleres'} isPro={isPro ?? false} />
+              </div>
+            )}
+            {visitedTabs.has('articulos') && (
+              <div style={{ display: activeTab === 'articulos' ? undefined : 'none' }}>
+                <MyArticles C={C} isActive={activeTab === 'articulos'} isPro={isPro ?? false} authorName={user?.name} />
               </div>
             )}
           </div>
