@@ -103,6 +103,15 @@ function ctaButton(text: string, url: string): string {
   </div>`;
 }
 
+function escapeHtml(text: string): string {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── Send ───────────────────────────────────────────────────────────
 
 export async function sendEmail(
@@ -447,6 +456,49 @@ export const emailTemplates = {
       `),
     };
   },
+
+  // Admin: un terapeuta envio un articulo a revision
+  articleSubmittedAdmin: (data: { authorName: string; title: string }) => ({
+    to: env.ADMIN_EMAIL,
+    subject: `Nuevo artículo por revisar: ${data.title}`,
+    html: baseTemplate('Nuevo artículo por revisar', `
+      ${heading(`${escapeHtml(data.authorName)} envió un artículo a revisión`)}
+      ${subtext('Hay un artículo nuevo esperando tu revisión en la Revista.')}
+      <div style="margin-top:20px;padding:16px;background:#f5f3ff;border-radius:8px;">
+        <p style="margin:0;color:#18181b;font-size:15px;font-weight:600;">${escapeHtml(data.title)}</p>
+      </div>
+      ${ctaButton('Revisar artículo', 'https://www.aliax.io/admin')}
+    `),
+  }),
+
+  // Terapeuta: su articulo fue aprobado y publicado
+  articleApproved: (data: { userName: string; userEmail: string; title: string; slug: string }) => ({
+    to: data.userEmail,
+    subject: 'Tu artículo fue aprobado',
+    html: baseTemplate('Tu artículo fue aprobado', `
+      ${heading(`¡Felicidades, ${escapeHtml(data.userName)}!`)}
+      ${subtext('Tu artículo ya está aprobado y aparecerá en la Revista en unos minutos.')}
+      <div style="margin-top:20px;padding:16px;background:#f0fdf4;border-radius:8px;">
+        <p style="margin:0;color:#18181b;font-size:15px;font-weight:600;">${escapeHtml(data.title)}</p>
+      </div>
+      ${ctaButton('Ver en la Revista', `https://www.aliax.io/revista/${encodeURIComponent(data.slug)}`)}
+    `),
+  }),
+
+  // Terapeuta: el admin pidio cambios en su articulo
+  articleChangesRequested: (data: { userName: string; userEmail: string; title: string; note: string }) => ({
+    to: data.userEmail,
+    subject: 'Hay cambios por hacer en tu artículo',
+    html: baseTemplate('Cambios por hacer en tu artículo', `
+      ${heading(`Hola ${escapeHtml(data.userName)}`)}
+      ${subtext(`Revisamos tu artículo "${escapeHtml(data.title)}" y hay algunos cambios por hacer antes de publicarlo:`)}
+      <div style="margin-top:20px;padding:16px;background:#f5f3ff;border-radius:8px;">
+        <p style="margin:0;color:#18181b;font-size:14px;line-height:1.6;white-space:pre-wrap;">${escapeHtml(data.note)}</p>
+      </div>
+      ${subtext('Puedes editar tu artículo y volver a enviarlo cuando esté listo.')}
+      ${ctaButton('Editar mi artículo', 'https://www.aliax.io/dashboard')}
+    `),
+  }),
 
   // Admin: nuevo usuario registrado
   adminNewUser: (data: {
