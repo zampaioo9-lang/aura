@@ -44,7 +44,7 @@ function statusColors(status: ArticleStatus, isDark: boolean): { bg: string; fg:
 
 // Caja de artículos: en claro lleva el borde del color del tema; en oscuro se tiñe con el color del tema, translúcido.
 function cardRing(C: Colors): string {
-  return C.isDark ? '0 0 0 1px rgba(255,255,255,0.08)' : `0 0 0 1.5px ${C.accent}`;
+  return C.isDark ? '0 0 0 1px rgba(255,255,255,0.08)' : `0 0 0 1px ${C.border}${C.cardShadow ? ", " + C.cardShadow : ""}`;
 }
 function cardFill(C: Colors): string {
   return C.isDark ? `color-mix(in srgb, ${C.accent} 14%, transparent)` : C.cardBg;
