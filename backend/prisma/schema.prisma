@@ -8,6 +8,7 @@ datasource db {
 }
 
 model User {
+  articles             Article[] @relation("ArticleAuthor")
   id                   String    @id @default(cuid())
   email                String    @unique
   password             String
@@ -789,7 +790,10 @@ model Article {
   excerpt         String
   metaDescription String?
   author          String?
-  categoryId      String
+  categoryId      String?
+  authorUserId    String?
+  reviewNote      String?
+  submittedAt     DateTime?
   coverImage      String?
   featured        Boolean       @default(false)
   status          ArticleStatus @default(DRAFT)
@@ -797,15 +801,19 @@ model Article {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  category Category       @relation(fields: [categoryId], references: [id])
+  category   Category?      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  authorUser User?          @relation("ArticleAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
   blocks   ArticleBlock[]
 
   @@index([categoryId])
+  @@index([authorUserId])
   @@index([status])
 }
 
 enum ArticleStatus {
   DRAFT
+  PENDING_REVIEW
+  CHANGES_REQUESTED
   PUBLISHED
 }
 
