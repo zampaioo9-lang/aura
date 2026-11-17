@@ -216,7 +216,7 @@ function renderSubscribeBand(): string {
 </script>`;
 }
 
-function renderTherapistCTA(): string {
+function renderPatientCTA(): string {
   return `<div style="background:linear-gradient(135deg,rgba(45,212,191,0.08),rgba(13,148,136,0.04));border-radius:20px;padding:32px;text-align:center;margin:40px 0">
   <h3 style="font-size:20px;margin:0 0 8px">¿Quieres hablar con un profesional?</h3>
   <p style="font-size:16px;font-weight:500;color:#3f3f46;margin:0 0 20px">Explora psicologos verificados en Aliax y agenda tu primera sesion.</p>
@@ -387,7 +387,10 @@ ${renderPillsScript()}`;
 
 function generateArticlePage(a: Article, allArticles: Article[]): string {
   const renderedBlocks = a.blocks.map(renderBlock);
-  renderedBlocks.splice(Math.floor(a.blocks.length / 2), 0, renderTherapistCTA());
+  // El bloque invita a buscar psicologo: solo tiene sentido en articulos para pacientes
+  if (a.category.audience === 'PACIENTES') {
+    renderedBlocks.splice(Math.floor(a.blocks.length / 2), 0, renderPatientCTA());
+  }
   const blocksHtml = renderedBlocks.join('\n');
   const related = relatedArticles(allArticles, a);
 
