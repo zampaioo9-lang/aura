@@ -1,6 +1,6 @@
 import {
-  Mic, Sparkles, FileText, CalendarClock, BellRing,
-  Users, Link2, Palette, BarChart3, Search, UsersRound,
+  Mic, Sparkles, FileText, CalendarClock,
+  Users, Link2, BarChart3, Search, UsersRound, GraduationCap, PenLine,
 } from 'lucide-react';
 
 interface Props {
@@ -10,16 +10,16 @@ interface Props {
 const c01 = (v: number) => Math.max(0, Math.min(1, v));
 
 const FEATURES = [
-  { icon: Search,        title: 'Matching inteligente',        desc: 'Encuentra al profesional ideal por enfoque y necesidad.', color: '#f97316' },
+  { icon: Search,        title: 'Matching inteligente',        desc: 'Te muestra a quienes buscan tu enfoque.', color: '#f97316' },
   { icon: Sparkles,       title: 'Notas con IA, en el formato que prefieras', desc: 'SOAP, Libre, Diamante TBCS y más, generadas por IA. Elige el que se adapte a tu estilo.', color: '#a78bfa' },
   { icon: FileText,       title: 'Historia Clínica',            desc: 'Expediente digital individual y de pareja.',              color: '#60a5fa' },
-  { icon: CalendarClock,  title: 'Agenda y reservas',           desc: 'Tus pacientes reservan en línea, sin comisiones.',         color: '#34d399' },
-  { icon: BellRing,       title: 'Recordatorios automáticos',   desc: 'Recordatorios por correo electrónico antes de cada sesión.',                  color: '#fbbf24' },
+  { icon: CalendarClock,  title: 'Agenda y recordatorios',      desc: 'Tus pacientes reservan en línea, sin comisiones, y reciben recordatorios por correo.', color: '#34d399' },
   { icon: Users,          title: 'Directorio verificado',       desc: 'Aparece por especialidad, ciudad y modalidad.',            color: '#22d3ee' },
-  { icon: Link2,          title: 'Enlace personalizado',        desc: 'Tu propia página: aliax.io/tu-nombre.',                    color: '#c084fc' },
-  { icon: Palette,        title: 'Templates y colores',         desc: 'Varias plantillas y colores para tu perfil.',              color: '#f87171' },
+  { icon: Link2,          title: 'Tu página profesional',       desc: 'Enlace propio (aliax.io/tu-nombre), plantillas y colores.', color: '#c084fc' },
   { icon: BarChart3,      title: 'Analytics',                   desc: 'Ingresos, clientes y progreso clínico.',                   color: '#4ade80' },
   { icon: UsersRound, title: 'Comunidad de terapeutas', desc: 'Reunión mensual en vivo para reflexionar y revisar casos con colegas.', color: '#2dd4bf' },
+  { icon: GraduationCap, title: 'Ingresos más allá de la consulta', desc: 'Vende cursos, talleres y webinars desde tu perfil, sin comisión de Aliax.', color: '#fbbf24' },
+  { icon: PenLine, title: 'Escribe en la Revista Aliax', desc: 'Propón tus artículos: se publican con tu firma y enlace a tu perfil.', color: '#f472b6' },
 ];
 
 export default function ThirdScreen({ lerpedProgress }: Props) {
