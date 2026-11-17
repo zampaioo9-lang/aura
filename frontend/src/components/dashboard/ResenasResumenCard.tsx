@@ -66,19 +66,19 @@ export default function ResenasResumenCard({ C, isPro, onOpen }: ResenasResumenC
   let body: React.ReactNode;
   if (!isPro) {
     body = (
-      <p style={{ fontSize: 12, color: C.muted, margin: 0, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 13, color: C.muted, margin: 0, lineHeight: 1.5 }}>
         Con el plan Pro, tus pacientes reciben un email al completar su cita para dejar una reseña verificada en tu perfil.
       </p>
     );
   } else if (loading) {
-    body = <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>Cargando…</p>;
+    body = <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Cargando…</p>;
   } else if (reviews.length === 0) {
     body = (
       <>
-        <p style={{ fontSize: 13, fontWeight: 600, color: C.isDark ? 'white' : C.text, margin: '0 0 4px' }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: C.isDark ? 'white' : C.text, margin: '0 0 4px' }}>
           Aún no hay reseñas registradas
         </p>
-        <p style={{ fontSize: 12, color: C.muted, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 13, color: C.muted, margin: 0, lineHeight: 1.5 }}>
           Cuando marques una cita como completada, tu paciente recibirá un email para dejar su reseña.
         </p>
       </>
@@ -89,7 +89,7 @@ export default function ResenasResumenCard({ C, isPro, onOpen }: ResenasResumenC
         {averageRating !== null && (
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: latest?.comment ? 8 : 0 }}>
             <span style={{ fontSize: 20, fontWeight: 700, color: C.isDark ? 'white' : C.text }}>{averageRating}</span>
-            <span style={{ fontSize: 12, color: C.muted }}>
+            <span style={{ fontSize: 13, color: C.muted }}>
               ({visibles} reseña{visibles !== 1 ? 's' : ''} visible{visibles !== 1 ? 's' : ''})
             </span>
           </div>
@@ -102,7 +102,7 @@ export default function ResenasResumenCard({ C, isPro, onOpen }: ResenasResumenC
               ))}
             </div>
             <p style={{
-              fontSize: 12, color: C.muted, margin: 0, fontStyle: 'italic', lineHeight: 1.5,
+              fontSize: 13, color: C.muted, margin: 0, fontStyle: 'italic', lineHeight: 1.5,
               display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
             }}>
               "{latest.comment}"
@@ -120,8 +120,8 @@ export default function ResenasResumenCard({ C, isPro, onOpen }: ResenasResumenC
           <Star style={{ width: 14, height: 14, color: '#2dd4bf' }} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: C.isDark ? 'white' : C.text, margin: 0 }}>Reseñas</p>
-          <p style={{ fontSize: 11, color: C.muted, margin: 0 }}>Lo que dicen tus pacientes sobre ti.</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: C.isDark ? 'white' : C.text, margin: 0 }}>Reseñas</p>
+          <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Lo que dicen tus pacientes sobre ti.</p>
         </div>
         <ChevronRight style={{ width: 16, height: 16, color: C.accent, flexShrink: 0 }} />
       </div>

@@ -15,9 +15,12 @@ interface RevistaSubscribeCardProps {
   name: string;
   email: string;
   newsletterSubscribed?: boolean;
+  /** En movil los textos suben un poco */
+  large?: boolean;
 }
 
-export default function RevistaSubscribeCard({ C, name, email, newsletterSubscribed }: RevistaSubscribeCardProps) {
+export default function RevistaSubscribeCard({ C, name, email, newsletterSubscribed, large = false }: RevistaSubscribeCardProps) {
+  const fs = (n: number) => (large ? n + (n <= 11 ? 2 : 1) : n);
   const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
@@ -54,11 +57,11 @@ export default function RevistaSubscribeCard({ C, name, email, newsletterSubscri
       <div style={cardStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
           <CheckCircle style={{ width: 16, height: 16, color: C.accent, flexShrink: 0 }} />
-          <p style={{ fontSize: 13, fontWeight: 700, color: C.isDark ? 'white' : C.text, margin: 0 }}>
+          <p style={{ fontSize: fs(13), fontWeight: 700, color: C.isDark ? 'white' : C.text, margin: 0 }}>
             Ya estás suscrito a Revista Aliax
           </p>
         </div>
-        <a href="/revista" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: C.accent, textDecoration: 'none' }}>
+        <a href="/revista" target="_blank" rel="noopener noreferrer" style={{ fontSize: fs(12), color: C.accent, textDecoration: 'none' }}>
           Ver la Revista →
         </a>
       </div>
@@ -69,21 +72,21 @@ export default function RevistaSubscribeCard({ C, name, email, newsletterSubscri
     <div style={cardStyle}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
         <Mail style={{ width: 16, height: 16, color: C.accent, flexShrink: 0 }} />
-        <p style={{ fontSize: 13, fontWeight: 700, color: C.isDark ? 'white' : C.text, margin: 0 }}>
+        <p style={{ fontSize: fs(13), fontWeight: 700, color: C.isDark ? 'white' : C.text, margin: 0 }}>
           Suscríbete a Revista Aliax
         </p>
       </div>
-      <p style={{ fontSize: 11, color: C.muted, margin: '0 0 10px' }}>
+      <p style={{ fontSize: fs(11), color: C.muted, margin: '0 0 10px' }}>
         Recibe los artículos nuevos y compártelos con tus pacientes.
       </p>
 
       {status === 'sent' ? (
-        <p style={{ fontSize: 12, color: C.accent, margin: 0 }}>
+        <p style={{ fontSize: fs(12), color: C.accent, margin: 0 }}>
           Revisa tu correo ({email}) para confirmar tu suscripción.
         </p>
       ) : (
         <>
-          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: 11, color: C.muted, marginBottom: 10, cursor: 'pointer' }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: fs(11), color: C.muted, marginBottom: 10, cursor: 'pointer' }}>
             <input
               type="checkbox"
               checked={consent}
@@ -101,7 +104,7 @@ export default function RevistaSubscribeCard({ C, name, email, newsletterSubscri
             style={{
               width: '100%', padding: '8px 0', borderRadius: 8, border: 'none',
               background: `linear-gradient(135deg, ${C.accent}, #2dd4bf)`,
-              color: 'white', fontSize: 12, fontWeight: 600,
+              color: 'white', fontSize: fs(12), fontWeight: 600,
               cursor: consent ? 'pointer' : 'not-allowed',
               opacity: consent && status !== 'sending' ? 1 : 0.5,
             }}
@@ -109,7 +112,7 @@ export default function RevistaSubscribeCard({ C, name, email, newsletterSubscri
             {status === 'sending' ? 'Enviando...' : 'Suscribirme'}
           </button>
           {status === 'error' && (
-            <p style={{ fontSize: 11, color: '#dc2626', margin: '6px 0 0' }}>{errorMsg}</p>
+            <p style={{ fontSize: fs(11), color: '#dc2626', margin: '6px 0 0' }}>{errorMsg}</p>
           )}
         </>
       )}

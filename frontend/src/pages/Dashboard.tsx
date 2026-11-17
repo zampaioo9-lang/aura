@@ -732,6 +732,7 @@ export default function Dashboard() {
                   profiles={profiles}
                   C={C}
                   onGoToAgenda={() => goMobile('agenda')}
+                  defaultView="lista"
                 />
               </div>
             )}
@@ -1135,6 +1136,8 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
   onGoToReviews?: () => void;
 }) {
   const totalServices = profiles.reduce((sum, p) => sum + p.services.length, 0);
+  /* En movil (una columna) los textos chicos suben un poco para leerse mejor */
+  const fs = (n: number) => (twoCol ? n : n + (n <= 11 ? 2 : 1));
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [agendaConfigured, setAgendaConfigured] = useState<boolean | null>(null);
   const hasUnpublished = profiles.length > 0 && profiles.some(p => !p.published);
@@ -1161,22 +1164,22 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
 
   const statsGrid = (
     <div className="grid grid-cols-2 gap-4">
-      <StatCard label="Reservas"    value={bookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED').length} sub="pendientes y confirmadas" color="indigo"  isDark={C.isDark} shadow={C.cardShadow} />
-      <StatCard label="Completadas" value={bookings.filter(b => b.status === 'COMPLETED').length}                           sub="reservas completadas"      color="emerald" isDark={C.isDark} shadow={C.cardShadow} />
-      <StatCard label="Servicios"   value={totalServices}                                                                   sub="en todos tus perfiles"     color="amber"   isDark={C.isDark} shadow={C.cardShadow} />
-      <StatCard label="Perfiles"    value={profiles.length}                                                                 sub="perfiles profesionales"    color="violet"  isDark={C.isDark} shadow={C.cardShadow} />
+      <StatCard large={!twoCol} label="Reservas" value={bookings.filter(b => b.status === 'PENDING' || b.status === 'CONFIRMED').length} sub="pendientes y confirmadas" color="indigo"  isDark={C.isDark} shadow={C.cardShadow} />
+      <StatCard large={!twoCol} label="Completadas" value={bookings.filter(b => b.status === 'COMPLETED').length}                           sub="reservas completadas"      color="emerald" isDark={C.isDark} shadow={C.cardShadow} />
+      <StatCard large={!twoCol} label="Servicios" value={totalServices}                                                                   sub="en todos tus perfiles"     color="amber"   isDark={C.isDark} shadow={C.cardShadow} />
+      <StatCard large={!twoCol} label="Perfiles" value={profiles.length}                                                                 sub="perfiles profesionales"    color="violet"  isDark={C.isDark} shadow={C.cardShadow} />
     </div>
   );
 
   const analyticsBlock = (
     <div style={{ marginTop: 16 }}>
       {dashStatsError && (
-        <div style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: 16 }}>
+        <div style={{ color: C.muted, fontSize: fs(13), textAlign: 'center', padding: 16 }}>
           No se pudo cargar Analytics.
         </div>
       )}
       {!dashStats && !dashStatsError && (
-        <div style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: 16 }}>
+        <div style={{ color: C.muted, fontSize: fs(13), textAlign: 'center', padding: 16 }}>
           Cargando…
         </div>
       )}
@@ -1199,9 +1202,9 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <h3 style={{ color: C.text, fontSize: 18, fontWeight: 700, margin: 0 }}>Analytics</h3>
               {isPro ? (
-                <span style={{ fontSize: 11, fontWeight: 600, color: '#10b981', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20, padding: '2px 8px' }}>Pro</span>
+                <span style={{ fontSize: fs(11), fontWeight: 600, color: '#10b981', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20, padding: '2px 8px' }}>Pro</span>
               ) : (
-                <Link to="/pricing" style={{ fontSize: 11, color: C.accent, textDecoration: 'none', background: C.accentLight, border: `1px solid ${C.accent}44`, borderRadius: 20, padding: '2px 8px' }}>Ver todo con Pro →</Link>
+                <Link to="/pricing" style={{ fontSize: fs(11), color: C.accent, textDecoration: 'none', background: C.accentLight, border: `1px solid ${C.accent}44`, borderRadius: 20, padding: '2px 8px' }}>Ver todo con Pro →</Link>
               )}
             </div>
           </div>
@@ -1209,7 +1212,7 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
           {/* ── Ingresos ── */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>💰 Ingresos</span>
+              <span style={{ fontSize: fs(11), fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.6px' }}>💰 Ingresos</span>
               <div style={{ display: 'flex', gap: 4 }}>
                 {(['week', 'month', 'year'] as AnalyticsPeriod[]).map(p => {
                   const label = p === 'week' ? 'Semana' : p === 'month' ? 'Mes' : 'Año';
@@ -1221,7 +1224,7 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
                       onClick={() => canUse && onPeriodChange(p)}
                       title={!canUse ? 'Requiere Pro' : undefined}
                       style={{
-                        padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                        padding: '3px 10px', borderRadius: 6, fontSize: fs(11), fontWeight: 600,
                         border: `1px solid ${isActive ? C.accent : C.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'}`,
                         background: isActive ? C.accent : 'transparent',
                         color: isActive ? '#fff' : canUse ? C.muted : C.isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
@@ -1240,11 +1243,11 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
                 <div style={{ color: C.text, fontSize: 22, fontWeight: 800 }}>
                   {dashStats.income.currency} {dashStats.income.total.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </div>
-                <div style={{ color: C.muted, fontSize: 11, marginTop: 2 }}>total del período</div>
+                <div style={{ color: C.muted, fontSize: fs(11), marginTop: 2 }}>total del período</div>
               </div>
               <div style={{ background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '12px 14px' }}>
                 <div style={{ color: C.text, fontSize: 22, fontWeight: 800 }}>{dashStats.income.completedSessions}</div>
-                <div style={{ color: C.muted, fontSize: 11, marginTop: 2 }}>sesiones completadas</div>
+                <div style={{ color: C.muted, fontSize: fs(11), marginTop: 2 }}>sesiones completadas</div>
               </div>
             </div>
           </div>
@@ -1254,7 +1257,7 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
 
           {/* ── Clientes ── */}
           <div style={{ marginBottom: 20 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.6px', display: 'block', marginBottom: 10 }}>👥 Clientes</span>
+            <span style={{ fontSize: fs(11), fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.6px', display: 'block', marginBottom: 10 }}>👥 Clientes</span>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
               {[
                 { label: 'activos', value: dashStats.clients.active, sub: 'últimos 15 días', pro: false },
@@ -1269,11 +1272,11 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
                   position: 'relative',
                 }}>
                   {pro && !isPro && (
-                    <span style={{ position: 'absolute', top: 6, right: 8, fontSize: 10 }}>🔒</span>
+                    <span style={{ position: 'absolute', top: 6, right: 8, fontSize: fs(10) }}>🔒</span>
                   )}
                   <div style={{ color: C.text, fontSize: 20, fontWeight: 800 }}>{value}</div>
-                  <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>{label}</div>
-                  <div style={{ color: C.muted, fontSize: 10, opacity: 0.7 }}>{sub}</div>
+                  <div style={{ color: C.muted, fontSize: fs(10), marginTop: 2 }}>{label}</div>
+                  <div style={{ color: C.muted, fontSize: fs(10), opacity: 0.7 }}>{sub}</div>
                 </div>
               ))}
             </div>
@@ -1284,12 +1287,12 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
 
           {/* ── Agenda ── */}
           <div style={{ marginBottom: 20 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.6px', display: 'block', marginBottom: 10 }}>📅 Agenda</span>
+            <span style={{ fontSize: fs(11), fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.6px', display: 'block', marginBottom: 10 }}>📅 Agenda</span>
             <div style={{ background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '12px 14px', marginBottom: 8 }}>
               <span style={{ color: C.text, fontSize: 15, fontWeight: 700 }}>
                 {dashStats.agenda.sessionsThisWeek} sesiones
               </span>
-              <span style={{ color: C.muted, fontSize: 13 }}>
+              <span style={{ color: C.muted, fontSize: fs(13) }}>
                 {' '}de {dashStats.agenda.slotsThisWeek > 0 ? dashStats.agenda.slotsThisWeek : '—'} slots esta semana
               </span>
             </div>
@@ -1297,22 +1300,22 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
               <div style={{ display: 'flex', gap: 8 }}>
                 <div style={{ flex: 1, background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
                   <div style={{ color: '#10b981', fontSize: 18, fontWeight: 800 }}>{dashStats.agenda.cancelledWithNotice ?? 0}</div>
-                  <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>cancel. con aviso</div>
+                  <div style={{ color: C.muted, fontSize: fs(10), marginTop: 2 }}>cancel. con aviso</div>
                 </div>
                 <div style={{ flex: 1, background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
                   <div style={{ color: '#ef4444', fontSize: 18, fontWeight: 800 }}>{dashStats.agenda.cancelledWithoutNotice ?? 0}</div>
-                  <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>sin aviso / no-show</div>
+                  <div style={{ color: C.muted, fontSize: fs(10), marginTop: 2 }}>sin aviso / no-show</div>
                 </div>
               </div>
             ) : (
               <div style={{ opacity: 0.4, display: 'flex', gap: 8 }}>
                 <div style={{ flex: 1, background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
                   <div style={{ color: C.muted, fontSize: 18, fontWeight: 800 }}>🔒</div>
-                  <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>cancel. con aviso</div>
+                  <div style={{ color: C.muted, fontSize: fs(10), marginTop: 2 }}>cancel. con aviso</div>
                 </div>
                 <div style={{ flex: 1, background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
                   <div style={{ color: C.muted, fontSize: 18, fontWeight: 800 }}>🔒</div>
-                  <div style={{ color: C.muted, fontSize: 10, marginTop: 2 }}>sin aviso / no-show</div>
+                  <div style={{ color: C.muted, fontSize: fs(10), marginTop: 2 }}>sin aviso / no-show</div>
                 </div>
               </div>
             )}
@@ -1323,21 +1326,21 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
             <>
               <div style={{ height: 1, background: C.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)', marginBottom: 20 }} />
               <div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.6px', display: 'block', marginBottom: 10 }}>📈 Progreso Clínico</span>
+                <span style={{ fontSize: fs(11), fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.6px', display: 'block', marginBottom: 10 }}>📈 Progreso Clínico</span>
                 {dashStats.clinical.clientsWithScale > 0 ? (
                   <div style={{ background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '14px 16px' }}>
                     <span style={{ color: C.accent, fontSize: 28, fontWeight: 800 }}>
                       {dashStats.clinical.improvedScalePercent ?? 0}%
                     </span>
-                    <span style={{ color: C.muted, fontSize: 13, marginLeft: 8 }}>
+                    <span style={{ color: C.muted, fontSize: fs(13), marginLeft: 8 }}>
                       de pacientes mejoraron su escala
                     </span>
-                    <div style={{ color: C.muted, fontSize: 11, marginTop: 4 }}>
+                    <div style={{ color: C.muted, fontSize: fs(11), marginTop: 4 }}>
                       Base: {dashStats.clinical.clientsWithScale} pacientes con 2+ notas NECS/Diamante
                     </div>
                   </div>
                 ) : (
-                  <div style={{ background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '14px 16px', color: C.muted, fontSize: 13 }}>
+                  <div style={{ background: C.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '14px 16px', color: C.muted, fontSize: fs(13) }}>
                     Aún no hay suficientes notas NECS/Diamante para calcular el progreso.
                   </div>
                 )}
@@ -1357,7 +1360,7 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
       borderRadius: 16, padding: '18px 20px',
       backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
     }}>
-      <p style={{ color: C.text, fontWeight: 700, fontSize: 14, margin: '0 0 14px' }}>
+      <p style={{ color: C.text, fontWeight: 700, fontSize: fs(14), margin: '0 0 14px' }}>
         Completa tu configuración
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1394,10 +1397,10 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
               background: done ? `rgba(${_r},${_g},${_b},0.2)` : C.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
               border: `1.5px solid ${done ? `rgba(${_r},${_g},${_b},0.6)` : C.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'}`,
             }}>
-              {done && <span style={{ color: `rgb(${_r},${_g},${_b})`, fontSize: 12, fontWeight: 700 }}>✓</span>}
+              {done && <span style={{ color: `rgb(${_r},${_g},${_b})`, fontSize: fs(12), fontWeight: 700 }}>✓</span>}
             </div>
             <span style={{
-              flex: 1, fontSize: 13, color: done ? C.muted : C.text,
+              flex: 1, fontSize: fs(13), color: done ? C.muted : C.text,
               textDecoration: done ? 'line-through' : 'none', opacity: done ? 0.6 : 1,
             }}>
               {label}
@@ -1407,7 +1410,7 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
                 flexShrink: 0, background: `rgba(${_r},${_g},${_b},0.15)`,
                 border: `1px solid rgba(${_r},${_g},${_b},0.4)`,
                 color: `rgb(${_r},${_g},${_b})`,
-                borderRadius: 8, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                borderRadius: 8, padding: '5px 12px', fontSize: fs(12), fontWeight: 600, cursor: 'pointer',
               }}>
                 {btnLabel}
               </button>
@@ -1432,10 +1435,10 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
     }}>
       <span style={{ fontSize: 26, flexShrink: 0 }}>👁️</span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ color: C.accent, fontWeight: 700, fontSize: 14, margin: 0 }}>
+        <p style={{ color: C.accent, fontWeight: 700, fontSize: fs(14), margin: 0 }}>
           Tu perfil no está publicado
         </p>
-        <p style={{ color: C.muted, fontSize: 12, margin: '3px 0 0', lineHeight: 1.4 }}>
+        <p style={{ color: C.muted, fontSize: fs(12), margin: '3px 0 0', lineHeight: 1.4 }}>
           Los pacientes no pueden encontrarte en el directorio. Ve a <strong style={{ color: C.text }}>Mi cuenta</strong> y activa "Publicar perfil".
         </p>
       </div>
@@ -1444,7 +1447,7 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
         style={{
           background: `linear-gradient(135deg, rgb(${_r},${_g},${_b}), rgba(${_r},${_g},${_b},0.75))`,
           color: 'white', border: 'none', borderRadius: 9,
-          padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          padding: '9px 16px', fontSize: fs(13), fontWeight: 600, cursor: 'pointer',
           whiteSpace: 'nowrap', flexShrink: 0,
         }}
       >
@@ -1580,17 +1583,17 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
           WebkitBackdropFilter: 'blur(20px)',
           boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
         }}>
-          <p className="text-sm font-medium mb-2" style={{ color: C.muted }}>Comparte este link con tus clientes</p>
+          <p className="text-base font-medium mb-2" style={{ color: C.muted }}>Comparte este link con tus clientes</p>
           <div className="flex flex-col gap-2">
             {profiles.map(p => (
               <div key={p.id} className="flex items-center gap-2 rounded-lg px-3 py-2"
                 style={{ background: C.isDark ? 'rgba(108,99,255,0.08)' : 'rgba(108,99,255,0.06)', border: `1px solid ${C.isDark ? 'rgba(108,99,255,0.2)' : 'rgba(108,99,255,0.15)'}` }}>
                 {profiles.length > 1 && (
-                  <span className="text-xs shrink-0 font-medium truncate max-w-20" style={{ color: C.muted }}>{p.title}</span>
+                  <span className="text-sm shrink-0 font-medium truncate max-w-20" style={{ color: C.muted }}>{p.title}</span>
                 )}
-                <span className="text-xs flex-1 truncate font-mono" style={{ color: C.accent }}>aliax.io/{p.slug}</span>
+                <span className="text-sm flex-1 truncate font-mono" style={{ color: C.accent }}>aliax.io/{p.slug}</span>
                 <button onClick={() => copyUrl(p.slug, p.id)} className="shrink-0 p-1 rounded transition-opacity hover:opacity-70" style={{ color: C.accent }} title="Copiar enlace">
-                  {copiedId === p.id ? <span className="text-xs font-medium text-green-500">✓ Copiado</span> : <Copy className="h-3.5 w-3.5" />}
+                  {copiedId === p.id ? <span className="text-sm font-medium text-green-500">✓ Copiado</span> : <Copy className="h-3.5 w-3.5" />}
                 </button>
                 <a href={`/${p.slug}`} target="_blank" rel="noopener noreferrer" className="shrink-0 p-1 rounded transition-opacity hover:opacity-70" style={{ color: C.accent }} title="Ver perfil público">
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -1602,6 +1605,7 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
       )}
       {profiles.length > 0 && (
         <RevistaSubscribeCard
+          large
           C={C}
           name={userName ?? ''}
           email={userEmail ?? ''}
@@ -1614,9 +1618,9 @@ function TabInicio({ profiles, bookings, userName, userEmail, newsletterSubscrib
   );
 }
 
-function StatCard({ label, value, sub, color, isDark, shadow }: {
+function StatCard({ label, value, sub, color, isDark, shadow, large = false }: {
   label: string; value: number | string; sub: string;
-  color: 'indigo' | 'emerald' | 'amber' | 'violet'; isDark: boolean; shadow: string;
+  color: 'indigo' | 'emerald' | 'amber' | 'violet'; isDark: boolean; shadow: string; large?: boolean;
 }) {
   const light = { indigo: { bg: '#eef2ff', text: '#4338ca' }, emerald: { bg: '#ecfdf5', text: '#047857' }, amber: { bg: '#fffbeb', text: '#b45309' }, violet: { bg: '#f5f3ff', text: '#6d28d9' } };
   const dark  = { indigo: { bg: 'rgba(99,102,241,0.18)', text: '#a5b4fc' }, emerald: { bg: 'rgba(16,185,129,0.18)', text: '#6ee7b7' }, amber: { bg: 'rgba(245,158,11,0.18)', text: '#fcd34d' }, violet: { bg: 'rgba(139,92,246,0.18)', text: '#c4b5fd' } };
@@ -1624,14 +1628,14 @@ function StatCard({ label, value, sub, color, isDark, shadow }: {
   return (
     <div className="rounded-xl p-5" style={{ background: p.bg, color: p.text, boxShadow: shadow }}>
       <p className="text-3xl font-bold">{value}</p>
-      <p className="text-sm font-semibold mt-0.5">{label}</p>
-      <p className="text-xs opacity-70 mt-0.5">{sub}</p>
+      <p className={`${large ? 'text-base' : 'text-sm'} font-semibold mt-0.5`}>{label}</p>
+      <p className={`${large ? 'text-sm' : 'text-xs'} opacity-70 mt-0.5`}>{sub}</p>
     </div>
   );
 }
 
 /* ────────────────── Tab: Mis Citas ────────────────── */
-function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBookingStatus, profiles, C, onGoToAgenda }: {
+function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBookingStatus, profiles, C, onGoToAgenda, defaultView = 'calendario' }: {
   pendingBookings: Booking[];
   confirmedBookings: Booking[];
   totalBookings: number;
@@ -1639,6 +1643,7 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
   profiles: Profile[];
   C: Colors;
   onGoToAgenda: () => void;
+  defaultView?: 'lista' | 'calendario';
 }) {
   const [agendaConfigured, setAgendaConfigured] = useState<boolean | null>(null);
 
@@ -1648,7 +1653,7 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
       .then(res => setAgendaConfigured(Array.isArray(res.data) ? res.data.length > 0 : true))
       .catch(() => setAgendaConfigured(true));
   }, [profiles.length]);
-  const [citasView, setCitasView] = useState<'lista' | 'calendario'>('calendario');
+  const [citasView, setCitasView] = useState<'lista' | 'calendario'>(defaultView);
   const [services, setServices] = useState<any[]>([]);
   const [modalSlot, setModalSlot] = useState<{ date: string; time: string } | null>(null);
 
