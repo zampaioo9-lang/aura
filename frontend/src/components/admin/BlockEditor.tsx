@@ -239,7 +239,7 @@ const BlockEditor = forwardRef<BlockEditorHandle, Props>(function BlockEditor({ 
 
           {block.type === 'IMAGE' && (
             <div>
-              {!readOnly && <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleImageUpload(block, e.target.files[0])} />}
+              {!readOnly && <input type="file" accept="image/*" className="article-file-input" style={{ color: C.text }} onChange={(e) => e.target.files?.[0] && handleImageUpload(block, e.target.files[0])} />}
               {uploading && <p style={{ fontSize: 12, color: C.textFaint, marginTop: 4 }}>Subiendo...</p>}
               {block.imageUrl && <img src={block.imageUrl} alt="" style={{ width: 128, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
             </div>

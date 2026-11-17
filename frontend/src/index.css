@@ -206,3 +206,31 @@ textarea::placeholder {
   animation: marquee-scroll linear infinite;
   will-change: transform;
 }
+
+/* Campo "Seleccionar archivo" de los editores de articulos: el boton nativo se veia como
+   texto plano. Usa currentColor para adaptarse solo a modo claro y oscuro, sin borde. */
+.article-file-input {
+  color: inherit;
+  font-size: 13px;
+  width: 100%;
+  max-width: 100%;
+}
+.article-file-input::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.article-file-input:hover::file-selector-button {
+  background: color-mix(in srgb, currentColor 24%, transparent);
+}
+.article-file-input:active::file-selector-button {
+  transform: translateY(1px);
+}

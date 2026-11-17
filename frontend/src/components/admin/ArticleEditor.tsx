@@ -243,7 +243,7 @@ export default function ArticleEditor({ C, articleId, categories, authorName, on
       </select>
 
       <label style={lbl}>Imagen de portada</label>
-      <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleCoverUpload(e.target.files[0])} />
+      <input type="file" accept="image/*" className="article-file-input" style={{ color: C.text }} onChange={(e) => e.target.files?.[0] && handleCoverUpload(e.target.files[0])} />
       {uploading && <p style={{ fontSize: 12, color: C.textFaint, marginTop: 4 }}>Subiendo...</p>}
       {coverImage && !uploading && <img src={coverImage} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
 

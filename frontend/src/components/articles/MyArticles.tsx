@@ -397,7 +397,7 @@ function ArticleForm({ C, ring, articleId, authorName, onBack, onChanged }: Form
             <textarea className="ma-input" style={{ ...inp, minHeight: 60, resize: 'vertical' }} value={metaDescription} readOnly={!editable} onChange={(e) => setMetaDescription(e.target.value)} placeholder="Opcional. Es lo que aparece en Google al compartir el enlace. Si la dejas vacía se usa el extracto." maxLength={300} />
 
             <label style={lbl}>Imagen de portada</label>
-            {editable && <input type="file" accept="image/*" style={{ color: C.muted, fontSize: 13, maxWidth: '100%' }} onChange={(e) => e.target.files?.[0] && handleCoverUpload(e.target.files[0])} />}
+            {editable && <input type="file" accept="image/*" className="article-file-input" style={{ color: C.text }} onChange={(e) => e.target.files?.[0] && handleCoverUpload(e.target.files[0])} />}
             {uploading && <p style={{ fontSize: 12, color: C.muted, marginTop: 6 }}>Subiendo imagen...</p>}
             {uploadError && !uploading && <p style={{ fontSize: 12, color: '#ef4444', marginTop: 6 }}>{uploadError}</p>}
             {coverImage && !uploading && <img src={coverImage} alt="" style={{ width: 140, height: 90, objectFit: 'cover', borderRadius: 10, marginTop: 8, display: 'block' }} />}
