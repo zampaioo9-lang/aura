@@ -83,23 +83,47 @@ async function waitAndPromoteBlogDeployment(triggeredAt: number): Promise<void> 
 // sent, without blocking that response -- the Vercel-native fix for the same class of
 // bug that silently dropped newsletter confirmation emails when a bare un-awaited
 // promise got cut off mid-flight (see project_aliax_revista_newsletter memory).
-async function triggerBlogRebuild(): Promise<void> {
-  const hookUrl = process.env.BLOG_DEPLOY_HOOK_URL;
-  if (!hookUrl) return;
+//
+// IMPORTANTE: waitUntil() debe registrarse DENTRO de la peticion, de forma sincrona y antes
+// de que se envie la respuesta. Publicar, despublicar y borrar llaman a esta funcion SIN
+// await; si waitUntil se registrara despues del fetch al hook, la funcion ya habria
+// terminado y la promocion nunca correria (el deploy se construye pero nadie lo promueve).
+// Por eso toda la tarea (hook + espera + promocion) va dentro de un unico waitUntil, y la
+// promesa que se devuelve solo espera a que el hook se haya disparado (asi el boton
+// "Publicar cambios en el sitio", que si hace await, no se queda esperando el build).
+function triggerBlogRebuild(): Promise<void> {
+  let markHookDone!: () => void;
+  const hookDone = new Promise<void>((resolve) => { markHookDone = resolve; });
+  waitUntil(runBlogRebuild(markHookDone));
+  return hookDone;
+}
 
-  const triggeredAt = Date.now();
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const res = await fetch(hookUrl, { method: 'POST' });
-      if (res.ok) {
-        waitUntil(waitAndPromoteBlogDeployment(triggeredAt));
-        return;
+async function runBlogRebuild(markHookDone: () => void): Promise<void> {
+  try {
+    const hookUrl = process.env.BLOG_DEPLOY_HOOK_URL;
+    if (!hookUrl) return;
+
+    const triggeredAt = Date.now();
+    let fired = false;
+    for (let attempt = 1; attempt <= 2 && !fired; attempt++) {
+      try {
+        const res = await fetch(hookUrl, { method: 'POST' });
+        if (res.ok) fired = true;
+      } catch {
+        // reintenta o registra abajo
       }
-    } catch {
-      // fall through to retry/log below
     }
+    markHookDone();
+    if (!fired) {
+      console.warn('[Revista] No se pudo disparar el deploy hook tras 2 intentos');
+      return;
+    }
+    await waitAndPromoteBlogDeployment(triggeredAt);
+  } catch (err) {
+    console.warn('[Revista] Fallo inesperado al reconstruir la Revista', err);
+  } finally {
+    markHookDone();
   }
-  console.warn('[Revista] No se pudo disparar el deploy hook tras 2 intentos');
 }
 
 // Called by the 5 "small edit" routes (article metadata, block create/update/swap/
