@@ -170,6 +170,15 @@ export function useArticles() {
     }
   }, []);
 
+  const requestChanges = useCallback(async (id: string, note: string): Promise<Article> => {
+    try {
+      const res = await api.patch(`/articles/${id}/request-changes`, { note });
+      return res.data;
+    } catch (err: any) {
+      throw new Error(errorMessage(err, 'Error al pedir cambios'));
+    }
+  }, []);
+
   const unpublishArticle = useCallback(async (id: string): Promise<Article> => {
     try {
       const res = await api.patch(`/articles/${id}/unpublish`);
@@ -281,7 +290,7 @@ export function useArticles() {
   return {
     listCategories, createCategory, updateCategory,
     listArticles, getArticle, createArticle, updateArticle,
-    publishArticle, unpublishArticle, deleteArticle,
+    publishArticle, requestChanges, unpublishArticle, deleteArticle,
     createBlock, updateBlock, deleteBlock, swapBlockOrder,
     publishSiteChanges, getRebuildStatus, getNewsletterPreview,
     listSubscribers, exportSubscribersCsv, unsubscribeSubscriber,

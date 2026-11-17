@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Newspaper, Tag, Plus, Users, Download } from 'lucide-react';
-import { useArticles, type Category, type CategoryAudience, type Article, type Subscriber } from '../../hooks/useArticles';
+import { useArticles, type Category, type CategoryAudience, type Article, type ArticleStatus, type Subscriber } from '../../hooks/useArticles';
 import { useToast } from '../Toast';
 import ArticleEditor from './ArticleEditor';
 
@@ -30,6 +30,8 @@ export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
   const [creating, setCreating] = useState(false);
   const [articles, setArticles] = useState<Article[]>([]);
   const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
+  const [editingAuthorName, setEditingAuthorName] = useState<string | null>(null);
+  const [articleFilter, setArticleFilter] = useState<'TODOS' | 'REVISAR'>('TODOS');
   const [creatingArticle, setCreatingArticle] = useState(false);
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
   const [publishingSite, setPublishingSite] = useState(false);
@@ -139,6 +141,23 @@ export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
     }
   };
 
+  const pendingReview = articles
+    .filter(a => a.status === 'PENDING_REVIEW')
+    .sort((a, b) => new Date(a.submittedAt || a.updatedAt).getTime() - new Date(b.submittedAt || b.updatedAt).getTime());
+  const visibleArticles = articleFilter === 'REVISAR' ? pendingReview : articles;
+  const statusPill = (status: ArticleStatus) => {
+    switch (status) {
+      case 'PUBLISHED': return { label: 'Publicado', bg: C.accentLight, color: C.accent };
+      case 'PENDING_REVIEW': return { label: 'En revision', bg: 'rgba(245,158,11,0.15)', color: '#d97706' };
+      case 'CHANGES_REQUESTED': return { label: 'Cambios solicitados', bg: 'rgba(239,68,68,0.12)', color: '#ef4444' };
+      default: return { label: 'Borrador', bg: C.tableRowAlt, color: C.textMuted };
+    }
+  };
+  const formatDate = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+  const openArticle = (article: Article) => {
+    setEditingAuthorName(article.authorUser?.name ?? null);
+    setEditingArticleId(article.id);
+  };
   const pacientes = categories.filter(c => c.audience === 'PACIENTES');
   const terapeutas = categories.filter(c => c.audience === 'TERAPEUTAS');
 
@@ -255,8 +274,9 @@ export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
             <ArticleEditor
               C={C}
               articleId={creatingArticle ? null : editingArticleId}
+              authorName={creatingArticle ? null : editingAuthorName}
               categories={categories}
-              onClose={() => { setEditingArticleId(null); setCreatingArticle(false); loadRebuildStatus(); }}
+              onClose={() => { setEditingArticleId(null); setEditingAuthorName(null); setCreatingArticle(false); loadRebuildStatus(); loadArticles(); }}
               onSaved={loadArticles}
             />
           ) : (
@@ -294,8 +314,20 @@ export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
                   </button>
                 </div>
               </div>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                <button style={tabBtn(articleFilter === 'TODOS')} onClick={() => setArticleFilter('TODOS')}>Todos</button>
+                <button
+                  style={{
+                    ...tabBtn(articleFilter === 'REVISAR'),
+                    ...(pendingReview.length > 0 && articleFilter !== 'REVISAR' ? { background: 'rgba(245,158,11,0.15)', color: '#d97706' } : {}),
+                  }}
+                  onClick={() => setArticleFilter('REVISAR')}
+                >
+                  Por revisar ({pendingReview.length})
+                </button>
+              </div>
               <div style={{ background: C.card, border: `1px solid ${C.cardBorder}`, borderRadius: 12 }}>
-                {articles.map((article, i) => (
+                {visibleArticles.map((article, i) => (
                   <div
                     key={article.id}
                     style={{
@@ -305,25 +337,37 @@ export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
                   >
                     <div>
                       <p style={{ fontSize: 14, fontWeight: 600, color: C.text, margin: 0 }}>{article.title}</p>
-                      <p style={{ fontSize: 12, color: C.textFaint, margin: 0 }}>{article.category?.name ?? ''}</p>
+                      <p style={{ fontSize: 12, color: C.textFaint, margin: 0 }}>
+                        {article.category?.name ?? (article.authorUser ? 'Sin categoria' : '')}
+                        {article.status === 'PENDING_REVIEW' && article.submittedAt ? ` · Enviado el ${formatDate(article.submittedAt)}` : ''}
+                      </p>
+                      {article.authorUser && (
+                        <span style={{
+                          display: 'inline-block', marginTop: 4, fontSize: 11, fontWeight: 600, padding: '2px 10px',
+                          borderRadius: 999, background: 'rgba(13,148,136,0.12)', color: '#0d9488',
+                        }}>
+                          Autor: {article.authorUser.name}
+                        </span>
+                      )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{
                         fontSize: 11, fontWeight: 600, padding: '4px 12px', borderRadius: 999,
-                        background: article.status === 'PUBLISHED' ? C.accentLight : C.tableRowAlt,
-                        color: article.status === 'PUBLISHED' ? C.accent : C.textMuted,
+                        background: statusPill(article.status).bg,
+                        color: statusPill(article.status).color,
                       }}>
-                        {article.status === 'PUBLISHED' ? 'Publicado' : 'Borrador'}
+                        {statusPill(article.status).label}
                       </span>
                       <button
-                        onClick={() => setEditingArticleId(article.id)}
+                        onClick={() => openArticle(article)}
                         style={{
                           fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8,
                           border: 'none', background: C.tableRowAlt, color: C.textMuted, cursor: 'pointer',
                         }}
                       >
-                        Editar
+                        {article.status === 'PENDING_REVIEW' ? 'Revisar' : 'Editar'}
                       </button>
+                      {(article.status === 'PUBLISHED' || !article.authorUser) && (
                       <button
                         onClick={async () => {
                           try {
@@ -342,6 +386,7 @@ export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
                       >
                         {article.status === 'PUBLISHED' ? 'Despublicar' : 'Publicar'}
                       </button>
+                      )}
                       {article.status === 'PUBLISHED' && (
                         <button
                           onClick={async () => {
@@ -381,7 +426,7 @@ export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
                     </div>
                   </div>
                 ))}
-                {articles.length === 0 && <p style={{ padding: '12px 16px', fontSize: 14, color: C.textFaint }}>Sin articulos aun.</p>}
+                {visibleArticles.length === 0 && <p style={{ padding: '12px 16px', fontSize: 14, color: C.textFaint }}>{articleFilter === 'REVISAR' ? 'No hay articulos por revisar.' : 'Sin articulos aun.'}</p>}
               </div>
             </>
           )}
