@@ -19,7 +19,7 @@ const FEATURES = [
   { icon: BarChart3,      title: 'Analytics',                   desc: 'Ingresos, clientes y progreso clínico.',                   color: '#4ade80' },
   { icon: UsersRound, title: 'Comunidad de terapeutas', desc: 'Reunión mensual en vivo para reflexionar y revisar casos con colegas.', color: '#2dd4bf' },
   { icon: GraduationCap, title: 'Ingresos más allá de la consulta', desc: 'Vende cursos, talleres y webinars desde tu perfil, sin comisión de Aliax.', color: '#fbbf24' },
-  { icon: PenLine, title: 'Escribe en la Revista Aliax', desc: 'Publica tus artículos desde tu panel, con tu firma y enlace a tu perfil.', color: '#f472b6' },
+  { icon: PenLine, title: 'Escribe en la Revista Aliax', desc: 'Publica desde tu panel tus propios artículos, con tu firma y enlace a tu perfil.', color: '#f472b6' },
 ];
 
 export default function ThirdScreen({ lerpedProgress }: Props) {
