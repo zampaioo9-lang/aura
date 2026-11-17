@@ -373,7 +373,7 @@ function generateListingPage(articles: Article[]): string {
   const body = `${renderNav()}
 <div style="max-width:1200px;margin:0 auto;padding:64px 24px">
   <h1 style="font-size:48px;text-align:center;margin-bottom:8px">Revista Aliax</h1>
-  <p style="text-align:center;font-size:19px;color:#55555f;margin-bottom:32px">Ideas y recursos para cuidar tu bienestar</p>
+  <p style="text-align:center;font-size:26px;font-weight:600;color:#2dd4bf;margin-bottom:32px">Ideas y recursos para cuidar tu bienestar</p>
   ${pills}
   ${heroHtml}
   <h3 style="font-size:24px;margin-bottom:24px">Ultimos articulos</h3>
