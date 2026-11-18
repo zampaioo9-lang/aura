@@ -125,6 +125,12 @@ h3{font-family:'DM Sans',sans-serif;font-weight:500;color:#080414;letter-spacing
 .ra-share-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border-radius:50%;border:0;background:#fff;box-shadow:0 2px 8px rgba(8,4,20,0.12);cursor:pointer;text-decoration:none}
 .ra-share-btn:hover{background:#2dd4bf}
 .ra-share-side{display:none}
+@media (max-width:600px){
+  .ra-share-inline,.ra-share-top{gap:8px}
+  .ra-share-inline .ra-share-label,.ra-share-top .ra-share-label{flex-basis:100%;margin:0 0 2px}
+  .ra-share-inline.ra-center .ra-share-label{text-align:center}
+  .ra-share-inline .ra-share-btn,.ra-share-top .ra-share-btn{width:min(40px,calc((100% - 48px)/7));height:auto;aspect-ratio:1}
+}
 @media (min-width:1000px){
   .ra-share-top{display:none}
   .ra-share-side{display:flex;flex-direction:column;position:fixed;top:200px;left:calc(50% + 340px + 24px);margin:0;gap:10px}
@@ -193,7 +199,7 @@ function renderShareBar(url: string, title: string, text: string, label: string,
     `<a class="ra-share-btn" aria-label="${aria}" title="${aria}" ${attrs}>${icon}</a>`;
   const ext = 'target="_blank" rel="noopener noreferrer"';
   const labelHtml = label ? `<span class="ra-share-label">${escapeHtml(label)}</span>` : '';
-  return `<div class="ra-share ra-share-${variant}" style="${center ? 'justify-content:center;' : ''}">
+  return `<div class="ra-share ra-share-${variant}${center ? ' ra-center' : ''}" style="${center ? 'justify-content:center;' : ''}">
   ${labelHtml}
   <button type="button" class="ra-share-btn" data-share-native aria-label="Más opciones" title="Más opciones" data-title="${escapeHtml(title)}" data-text="${escapeHtml(text)}" data-url="${escapeHtml(url)}" style="display:none">${SHARE_ICONS.more}</button>
   ${btn('Compartir por WhatsApp', SHARE_ICONS.whatsapp, `href="https://wa.me/?text=${tu}" ${ext}`)}
@@ -458,7 +464,7 @@ function generateListingPage(articles: Article[]): string {
   ${heroHtml}
   <h3 style="font-size:24px;margin-bottom:24px">Ultimos articulos</h3>
   <div class="ra-grid3">${cards}</div>
-  ${renderShareBar(`${SITE_URL}/revista#suscribirse`, 'Revista Aliax', 'Revista Aliax: artículos para terapeutas y pacientes. Suscríbete y recibe uno nuevo cada quincena.', 'Comparte la Revista:', 'inline', true)}
+  ${renderShareBar(`${SITE_URL}/revista#suscribirse`, 'Revista Aliax', 'Revista Aliax: artículos para terapeutas y pacientes. Suscríbete y recibe uno nuevo cada quincena.', 'Comparte la Revista', 'inline', true)}
   ${renderSubscribeBand()}
 </div>
 ${renderPillsScript()}
@@ -467,7 +473,7 @@ ${renderShareScript()}`;
     'Revista Aliax — Ideas y recursos para tu bienestar',
     'Articulos escritos por psicologos de Aliax, para pacientes y terapeutas.',
     `${SITE_URL}/revista`,
-    `${SITE_URL}/og-image.png`,
+    `${SITE_URL}/og-revista.png`,
     body
   );
 }
