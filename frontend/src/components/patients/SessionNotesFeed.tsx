@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { Plus, Edit3, Trash2, ChevronDown, ChevronUp, Sparkles, Loader2, Lock, Mic, X } from 'lucide-react';
@@ -10,7 +10,7 @@ import api from '../../api/client';
 import { useClinicoFeature } from '../../hooks/useClinicoFeature';
 import AudioUploadBlock from './AudioUploadBlock';
 
-interface Props { clientId: string; accent?: string; isDark?: boolean; }
+interface Props { clientId: string; accent?: string; isDark?: boolean; onWorkInProgressChange?: (busy: boolean) => void; }
 
 type NoteType = 'LIBRE' | 'SOAP' | 'DIAMANTE' | 'NECS';
 interface FieldDef { key: string; label: string; hint?: string; }
@@ -261,7 +261,7 @@ function TypeBadge({ type, small = false }: { type: string; small?: boolean }) {
 
 const EMPTY_SCALE: ScaleData = { scale: 0, q1: '', q2: '' };
 
-export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)', isDark = false }: Props) {
+export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)', isDark = false, onWorkInProgressChange }: Props) {
   const { notes, loading, addNote, updateNote, deleteNote } = useSessionNotes(clientId);
   const canUseAI = useClinicoFeature('aiNotes');
   const canUseAudioNotes = useClinicoFeature('audio_notes');
@@ -273,6 +273,14 @@ export default function SessionNotesFeed({ clientId, accent = 'rgb(45,212,191)',
   const [scaleData, setScaleData]   = useState<ScaleData>(EMPTY_SCALE);
   const [aiDraft, setAiDraft]       = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Avisa al contenedor cuando hay una nota abierta, una transcripcion de audio o una
+  // generacion con IA en curso, para que no se descarte ese trabajo al cambiar de seccion.
+  const workInProgress = showForm || audioBusy || isGenerating;
+  useEffect(() => {
+    onWorkInProgressChange?.(workInProgress);
+    return () => onWorkInProgressChange?.(false);
+  }, [workInProgress]);
   const [form, setForm] = useState({
     sessionDate: new Date().toISOString().split('T')[0],
     noteType: 'LIBRE' as NoteType,

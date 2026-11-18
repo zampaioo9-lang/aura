@@ -671,6 +671,24 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
     setFranjasByDay(prev => ({ ...prev, [selectedDay]: [...existing, { startTime: m2t(startM), endTime: m2t(Math.min(startM + 60, 1410)) }] }));
   };
 
+  // Copia las franjas del dia seleccionado a los demas dias elegidos para ESTE servicio.
+  // Solo cambia el formulario: al editar se guarda con "Guardar horario" y al crear con
+  // "Crear servicio", asi que no hace falta confirmacion (se puede descartar sin guardar).
+  const handleApplyServiceToAllDays = () => {
+    if (selectedDay === null) return;
+    const source = franjasByDay[selectedDay] ?? [];
+    const otherDays = activeDays.filter(d => d !== selectedDay);
+    if (source.length === 0 || otherDays.length === 0) return;
+    setFranjasByDay(prev => {
+      const next = { ...prev };
+      otherDays.forEach(d => { next[d] = source.map(f => ({ ...f })); });
+      return next;
+    });
+    toast(modalMode === 'edit'
+      ? `Horario copiado a ${otherDays.length} días. Pulsa "Guardar horario" para confirmar.`
+      : `Horario copiado a ${otherDays.length} días`);
+  };
+
   const handleSaveSlots = async () => {
     if (!editingService) return;
     setSaving(true);
@@ -906,6 +924,9 @@ function TabServicios({ profileId, isPro = false }: { profileId: string; isPro?:
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: modalMode === 'create' ? 'flex-start' : 'flex-end', paddingTop: 16, borderTop: '1px solid var(--sc-border)', gap: 8, flexWrap: 'wrap' }}>
                     <BtnGhost small onClick={addFranja}>+ Añadir franja</BtnGhost>
+                    <BtnGhost small onClick={handleApplyServiceToAllDays} disabled={currentFranjas.length === 0 || activeDays.filter(d => d !== selectedDay).length === 0}>
+                      Aplicar a todos los días
+                    </BtnGhost>
                     {modalMode === 'edit' && (
                       <BtnPrimary onClick={handleSaveSlots} disabled={saving}>{saving ? 'Guardando...' : 'Guardar horario'}</BtnPrimary>
                     )}

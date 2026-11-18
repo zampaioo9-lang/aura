@@ -25,6 +25,7 @@ interface Service {
   price: number;
   currency: string;
   profileId: string;
+  isActive?: boolean;
 }
 
 interface Patient {
@@ -56,15 +57,32 @@ function fmt12(t: string) {
   return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
 }
 
-export default function NewBookingModal({ slot, services, C, onClose, onCreated, prefillClient }: Props) {
+export default function NewBookingModal({ slot, services: initialServices, C, onClose, onCreated, prefillClient }: Props) {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // La lista que llega por props puede estar desactualizada: las pestañas del dashboard se
+  // quedan montadas y cargan los servicios una sola vez. Al abrir el modal se vuelve a pedir
+  // la lista para que un servicio recién creado aparezca de inmediato.
+  const [freshServices, setFreshServices] = useState<Service[] | null>(null);
+  const services = freshServices ?? initialServices;
+
+  useEffect(() => {
+    let cancelled = false;
+    api.get('/services/me')
+      .then(r => {
+        const all: Service[] = r.data.services ?? r.data;
+        if (!cancelled) setFreshServices(all.filter(s => s.isActive !== false));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
   const [form, setForm] = useState({
     date: slot.date,
     startTime: slot.time,
-    serviceId: services[0]?.id ?? '',
+    serviceId: initialServices[0]?.id ?? '',
     clientName: prefillClient?.name ?? '',
     clientEmail: prefillClient?.email ?? '',
     clientPhone: prefillClient?.phone ?? '',
@@ -78,6 +96,13 @@ export default function NewBookingModal({ slot, services, C, onClose, onCreated,
   const [availableDays, setAvailableDays] = useState<Set<number>>(new Set());
 
   const selectedService = services.find(s => s.id === form.serviceId);
+
+  // Si no había servicio elegido (lista vacía al abrir) o el elegido ya no existe, se toma el primero.
+  useEffect(() => {
+    if (services.length > 0 && !services.some(s => s.id === form.serviceId)) {
+      setForm(prev => ({ ...prev, serviceId: services[0].id }));
+    }
+  }, [services, form.serviceId]);
 
   // Fetch availability days-of-week when service changes
   useEffect(() => {
@@ -247,7 +272,9 @@ export default function NewBookingModal({ slot, services, C, onClose, onCreated,
           <div>
             <label style={labelStyle}><Briefcase className="h-3.5 w-3.5" /> Servicio</label>
             {services.length === 0 ? (
-              <p className="text-sm" style={{ color: C.muted }}>No hay servicios activos.</p>
+              <p className="text-sm" style={{ color: C.muted }}>
+                {freshServices === null ? 'Cargando servicios...' : 'No hay servicios activos.'}
+              </p>
             ) : (
               <CustomSelect
                 value={form.serviceId}

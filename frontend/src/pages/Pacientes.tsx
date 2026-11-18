@@ -35,6 +35,19 @@ export default function Pacientes({ C, isPro = false, isActive, profiles }: { C:
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [creating, setCreating] = useState(false);
+  const [noteWorkInProgress, setNoteWorkInProgress] = useState(false);
+
+  // Las secciones del dashboard se quedan montadas al cambiar de una a otra, asi que sin esto
+  // el paciente que estaba abierto sigue abierto al volver (con datos viejos). Al salir de la
+  // seccion se regresa al listado, salvo que haya trabajo en curso que no se debe perder:
+  // un asistente de historia clinica, la edicion de datos, o una nota/audio/IA sin terminar.
+  useEffect(() => {
+    if (isActive !== false) return;
+    if (activeWizard || datosSection || noteWorkInProgress) return;
+    setSelected(null);
+    setDetailTab('notas');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive]);
 
   const filtered = patients.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -180,7 +193,7 @@ export default function Pacientes({ C, isPro = false, isActive, profiles }: { C:
 
           {/* ── NOTAS ── */}
           {detailTab === 'notas' && (
-            <SessionNotesFeed clientId={selected.id} accent={C.accent} isDark={C.isDark} />
+            <SessionNotesFeed clientId={selected.id} accent={C.accent} isDark={C.isDark} onWorkInProgressChange={setNoteWorkInProgress} />
           )}
 
           {/* ── CITAS ── */}
