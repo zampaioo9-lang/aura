@@ -506,6 +506,11 @@ export default function AdminPanel() {
   const [userDetailTab, setUserDetailTab] = useState<'perfil' | 'actividad' | 'comunicacion'>('actividad');
   const [activitySummary, setActivitySummary] = useState<{ module: string; count: number }[]>([]);
   const [activityPeriod, setActivityPeriod] = useState<'30d' | '90d' | 'all'>('30d');
+  const [therapistActivity, setTherapistActivity] = useState<{
+    totalAccounts: number;
+    users: { id: string; name: string; plan: string | null; isAdmin: boolean; uses: number; activeDays: number; lastActiveAt: string | null }[];
+  }>({ totalAccounts: 0, users: [] });
+  const [therapistActivityError, setTherapistActivityError] = useState(false);
   const [pageTab, setPageTab] = useState<'resumen' | 'usuarios' | 'leads' | 'comunicacion' | 'revista'>('usuarios');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -754,6 +759,10 @@ export default function AdminPanel() {
 
   useEffect(() => {
     api.get(`/admin/activity/summary?period=${activityPeriod}`).then(res => setActivitySummary(res.data));
+    // Si el backend aun no tiene este endpoint (despliegue en orden), se deja el desglose vacio sin romper el panel.
+    api.get(`/admin/activity/users?period=${activityPeriod}`)
+      .then(res => { setTherapistActivity(res.data); setTherapistActivityError(false); })
+      .catch(() => { setTherapistActivity({ totalAccounts: 0, users: [] }); setTherapistActivityError(true); });
   }, [activityPeriod]);
 
   useEffect(() => {
@@ -1085,6 +1094,48 @@ export default function AdminPanel() {
               ))}
             </ol>
           )}
+
+          {/* ── Desglose por cuenta (sin cuentas demo) ── */}
+          <div className="mt-5 pt-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: C.textFaint }}>
+                Por cuenta (sin cuentas demo)
+              </span>
+              {therapistActivity.totalAccounts > 0 && (
+                <span className="text-xs" style={{ color: C.textMuted }}>
+                  {therapistActivity.users.length} de {therapistActivity.totalAccounts} cuentas con actividad
+                </span>
+              )}
+            </div>
+            {therapistActivityError ? (
+              <p className="text-xs italic" style={{ color: C.textFaint }}>No se pudo cargar el desglose por cuenta.</p>
+            ) : therapistActivity.users.length === 0 ? (
+              <p className="text-xs italic" style={{ color: C.textFaint }}>Ninguna cuenta con actividad en este periodo.</p>
+            ) : (
+              <div className="text-sm" style={{ color: C.text, minWidth: 440 }}>
+                <div className="grid text-xs font-semibold mb-1" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1.4fr', color: C.textFaint, gap: 8 }}>
+                  <span>Cuenta</span><span>Plan</span><span>Usos</span><span>Días activos</span><span>Última actividad</span>
+                </div>
+                {therapistActivity.users.map(u => (
+                  <div key={u.id} className="grid py-1" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1.4fr', gap: 8, alignItems: 'center' }}>
+                    <span>{u.name}{u.isAdmin ? ' (admin)' : ''}</span>
+                    <span style={{ color: C.textMuted }}>{u.plan ?? 'FREE'}</span>
+                    <span>{u.uses}</span>
+                    <span>{u.activeDays}</span>
+                    <span style={{ color: C.textFaint }}>
+                      {u.lastActiveAt ? new Date(u.lastActiveAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                    </span>
+                  </div>
+                ))}
+                {therapistActivity.totalAccounts - therapistActivity.users.length > 0 && (
+                  <div className="grid py-1" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr 1.4fr', gap: 8, color: C.textFaint }}>
+                    <span>Otras {therapistActivity.totalAccounts - therapistActivity.users.length} cuentas</span>
+                    <span>-</span><span>0</span><span>0</span><span>-</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         </>
         )}
