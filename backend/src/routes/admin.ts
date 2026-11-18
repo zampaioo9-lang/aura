@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth';
 import { adminMiddleware } from '../middleware/adminAuth';
 import { sendEmail, emailTemplates, sendPasswordResetEmail, baseTemplate } from '../services/emailService';
@@ -762,24 +762,77 @@ router.get('/users/:id/activity', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// Cuentas internas de demostracion (Aliax Demo y Ana Luisa): no cuentan como uso real
+// de terapeutas. La cuenta de Cesar A. (admin) NO se excluye: su actividad clinica en
+// Aliax es uso real. Correos en minusculas (se compara con LOWER(email)).
+const ACTIVITY_EXCLUDED_EMAILS = ['zampaioo9@gmail.com', 'zampaio9@hotmail.com'];
+
+function activityCutoff(periodParam: unknown): Date {
+  const period = String(periodParam ?? '30d');
+  return period === '90d' ? new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) :
+    period === 'all' ? new Date(0) :
+    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+}
+
 // GET /api/admin/activity/summary?period=30d|90d|all
+// Modulos mas usados, sin contar las cuentas demo.
 router.get('/activity/summary', async (req, res, next) => {
   try {
-    const period = String(req.query.period ?? '30d');
-    const cutoff =
-      period === '90d' ? new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) :
-      period === 'all' ? new Date(0) :
-      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const cutoff = activityCutoff(req.query.period);
 
     const rows = await prisma.$queryRaw<{ module: string; count: bigint }[]>`
-      SELECT module, COUNT(*)::int as count
-      FROM "ActivityEvent"
-      WHERE type = 'VIEW' AND "createdAt" >= ${cutoff}
-      GROUP BY module
+      SELECT e.module, COUNT(*)::int as count
+      FROM "ActivityEvent" e
+      JOIN "User" u ON u.id = e."userId"
+      WHERE e.type = 'VIEW' AND e."createdAt" >= ${cutoff}
+        AND LOWER(u.email) NOT IN (${Prisma.join(ACTIVITY_EXCLUDED_EMAILS)})
+      GROUP BY e.module
       ORDER BY count DESC
     `;
 
     res.json(rows.map(r => ({ module: r.module, count: Number(r.count) })));
+  } catch (err) { next(err); }
+});
+
+// GET /api/admin/activity/users?period=30d|90d|all
+// Desglose por cuenta (sin cuentas demo): usos, dias activos y ultima actividad,
+// mas el total de cuentas para saber cuantas no tuvieron actividad.
+router.get('/activity/users', async (req, res, next) => {
+  try {
+    const cutoff = activityCutoff(req.query.period);
+
+    const [rows, totals] = await Promise.all([
+      prisma.$queryRaw<{ id: string; name: string; plan: string | null; isAdmin: boolean; uses: number; activeDays: number; lastActiveAt: Date | null }[]>`
+        SELECT u.id, u.name, u.plan, u."isAdmin",
+               COUNT(*) FILTER (WHERE e.type = 'VIEW')::int AS uses,
+               COUNT(DISTINCT DATE(e."createdAt"))::int AS "activeDays",
+               MAX(e."createdAt") AS "lastActiveAt"
+        FROM "ActivityEvent" e
+        JOIN "User" u ON u.id = e."userId"
+        WHERE e."createdAt" >= ${cutoff}
+          AND LOWER(u.email) NOT IN (${Prisma.join(ACTIVITY_EXCLUDED_EMAILS)})
+        GROUP BY u.id, u.name, u.plan, u."isAdmin"
+        HAVING COUNT(*) FILTER (WHERE e.type = 'VIEW') > 0
+        ORDER BY uses DESC
+      `,
+      prisma.$queryRaw<{ total: number }[]>`
+        SELECT COUNT(*)::int AS total FROM "User"
+        WHERE LOWER(email) NOT IN (${Prisma.join(ACTIVITY_EXCLUDED_EMAILS)})
+      `,
+    ]);
+
+    res.json({
+      totalAccounts: Number(totals[0]?.total ?? 0),
+      users: rows.map(r => ({
+        id: r.id,
+        name: r.name,
+        plan: r.plan,
+        isAdmin: r.isAdmin,
+        uses: Number(r.uses),
+        activeDays: Number(r.activeDays),
+        lastActiveAt: r.lastActiveAt,
+      })),
+    });
   } catch (err) { next(err); }
 });
 
