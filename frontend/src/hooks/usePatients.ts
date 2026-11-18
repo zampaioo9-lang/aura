@@ -13,6 +13,7 @@ export interface Patient {
   occupation?: string;
   city?: string;
   country?: string;
+  timezone?: string | null;
   emergencyContact?: string;
   referralSource?: string;
   consentGivenAt?: string | null;

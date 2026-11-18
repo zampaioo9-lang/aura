@@ -37,6 +37,28 @@ const EDUCATION = [
   { value: 'Posgrado', label: 'Posgrado' },
 ];
 
+// Zona horaria del paciente: sus recordatorios y avisos de cita le llegan en su horario local.
+// Vacío = la misma zona del profesional (sin conversión).
+const TIMEZONES = [
+  { value: '', label: 'Igual que mi zona horaria' },
+  { value: 'Europe/Paris', label: 'Francia (París)' },
+  { value: 'Europe/Madrid', label: 'España (Madrid)' },
+  { value: 'Europe/London', label: 'Reino Unido (Londres)' },
+  { value: 'Europe/Berlin', label: 'Alemania (Berlín)' },
+  { value: 'Europe/Rome', label: 'Italia (Roma)' },
+  { value: 'Europe/Lisbon', label: 'Portugal (Lisboa)' },
+  { value: 'America/New_York', label: 'EE. UU. (Nueva York)' },
+  { value: 'America/Chicago', label: 'EE. UU. (Chicago)' },
+  { value: 'America/Los_Angeles', label: 'EE. UU. (Los Ángeles)' },
+  { value: 'America/Mexico_City', label: 'México (Ciudad de México)' },
+  { value: 'America/Cancun', label: 'México (Cancún)' },
+  { value: 'America/Tijuana', label: 'México (Tijuana)' },
+  { value: 'America/Bogota', label: 'Colombia (Bogotá)' },
+  { value: 'America/Lima', label: 'Perú (Lima)' },
+  { value: 'America/Santiago', label: 'Chile (Santiago)' },
+  { value: 'America/Argentina/Buenos_Aires', label: 'Argentina (Buenos Aires)' },
+];
+
 export default function Step1Datos({ patient, onSave, inp, lbl, accent, isDark = true }: Props) {
   const [form, setForm] = useState({
     name: patient.name ?? '',
@@ -49,6 +71,7 @@ export default function Step1Datos({ patient, onSave, inp, lbl, accent, isDark =
     occupation: patient.occupation ?? '',
     city: patient.city ?? '',
     country: patient.country ?? '',
+    timezone: patient.timezone ?? '',
     emergencyContact: patient.emergencyContact ?? '',
     referralSource: patient.referralSource ?? '',
   });
@@ -152,6 +175,21 @@ export default function Step1Datos({ patient, onSave, inp, lbl, accent, isDark =
         <div>
           <label style={lbl}>País</label>
           <input value={form.country} onChange={e => set('country', e.target.value)} style={inp} placeholder="México" />
+        </div>
+
+        <div style={{ gridColumn: '1/-1' }}>
+          <label style={lbl}>Zona horaria del paciente</label>
+          <CustomSelect
+            value={form.timezone}
+            onChange={v => set('timezone', v)}
+            options={TIMEZONES}
+            placeholder="Igual que mi zona horaria"
+            dark={isDark}
+            accent={accent}
+          />
+          <p style={{ fontSize: 11, margin: '5px 0 0', opacity: 0.7 }}>
+            Si vive en otro país, sus recordatorios, confirmaciones y cancelaciones le llegarán en su horario local, con la ciudad indicada (por ejemplo "17:00 hora de París").
+          </p>
         </div>
 
         <div style={{ gridColumn: '1/-1' }}>
