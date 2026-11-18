@@ -459,7 +459,7 @@ function generateListingPage(articles: Article[]): string {
   const body = `${renderNav()}
 <div style="max-width:1200px;margin:0 auto;padding:64px 24px">
   <h1 style="font-size:48px;text-align:center;margin:0 0 2px">Revista Aliax</h1>
-  <p style="text-align:center;font-size:26px;font-weight:700;letter-spacing:0.01em;color:#7c3aed;margin:0 0 32px">Ideas y recursos para cuidar tu bienestar</p>
+  <p style="text-align:center;font-size:26px;font-weight:700;letter-spacing:0.01em;margin:0 0 32px"><span style="display:inline-block;color:#0d9488;background:linear-gradient(90deg,#0d9488,#7c3aed);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Ideas y recursos para cuidar tu bienestar</span></p>
   ${pills}
   ${heroHtml}
   <h3 style="font-size:24px;margin-bottom:24px">Ultimos articulos</h3>
@@ -473,7 +473,7 @@ ${renderShareScript()}`;
     'Revista Aliax — Ideas y recursos para tu bienestar',
     'Articulos escritos por psicologos de Aliax, para pacientes y terapeutas.',
     `${SITE_URL}/revista`,
-    `${SITE_URL}/og-revista-2.png`,
+    `${SITE_URL}/og-revista-3.png`,
     body
   );
 }
