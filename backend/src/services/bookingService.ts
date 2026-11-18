@@ -4,6 +4,7 @@ import { sendWhatsApp, sendWhatsAppTemplate, templates, templateComponents } fro
 import { sendEmail, emailTemplates } from './emailService';
 import { env } from '../config/env';
 import { isProUser } from '../lib/planUtils';
+import { getBookingLocalTime } from '../lib/clientTimezone';
 
 const prisma = new PrismaClient();
 
@@ -446,13 +447,21 @@ export async function createBooking(data: {
 
   // Email al cliente: solicitud recibida
   if (data.clientEmail) {
+    // La hora se muestra en el horario local del paciente (si tiene otra zona horaria).
+    const clientLocal = await getBookingLocalTime({
+      profileId: booking.profileId,
+      professionalId: booking.professionalId,
+      clientEmail: data.clientEmail,
+      date: booking.date,
+      startTime: data.startTime,
+    });
     const tpl = emailTemplates.bookingReceived({
       clientName: data.clientName,
       clientEmail: data.clientEmail,
       professionalName: booking.profile.user.name,
       serviceName: booking.service.name,
-      date: data.date,
-      startTime: data.startTime,
+      date: clientLocal.date,
+      startTime: clientLocal.startTime,
     });
     const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
     await saveNotification(booking.id, 'NEW_BOOKING', data.clientEmail, tpl.subject, emailResult);
@@ -480,14 +489,17 @@ export async function confirmBooking(bookingId: string, professionalId: string) 
     include: { service: true, profile: { select: { title: true, slug: true } } },
   });
 
+  // El cliente recibe la hora en su horario local (si su zona horaria es distinta a la del profesional).
+  const clientLocal = await getBookingLocalTime(booking);
+
   // Send WhatsApp confirmation to client
   if (booking.clientPhone) {
     const components = templateComponents.confirmation({
       clientName: booking.clientName,
       professionalName: booking.profile.user.name,
       serviceName: booking.service.name,
-      date: booking.date,
-      startTime: booking.startTime,
+      date: clientLocal.date,
+      startTime: clientLocal.startTime,
     });
 
     let result = await sendWhatsAppTemplate(booking.clientPhone, 'reserva_confirmada', 'es_MX', components);
@@ -497,8 +509,8 @@ export async function confirmBooking(bookingId: string, professionalId: string) 
         clientName: booking.clientName,
         professionalName: booking.profile.user.name,
         serviceName: booking.service.name,
-        date: booking.date,
-        startTime: booking.startTime,
+        date: clientLocal.date,
+        startTime: clientLocal.startTime,
       });
       result = await sendWhatsApp(booking.clientPhone, message);
       await saveNotification(bookingId, 'CONFIRMATION', booking.clientPhone, message, result);
@@ -514,8 +526,8 @@ export async function confirmBooking(bookingId: string, professionalId: string) 
       clientEmail: booking.clientEmail,
       professionalName: booking.profile.user.name,
       serviceName: booking.service.name,
-      date: booking.date,
-      startTime: booking.startTime,
+      date: clientLocal.date,
+      startTime: clientLocal.startTime,
     });
     const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
     await saveNotification(bookingId, 'CONFIRMATION', booking.clientEmail, tpl.subject, emailResult);
@@ -566,18 +578,21 @@ export async function cancelBooking(
     reason,
   };
 
+  // El cliente recibe la hora en su horario local (si su zona horaria es distinta a la del profesional).
+  const clientLocal = await getBookingLocalTime(booking);
+
   // Notify client
   if (booking.clientPhone) {
     const components = templateComponents.cancellation({
       recipientName: booking.clientName,
       professionalName: booking.profile.user.name,
       serviceName: booking.service.name,
-      date: booking.date,
-      startTime: booking.startTime,
+      date: clientLocal.date,
+      startTime: clientLocal.startTime,
     });
     let clientResult = await sendWhatsAppTemplate(booking.clientPhone, 'cita_cancelada', 'es_MX', components);
     if (!clientResult.success) {
-      const clientMsg = templates.cancellation({ recipientName: booking.clientName, ...cancelData });
+      const clientMsg = templates.cancellation({ recipientName: booking.clientName, ...cancelData, date: clientLocal.date, startTime: clientLocal.startTime });
       clientResult = await sendWhatsApp(booking.clientPhone, clientMsg);
       await saveNotification(bookingId, 'CANCELLATION', booking.clientPhone, clientMsg, clientResult);
     } else {
@@ -613,8 +628,8 @@ export async function cancelBooking(
       clientEmail: booking.clientEmail,
       professionalName: booking.profile.user.name,
       serviceName: booking.service.name,
-      date: booking.date,
-      startTime: booking.startTime,
+      date: clientLocal.date,
+      startTime: clientLocal.startTime,
       reason,
     });
     const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);

@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { logActivity } from '../services/activityService';
+import { isValidTimeZone } from '../lib/clientTimezone';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -46,10 +47,11 @@ router.post('/', authMiddleware, async (req: AuthRequest, res, next) => {
     const {
       name, email, phone, notes,
       birthDate, gender, maritalStatus, education,
-      occupation, city, country, emergencyContact, referralSource,
+      occupation, city, country, emergencyContact, referralSource, timezone,
     } = req.body;
 
     if (!name?.trim()) throw new AppError(400, 'El nombre es requerido');
+    if (timezone && !isValidTimeZone(timezone)) throw new AppError(400, 'Zona horaria no válida');
 
     const client = await prisma.client.create({
       data: {
@@ -65,6 +67,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res, next) => {
         occupation:      occupation      || null,
         city:            city            || null,
         country:         country         || null,
+        timezone:        timezone        || null,
         emergencyContact: emergencyContact || null,
         referralSource:  referralSource  || null,
       },
@@ -81,11 +84,14 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res, next) => {
     if (!existing) throw new AppError(404, 'Paciente no encontrado');
     if (existing.userId !== req.userId) throw new AppError(403, 'No autorizado');
 
-    const { birthDate, consentGivenAt, ...rest } = req.body;
+    const { birthDate, consentGivenAt, timezone, ...rest } = req.body;
+    if (timezone && !isValidTimeZone(timezone)) throw new AppError(400, 'Zona horaria no válida');
     const updated = await prisma.client.update({
       where: { id: req.params.id },
       data: {
         ...rest,
+        // Vacío = misma zona horaria del profesional (sin conversión)
+        ...(timezone !== undefined ? { timezone: timezone || null } : {}),
         ...(birthDate !== undefined ? { birthDate: birthDate ? new Date(birthDate) : null } : {}),
         ...(consentGivenAt !== undefined ? { consentGivenAt: consentGivenAt ? new Date(consentGivenAt) : null } : {}),
       },

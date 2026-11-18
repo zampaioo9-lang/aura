@@ -56,6 +56,8 @@ model Client {
   occupation       String?
   city             String?
   country          String?
+  // Zona horaria del paciente (IANA, ej. Europe/Paris). null = la misma del profesional (sin conversion)
+  timezone         String?
   emergencyContact String?
   referralSource   String?
   // Consentimiento expreso (LFPDPPP Art. 9) — ver docs/superpowers/specs/2026-07-02-consentimiento-expreso-design.md

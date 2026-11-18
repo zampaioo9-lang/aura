@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { sendWhatsApp, sendWhatsAppTemplate, templates, templateComponents } from '../services/whatsappService';
 import { sendEmail, emailTemplates } from '../services/emailService';
 import { tryReminderWindow, endingReminderWindow } from '../lib/trialReminders';
+import { getBookingLocalTime } from '../lib/clientTimezone';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -50,6 +51,9 @@ router.post('/reminders', async (req: Request, res: Response): Promise<void> => 
       const notifSettings = await prisma.bookingSettings.findUnique({ where: { profileId: booking.profileId } });
       const emailEnabled = notifSettings?.emailEnabled ?? true;
 
+      // El cliente recibe la hora en su horario local (si su zona horaria es distinta a la del profesional).
+      const clientLocal = await getBookingLocalTime(booking);
+
       // ── Recordatorio al cliente ──────────────────────────────────
       const alreadySentClient = await prisma.notification.findFirst({
         where: {
@@ -65,8 +69,8 @@ router.post('/reminders', async (req: Request, res: Response): Promise<void> => 
           clientName: booking.clientName,
           professionalName: booking.profile.user.name,
           serviceName: booking.service.name,
-          date: booking.date,
-          startTime: booking.startTime,
+          date: clientLocal.date,
+          startTime: clientLocal.startTime,
         });
 
         let result = await sendWhatsAppTemplate(booking.clientPhone, 'recordatorio_cita', 'es_MX', components);
@@ -77,8 +81,8 @@ router.post('/reminders', async (req: Request, res: Response): Promise<void> => 
             clientName: booking.clientName,
             professionalName: booking.profile.user.name,
             serviceName: booking.service.name,
-            date: booking.date,
-            startTime: booking.startTime,
+            date: clientLocal.date,
+            startTime: clientLocal.startTime,
           });
           result = await sendWhatsApp(booking.clientPhone, message);
         }
@@ -115,8 +119,8 @@ router.post('/reminders', async (req: Request, res: Response): Promise<void> => 
               clientEmail: booking.clientEmail,
               professionalName: booking.profile.user.name,
               serviceName: booking.service.name,
-              date: booking.date,
-              startTime: booking.startTime,
+              date: clientLocal.date,
+              startTime: clientLocal.startTime,
             });
             const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
             await prisma.notification.create({
