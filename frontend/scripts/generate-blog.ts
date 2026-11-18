@@ -120,9 +120,15 @@ h3{font-family:'DM Sans',sans-serif;font-weight:500;color:#080414;letter-spacing
 .ra-cat-active{background:#080414;color:#fff}
 .ra-bullets li{font-family:'DM Sans',sans-serif;font-weight:400;font-size:17px;line-height:1.75;color:#3f3f46;margin-bottom:8px}
 .ra-bullets li::marker{color:#0d9488}
-.ra-share{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.ra-share-btn{display:inline-flex;align-items:center;padding:8px 16px;border-radius:999px;border:0;background:#fff;color:#080414;font-size:13px;font-weight:600;font-family:'Urbanist',sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(8,4,20,0.10);text-decoration:none;line-height:1.2}
-.ra-share-btn:hover{background:#2dd4bf;color:#04201c}
+.ra-share{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0}
+.ra-share-label{font-size:13px;font-weight:700;color:#080414;margin-right:2px}
+.ra-share-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border-radius:50%;border:0;background:#fff;box-shadow:0 2px 8px rgba(8,4,20,0.12);cursor:pointer;text-decoration:none}
+.ra-share-btn:hover{background:#2dd4bf}
+.ra-share-side{display:none}
+@media (min-width:1000px){
+  .ra-share-top{display:none}
+  .ra-share-side{display:flex;flex-direction:column;position:fixed;top:200px;left:calc(50% + 340px + 24px);margin:0;gap:10px}
+}
 .ra-card{transition:transform 0.2s ease,box-shadow 0.2s ease}
 .ra-card:hover{transform:translateY(-6px);box-shadow:0 16px 40px rgba(8,4,20,0.16)}
 @media (max-width:860px){.ra-grid3{grid-template-columns:1fr}.ra-hero-grid{grid-template-columns:1fr}}
@@ -161,26 +167,41 @@ function renderByline(a: Article): string {
 </div>`;
 }
 
+// Iconos en negro (SVG inline, sin librerias). Cada boton es un circulo blanco con sombra suave.
+const SHARE_ICONS = {
+  whatsapp: '<svg viewBox="0 0 24 24" width="20" height="20" fill="#080414" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>',
+  facebook: '<svg viewBox="0 0 24 24" width="20" height="20" fill="#080414" aria-hidden="true"><path d="M14 8h3V4h-3a4 4 0 0 0-4 4v2H7v4h3v7h4v-7h3l1-4h-4V8z"/></svg>',
+  x: '<svg viewBox="0 0 24 24" width="18" height="18" fill="#080414" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+  linkedin: '<svg viewBox="0 0 24 24" width="19" height="19" fill="#080414" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>',
+  mail: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#080414" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>',
+  link: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#080414" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+  more: '<svg viewBox="0 0 24 24" width="20" height="20" fill="#080414" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+};
+
 // Botones para compartir: enlaces directos a cada red (sin librerias ni rastreadores).
-// Instagram no tiene direccion de compartir para sitios web, por eso el boton "Compartir"
+// Instagram no tiene direccion de compartir para sitios web, por eso el boton "Mas opciones"
 // usa el menu nativo del celular (navigator.share), que si lista Instagram y demas apps.
-function renderShareBar(url: string, title: string, text: string, label: string, center = false): string {
+// variant: 'inline' (horizontal), 'top' (horizontal, se oculta en pantallas anchas) o
+// 'side' (vertical flotante a la derecha del articulo, solo en pantallas anchas).
+function renderShareBar(url: string, title: string, text: string, label: string, variant: 'inline' | 'top' | 'side' = 'inline', center = false): string {
   const u = encodeURIComponent(url);
   const t = encodeURIComponent(text);
   const tu = encodeURIComponent(`${text} ${url}`);
   const mailSubject = encodeURIComponent(title);
-  const mailBody = encodeURIComponent(`${text}
-
-${url}`);
-  return `<div class="ra-share" style="${center ? 'justify-content:center;' : ''}margin:20px 0">
-  <span style="font-size:13px;font-weight:700;color:#080414;margin-right:4px">${escapeHtml(label)}</span>
-  <button type="button" class="ra-share-btn" data-share-native data-title="${escapeHtml(title)}" data-text="${escapeHtml(text)}" data-url="${escapeHtml(url)}" style="display:none">Compartir</button>
-  <a class="ra-share-btn" href="https://wa.me/?text=${tu}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-  <a class="ra-share-btn" href="https://www.facebook.com/sharer/sharer.php?u=${u}" target="_blank" rel="noopener noreferrer">Facebook</a>
-  <a class="ra-share-btn" href="https://twitter.com/intent/tweet?text=${t}&url=${u}" target="_blank" rel="noopener noreferrer">X</a>
-  <a class="ra-share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=${u}" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-  <a class="ra-share-btn" href="mailto:?subject=${mailSubject}&body=${mailBody}">Correo</a>
-  <button type="button" class="ra-share-btn" data-share-copy data-url="${escapeHtml(url)}">Copiar enlace</button>
+  const mailBody = encodeURIComponent(`${text}\n\n${url}`);
+  const btn = (aria: string, icon: string, attrs: string) =>
+    `<a class="ra-share-btn" aria-label="${aria}" title="${aria}" ${attrs}>${icon}</a>`;
+  const ext = 'target="_blank" rel="noopener noreferrer"';
+  const labelHtml = label ? `<span class="ra-share-label">${escapeHtml(label)}</span>` : '';
+  return `<div class="ra-share ra-share-${variant}" style="${center ? 'justify-content:center;' : ''}">
+  ${labelHtml}
+  <button type="button" class="ra-share-btn" data-share-native aria-label="Más opciones" title="Más opciones" data-title="${escapeHtml(title)}" data-text="${escapeHtml(text)}" data-url="${escapeHtml(url)}" style="display:none">${SHARE_ICONS.more}</button>
+  ${btn('Compartir por WhatsApp', SHARE_ICONS.whatsapp, `href="https://wa.me/?text=${tu}" ${ext}`)}
+  ${btn('Compartir en Facebook', SHARE_ICONS.facebook, `href="https://www.facebook.com/sharer/sharer.php?u=${u}" ${ext}`)}
+  ${btn('Compartir en X', SHARE_ICONS.x, `href="https://twitter.com/intent/tweet?text=${t}&url=${u}" ${ext}`)}
+  ${btn('Compartir en LinkedIn', SHARE_ICONS.linkedin, `href="https://www.linkedin.com/sharing/share-offsite/?url=${u}" ${ext}`)}
+  ${btn('Compartir por correo', SHARE_ICONS.mail, `href="mailto:?subject=${mailSubject}&body=${mailBody}"`)}
+  <button type="button" class="ra-share-btn" data-share-copy data-url="${escapeHtml(url)}" aria-label="Copiar enlace" title="Copiar enlace">${SHARE_ICONS.link}</button>
 </div>`;
 }
 
@@ -188,7 +209,7 @@ function renderShareScript(): string {
   return `<script>
 (function(){
   document.querySelectorAll('[data-share-native]').forEach(function(b){
-    if (!navigator.share) return;
+    if (!navigator.share || !(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) return;
     b.style.display = 'inline-flex';
     b.addEventListener('click', function(){
       navigator.share({ title: b.getAttribute('data-title'), text: b.getAttribute('data-text'), url: b.getAttribute('data-url') }).catch(function(){});
@@ -197,8 +218,8 @@ function renderShareScript(): string {
   document.querySelectorAll('[data-share-copy]').forEach(function(b){
     b.addEventListener('click', function(){
       var url = b.getAttribute('data-url');
-      var original = b.textContent;
-      function done(){ b.textContent = '¡Enlace copiado!'; setTimeout(function(){ b.textContent = original; }, 2000); }
+      var original = b.getAttribute('title');
+      function done(){ b.setAttribute('title', '¡Enlace copiado!'); b.style.background = '#2dd4bf'; setTimeout(function(){ b.setAttribute('title', original); b.style.background = ''; }, 2000); }
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url).then(done).catch(function(){});
       } else {
@@ -437,7 +458,7 @@ function generateListingPage(articles: Article[]): string {
   ${heroHtml}
   <h3 style="font-size:24px;margin-bottom:24px">Ultimos articulos</h3>
   <div class="ra-grid3">${cards}</div>
-  ${renderShareBar(`${SITE_URL}/revista#suscribirse`, 'Revista Aliax', 'Revista Aliax: artículos para terapeutas y pacientes. Suscríbete y recibe uno nuevo cada quincena.', 'Comparte la Revista:', true)}
+  ${renderShareBar(`${SITE_URL}/revista#suscribirse`, 'Revista Aliax', 'Revista Aliax: artículos para terapeutas y pacientes. Suscríbete y recibe uno nuevo cada quincena.', 'Comparte la Revista:', 'inline', true)}
   ${renderSubscribeBand()}
 </div>
 ${renderPillsScript()}
@@ -466,7 +487,8 @@ function generateArticlePage(a: Article, allArticles: Article[]): string {
   <span style="display:inline-block;margin-left:12px;padding:5px 12px;border-radius:999px;background:#2dd4bf;color:#04201c;font-size:11px;font-weight:700;text-transform:uppercase">${escapeHtml(a.category.name)}</span>
   <h1 style="font-size:40px;line-height:1.1;margin:18px 0 16px">${escapeHtml(a.title)}</h1>
   ${renderByline(a)}
-  ${renderShareBar(`${SITE_URL}/revista/${a.slug}`, a.title, a.title, 'Compartir:')}
+  ${renderShareBar(`${SITE_URL}/revista/${a.slug}`, a.title, a.title, 'Compartir:', 'top')}
+  ${renderShareBar(`${SITE_URL}/revista/${a.slug}`, a.title, a.title, '', 'side')}
   ${safeImgSrc(a.coverImage) ? `<img src="${escapeHtml(safeImgSrc(a.coverImage))}" alt="" style="width:100%;border-radius:24px;margin:24px 0 32px">` : ''}
   ${blocksHtml}
   ${renderShareBar(`${SITE_URL}/revista/${a.slug}`, a.title, a.title, '¿Te sirvió? Compártelo:')}
