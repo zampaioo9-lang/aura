@@ -897,6 +897,9 @@ export async function rescheduleBookingByClient(bookingId: string, input: { date
     await saveNotification(booking.id, 'RESCHEDULED', professionalEmail, tpl.subject, result);
   }
 
+  // Lista de espera: el horario que el paciente dejo libre tambien se avisa a quienes esperaban ese dia.
+  await notifyWaitlistForFreedSlot({ profileId: booking.profileId, serviceId: booking.serviceId, date: booking.date });
+
   return updated;
 }
 

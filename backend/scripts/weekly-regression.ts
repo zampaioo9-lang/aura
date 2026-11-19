@@ -462,6 +462,15 @@ async function main() {
       assert((await st(c.id)).status === 'NOTIFIED', 'quien esperaba ese dia (cualquier servicio) deberia quedar avisado');
       assert((await st(b.id)).status === 'WAITING', 'quien esperaba otro dia no deberia avisarse');
     });
+    await check('Lista de espera', 'Al reagendar, el horario que se deja libre tambien se avisa a la lista de espera', async () => {
+      const { tk, slots } = await newBooking(day(10), '09:00', { waitlistEnabled: true });
+      const viejo = await prisma.waitlistEntry.create({ data: { profileId, name: 'ZZ Viejo', email: `zz-viejo-${stamp}@aliax-test.invalid`, date: new Date(day(10)) } });
+      const otro = await prisma.waitlistEntry.create({ data: { profileId, name: 'ZZ Otro', email: `zz-otro-${stamp}@aliax-test.invalid`, date: new Date(day(12)) } });
+      const r = await api('POST', `/api/manage-booking/${tk}/reschedule`, { date: day(12), startTime: slots.find(s => s >= '12:00')! });
+      assert(r.status === 200, `reagendar dio ${r.status}: ${JSON.stringify(r.json)}`);
+      assert((await prisma.waitlistEntry.findUnique({ where: { id: viejo.id } }))!.status === 'NOTIFIED', 'quien esperaba el dia que se libero deberia quedar avisado');
+      assert((await prisma.waitlistEntry.findUnique({ where: { id: otro.id } }))!.status === 'WAITING', 'quien esperaba el dia al que se movio la cita no deberia avisarse');
+    });
     await check('Lista de espera', 'Con la lista apagada o el canal Email apagado no se avisa a nadie', async () => {
       for (const extra of [{ waitlistEnabled: false }, { waitlistEnabled: true, emailEnabled: false }]) {
         const { tk } = await newBooking(day(10), '09:00', extra);
