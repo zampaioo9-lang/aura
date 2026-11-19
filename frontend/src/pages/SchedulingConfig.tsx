@@ -1432,7 +1432,7 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
           <ToggleRow label="Múltiples reservas por horario" desc="Permite que varias personas reserven el mismo horario (por ejemplo sesiones de pareja o grupales)" on={!!settings.multiplePerSlot} onChange={() => upd('multiplePerSlot', !settings.multiplePerSlot)} />
         </ProGate>
         <div style={{ borderBottom: 'none' }}>
-          <ToggleRow label="Permitir cancelaciones" desc="Los pacientes pueden cancelar por sí mismos (respetando el plazo de 'Cancelación permitida hasta')" on={settings.allowClientCancel ?? true} onChange={() => upd('allowClientCancel', !(settings.allowClientCancel ?? true))} />
+          <ToggleRow label="Permitir cancelaciones" desc="Los pacientes pueden cancelar o reagendar por sí mismos desde el enlace de su correo (respetando el plazo de 'Cancelación permitida hasta')" on={settings.allowClientCancel ?? true} onChange={() => upd('allowClientCancel', !(settings.allowClientCancel ?? true))} />
         </div>
       </Card>
 
@@ -1527,7 +1527,7 @@ function TabNotificaciones({ profileId, isPro = false }: { profileId: string; is
         <ToggleRow label="Nueva reserva recibida" desc="Cuando un paciente reserva por su cuenta" on={prefs.profNewBooking} onChange={() => setPref('profNewBooking')} />
         <ToggleRow label="Cancelación de reserva" desc="Cuando se cancela una cita" on={prefs.profCancellation} onChange={() => setPref('profCancellation')} />
         <ProGate isPro={isPro}>
-          <ToggleRow label="Reagendamiento" on={false} onChange={() => {}} locked="pronto" />
+          <ToggleRow label="Reagendamiento" desc="Cuando un paciente cambia su cita a otro horario" on={prefs.profReschedule} onChange={() => setPref('profReschedule')} />
         </ProGate>
         <ProGate isPro={isPro}>
           <ToggleRow label="Nuevo cliente en lista de espera" on={false} onChange={() => {}} locked="pronto" />

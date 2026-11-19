@@ -59,6 +59,7 @@ export interface NotificationPrefs {
   clientFeedback:     boolean;
   profNewBooking:     boolean;
   profCancellation:   boolean;
+  profReschedule:     boolean;
 }
 
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
@@ -69,6 +70,7 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   clientFeedback:     true,
   profNewBooking:     true,
   profCancellation:   true,
+  profReschedule:     true,
 };
 
 export interface ScheduleBlock {

@@ -28,6 +28,7 @@ const PayPalReturn = lazy(() => import('./pages/PayPalReturn'));
 const Explorar = lazy(() => import('./pages/Explorar'));
 const PsicologosDirectory = lazy(() => import('./pages/PsicologosDirectory'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
+const ManageBookingPage = lazy(() => import('./pages/ManageBookingPage'));
 const OfferingPublic = lazy(() => import('./pages/OfferingPublic'));
 const OfferingCheckoutSuccess = lazy(() => import('./pages/OfferingCheckoutSuccess'));
 const OfferingCheckoutCancel = lazy(() => import('./pages/OfferingCheckoutCancel'));
@@ -98,6 +99,7 @@ function App() {
               <Route path="/psicologos/:countryCode/:citySlug/:approach" element={<PsicologosDirectory />} />
               <Route path="/book/:slug" element={<BookingPage />} />
               <Route path="/review/:token" element={<ReviewPage />} />
+              <Route path="/cita/:token" element={<ManageBookingPage />} />
               <Route path="/oferta/:offeringId" element={<OfferingPublic />} />
               <Route path="/oferta/:offeringId/exito" element={<OfferingCheckoutSuccess />} />
               <Route path="/oferta/:offeringId/cancelado" element={<OfferingCheckoutCancel />} />
