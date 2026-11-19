@@ -41,6 +41,7 @@ export interface BookingSettings {
   autoConfirm:        boolean;
   timezone:           string;
   language:           string;
+  meetingLink?:       string | null;
 }
 
 export interface ScheduleBlock {

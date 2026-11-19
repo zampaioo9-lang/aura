@@ -288,14 +288,28 @@ function SectionDivider({ label }: { label: string }) {
   );
 }
 
-function ToggleRow({ label, desc, on, onChange }: { label: string; desc?: string | ReactNode; on: boolean; onChange: () => void }) {
+// `locked`: el interruptor aun no se puede configurar (no se guarda). Se muestra bloqueado con una
+// etiqueta honesta en vez de aparentar que guarda: "Siempre activo" (ya funciona y no se puede apagar)
+// o "Próximamente" (todavia no esta construido).
+function ToggleRow({ label, desc, on, onChange, locked }: { label: string; desc?: string | ReactNode; on: boolean; onChange: () => void; locked?: 'siempre' | 'pronto' }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--sc-border)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--sc-border)', gap: 12 }}>
       <div>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>{label}</div>
+        <div style={{ fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {label}
+          {locked && (
+            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 999, background: 'var(--sc-accent-12)', color: 'var(--sc-accent-text)' }}>
+              {locked === 'siempre' ? 'Siempre activo' : 'Próximamente'}
+            </span>
+          )}
+        </div>
         {desc && <div style={{ fontSize: 12, color: 'var(--sc-muted)', marginTop: 2 }}>{desc}</div>}
       </div>
-      <Toggle on={on} onChange={onChange} />
+      {locked ? (
+        <div style={{ opacity: 0.45, pointerEvents: 'none' }} aria-disabled="true"><Toggle on={on} onChange={() => {}} /></div>
+      ) : (
+        <Toggle on={on} onChange={onChange} />
+      )}
     </div>
   );
 }
@@ -380,7 +394,7 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
     setSavingSettings(true);
     try {
       await api.put('/booking-settings', settings, { params: { profileId } });
-      toast('Zona horaria guardada');
+      toast('Configuración guardada');
     } catch { toast('Error al guardar', 'error'); }
     finally { setSavingSettings(false); }
   };
@@ -508,7 +522,7 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
 
       {/* Zona horaria */}
       <Card>
-        <CardHeader dot="#f6c90e" title="Zona horaria y región" />
+        <CardHeader dot="#f6c90e" title="Zona horaria, región y videollamada" />
         <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <FormSelect
             label="Zona horaria"
@@ -523,8 +537,21 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
             options={LANGUAGES.map(l => ({ value: l.value, label: l.label }))}
           />
         </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 16 }}>
+          <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--sc-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Enlace de videollamada (Meet, Zoom)</label>
+          <input
+            type="url"
+            value={settings.meetingLink ?? ''}
+            onChange={e => setSettings(s => ({ ...s, meetingLink: e.target.value }))}
+            placeholder="https://meet.google.com/abc-defg-hij"
+            style={{ background: 'var(--sc-inner)', border: '1px solid var(--sc-border)', borderRadius: 8, padding: '9px 12px', color: 'var(--sc-text)', fontFamily: 'DM Sans', fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' }}
+          />
+          <span style={{ fontSize: 12, color: 'var(--sc-muted)' }}>
+            Se envía a tus pacientes en la confirmación y el recordatorio de las citas en línea. Déjalo vacío si no lo necesitas.
+          </span>
+        </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-          <BtnPrimary onClick={handleSaveZone} disabled={savingSettings}>{savingSettings ? 'Guardando...' : 'Guardar zona'}</BtnPrimary>
+          <BtnPrimary onClick={handleSaveZone} disabled={savingSettings}>{savingSettings ? 'Guardando...' : 'Guardar'}</BtnPrimary>
         </div>
       </Card>
 
@@ -1319,7 +1346,8 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
     profileId, bufferMinutes: 0, advanceBookingDays: 60, minAdvanceHours: 1,
     cancellationHours: 24, autoConfirm: false, timezone: 'America/Mexico_City', language: 'es',
   });
-  const [toggles, setToggles] = useState({ waitlist: false, multiplePerSlot: false, allowCancel: true, requirePayment: false });
+  // Estos interruptores aun no se guardan (se muestran bloqueados como "Próximamente")
+  const toggles = { waitlist: false, multiplePerSlot: false, allowCancel: true };
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -1385,24 +1413,24 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
       <Card>
         <CardHeader dot="#43d9ad" title="Comportamiento del sistema" />
         <ProGate isPro={isPro}>
-          <ToggleRow label="Confirmación automática" desc="Las reservas se confirman sin revisión manual" on={settings.autoConfirm} onChange={() => upd('autoConfirm', !settings.autoConfirm)} />
+          <ToggleRow label="Confirmación automática" desc="Las reservas se confirman sin revisión manual" on={settings.autoConfirm} onChange={() => upd('autoConfirm', !settings.autoConfirm)} locked="pronto" />
         </ProGate>
         <ProGate isPro={isPro}>
-          <ToggleRow label="Lista de espera" desc="Los clientes pueden unirse a lista de espera si no hay slots" on={toggles.waitlist} onChange={() => setToggles(t => ({ ...t, waitlist: !t.waitlist }))} />
+          <ToggleRow label="Lista de espera" desc="Los clientes pueden unirse a lista de espera si no hay slots" on={toggles.waitlist} onChange={() => {}} locked="pronto" />
         </ProGate>
         <ProGate isPro={isPro}>
-          <ToggleRow label="Múltiples reservas por slot" desc="Permite solapamiento de citas (requiere recursos separados)" on={toggles.multiplePerSlot} onChange={() => setToggles(t => ({ ...t, multiplePerSlot: !t.multiplePerSlot }))} />
+          <ToggleRow label="Múltiples reservas por slot" desc="Permite solapamiento de citas (requiere recursos separados)" on={toggles.multiplePerSlot} onChange={() => {}} locked="pronto" />
         </ProGate>
         <div style={{ borderBottom: 'none' }}>
-          <ToggleRow label="Permitir cancelaciones" desc="Los clientes pueden cancelar por sí mismos" on={toggles.allowCancel} onChange={() => setToggles(t => ({ ...t, allowCancel: !t.allowCancel }))} />
+          <ToggleRow label="Permitir cancelaciones" desc="Los clientes pueden cancelar por sí mismos" on={toggles.allowCancel} onChange={() => {}} locked="pronto" />
         </div>
       </Card>
 
       {/* Límites por cliente */}
       <ProGate isPro={isPro}>
         <Card>
-          <CardHeader dot="#ff6584" title="Límites por cliente" />
-          <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <CardHeader dot="#ff6584" title="Límites por cliente · Próximamente" />
+          <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, opacity: 0.45, pointerEvents: 'none' }} aria-disabled="true">
             <FormSelect label="Máx. reservas activas por cliente" value="3" onChange={() => {}} options={[
               { value: '1', label: '1 reserva' }, { value: '2', label: '2 reservas' },
               { value: '3', label: '3 reservas' }, { value: '5', label: '5 reservas' },
@@ -1422,37 +1450,28 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
 // ════════════════════════════════════════════════════════════════════
 // TAB: NOTIFICACIONES
 // ════════════════════════════════════════════════════════════════════
-function TabNotificaciones({ isPro = false }: { isPro?: boolean }) {
+function TabNotificaciones({ profileId, isPro = false }: { profileId: string; isPro?: boolean }) {
   const { toast } = useToast();
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [reminders, setReminders] = useState({
-    confirmacion: true, recordatorio24h: true, recordatorio1h: false,
-    cancelacion: true, feedback: false,
-  });
-  const [profNotifs, setProfNotifs] = useState({
-    nuevaReserva: true, cancelacion: true, reagendamiento: false, listaEspera: false,
-  });
 
   useEffect(() => {
-    api.get('/booking-settings').then(r => {
+    api.get('/booking-settings', { params: { profileId } }).then(r => {
       if (r.data.emailEnabled !== undefined) setEmailEnabled(r.data.emailEnabled);
     }).catch(() => {});
-  }, []);
+  }, [profileId]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put('/booking-settings', { emailEnabled });
+      await api.put('/booking-settings', { emailEnabled }, { params: { profileId } });
       toast('Notificaciones guardadas');
     } catch {
-      toast('Error al guardar');
+      toast('Error al guardar', 'error');
     } finally {
       setSaving(false);
     }
   };
-
-  const tog = (_obj: any, set: any, key: string) => set((p: any) => ({ ...p, [key]: !p[key] }));
 
   return (
     <>
@@ -1478,27 +1497,27 @@ function TabNotificaciones({ isPro = false }: { isPro?: boolean }) {
       {/* Recordatorios */}
       <Card>
         <CardHeader dot="var(--sc-accent-text)" title="Recordatorios automáticos al cliente" />
-        <ToggleRow label="Confirmación de reserva" desc="Inmediato tras reservar" on={reminders.confirmacion} onChange={() => tog(reminders, setReminders, 'confirmacion')} />
-        <ToggleRow label="Recordatorio previo 24h" desc="24 horas antes de la cita" on={reminders.recordatorio24h} onChange={() => tog(reminders, setReminders, 'recordatorio24h')} />
+        <ToggleRow label="Confirmación de reserva" desc="Inmediato tras reservar" on={true} onChange={() => {}} locked="siempre" />
+        <ToggleRow label="Recordatorio previo 24h" desc="24 horas antes de la cita" on={true} onChange={() => {}} locked="siempre" />
         <ProGate isPro={isPro}>
-          <ToggleRow label="Recordatorio previo 1h" desc="1 hora antes de la cita" on={reminders.recordatorio1h} onChange={() => tog(reminders, setReminders, 'recordatorio1h')} />
+          <ToggleRow label="Recordatorio previo 1h" desc="1 hora antes de la cita" on={false} onChange={() => {}} locked="pronto" />
         </ProGate>
-        <ToggleRow label="Aviso de cancelación" desc="Al cancelar la cita" on={reminders.cancelacion} onChange={() => tog(reminders, setReminders, 'cancelacion')} />
+        <ToggleRow label="Aviso de cancelación" desc="Al cancelar la cita" on={true} onChange={() => {}} locked="siempre" />
         <ProGate isPro={isPro}>
-          <ToggleRow label="Solicitud de feedback" desc="2 horas después de la cita" on={reminders.feedback} onChange={() => tog(reminders, setReminders, 'feedback')} />
+          <ToggleRow label="Solicitud de feedback" desc="2 horas después de la cita" on={false} onChange={() => {}} locked="pronto" />
         </ProGate>
       </Card>
 
       {/* Notificaciones al profesional */}
       <Card>
         <CardHeader dot="#f6c90e" title="Notificaciones al profesional" />
-        <ToggleRow label="Nueva reserva recibida" on={profNotifs.nuevaReserva} onChange={() => tog(profNotifs, setProfNotifs, 'nuevaReserva')} />
-        <ToggleRow label="Cancelación de reserva" on={profNotifs.cancelacion} onChange={() => tog(profNotifs, setProfNotifs, 'cancelacion')} />
+        <ToggleRow label="Nueva reserva recibida" on={true} onChange={() => {}} locked="siempre" />
+        <ToggleRow label="Cancelación de reserva" on={true} onChange={() => {}} locked="siempre" />
         <ProGate isPro={isPro}>
-          <ToggleRow label="Reagendamiento" on={profNotifs.reagendamiento} onChange={() => tog(profNotifs, setProfNotifs, 'reagendamiento')} />
+          <ToggleRow label="Reagendamiento" on={false} onChange={() => {}} locked="pronto" />
         </ProGate>
         <ProGate isPro={isPro}>
-          <ToggleRow label="Nuevo cliente en lista de espera" on={profNotifs.listaEspera} onChange={() => tog(profNotifs, setProfNotifs, 'listaEspera')} />
+          <ToggleRow label="Nuevo cliente en lista de espera" on={false} onChange={() => {}} locked="pronto" />
         </ProGate>
       </Card>
     </>
@@ -1697,7 +1716,7 @@ export function SchedulingPanel({ theme, accent, accentId }: { theme: 'dark' | '
             {tab === 'services'      && <TabServicios      profileId={selectedProfileId} isPro={effectiveIsPro} />}
             {tab === 'blocks'        && <TabBloqueos       profileId={selectedProfileId} isPro={effectiveIsPro} />}
             {tab === 'rules'         && <TabReglas         profileId={selectedProfileId} isPro={effectiveIsPro} />}
-            {tab === 'notifications' && <TabNotificaciones isPro={effectiveIsPro} />}
+            {tab === 'notifications' && <TabNotificaciones profileId={selectedProfileId} isPro={effectiveIsPro} />}
           </>
         ) : (
           <p style={{ color: T.muted, fontSize: 14 }}>No tienes perfiles configurados aún.</p>
@@ -1863,7 +1882,7 @@ export default function SchedulingConfig() {
             {tab === 'services'       && <TabServicios      profileId={selectedProfileId} isPro={effectiveIsPro} />}
             {tab === 'blocks'         && <TabBloqueos       profileId={selectedProfileId} isPro={effectiveIsPro} />}
             {tab === 'rules'          && <TabReglas         profileId={selectedProfileId} isPro={effectiveIsPro} />}
-            {tab === 'notifications'  && <TabNotificaciones isPro={effectiveIsPro} />}
+            {tab === 'notifications'  && <TabNotificaciones profileId={selectedProfileId} isPro={effectiveIsPro} />}
           </>
         )}
       </main>
