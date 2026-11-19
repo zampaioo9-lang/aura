@@ -51,6 +51,7 @@ async function main() {
   const { signToken } = await import('../src/services/authService');
   const { zonedWallTimeToInstant, localizeBookingTime } = await import('../src/lib/clientTimezone');
   const { findBookingsDueFor24hReminder } = await import('../src/lib/reminders');
+  const { emailTemplates } = await import('../src/services/emailService');
   const manageRoutes = (await import('../src/routes/manage-booking')).default;
   const bookingRoutes = (await import('../src/routes/bookings')).default;
   const settingsRoutes = (await import('../src/routes/booking-settings')).default;
@@ -371,6 +372,38 @@ async function main() {
       assert(r.status === 201, `crear cita dio ${r.status}: ${JSON.stringify(r.json)}`);
       const vieja = await prisma.booking.findUnique({ where: { id } });
       assert(vieja?.status === 'CANCELLED', 'la cita cancelada deberia seguir registrada');
+    });
+    await check('Seguridad', 'Ningun correo deja pasar HTML o enlaces falsos escritos por un paciente', async () => {
+      const EVIL = '<script>alert(1)</script><img src=x onerror=alert(2)><a href="https://evil.example">clic</a>';
+      const NORMAL = 'José & María';
+      const URL_OK = 'https://www.aliax.io/x';
+      const d = new Date('2026-11-20T00:00:00Z');
+      const datos = (v: string): any => ({
+        clientName: v, professionalName: v, userName: v, buyerName: v, offeringTitle: v, serviceName: v, clientNotes: v, reason: v,
+        summary: v, errorDetail: v, title: v, name: v, buyerEmail: v, clientPhone: v,
+        clientEmail: 'cliente@example.com', userEmail: 'user@example.com', professionalEmail: 'pro@example.com', email: 'x@example.com',
+        date: d, oldDate: d, newDate: d, clientDate: d, startTime: '10:00', oldStartTime: '10:00', newStartTime: '11:00', clientStartTime: '17:00',
+        amountPaid: 100, currency: 'MXN', provider: 'stripe', tier: 'PRO', interval: 'monthly', modalityLabel: 'En linea',
+        meetingLink: 'https://meet.google.com/abc-defg-hij',
+        dashboardUrl: URL_OK, bookUrl: URL_OK, reviewUrl: URL_OK, accessUrl: URL_OK, confirmUrl: URL_OK, resetUrl: URL_OK, articleUrl: URL_OK,
+        slug: 'articulo', audience: 'TERAPEUTAS', approach: 'x', city: 'x', country: 'x', excerpt: 'x', coverImage: '', subject: 'x', body: 'x', note: 'x',
+        details: { modalityLabel: 'En linea', meetingLink: 'https://meet.google.com/abc-defg-hij', cancelUrl: URL_OK, rescheduleUrl: URL_OK },
+      });
+      // Anuncios y newsletter llevan HTML escrito a proposito por el administrador
+      const SALTAR = new Set(['announcement', 'articleNewsletter']);
+      const malas: string[] = [];
+      let revisadas = 0;
+      for (const [nombre, fn] of Object.entries(emailTemplates)) {
+        if (SALTAR.has(nombre) || typeof fn !== 'function') continue;
+        let malo = '', normal = '';
+        try { malo = (fn as any)(datos(EVIL)).html; normal = (fn as any)(datos(NORMAL)).html; } catch { continue; }
+        revisadas++;
+        if (malo.includes('<script>alert(1)') || malo.includes('<img src=x onerror') || malo.includes('<a href="https://evil.example"')) malas.push(nombre + ' (deja pasar HTML)');
+        if (normal.includes('&amp;amp;')) malas.push(nombre + ' (escapa dos veces)');
+      }
+      assert(revisadas >= 20, `solo se revisaron ${revisadas} plantillas`);
+      assert(malas.length === 0, `plantillas con problema: ${malas.join(', ')}`);
+      return `${revisadas} plantillas revisadas`;
     });
     await check('Recordatorios', 'El recordatorio de 24 h se elige por la hora real de la cita (zona del profesional)', async () => {
       await reset();

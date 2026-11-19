@@ -88,12 +88,19 @@ export function baseTemplate(title: string, content: string, headerLabel: string
 }
 
 // Fila de detalle reutilizable
+// Fila de detalle. El valor se ESCAPA: muchos datos los escribe el paciente en un formulario (nombre, notas,
+// motivo de cancelacion...) y no deben poder meter HTML o enlaces en un correo que sale de Aliax.
 function detailRow(label: string, value: string): string {
+  return detailRowHtml(label, escapeHtml(value));
+}
+
+// Igual que detailRow pero el valor ya es HTML armado por nosotros (por ejemplo un enlace con sus datos escapados).
+function detailRowHtml(label: string, html: string): string {
   return `
   <tr>
     <td style="padding:8px 0;border-bottom:1px solid #f4f4f5;">
       <span style="color:#71717a;font-size:13px;">${label}</span><br>
-      <span style="color:#18181b;font-size:15px;font-weight:500;">${value}</span>
+      <span style="color:#18181b;font-size:15px;font-weight:500;">${html}</span>
     </td>
   </tr>`;
 }
@@ -132,16 +139,16 @@ export interface ClientBookingExtras {
 
 function meetingLinkRow(link?: string | null): string {
   return link
-    ? detailRow('Enlace de la videollamada', `<a href="${escapeHtml(link)}" style="color:#7c3aed;word-break:break-all;">${escapeHtml(link)}</a>`)
+    ? detailRowHtml('Enlace de la videollamada', `<a href="${escapeHtml(link)}" style="color:#7c3aed;word-break:break-all;">${escapeHtml(link)}</a>`)
     : '';
 }
 
 function clientBookingExtraRows(x?: ClientBookingExtras): string {
   if (!x) return '';
   return (
-    (x.modalityLabel ? detailRow('Tipo de cita', escapeHtml(x.modalityLabel)) : '') +
+    (x.modalityLabel ? detailRow('Tipo de cita', x.modalityLabel) : '') +
     (x.meetingLink
-      ? detailRow('Enlace de la videollamada', `<a href="${escapeHtml(x.meetingLink)}" style="color:#7c3aed;word-break:break-all;">${escapeHtml(x.meetingLink)}</a>`)
+      ? detailRowHtml('Enlace de la videollamada', `<a href="${escapeHtml(x.meetingLink)}" style="color:#7c3aed;word-break:break-all;">${escapeHtml(x.meetingLink)}</a>`)
       : '')
   );
 }
@@ -227,7 +234,7 @@ export const emailTemplates = {
     subject: `Solicitud recibida con ${data.professionalName} — Aliax`,
     html: baseTemplate('Solicitud recibida', `
       ${badge('Pendiente de confirmación', '#d97706')}
-      ${heading(`Hola ${data.clientName}`)}
+      ${heading(`Hola ${escapeHtml(data.clientName)}`)}
       ${subtext('Recibimos tu solicitud de cita. El profesional la revisará y te confirmará pronto.')}
       ${detailTable(
         detailRow('Profesional', data.professionalName) +
@@ -257,7 +264,7 @@ export const emailTemplates = {
     subject: `Nueva reserva de ${data.clientName} — Aliax`,
     html: baseTemplate('Nueva reserva', `
       ${badge('Nueva reserva', '#9333ea')}
-      ${heading(`Hola ${data.professionalName}`)}
+      ${heading(`Hola ${escapeHtml(data.professionalName)}`)}
       ${subtext(data.autoConfirmed ? 'Tienes una nueva cita. Se confirmó automáticamente, según tu configuración.' : 'Tienes una nueva solicitud de cita que requiere tu confirmación.')}
       ${detailTable(
         detailRow('Cliente', data.clientName) +
@@ -294,13 +301,13 @@ export const emailTemplates = {
       ${heading(`Hola ${escapeHtml(data.professionalName)}`)}
       ${subtext('Agendaste una cita. Ya está confirmada y tu paciente recibió su aviso.')}
       ${detailTable(
-        detailRow('Cliente', escapeHtml(data.clientName)) +
-        detailRow('Servicio', escapeHtml(data.serviceName)) +
+        detailRow('Cliente', data.clientName) +
+        detailRow('Servicio', data.serviceName) +
         detailRow('Fecha', formatDateES(data.date)) +
         detailRow('Hora', data.startTime) +
-        (data.clientStartTime ? detailRow('Para tu paciente', `${formatDateES(data.clientDate ?? data.date)}, ${escapeHtml(data.clientStartTime)}`) : '') +
-        (data.modalityLabel ? detailRow('Tipo de cita', escapeHtml(data.modalityLabel)) : '') +
-        (data.meetingLink ? detailRow('Enlace de la videollamada', `<a href="${escapeHtml(data.meetingLink)}" style="color:#7c3aed;word-break:break-all;">${escapeHtml(data.meetingLink)}</a>`) : '')
+        (data.clientStartTime ? detailRow('Para tu paciente', `${formatDateES(data.clientDate ?? data.date)}, ${data.clientStartTime}`) : '') +
+        (data.modalityLabel ? detailRow('Tipo de cita', data.modalityLabel) : '') +
+        (data.meetingLink ? detailRowHtml('Enlace de la videollamada', `<a href="${escapeHtml(data.meetingLink)}" style="color:#7c3aed;word-break:break-all;">${escapeHtml(data.meetingLink)}</a>`) : '')
       )}
       ${ctaButton('Ver en el dashboard', data.dashboardUrl)}
     `),
@@ -324,10 +331,10 @@ export const emailTemplates = {
       ${heading(`Hola ${escapeHtml(data.professionalName)}`)}
       ${subtext('Una persona quiere que le avises si se libera un horario ese día.')}
       ${detailTable(
-        detailRow('Nombre', escapeHtml(data.clientName)) +
-        detailRow('Correo', escapeHtml(data.clientEmail)) +
-        (data.clientPhone ? detailRow('Teléfono', escapeHtml(data.clientPhone)) : '') +
-        (data.serviceName ? detailRow('Servicio', escapeHtml(data.serviceName)) : '') +
+        detailRow('Nombre', data.clientName) +
+        detailRow('Correo', data.clientEmail) +
+        (data.clientPhone ? detailRow('Teléfono', data.clientPhone) : '') +
+        (data.serviceName ? detailRow('Servicio', data.serviceName) : '') +
         detailRow('Día que quiere', formatDateES(data.date))
       )}
       ${ctaButton('Ver mi lista de espera', data.dashboardUrl)}
@@ -366,7 +373,7 @@ export const emailTemplates = {
     subject: `Cita confirmada con ${data.professionalName} — Aliax`,
     html: baseTemplate('Cita confirmada', `
       ${badge('Confirmada ✓', '#16a34a')}
-      ${heading(`Hola ${data.clientName}`)}
+      ${heading(`Hola ${escapeHtml(data.clientName)}`)}
       ${subtext('Tu cita ha sido confirmada. Te esperamos.')}
       ${detailTable(
         detailRow('Profesional', data.professionalName) +
@@ -396,8 +403,8 @@ export const emailTemplates = {
       ${heading(`Hola ${escapeHtml(data.clientName)}`)}
       ${subtext('Tu cita quedó reagendada para el nuevo horario. Si no fuiste tú, contacta a tu profesional.')}
       ${detailTable(
-        detailRow('Profesional', escapeHtml(data.professionalName)) +
-        detailRow('Servicio', escapeHtml(data.serviceName)) +
+        detailRow('Profesional', data.professionalName) +
+        detailRow('Servicio', data.serviceName) +
         detailRow('Nueva fecha', formatDateES(data.date)) +
         detailRow('Nueva hora', data.startTime) +
         clientBookingExtraRows(data.details)
@@ -425,8 +432,8 @@ export const emailTemplates = {
       ${heading(`Hola ${escapeHtml(data.professionalName)}`)}
       ${subtext(`${escapeHtml(data.clientName)} cambió su cita a otro horario.`)}
       ${detailTable(
-        detailRow('Cliente', escapeHtml(data.clientName)) +
-        detailRow('Servicio', escapeHtml(data.serviceName)) +
+        detailRow('Cliente', data.clientName) +
+        detailRow('Servicio', data.serviceName) +
         detailRow('Horario anterior', `${formatDateES(data.oldDate)}, ${data.oldStartTime}`) +
         detailRow('Nuevo horario', `${formatDateES(data.newDate)}, ${data.newStartTime}`) +
         meetingLinkRow(data.meetingLink)
@@ -448,7 +455,7 @@ export const emailTemplates = {
     subject: `Recordatorio: tienes cita con ${data.professionalName} el ${formatDateES(data.date)} — Aliax`,
     html: baseTemplate('Recordatorio de cita', `
       ${badge('Recordatorio', '#d97706')}
-      ${heading(`Hola ${data.clientName}`)}
+      ${heading(`Hola ${escapeHtml(data.clientName)}`)}
       ${subtext(`Te recordamos que tienes una cita programada para el ${formatDateES(data.date)}.`)}
       ${detailTable(
         detailRow('Con', data.professionalName) +
@@ -475,7 +482,7 @@ export const emailTemplates = {
     subject: `Tu cita con ${data.professionalName} es en aproximadamente 1 hora — Aliax`,
     html: baseTemplate('Tu cita es en 1 hora', `
       ${badge('En 1 hora', '#d97706')}
-      ${heading(`Hola ${data.clientName}`)}
+      ${heading(`Hola ${escapeHtml(data.clientName)}`)}
       ${subtext('Te recordamos que tu cita empieza en aproximadamente una hora.')}
       ${detailTable(
         detailRow('Con', data.professionalName) +
@@ -502,7 +509,7 @@ export const emailTemplates = {
     subject: `Recordatorio: tienes cita con ${data.clientName} el ${formatDateES(data.date)} — Aliax`,
     html: baseTemplate('Recordatorio de cita', `
       ${badge('Recordatorio', '#d97706')}
-      ${heading(`Hola ${data.professionalName}`)}
+      ${heading(`Hola ${escapeHtml(data.professionalName)}`)}
       ${subtext(`Te recordamos que tienes una cita programada para el ${formatDateES(data.date)}.`)}
       ${detailTable(
         detailRow('Cliente', data.clientName) +
@@ -528,7 +535,7 @@ export const emailTemplates = {
     subject: `Cita cancelada — Aliax`,
     html: baseTemplate('Cita cancelada', `
       ${badge('Cancelada', '#dc2626')}
-      ${heading(`Hola ${data.clientName}`)}
+      ${heading(`Hola ${escapeHtml(data.clientName)}`)}
       ${subtext('Lamentamos informarte que tu cita ha sido cancelada.')}
       ${detailTable(
         detailRow('Profesional', data.professionalName) +
@@ -548,7 +555,7 @@ export const emailTemplates = {
     to: data.userEmail,
     subject: '¡Bienvenido a Aliax! 🎉',
     html: baseTemplate('Bienvenido a Aliax', `
-      ${heading(`¡Hola ${data.userName}!`)}
+      ${heading(`¡Hola ${escapeHtml(data.userName)}!`)}
       ${subtext('Nos da mucho gusto que formes parte de Aliax. Tu cuenta ya está activa.')}
 
       <div style="margin-top:20px;padding:16px;background:#f5f3ff;border-radius:8px;border:1px solid #ddd6fe;">
@@ -588,7 +595,7 @@ export const emailTemplates = {
     to: data.userEmail,
     subject: '¿Ya probaste las notas con IA en Aliax?',
     html: baseTemplate('Tu prueba de Pro IA', `
-      ${heading(`Hola ${data.userName}`)}
+      ${heading(`Hola ${escapeHtml(data.userName)}`)}
       ${subtext('Llevas un par de días en tu prueba de Pro IA y todavía te quedan unos 3. Aquí tienes tres cosas que puedes probar hoy:')}
 
       <div style="margin-top:20px;">
@@ -613,7 +620,7 @@ export const emailTemplates = {
     to: data.userEmail,
     subject: 'Tu prueba de Pro IA vence mañana',
     html: baseTemplate('Tu prueba de Pro IA vence mañana', `
-      ${heading(`Hola ${data.userName}`)}
+      ${heading(`Hola ${escapeHtml(data.userName)}`)}
       ${subtext('Tu prueba de Pro IA termina en menos de 24 horas.')}
 
       <div style="margin-top:20px;padding:16px;background:#f0fdf4;border-radius:8px;">
@@ -645,7 +652,7 @@ export const emailTemplates = {
     to: data.userEmail,
     subject: 'Restablece tu contraseña de Aliax',
     html: baseTemplate('Restablece tu contraseña', `
-      ${heading(`Hola ${data.userName}`)}
+      ${heading(`Hola ${escapeHtml(data.userName)}`)}
       ${subtext('Recibimos una solicitud para restablecer la contraseña de tu cuenta en Aliax. Si fuiste tú, haz clic en el siguiente botón para elegir una nueva contraseña.')}
       ${ctaButton('Restablecer contraseña', data.resetUrl)}
       <p style="margin-top:24px;color:#a1a1aa;font-size:13px;">Este enlace expira en 30 minutos. Si no solicitaste este cambio, puedes ignorar este correo — tu contraseña actual seguirá funcionando.</p>
@@ -660,7 +667,7 @@ export const emailTemplates = {
     to: data.userEmail,
     subject: 'Tu contraseña de Aliax fue actualizada',
     html: baseTemplate('Contraseña actualizada', `
-      ${heading(`Hola ${data.userName}`)}
+      ${heading(`Hola ${escapeHtml(data.userName)}`)}
       ${subtext('Tu contraseña de Aliax se actualizó correctamente. Ya puedes iniciar sesión con tu nueva contraseña.')}
       <p style="margin-top:24px;color:#a1a1aa;font-size:13px;">Si no fuiste tú quien hizo este cambio, contáctanos de inmediato respondiendo a este correo.</p>
     `),
@@ -786,8 +793,8 @@ export const emailTemplates = {
     subject: `Tu compra de "${data.offeringTitle}" está confirmada`,
     html: baseTemplate('Compra confirmada', `
       ${badge('Pago confirmado', '#16a34a')}
-      ${heading(`Gracias, ${data.buyerName}`)}
-      ${subtext(`Tu compra de "${data.offeringTitle}" quedó registrada. Guarda este correo: el siguiente enlace es tu única forma de acceder al contenido.`)}
+      ${heading(`Gracias, ${escapeHtml(data.buyerName)}`)}
+      ${subtext(`Tu compra de "${escapeHtml(data.offeringTitle)}" quedó registrada. Guarda este correo: el siguiente enlace es tu única forma de acceder al contenido.`)}
       ${ctaButton('Ver mi compra', data.accessUrl)}
     `),
   }),
@@ -851,8 +858,8 @@ export const emailTemplates = {
     subject: `Cita cancelada por ${data.clientName} — Aliax`,
     html: baseTemplate('Cita cancelada', `
       ${badge('Cancelada', '#dc2626')}
-      ${heading(`Hola ${data.professionalName}`)}
-      ${subtext(`${data.clientName} ha cancelado su cita.`)}
+      ${heading(`Hola ${escapeHtml(data.professionalName)}`)}
+      ${subtext(`${escapeHtml(data.clientName)} ha cancelado su cita.`)}
       ${detailTable(
         detailRow('Cliente', data.clientName) +
         detailRow('Servicio', data.serviceName) +
@@ -873,8 +880,8 @@ export const emailTemplates = {
     to: data.clientEmail,
     subject: `¿Cómo fue tu sesión con ${data.professionalName}? — Aliax`,
     html: baseTemplate('Deja tu reseña', `
-      ${heading(`Hola ${data.clientName}`)}
-      ${subtext(`Tu opinión sobre tu sesión con <strong>${data.professionalName}</strong> ayuda a otros a encontrar el apoyo que necesitan.`)}
+      ${heading(`Hola ${escapeHtml(data.clientName)}`)}
+      ${subtext(`Tu opinión sobre tu sesión con <strong>${escapeHtml(data.professionalName)}</strong> ayuda a otros a encontrar el apoyo que necesitan.`)}
 
       <div style="margin-top:20px;padding:16px;background:#f0fdfa;border-radius:8px;border:1px solid #99f6e4;">
         <p style="margin:0 0 6px;color:#0f766e;font-size:13px;font-weight:600;">Solo toma 1 minuto</p>
@@ -897,7 +904,7 @@ export const emailTemplates = {
     subject: `Caso urgente: se necesita contacto directo — Aliax`,
     html: baseTemplate('Caso urgente', `
       ${badge('Riesgo alto', '#dc2626')}
-      ${heading(`Hola ${data.professionalName}`)}
+      ${heading(`Hola ${escapeHtml(data.professionalName)}`)}
       ${subtext('Una persona en un programa de acompañamiento guiado por IA (ia-terapia, un proyecto afiliado a Aliax) mostró señales de riesgo alto. Te pedimos que la contactes directamente lo antes posible.')}
       ${detailTable(detailRow('Resumen del caso', data.summary))}
       <p style="margin-top:20px;color:#a1a1aa;font-size:12px;line-height:1.5;">Este correo no incluye datos clínicos completos, solo lo necesario para el primer contacto. Actúa con tu criterio profesional habitual.</p>
