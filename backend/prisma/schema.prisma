@@ -822,6 +822,10 @@ model NewsletterSubscriber {
   confirmToken String?           @unique
   confirmedAt  DateTime?
   createdAt    DateTime          @default(now())
+  // Origen: de que red o enlace llego (utm_source / utm_campaign) y en que pagina lleno el formulario.
+  source       String?
+  campaign     String?
+  landingPage  String?
 
   @@unique([email, audience])
   @@index([confirmToken])

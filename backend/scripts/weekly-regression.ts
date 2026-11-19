@@ -385,6 +385,7 @@ async function main() {
         date: d, oldDate: d, newDate: d, clientDate: d, startTime: '10:00', oldStartTime: '10:00', newStartTime: '11:00', clientStartTime: '17:00',
         amountPaid: 100, currency: 'MXN', provider: 'stripe', tier: 'PRO', interval: 'monthly', modalityLabel: 'En linea',
         meetingLink: 'https://meet.google.com/abc-defg-hij',
+        unsubscribeUrl: URL_OK, revistaUrl: URL_OK, article: { title: v, excerpt: v, url: URL_OK },
         dashboardUrl: URL_OK, bookUrl: URL_OK, reviewUrl: URL_OK, accessUrl: URL_OK, confirmUrl: URL_OK, resetUrl: URL_OK, articleUrl: URL_OK,
         slug: 'articulo', audience: 'TERAPEUTAS', approach: 'x', city: 'x', country: 'x', excerpt: 'x', coverImage: '', subject: 'x', body: 'x', note: 'x',
         details: { modalityLabel: 'En linea', meetingLink: 'https://meet.google.com/abc-defg-hij', cancelUrl: URL_OK, rescheduleUrl: URL_OK },
@@ -404,6 +405,17 @@ async function main() {
       assert(revisadas >= 20, `solo se revisaron ${revisadas} plantillas`);
       assert(malas.length === 0, `plantillas con problema: ${malas.join(', ')}`);
       return `${revisadas} plantillas revisadas`;
+    });
+    await check('Revista', 'El origen del suscriptor se limpia y el correo de bienvenida existe', async () => {
+      const { cleanSubscriberOrigin } = await import('../src/lib/subscriberOrigin');
+      const o = cleanSubscriberOrigin({ source: ' Instagram ', campaign: 'Carrusel Burnout!<script>', landingPage: '/revista/burnout?utm_source=x#a' });
+      assert(o.source === 'instagram', 'source mal limpiado: ' + o.source);
+      assert(o.campaign === 'carrusel-burnoutscript', 'campaign mal limpiado: ' + o.campaign);
+      assert(o.landingPage === '/revista/burnout', 'landingPage mal limpiado: ' + o.landingPage);
+      const vacio = cleanSubscriberOrigin({ source: '<>', landingPage: 'https://evil.example/x' });
+      assert(vacio.source === null && vacio.landingPage === null, 'valores invalidos deberian quedar en null');
+      const w = emailTemplates.newsletterWelcome({ email: 'x@example.com', fullName: 'Ana Lopez', audience: 'PACIENTES', unsubscribeUrl: 'https://api.aliax.io/baja', revistaUrl: 'https://www.aliax.io/revista', article: null });
+      assert(w.html.includes('Te damos la bienvenida, Ana') && w.html.includes('/baja'), 'la bienvenida no trae saludo o enlace de baja');
     });
     await check('Recordatorios', 'El recordatorio de 24 h se elige por la hora real de la cita (zona del profesional)', async () => {
       await reset();

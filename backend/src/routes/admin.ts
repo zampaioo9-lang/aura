@@ -648,7 +648,7 @@ router.get('/newsletter/subscribers', async (req, res, next) => {
     const subscribers = await prisma.newsletterSubscriber.findMany({
       where: audience ? { audience } : undefined,
       orderBy: { createdAt: 'desc' },
-      select: { id: true, fullName: true, email: true, audience: true, status: true, createdAt: true, confirmedAt: true },
+      select: { id: true, fullName: true, email: true, audience: true, status: true, createdAt: true, confirmedAt: true, source: true, campaign: true, landingPage: true },
     });
     res.json(subscribers);
   } catch (err) {
@@ -672,10 +672,10 @@ router.get('/newsletter/subscribers/export', async (req, res, next) => {
     const subscribers = await prisma.newsletterSubscriber.findMany({
       where: audience ? { audience } : undefined,
       orderBy: { createdAt: 'desc' },
-      select: { fullName: true, email: true, audience: true, status: true, createdAt: true, confirmedAt: true },
+      select: { fullName: true, email: true, audience: true, status: true, createdAt: true, confirmedAt: true, source: true, campaign: true, landingPage: true },
     });
 
-    const header = 'Nombre,Correo,Audiencia,Estado,Fecha de registro,Fecha de confirmacion';
+    const header = 'Nombre,Correo,Audiencia,Estado,Fecha de registro,Fecha de confirmacion,Origen,Campana,Pagina';
     const rows = subscribers.map((s) =>
       [
         csvEscape(s.fullName),
@@ -684,6 +684,9 @@ router.get('/newsletter/subscribers/export', async (req, res, next) => {
         s.status,
         s.createdAt.toISOString(),
         s.confirmedAt ? s.confirmedAt.toISOString() : '',
+        csvEscape(s.source ?? ''),
+        csvEscape(s.campaign ?? ''),
+        csvEscape(s.landingPage ?? ''),
       ].join(',')
     );
     const csv = [header, ...rows].join('\n');

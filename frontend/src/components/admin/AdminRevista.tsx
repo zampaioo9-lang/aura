@@ -453,6 +453,17 @@ export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
             </button>
           </div>
 
+          {(() => {
+            const conteo: Record<string, number> = {};
+            subscribers.filter((s) => s.status === 'CONFIRMED').forEach((s) => { const k = s.source || 'sin dato'; conteo[k] = (conteo[k] || 0) + 1; });
+            const items = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
+            return (
+              <p style={{ margin: '0 0 10px', fontSize: 13, color: C.textMuted }}>
+                <strong style={{ color: C.text }}>Confirmados por origen:</strong>{' '}
+                {items.length ? items.map(([k, n]) => `${k} ${n}`).join('  ·  ') : 'ninguno todavía'}
+              </p>
+            );
+          })()}
           <div style={{ ...card, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
@@ -461,16 +472,17 @@ export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
                   <th style={{ textAlign: 'left', padding: '10px 16px', color: C.textMuted, fontWeight: 600 }}>Correo</th>
                   <th style={{ textAlign: 'left', padding: '10px 16px', color: C.textMuted, fontWeight: 600 }}>Audiencia</th>
                   <th style={{ textAlign: 'left', padding: '10px 16px', color: C.textMuted, fontWeight: 600 }}>Estado</th>
+                  <th style={{ textAlign: 'left', padding: '10px 16px', color: C.textMuted, fontWeight: 600 }}>Origen</th>
                   <th style={{ textAlign: 'left', padding: '10px 16px', color: C.textMuted, fontWeight: 600 }}>Fecha</th>
                   <th style={{ padding: '10px 16px' }}></th>
                 </tr>
               </thead>
               <tbody>
                 {loadingSubscribers && (
-                  <tr><td colSpan={6} style={{ padding: 20, textAlign: 'center', color: C.textMuted }}>Cargando...</td></tr>
+                  <tr><td colSpan={7} style={{ padding: 20, textAlign: 'center', color: C.textMuted }}>Cargando...</td></tr>
                 )}
                 {!loadingSubscribers && subscribers.length === 0 && (
-                  <tr><td colSpan={6} style={{ padding: 20, textAlign: 'center', color: C.textMuted }}>Sin suscriptores todavia</td></tr>
+                  <tr><td colSpan={7} style={{ padding: 20, textAlign: 'center', color: C.textMuted }}>Sin suscriptores todavia</td></tr>
                 )}
                 {!loadingSubscribers && subscribers.map((s, i) => {
                   const audiencePill = s.audience === 'TERAPEUTAS'
@@ -491,6 +503,7 @@ export default function AdminRevista({ C, onSendAsNewsletter }: Props) {
                       <td style={{ padding: '10px 16px' }}>
                         <span style={{ background: statusPill.bg, color: statusPill.color, padding: '3px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600 }}>{statusPill.label}</span>
                       </td>
+                      <td style={{ padding: '10px 16px', color: C.textMuted }} title={s.campaign ? `Campaña: ${s.campaign}` : undefined}>{s.source || 'Sin dato'}</td>
                       <td style={{ padding: '10px 16px', color: C.textMuted }}>{new Date(s.createdAt).toLocaleDateString('es-MX')}</td>
                       <td style={{ padding: '10px 16px', textAlign: 'right' }}>
                         {s.status !== 'UNSUBSCRIBED' && (

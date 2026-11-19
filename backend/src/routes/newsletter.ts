@@ -6,6 +6,7 @@ import { AppError } from '../middleware/errorHandler';
 import { addContact, removeContact, type AudienceTarget } from '../services/audienceService';
 import { emailTemplates, sendEmail } from '../services/emailService';
 import { env } from '../config/env';
+import { cleanSubscriberOrigin } from '../lib/subscriberOrigin';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -17,7 +18,8 @@ function toAudienceTarget(audience: 'PACIENTES' | 'TERAPEUTAS'): AudienceTarget 
 // POST /api/newsletter/subscribe: public, rate-limited by IP+email per day
 router.post('/subscribe', async (req, res, next) => {
   try {
-    const { fullName, email, audience } = subscribeNewsletterSchema.parse(req.body);
+    const { fullName, email, audience, ...rawOrigin } = subscribeNewsletterSchema.parse(req.body);
+    const origin = cleanSubscriberOrigin(rawOrigin);
 
     const ip = ((req.headers['x-forwarded-for'] as string) || '').split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
     const today = new Date().toISOString().split('T')[0];
@@ -45,10 +47,11 @@ router.post('/subscribe', async (req, res, next) => {
     const subscriber = existing
       ? await prisma.newsletterSubscriber.update({
           where: { id: existing.id },
-          data: { fullName, status: 'PENDING', confirmToken },
+          // El origen de la primera vez se conserva: solo se llena si todavia no tenia.
+          data: { fullName, status: 'PENDING', confirmToken, ...(existing.source ? {} : origin) },
         })
       : await prisma.newsletterSubscriber.create({
-          data: { fullName, email, audience, status: 'PENDING', confirmToken },
+          data: { fullName, email, audience, status: 'PENDING', confirmToken, ...origin },
         });
 
     const confirmUrl = `${env.API_BASE_URL}/api/newsletter/confirm/${subscriber.confirmToken}`;
@@ -82,12 +85,41 @@ router.get('/confirm/:token', async (req, res, next) => {
       return res.redirect(`${env.FRONTEND_URL}/revista?newsletter=invalido`);
     }
 
+    const wasConfirmed = subscriber.status === 'CONFIRMED';
     await prisma.newsletterSubscriber.update({
       where: { id: subscriber.id },
       data: { status: 'CONFIRMED', confirmedAt: new Date() },
     });
 
     await addContact(subscriber.email, subscriber.fullName, toAudienceTarget(subscriber.audience));
+
+    // Correo de bienvenida: solo la primera vez que se confirma (abrir el enlace otra vez no lo reenvia).
+    // Si falla, la suscripcion ya quedo confirmada y no se rompe el flujo.
+    if (!wasConfirmed) {
+      try {
+        const article = await prisma.article.findFirst({
+          where: { status: 'PUBLISHED', category: { audience: subscriber.audience } },
+          orderBy: { publishedAt: 'desc' },
+          select: { title: true, excerpt: true, slug: true },
+        }) ?? await prisma.article.findFirst({
+          where: { status: 'PUBLISHED' },
+          orderBy: { publishedAt: 'desc' },
+          select: { title: true, excerpt: true, slug: true },
+        });
+        const tpl = emailTemplates.newsletterWelcome({
+          email: subscriber.email,
+          fullName: subscriber.fullName,
+          audience: subscriber.audience,
+          unsubscribeUrl: `${env.API_BASE_URL}/api/newsletter/unsubscribe/${subscriber.confirmToken}`,
+          revistaUrl: `${env.FRONTEND_URL}/revista`,
+          article: article ? { title: article.title, excerpt: article.excerpt, url: `${env.FRONTEND_URL}/revista/${article.slug}` } : null,
+        });
+        // Se espera el envio: en serverless una promesa sin await puede quedar cortada (ver /subscribe).
+        await sendEmail(tpl.to, tpl.subject, tpl.html);
+      } catch (e) {
+        console.error('[newsletter] no se pudo enviar el correo de bienvenida', e);
+      }
+    }
 
     res.redirect(`${env.FRONTEND_URL}/revista?newsletter=confirmado`);
   } catch (err) {

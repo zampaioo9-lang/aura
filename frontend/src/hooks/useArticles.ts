@@ -58,6 +58,9 @@ export interface Subscriber {
   status: SubscriberStatus;
   createdAt: string;
   confirmedAt: string | null;
+  source?: string | null;
+  campaign?: string | null;
+  landingPage?: string | null;
 }
 
 export interface CreateCategoryData { name: string; audience: CategoryAudience }

@@ -441,6 +441,10 @@ export const subscribeNewsletterSchema = z.object({
   fullName: z.string().trim().min(2, 'El nombre es obligatorio'),
   email: z.string().trim().email(),
   audience: z.enum(['PACIENTES', 'TERAPEUTAS']),
+  // Origen opcional: se limpia en la ruta (lib/subscriberOrigin.ts) antes de guardarse.
+  source: z.string().max(100).optional(),
+  campaign: z.string().max(150).optional(),
+  landingPage: z.string().max(300).optional(),
 });
 
 export const matchLeadContactSchema = z.object({

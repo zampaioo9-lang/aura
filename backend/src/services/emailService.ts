@@ -927,6 +927,40 @@ export const emailTemplates = {
     `),
   }),
 
+  // Bienvenida al confirmar la suscripcion a la Revista (se envia una sola vez, al confirmar).
+  newsletterWelcome: (data: {
+    email: string;
+    fullName: string;
+    audience: 'PACIENTES' | 'TERAPEUTAS';
+    unsubscribeUrl: string;
+    revistaUrl: string;
+    article?: { title: string; excerpt: string; url: string } | null;
+  }) => {
+    const firstName = escapeHtml((data.fullName || '').trim().split(/\s+/)[0] || '');
+    const promise = data.audience === 'TERAPEUTAS'
+      ? 'Cada quincena recibirás un artículo nuevo para tu práctica, listo para leer y compartir con tus pacientes.'
+      : 'Cada quincena recibirás un artículo nuevo para entender lo que sientes y cuidar tus relaciones.';
+    const articleBlock = data.article
+      ? `
+      <div style="margin-top:20px;padding:16px;background:#f4f4f5;border-radius:10px;">
+        <p style="margin:0 0 6px;color:#71717a;font-size:12px;">Para empezar, te recomendamos este artículo</p>
+        <p style="margin:0 0 6px;color:#18181b;font-size:16px;font-weight:700;">${escapeHtml(data.article.title)}</p>
+        ${subtext(escapeHtml(data.article.excerpt))}
+      </div>
+      ${ctaButton('Leer artículo', escapeHtml(data.article.url))}`
+      : ctaButton('Explorar la Revista', escapeHtml(data.revistaUrl));
+    return {
+      to: data.email,
+      subject: 'Te damos la bienvenida a Revista Aliax',
+      html: baseTemplate('Bienvenida a Revista Aliax', `
+      ${heading(firstName ? `Te damos la bienvenida, ${firstName}` : 'Te damos la bienvenida')}
+      ${subtext('Tu suscripción quedó confirmada. ' + promise)}
+      ${articleBlock}
+      <div style="margin-top:24px;">${subtext(`Si en algún momento ya no quieres recibirlos, puedes <a href="${escapeHtml(data.unsubscribeUrl)}" style="color:#0d9488;">darte de baja aquí</a>.`)}</div>
+    `),
+    };
+  },
+
   // HTML pre-llenado para "Enviar como newsletter" desde el CMS de Revista.
   // Sin `to`: no se envia directo, solo se devuelve subject+html para pre-llenar el formulario admin.
   articleNewsletter: (data: { title: string; excerpt: string; coverImage: string | null; articleUrl: string }) => ({

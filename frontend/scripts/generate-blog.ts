@@ -270,6 +270,26 @@ function renderSubscribeBand(): string {
   // Limpia el parametro de la URL para que un reload o un link compartido no repita el mensaje.
   if (state) { history.replaceState(null, '', location.pathname); }
 
+  // Origen del suscriptor: utm_source / utm_campaign del enlace; si no hay, el sitio desde donde llego.
+  // Se guarda en el navegador para que no se pierda al pasar de /revista a un articulo.
+  var ORIGIN_KEY = 'ra_origin';
+  function cleanTag(v){ return String(v || '').toLowerCase().replace(/\\s+/g, '-').replace(/[^a-z0-9._:-]/g, '').slice(0, 40); }
+  function readOrigin(){ try { return JSON.parse(localStorage.getItem(ORIGIN_KEY) || 'null'); } catch (e) { return null; } }
+  function saveOrigin(o){ try { localStorage.setItem(ORIGIN_KEY, JSON.stringify(o)); } catch (e) {} }
+  var utmSource = cleanTag(params.get('utm_source'));
+  if (utmSource) {
+    saveOrigin({ source: utmSource, campaign: cleanTag(params.get('utm_campaign')) });
+  } else if (!readOrigin() && document.referrer) {
+    var refHost = '';
+    try { refHost = new URL(document.referrer).hostname.replace(/^www\\./, ''); } catch (e) {}
+    if (refHost && refHost.indexOf('aliax.io') === -1) {
+      var known = [['instagram', 'instagram'], ['facebook', 'facebook'], ['fb.com', 'facebook'], ['tiktok', 'tiktok'], ['google', 'google'], ['linkedin', 'linkedin'], ['t.co', 'x'], ['twitter', 'x']];
+      var mapped = cleanTag(refHost);
+      for (var i = 0; i < known.length; i++) { if (refHost.indexOf(known[i][0]) !== -1) { mapped = known[i][1]; break; } }
+      saveOrigin({ source: mapped, campaign: '' });
+    }
+  }
+
   var form = document.getElementById('ra-subscribe-form');
   if (!form) return;
   form.addEventListener('submit', function(e){
@@ -283,7 +303,7 @@ function renderSubscribeBand(): string {
     fetch('${API_URL}/newsletter/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fullName: fullName, email: email, audience: audience })
+      body: JSON.stringify({ fullName: fullName, email: email, audience: audience, source: (readOrigin() || {}).source || 'directo', campaign: (readOrigin() || {}).campaign || '', landingPage: location.pathname })
     }).then(function(r){ return r.json(); }).then(function(data){
       btn.disabled = false;
       btn.textContent = 'Suscribirme';

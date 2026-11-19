@@ -34,6 +34,7 @@ export default function RevistaSubscribeCard({ C, name, email, newsletterSubscri
         fullName: name,
         email,
         audience: 'TERAPEUTAS',
+        source: 'dashboard',
       });
       setStatus('sent');
     } catch (err: any) {
