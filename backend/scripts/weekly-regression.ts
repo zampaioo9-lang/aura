@@ -50,9 +50,11 @@ async function main() {
   const bookingService = await import('../src/services/bookingService');
   const { signToken } = await import('../src/services/authService');
   const { zonedWallTimeToInstant, localizeBookingTime } = await import('../src/lib/clientTimezone');
+  const { findBookingsDueFor24hReminder } = await import('../src/lib/reminders');
   const manageRoutes = (await import('../src/routes/manage-booking')).default;
   const bookingRoutes = (await import('../src/routes/bookings')).default;
   const settingsRoutes = (await import('../src/routes/booking-settings')).default;
+  const waitlistRoutes = (await import('../src/routes/waitlist')).default;
 
   const stamp = Date.now();
   const proEmail = `zz-regresion-${stamp}@aliax-test.invalid`;
@@ -75,6 +77,7 @@ async function main() {
   app.use('/api/manage-booking', manageRoutes);
   app.use('/api/bookings', bookingRoutes);
   app.use('/api/booking-settings', settingsRoutes);
+  app.use('/api/waitlist', waitlistRoutes);
   app.use(errorHandler);
   const server = http.createServer(app);
   await new Promise<void>(r => server.listen(0, '127.0.0.1', () => r()));
@@ -91,6 +94,7 @@ async function main() {
   }
 
   let userId = '';
+  let user2Id = '';
   let profileId = '';
   let serviceId = '';
 
@@ -104,18 +108,23 @@ async function main() {
     serviceId = service.id;
     for (let d = 0; d < 7; d++) await prisma.availabilitySlot.create({ data: { profileId, dayOfWeek: d, startTime: '08:00', endTime: '20:00' } });
     await prisma.client.create({ data: { userId, name: 'ZZ Paciente', email: clientEmail, timezone: 'Europe/Paris' } });
+    const user2 = await prisma.user.create({ data: { email: `zz-regresion-otro-${stamp}@aliax-test.invalid`, password: 'sin-acceso', name: 'ZZ Otro Profesional' } });
+    user2Id = user2.id;
     const token = signToken(userId);
+    const token2 = signToken(user2Id);
 
     const BASELINE = {
       emailEnabled: true, autoConfirm: false, allowClientCancel: true, multiplePerSlot: false,
       maxActiveBookingsPerClient: 0, minDaysBetweenBookings: 0, cancellationHours: 0, minAdvanceHours: 0,
       advanceBookingDays: 90, bufferMinutes: 0, timezone: 'America/Mexico_City',
       meetingLink: 'https://meet.google.com/zzz-test-link', notificationPrefs: undefined as undefined | object | null,
+      waitlistEnabled: false,
     };
     await prisma.bookingSettings.create({ data: { profileId, ...BASELINE, notificationPrefs: undefined } });
 
     async function reset(extra: Record<string, unknown> = {}) {
       await prisma.booking.deleteMany({ where: { profileId } });
+      await prisma.waitlistEntry.deleteMany({ where: { profileId } });
       await prisma.bookingSettings.update({ where: { profileId }, data: { ...BASELINE, notificationPrefs: Prisma.DbNull, ...extra } as any });
     }
     const notes = (bookingId: string) => prisma.notification.findMany({ where: { bookingId }, orderBy: { createdAt: 'asc' } });
@@ -355,6 +364,38 @@ async function main() {
       assert((await prisma.booking.findUnique({ where: { id } })) === null, 'la cita no se borro');
       assert((await api('DELETE', `/api/bookings/${id}`, undefined, token)).status === 404, 'eliminar una cita inexistente deberia dar 404');
     });
+    await check('Citas', 'Crear una cita en el horario de una cancelada NO borra la cancelada', async () => {
+      const { id, tk } = await newBooking(day(10), '09:00');
+      await api('POST', `/api/manage-booking/${tk}/cancel`, {});
+      const r = await api('POST', '/api/bookings/professional', { profileId, serviceId, clientName: 'ZZ Paciente', clientEmail, date: day(10), startTime: '09:00' }, token);
+      assert(r.status === 201, `crear cita dio ${r.status}: ${JSON.stringify(r.json)}`);
+      const vieja = await prisma.booking.findUnique({ where: { id } });
+      assert(vieja?.status === 'CANCELLED', 'la cita cancelada deberia seguir registrada');
+    });
+    await check('Recordatorios', 'El recordatorio de 24 h se elige por la hora real de la cita (zona del profesional)', async () => {
+      await reset();
+      const wall = (ms: number) => {
+        const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).formatToParts(new Date(ms)).map(x => [x.type, x.value]));
+        return { date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}` };
+      };
+      const now = Date.now();
+      const mk = async (minutesAhead: number) => {
+        const w = wall(now + minutesAhead * 60_000);
+        const b = await prisma.booking.create({
+          data: { profileId, serviceId, professionalId: userId, clientName: 'ZZ Paciente', clientEmail, clientPhone: '', date: new Date(w.date), startTime: w.time, endTime: w.time, status: 'CONFIRMED' },
+        });
+        return b.id;
+      };
+      const id24 = await mk(24 * 60);      // dentro de 24 h: toca
+      const id10 = await mk(10 * 60);      // reservada con poca anticipacion: toca (en su primera ejecucion)
+      const id40 = await mk(40 * 60);      // dentro de 40 h: todavia no
+      const id30m = await mk(30);          // dentro de 30 min: ya no (para eso esta el de 1 h)
+      const due = (await findBookingsDueFor24hReminder(new Date(now), profileId)).map(b => b.id);
+      assert(due.includes(id24), 'la cita a 24 h deberia tocar');
+      assert(due.includes(id10), 'la cita a 10 h deberia tocar');
+      assert(!due.includes(id40), 'la cita a 40 h no deberia tocar todavia');
+      assert(!due.includes(id30m), 'la cita a 30 min no deberia tocar');
+    });
     await check('Notificaciones', 'Aviso de cancelacion apagado para el paciente', async () => {
       const { id, tk } = await newBooking(day(10), '09:00', { notificationPrefs: { clientCancellation: false } });
       await api('POST', `/api/manage-booking/${tk}/cancel`, {});
@@ -371,6 +412,71 @@ async function main() {
       const g = await api('GET', `/api/manage-booking/${tk}`);
       assert(g.json.canChange === false && /pas/.test(g.json.blockedReason || ''), `canChange=${g.json.canChange} (${g.json.blockedReason})`);
       assert((await api('POST', `/api/manage-booking/${tk}/cancel`, {})).status === 403, 'cancelar una cita pasada');
+    });
+
+    // ═══════════ LISTA DE ESPERA ═══════════
+    const wlBody = () => ({ profileId, serviceId, name: 'ZZ Espera', email: `zz-espera-${stamp}@aliax-test.invalid`, date: day(10) });
+    await check('Lista de espera', 'Apuntarse segun el interruptor, sin duplicados y con validaciones', async () => {
+      await reset();
+      let c = await api('GET', `/api/waitlist/config?profileId=${profileId}`);
+      assert(c.status === 200 && c.json.enabled === false, 'deberia venir apagada');
+      assert((await api('POST', '/api/waitlist', wlBody())).status === 403, 'con la lista apagada deberia dar 403');
+      await prisma.bookingSettings.update({ where: { profileId }, data: { waitlistEnabled: true } });
+      c = await api('GET', `/api/waitlist/config?profileId=${profileId}`);
+      assert(c.json.enabled === true, 'deberia reportar activada');
+      const r = await api('POST', '/api/waitlist', wlBody());
+      assert(r.status === 201, `apuntarse dio ${r.status}: ${JSON.stringify(r.json)}`);
+      const again = await api('POST', '/api/waitlist', wlBody());
+      assert(again.status === 200 && again.json.already === true, 'apuntarse dos veces no deberia duplicar');
+      assert((await prisma.waitlistEntry.count({ where: { profileId } })) === 1, 'deberia haber 1 sola entrada');
+      assert((await api('POST', '/api/waitlist', { ...wlBody(), date: day(-2) })).status === 400, 'fecha pasada');
+      assert((await api('POST', '/api/waitlist', { ...wlBody(), name: 'x' })).status === 400, 'nombre muy corto');
+      assert((await api('POST', '/api/waitlist', { ...wlBody(), email: 'no-es-correo' })).status === 400, 'correo invalido');
+      assert((await api('POST', '/api/waitlist', { ...wlBody(), serviceId: 'no-existe' })).status === 400, 'servicio inexistente');
+    });
+    await check('Lista de espera', 'El profesional ve y gestiona su lista; otro profesional no puede tocarla', async () => {
+      await reset({ waitlistEnabled: true });
+      await api('POST', '/api/waitlist', wlBody());
+      assert((await api('GET', '/api/waitlist')).status === 401, 'sin sesion deberia dar 401');
+      const mine = await api('GET', '/api/waitlist', undefined, token);
+      assert(mine.status === 200 && mine.json.length === 1 && mine.json[0].status === 'WAITING' && mine.json[0].date === day(10), `lista: ${JSON.stringify(mine.json)}`);
+      const id = mine.json[0].id;
+      assert((await api('GET', '/api/waitlist', undefined, token2)).json.length === 0, 'otro profesional no deberia verla');
+      assert((await api('PATCH', `/api/waitlist/${id}`, { status: 'ATTENDED' }, token2)).status === 403, 'otro profesional no deberia poder editarla');
+      assert((await api('DELETE', `/api/waitlist/${id}`, undefined, token2)).status === 403, 'otro profesional no deberia poder quitarla');
+      assert((await api('PATCH', `/api/waitlist/${id}`, { status: 'ATTENDED' }, token)).status === 200, 'marcar atendida');
+      assert((await prisma.waitlistEntry.findUnique({ where: { id } }))?.status === 'ATTENDED', 'no quedo atendida');
+      assert((await api('PATCH', `/api/waitlist/${id}`, { status: 'WAITING' }, token)).status === 200, 'volver a espera');
+      assert((await api('DELETE', `/api/waitlist/${id}`, undefined, token)).status === 200, 'quitar');
+      assert((await api('DELETE', `/api/waitlist/${id}`, undefined, token)).status === 404, 'quitar otra vez deberia dar 404');
+    });
+    await check('Lista de espera', 'Al cancelar una cita se avisa solo a quienes esperaban ese dia', async () => {
+      const { tk } = await newBooking(day(10), '09:00', { waitlistEnabled: true });
+      const mk = (name: string, d: string, svc: string | null) => prisma.waitlistEntry.create({ data: { profileId, serviceId: svc, name, email: `zz-${name}-${stamp}@aliax-test.invalid`, date: new Date(d) } });
+      const a = await mk('a', day(10), serviceId);
+      const b = await mk('b', day(11), serviceId);
+      const c = await mk('c', day(10), null);
+      await api('POST', `/api/manage-booking/${tk}/cancel`, {});
+      const st = async (id: string) => (await prisma.waitlistEntry.findUnique({ where: { id } }))!;
+      assert((await st(a.id)).status === 'NOTIFIED' && !!(await st(a.id)).notifiedAt, 'quien esperaba ese dia y servicio deberia quedar avisado');
+      assert((await st(c.id)).status === 'NOTIFIED', 'quien esperaba ese dia (cualquier servicio) deberia quedar avisado');
+      assert((await st(b.id)).status === 'WAITING', 'quien esperaba otro dia no deberia avisarse');
+    });
+    await check('Lista de espera', 'Con la lista apagada o el canal Email apagado no se avisa a nadie', async () => {
+      for (const extra of [{ waitlistEnabled: false }, { waitlistEnabled: true, emailEnabled: false }]) {
+        const { tk } = await newBooking(day(10), '09:00', extra);
+        const e = await prisma.waitlistEntry.create({ data: { profileId, name: 'ZZ', email: `zz-x-${stamp}@aliax-test.invalid`, date: new Date(day(10)) } });
+        await api('POST', `/api/manage-booking/${tk}/cancel`, {});
+        assert((await prisma.waitlistEntry.findUnique({ where: { id: e.id } }))!.status === 'WAITING', `con ${JSON.stringify(extra)} no deberia avisar`);
+      }
+    });
+    await check('Notificaciones', 'Aviso al profesional por lista de espera apagable (preferencia por defecto activa)', async () => {
+      await reset();
+      const r = await api('GET', `/api/booking-settings?profileId=${profileId}`, undefined, token);
+      assert(r.json?.notificationPrefs?.profWaitlist === true, 'profWaitlist deberia venir activo por defecto');
+      await api('PUT', `/api/booking-settings?profileId=${profileId}`, { notificationPrefs: { profWaitlist: false }, waitlistEnabled: true }, token);
+      const s = await prisma.bookingSettings.findUnique({ where: { profileId } });
+      assert((s!.notificationPrefs as any)?.profWaitlist === false && s!.waitlistEnabled === true, 'no se guardo');
     });
 
     // ═══════════ D. GUARDADO DE AJUSTES (el error que reseteaba reglas) ═══════════
@@ -404,6 +510,7 @@ async function main() {
         await prisma.booking.deleteMany({ where: { professionalId: userId } });
         await prisma.user.delete({ where: { id: userId } });
       }
+      if (user2Id) await prisma.user.delete({ where: { id: user2Id } }).catch(() => {});
       const left = await prisma.user.count({ where: { email: { startsWith: 'zz-regresion-' } } });
       const leftBookings = userId ? await prisma.booking.count({ where: { professionalId: userId } }) : 0;
       const leftProfiles = profileId ? await prisma.profile.count({ where: { id: profileId } }) : 0;

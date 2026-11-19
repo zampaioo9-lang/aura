@@ -297,6 +297,7 @@ model Profile {
   recurringScheduleBlocks RecurringScheduleBlock[]
   bookingSettings   BookingSettings?
   reviews           Review[]
+  waitlistEntries   WaitlistEntry[]
 
   @@index([userId])
 }
@@ -328,6 +329,7 @@ model Service {
   profile               Profile               @relation(fields: [profileId], references: [id], onDelete: Cascade)
   bookings              Booking[]
   serviceAvailabilities ServiceAvailability[]
+  waitlistEntries       WaitlistEntry[]
 
   @@index([profileId])
   @@index([isActive])
@@ -424,6 +426,32 @@ enum NotificationType {
   RESCHEDULED
 }
 
+enum WaitlistStatus {
+  WAITING
+  NOTIFIED
+  ATTENDED
+}
+
+// Personas que esperan que se libere un horario un dia en que no habia (ver routes/waitlist.ts)
+model WaitlistEntry {
+  id         String         @id @default(uuid())
+  profileId  String
+  serviceId  String?
+  name       String
+  email      String
+  phone      String?
+  date       DateTime       // dia que queria el paciente (medianoche UTC, igual que Booking.date)
+  status     WaitlistStatus @default(WAITING)
+  notifiedAt DateTime?
+  createdAt  DateTime       @default(now())
+
+  profile Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  service Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  @@index([profileId, status])
+  @@index([profileId, date])
+}
+
 enum NotificationStatus {
   PENDING
   SENT
@@ -467,6 +495,7 @@ model BookingSettings {
   multiplePerSlot            Boolean @default(false) // varias reservas en el mismo horario
   maxActiveBookingsPerClient Int     @default(0)     // 0 = sin limite
   minDaysBetweenBookings     Int     @default(0)     // 0 = sin restriccion
+  waitlistEnabled            Boolean @default(false) // lista de espera activada
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 

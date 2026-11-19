@@ -17,6 +17,7 @@ export interface NotificationPrefs {
   profNewBooking: boolean;       // Al profesional: nueva reserva
   profCancellation: boolean;     // Al profesional: cancelacion de reserva
   profReschedule: boolean;       // Al profesional: un paciente cambio su cita a otro horario
+  profWaitlist: boolean;         // Al profesional: alguien se apunto a la lista de espera
 }
 
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
@@ -28,6 +29,7 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   profNewBooking: true,
   profCancellation: true,
   profReschedule: true,
+  profWaitlist: true,
 };
 
 export const NOTIFICATION_PREF_KEYS = Object.keys(DEFAULT_NOTIFICATION_PREFS) as (keyof NotificationPrefs)[];

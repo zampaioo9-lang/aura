@@ -8,7 +8,8 @@ import { getBookingLocalTime, zonedWallTimeToInstant, isValidTimeZone, DEFAULT_P
 import { getNotificationPrefs, resolveNotificationPrefs } from '../lib/notificationPrefs';
 import { checkClientBookingLimits, checkClientCancellation, bookingStartInstant } from '../lib/bookingRules';
 import { generateManageToken } from '../lib/manageToken';
-import { getClientBookingNotice } from '../lib/clientBookingNotice';
+import { notifyWaitlistForFreedSlot } from './waitlistService';
+import { getClientBookingNotice, getMeetingLinkForBooking } from '../lib/clientBookingNotice';
 
 const prisma = new PrismaClient();
 
@@ -494,6 +495,10 @@ export async function createBooking(data: {
       startTime: data.startTime,
       dashboardUrl: `${env.FRONTEND_URL}/dashboard`,
       autoConfirmed: autoConfirm,
+      meetingLink: await getMeetingLinkForBooking(
+        { profileId: booking.profileId, professionalId: booking.professionalId, clientEmail: data.clientEmail },
+        booking.service.sessionModality,
+      ),
     });
     const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
     await saveNotification(booking.id, 'NEW_BOOKING', professionalEmail, tpl.subject, emailResult);
@@ -795,6 +800,9 @@ export async function cancelBooking(
     await saveNotification(bookingId, 'CANCELLATION', professionalEmail, tpl.subject, emailResult);
   }
 
+  // Lista de espera: se libero un horario, se avisa a quienes esperaban ese dia (si esta activada).
+  await notifyWaitlistForFreedSlot({ profileId: booking.profileId, serviceId: booking.serviceId, date: booking.date });
+
   return updated;
 }
 
@@ -883,6 +891,7 @@ export async function rescheduleBookingByClient(bookingId: string, input: { date
       oldStartTime: booking.startTime,
       newDate: updated.date,
       newStartTime: updated.startTime,
+      meetingLink: await getMeetingLinkForBooking(booking, booking.service.sessionModality),
     });
     const result = await sendEmail(tpl.to, tpl.subject, tpl.html);
     await saveNotification(booking.id, 'RESCHEDULED', professionalEmail, tpl.subject, result);

@@ -46,6 +46,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res, next) => {
         multiplePerSlot: false,
         maxActiveBookingsPerClient: 0,
         minDaysBetweenBookings: 0,
+        waitlistEnabled: false,
         notificationPrefs: DEFAULT_NOTIFICATION_PREFS,
       });
     }

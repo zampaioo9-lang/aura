@@ -3,9 +3,10 @@ import { PrismaClient } from '@prisma/client';
 import { sendWhatsApp, sendWhatsAppTemplate, templates, templateComponents } from '../services/whatsappService';
 import { sendEmail, emailTemplates } from '../services/emailService';
 import { tryReminderWindow, endingReminderWindow } from '../lib/trialReminders';
-import { getClientBookingNotice } from '../lib/clientBookingNotice';
+import { getClientBookingNotice, getMeetingLinkForBooking } from '../lib/clientBookingNotice';
 import { getNotificationPrefs, resolveNotificationPrefs } from '../lib/notificationPrefs';
 import { bookingStartInstant } from '../lib/bookingRules';
+import { findBookingsDueFor24hReminder } from '../lib/reminders';
 import { isValidTimeZone, DEFAULT_PROFESSIONAL_TIMEZONE } from '../lib/clientTimezone';
 
 const router = Router();
@@ -27,26 +28,9 @@ router.post('/reminders', async (req: Request, res: Response): Promise<void> => 
   }
 
   try {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-
-    const endOfTomorrow = new Date(tomorrow);
-    endOfTomorrow.setHours(23, 59, 59, 999);
-
-    const bookings = await prisma.booking.findMany({
-      where: {
-        status: 'CONFIRMED',
-        date: {
-          gte: tomorrow,
-          lte: endOfTomorrow,
-        },
-      },
-      include: {
-        service: true,
-        profile: { include: { user: { select: { name: true, email: true, phone: true, socialLinks: true } } } },
-      },
-    });
+    // Citas a las que les toca el recordatorio de 24 h: se decide con la hora real de inicio de la cita
+    // (zona horaria del profesional), no con la fecha en UTC. Ver lib/reminders.ts.
+    const bookings = await findBookingsDueFor24hReminder();
 
     let sent = 0;
 
@@ -221,6 +205,7 @@ router.post('/reminders', async (req: Request, res: Response): Promise<void> => 
                 serviceName: booking.service.name,
                 date: booking.date,
                 startTime: booking.startTime,
+                meetingLink: await getMeetingLinkForBooking(booking, booking.service.sessionModality),
               });
               const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
               await prisma.notification.create({

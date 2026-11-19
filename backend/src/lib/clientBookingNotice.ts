@@ -119,3 +119,13 @@ export async function getClientBookingNotice(
       : whatsappChatUrl(ctx.professionalPhone, `Hola ${ctx.professionalName}, quiero reagendar mi cita del ${when}.`),
   };
 }
+
+/** Enlace de videollamada de una cita para los correos al PROFESIONAL (null si el servicio es solo presencial o no hay enlace). */
+export async function getMeetingLinkForBooking(
+  booking: { profileId: string; professionalId: string; clientEmail: string | null },
+  serviceModality?: string | null,
+): Promise<string | null> {
+  if (normalizeModality(serviceModality) === 'presencial') return null;
+  const { meetingLink } = await resolveBookingZones(booking);
+  return meetingLink;
+}

@@ -130,6 +130,12 @@ export interface ClientBookingExtras {
   rescheduleUrl?: string | null;
 }
 
+function meetingLinkRow(link?: string | null): string {
+  return link
+    ? detailRow('Enlace de la videollamada', `<a href="${escapeHtml(link)}" style="color:#7c3aed;word-break:break-all;">${escapeHtml(link)}</a>`)
+    : '';
+}
+
 function clientBookingExtraRows(x?: ClientBookingExtras): string {
   if (!x) return '';
   return (
@@ -245,6 +251,7 @@ export const emailTemplates = {
     startTime: string;
     dashboardUrl: string;
     autoConfirmed?: boolean;
+    meetingLink?: string | null;
   }) => ({
     to: data.professionalEmail,
     subject: `Nueva reserva de ${data.clientName} — Aliax`,
@@ -259,7 +266,8 @@ export const emailTemplates = {
         detailRow('Servicio', data.serviceName) +
         detailRow('Fecha', formatDateES(data.date)) +
         detailRow('Hora', data.startTime) +
-        (data.clientNotes ? detailRow('Notas del cliente', data.clientNotes) : '')
+        (data.clientNotes ? detailRow('Notas del cliente', data.clientNotes) : '') +
+        meetingLinkRow(data.meetingLink)
       )}
       ${ctaButton('Ver reserva en el dashboard', data.dashboardUrl)}
     `),
@@ -295,6 +303,52 @@ export const emailTemplates = {
         (data.meetingLink ? detailRow('Enlace de la videollamada', `<a href="${escapeHtml(data.meetingLink)}" style="color:#7c3aed;word-break:break-all;">${escapeHtml(data.meetingLink)}</a>`) : '')
       )}
       ${ctaButton('Ver en el dashboard', data.dashboardUrl)}
+    `),
+  }),
+
+  // Al profesional: alguien se apunto a su lista de espera
+  waitlistJoinedProfessional: (data: {
+    professionalName: string;
+    professionalEmail: string;
+    clientName: string;
+    clientEmail: string;
+    clientPhone?: string | null;
+    serviceName?: string | null;
+    date: Date | string;
+    dashboardUrl: string;
+  }) => ({
+    to: data.professionalEmail,
+    subject: `${data.clientName} se apuntó a tu lista de espera — Aliax`,
+    html: baseTemplate('Lista de espera', `
+      ${badge('Lista de espera', '#7c3aed')}
+      ${heading(`Hola ${escapeHtml(data.professionalName)}`)}
+      ${subtext('Una persona quiere que le avises si se libera un horario ese día.')}
+      ${detailTable(
+        detailRow('Nombre', escapeHtml(data.clientName)) +
+        detailRow('Correo', escapeHtml(data.clientEmail)) +
+        (data.clientPhone ? detailRow('Teléfono', escapeHtml(data.clientPhone)) : '') +
+        (data.serviceName ? detailRow('Servicio', escapeHtml(data.serviceName)) : '') +
+        detailRow('Día que quiere', formatDateES(data.date))
+      )}
+      ${ctaButton('Ver mi lista de espera', data.dashboardUrl)}
+    `),
+  }),
+
+  // Al paciente: se libero un horario el dia que esperaba
+  waitlistSlotFreed: (data: {
+    clientName: string;
+    clientEmail: string;
+    professionalName: string;
+    date: Date | string;
+    bookUrl: string;
+  }) => ({
+    to: data.clientEmail,
+    subject: `Se liberó un horario con ${data.professionalName} — Aliax`,
+    html: baseTemplate('Se liberó un horario', `
+      ${badge('Horario disponible', '#16a34a')}
+      ${heading(`Hola ${escapeHtml(data.clientName)}`)}
+      ${subtext(`Te habías apuntado en la lista de espera de ${escapeHtml(data.professionalName)}. Se liberó un horario el ${formatDateES(data.date)}. Reserva pronto: otras personas también pueden estar esperando.`)}
+      ${ctaButton('Reservar ahora', data.bookUrl)}
     `),
   }),
 
@@ -362,6 +416,7 @@ export const emailTemplates = {
     oldStartTime: string;
     newDate: Date | string;
     newStartTime: string;
+    meetingLink?: string | null;
   }) => ({
     to: data.professionalEmail,
     subject: `${data.clientName} reagendó su cita — Aliax`,
@@ -373,7 +428,8 @@ export const emailTemplates = {
         detailRow('Cliente', escapeHtml(data.clientName)) +
         detailRow('Servicio', escapeHtml(data.serviceName)) +
         detailRow('Horario anterior', `${formatDateES(data.oldDate)}, ${data.oldStartTime}`) +
-        detailRow('Nuevo horario', `${formatDateES(data.newDate)}, ${data.newStartTime}`)
+        detailRow('Nuevo horario', `${formatDateES(data.newDate)}, ${data.newStartTime}`) +
+        meetingLinkRow(data.meetingLink)
       )}
     `),
   }),
@@ -389,11 +445,11 @@ export const emailTemplates = {
     details?: ClientBookingExtras;
   }) => ({
     to: data.clientEmail,
-    subject: `Recordatorio: mañana tienes cita con ${data.professionalName} — Aliax`,
+    subject: `Recordatorio: tienes cita con ${data.professionalName} el ${formatDateES(data.date)} — Aliax`,
     html: baseTemplate('Recordatorio de cita', `
       ${badge('Recordatorio', '#d97706')}
       ${heading(`Hola ${data.clientName}`)}
-      ${subtext('Te recordamos que mañana tienes una cita programada.')}
+      ${subtext(`Te recordamos que tienes una cita programada para el ${formatDateES(data.date)}.`)}
       ${detailTable(
         detailRow('Con', data.professionalName) +
         detailRow('Servicio', data.serviceName) +
@@ -440,18 +496,20 @@ export const emailTemplates = {
     serviceName: string;
     date: Date | string;
     startTime: string;
+    meetingLink?: string | null;
   }) => ({
     to: data.professionalEmail,
-    subject: `Recordatorio: mañana tienes cita con ${data.clientName} — Aliax`,
+    subject: `Recordatorio: tienes cita con ${data.clientName} el ${formatDateES(data.date)} — Aliax`,
     html: baseTemplate('Recordatorio de cita', `
       ${badge('Recordatorio', '#d97706')}
       ${heading(`Hola ${data.professionalName}`)}
-      ${subtext('Te recordamos que mañana tienes una cita programada.')}
+      ${subtext(`Te recordamos que tienes una cita programada para el ${formatDateES(data.date)}.`)}
       ${detailTable(
         detailRow('Cliente', data.clientName) +
         detailRow('Servicio', data.serviceName) +
         detailRow('Fecha', formatDateES(data.date)) +
-        detailRow('Hora', data.startTime)
+        detailRow('Hora', data.startTime) +
+        meetingLinkRow(data.meetingLink)
       )}
     `),
   }),

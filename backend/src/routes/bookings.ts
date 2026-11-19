@@ -330,11 +330,6 @@ router.post('/professional', authMiddleware, async (req: AuthRequest, res, next)
       },
     });
 
-    // Remove stale cancelled bookings at the exact same slot
-    await prisma.booking.deleteMany({
-      where: { profileId, date: confirmed.date, startTime, status: 'CANCELLED' },
-    });
-
     // Auto-create patient record if this exact name+email combo doesn't exist yet
     const existingClient = await prisma.client.findFirst({
       where: { userId: req.userId!, email: clientEmail, name: clientName },

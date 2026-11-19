@@ -69,3 +69,12 @@ export function checkClientBookingLimits(opts: {
   }
   return { ok: true };
 }
+
+/**
+ * Recordatorio de 24 h. El cron corre cada hora, asi que se envia en la primera ejecucion en que faltan 24,5 h o
+ * menos para la cita: cada cita lo recibe entre 23,5 y 24,5 h antes. Si la cita se reservo con menos de 24 h de
+ * anticipacion, lo recibe en la siguiente ejecucion (siempre que falte mas de 1 h; para eso esta el de 1 h).
+ */
+export function isWithinReminder24hWindow(minutesLeft: number): boolean {
+  return minutesLeft > 60 && minutesLeft <= 24.5 * 60;
+}

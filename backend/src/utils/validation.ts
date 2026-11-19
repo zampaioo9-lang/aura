@@ -126,6 +126,7 @@ export const upsertBookingSettingsSchema = z.object({
   multiplePerSlot:            z.boolean().default(false),
   maxActiveBookingsPerClient: z.number().int().min(0).max(50).default(0),
   minDaysBetweenBookings:     z.number().int().min(0).max(90).default(0),
+  waitlistEnabled:            z.boolean().default(false),
   // Solo booleanos y solo las claves conocidas (lib/notificationPrefs.ts). Se mezcla con lo ya guardado.
   notificationPrefs: z.object({
     clientConfirmation: z.boolean(),
@@ -136,6 +137,7 @@ export const upsertBookingSettingsSchema = z.object({
     profNewBooking:     z.boolean(),
     profCancellation:   z.boolean(),
     profReschedule:     z.boolean(),
+    profWaitlist:       z.boolean(),
   }).partial().optional(),
   // Enlace fijo de videollamada. Vacio = sin enlace. Si falta https:// se agrega (Meet suele copiarse sin el).
   meetingLink: z.string().trim().max(500)
