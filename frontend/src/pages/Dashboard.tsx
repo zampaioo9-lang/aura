@@ -370,12 +370,12 @@ export default function Dashboard() {
   const isProfessional = profiles.length > 0;
   const isPairTherapist = profiles.some(p => p.profession === 'Terapeuta de Parejas');
 
-  const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
+  const TABS: { id: Tab; label: string; icon: React.ReactNode; isNew?: boolean }[] = [
     { id: 'inicio',     label: 'Inicio',           icon: <Home className="h-4 w-4" /> },
     { id: 'agenda',     label: 'Configurar Agenda', icon: <CalendarDays className="h-4 w-4" /> },
     { id: 'pacientes',  label: 'Pacientes',          icon: <Users className="h-4 w-4" /> },
-    { id: 'talleres',   label: 'Talleres y Cursos',  icon: <GraduationCap className="h-4 w-4" /> },
-    { id: 'articulos',  label: 'Mis artículos',      icon: <PenLine className="h-4 w-4" /> },
+    { id: 'talleres',   label: 'Talleres y Cursos',  icon: <GraduationCap className="h-4 w-4" />, isNew: true },
+    { id: 'articulos',  label: 'Mis artículos',      icon: <PenLine className="h-4 w-4" />, isNew: true },
     { id: 'citas',      label: 'Mis Citas',         icon: <Calendar className="h-4 w-4" /> },
     { id: 'resenas',    label: 'Reseñas',            icon: <Star className="h-4 w-4" /> },
   ];
@@ -849,9 +849,9 @@ export default function Dashboard() {
             { section: 'citas'     as const, label: 'Citas',     icon: <Calendar className="h-6 w-6" /> },
             { section: 'agenda'    as const, label: 'Agenda',    icon: <CalendarDays className="h-6 w-6" /> },
             { section: 'pacientes' as const, label: 'Pacientes', icon: <Users className="h-6 w-6" /> },
-            { section: 'talleres'  as const, label: 'Talleres',  icon: <GraduationCap className="h-6 w-6" /> },
-            { section: 'articulos' as const, label: 'Artículos', icon: <PenLine className="h-6 w-6" /> },
-          ]).map(({ section, label, icon }) => {
+            { section: 'talleres'  as const, label: 'Talleres',  icon: <GraduationCap className="h-6 w-6" />, isNew: true },
+            { section: 'articulos' as const, label: 'Artículos', icon: <PenLine className="h-6 w-6" />, isNew: true },
+          ] as { section: MobileSection; label: string; icon: React.ReactNode; isNew?: boolean }[]).map(({ section, label, icon, isNew }) => {
             const isActive = mobileSection === section;
             return (
               <button
@@ -867,6 +867,12 @@ export default function Dashboard() {
                   transition: 'background 0.25s',
                 }} />
                 {icon}
+                {isNew && (
+                  <span style={{
+                    position: 'absolute', top: 3, left: '50%', marginLeft: 6, fontSize: 8, fontWeight: 700, lineHeight: 1,
+                    padding: '2px 4px', borderRadius: 999, background: C.accent, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.3px',
+                  }}>Nuevo</span>
+                )}
                 <span className="truncate max-w-full" style={{ fontSize: 10, fontWeight: 500, lineHeight: 1 }}>{label}</span>
               </button>
             );
@@ -946,7 +952,7 @@ export default function Dashboard() {
           {/* "General" — main navigation */}
           <DashSection label="General">
             {TABS.map(tab => (
-              <DashNavRow key={tab.id} icon={tab.icon} isActive={activeTab === tab.id} C={C} onClick={() => goTab(tab.id)}>
+              <DashNavRow key={tab.id} icon={tab.icon} isActive={activeTab === tab.id} C={C} onClick={() => goTab(tab.id)} badge={tab.isNew ? 'Nuevo' : undefined}>
                 {tab.label}
               </DashNavRow>
             ))}
@@ -1119,7 +1125,7 @@ function DashSection({ label, children }: { label: string; children: React.React
   );
 }
 
-function DashNavRow({ icon, isActive, C, onClick, children }: { icon: React.ReactNode; isActive: boolean; C: Colors; onClick: () => void; children: React.ReactNode }) {
+function DashNavRow({ icon, isActive, C, onClick, children, badge }: { icon: React.ReactNode; isActive: boolean; C: Colors; onClick: () => void; children: React.ReactNode; badge?: string }) {
   return (
     <button
       onClick={onClick}
@@ -1138,6 +1144,16 @@ function DashNavRow({ icon, isActive, C, onClick, children }: { icon: React.Reac
       <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: isActive ? 600 : 500, color: isActive ? 'white' : C.isDark ? 'rgba(255,255,255,0.85)' : C.text, lineHeight: 1 }}>
         {children}
       </span>
+      {badge && (
+        <span style={{
+          marginLeft: 'auto', flexShrink: 0, fontFamily: "'DM Sans', sans-serif", fontSize: 10, fontWeight: 700,
+          letterSpacing: '0.4px', textTransform: 'uppercase', padding: '3px 7px', borderRadius: 999, lineHeight: 1,
+          background: isActive ? 'rgba(255,255,255,0.28)' : C.isDark ? 'rgba(255,255,255,0.14)' : C.accentLight,
+          color: isActive ? 'white' : C.isDark ? 'rgba(255,255,255,0.9)' : C.accent,
+        }}>
+          {badge}
+        </span>
+      )}
     </button>
   );
 }
