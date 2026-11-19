@@ -223,6 +223,19 @@ async function main() {
       assert(n.length === 1 && n[0].type === 'CONFIRMATION', 'falta la confirmacion al paciente');
       assert(/Cita confirmada/.test(n[0].message), `asunto inesperado: ${n[0].message}`);
     });
+    await check('Reservas', 'Cita creada por el profesional: el profesional recibe su copia (y se puede apagar)', async () => {
+      await reset();
+      const s = await slotsOf(day(10));
+      const b = await book(day(10), s[0], { skipClientRequestEmail: true, enforceClientLimits: false });
+      await bookingService.sendProfessionalCopyForProfessionalBooking(b.id);
+      const n = forPro(await notes(b.id));
+      assert(n.length === 1 && n[0].type === 'NEW_BOOKING', 'el profesional no recibio su copia');
+      assert(/Cita agendada/.test(n[0].message), `asunto inesperado: ${n[0].message}`);
+      await reset({ notificationPrefs: { profNewBooking: false } });
+      const b2 = await book(day(10), s[0], { skipClientRequestEmail: true, enforceClientLimits: false });
+      await bookingService.sendProfessionalCopyForProfessionalBooking(b2.id);
+      assert(forPro(await notes(b2.id)).length === 0, 'con el interruptor apagado no deberia enviarse');
+    });
     await check('Reglas', 'Multiples reservas por horario: apagado bloquea, encendido permite', async () => {
       await reset();
       const s = await slotsOf(day(10));
@@ -416,17 +429,19 @@ async function main() {
   {
     const since = new Date(Date.now() - 7 * 86_400_000);
     const failedRows = await prisma.notification.findMany({ where: { status: 'FAILED', createdAt: { gte: since } }, select: { recipient: true, error: true } });
-    const failed = failedRows.length;
-    if (failed > 0) {
+    // WhatsApp esta pospuesto por decision de Alberto (se activara cuando los terapeutas lo pidan): sus fallos no se reportan.
+    const emailFailed = failedRows.filter(r => r.recipient.includes('@'));
+    const whatsappIgnored = failedRows.length - emailFailed.length;
+    if (emailFailed.length > 0) {
       const causas = new Map<string, number>();
-      for (const r of failedRows) {
-        const canal = r.recipient.includes('@') ? 'correo' : 'WhatsApp';
-        const k = `${canal}: ${(r.error || 'sin detalle').slice(0, 120)}`;
+      for (const r of emailFailed) {
+        const k = (r.error || 'sin detalle').slice(0, 120);
         causas.set(k, (causas.get(k) || 0) + 1);
       }
-      warn('Datos', 'Avisos fallidos en los ultimos 7 dias', `${failed} avisos con estado FAILED. Causas: ${[...causas.entries()].map(([k, n]) => `${n} x ${k}`).join(' | ')}`);
+      warn('Datos', 'Correos fallidos en los ultimos 7 dias', `${emailFailed.length} correos con estado FAILED. Causas: ${[...causas.entries()].map(([k, n]) => `${n} x ${k}`).join(' | ')}`);
+    } else {
+      results.push({ area: 'Datos', name: 'Correos fallidos en los ultimos 7 dias', level: 'ok', detail: whatsappIgnored ? `ninguno (${whatsappIgnored} fallo(s) de WhatsApp ignorados: pospuesto)` : 'ninguno' });
     }
-    else results.push({ area: 'Datos', name: 'Avisos fallidos en los ultimos 7 dias', level: 'ok', detail: 'ninguno' });
   }
   {
     // Recordatorios de 24 h: citas confirmadas de los ultimos 3 dias que debieron recibirlo

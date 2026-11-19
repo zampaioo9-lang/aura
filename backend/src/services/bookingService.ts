@@ -639,6 +639,45 @@ export async function sendClientConfirmationForProfessionalBooking(bookingId: st
   await saveNotification(bookingId, 'CONFIRMATION', booking.clientEmail, tpl.subject, emailResult);
 }
 
+// ── Copia para el profesional cuando EL agenda la cita desde su panel ──
+// Antes no se le avisaba ("ya sabes de ella"), pero el profesional quiere el correo como registro.
+// Respeta el interruptor "Nueva reserva recibida" y el canal Email.
+export async function sendProfessionalCopyForProfessionalBooking(bookingId: string) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      service: true,
+      profile: { include: { user: { select: { name: true, email: true, phone: true, socialLinks: true } } } },
+    },
+  });
+  if (!booking) return;
+  const professionalEmail = booking.profile.user.email;
+  const prefs = await getNotificationPrefs(booking.profileId);
+  if (!professionalEmail || !prefs.profNewBooking || !prefs.emailEnabled) return;
+
+  const links = booking.profile.user.socialLinks as Record<string, string> | null;
+  const notice = await getClientBookingNotice(booking, {
+    professionalName: booking.profile.user.name,
+    professionalPhone: links?.whatsapp || booking.profile.phone || booking.profile.user.phone,
+    serviceModality: booking.service.sessionModality,
+  });
+  const differs = notice.startTime !== booking.startTime;
+  const tpl = emailTemplates.bookingCreatedByProfessional({
+    professionalName: booking.profile.user.name,
+    professionalEmail,
+    clientName: booking.clientName,
+    serviceName: booking.service.name,
+    date: booking.date,
+    startTime: booking.startTime,
+    clientDate: differs ? notice.date : undefined,
+    clientStartTime: differs ? notice.startTime : undefined,
+    modalityLabel: notice.modalityLabel,
+    dashboardUrl: `${env.FRONTEND_URL}/dashboard`,
+  });
+  const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
+  await saveNotification(bookingId, 'NEW_BOOKING', professionalEmail, tpl.subject, emailResult);
+}
+
 // ── cancelBooking ──────────────────────────────────────────────────
 export async function cancelBooking(
   bookingId: string,

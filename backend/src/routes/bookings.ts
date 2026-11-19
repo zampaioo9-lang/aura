@@ -12,6 +12,7 @@ import {
   markNoShow,
   getAvailableSlots,
   sendClientConfirmationForProfessionalBooking,
+  sendProfessionalCopyForProfessionalBooking,
 } from '../services/bookingService';
 import { AppError } from '../middleware/errorHandler';
 import { isProUser } from '../lib/planUtils';
@@ -335,6 +336,12 @@ router.post('/professional', authMiddleware, async (req: AuthRequest, res, next)
       await sendClientConfirmationForProfessionalBooking(booking.id);
     } catch (e) {
       console.error('[Booking] No se pudo enviar la confirmacion al paciente:', e instanceof Error ? e.message : e);
+    }
+    // Y una copia para el propio profesional, como registro de lo que agendo.
+    try {
+      await sendProfessionalCopyForProfessionalBooking(booking.id);
+    } catch (e) {
+      console.error('[Booking] No se pudo enviar la copia al profesional:', e instanceof Error ? e.message : e);
     }
 
     res.status(201).json(confirmed);

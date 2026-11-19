@@ -265,6 +265,37 @@ export const emailTemplates = {
     `),
   }),
 
+  // Al profesional: copia de la cita que EL mismo agendo desde su panel (ya esta confirmada)
+  bookingCreatedByProfessional: (data: {
+    professionalName: string;
+    professionalEmail: string;
+    clientName: string;
+    serviceName: string;
+    date: Date | string;
+    startTime: string;
+    clientDate?: Date | string;   // fecha/hora para el paciente, solo si su zona horaria es distinta
+    clientStartTime?: string;
+    modalityLabel?: string | null;
+    dashboardUrl: string;
+  }) => ({
+    to: data.professionalEmail,
+    subject: `Cita agendada con ${data.clientName} — Aliax`,
+    html: baseTemplate('Cita agendada', `
+      ${badge('Cita agendada', '#16a34a')}
+      ${heading(`Hola ${escapeHtml(data.professionalName)}`)}
+      ${subtext('Agendaste una cita. Ya está confirmada y tu paciente recibió su aviso.')}
+      ${detailTable(
+        detailRow('Cliente', escapeHtml(data.clientName)) +
+        detailRow('Servicio', escapeHtml(data.serviceName)) +
+        detailRow('Fecha', formatDateES(data.date)) +
+        detailRow('Hora', data.startTime) +
+        (data.clientStartTime ? detailRow('Para tu paciente', `${formatDateES(data.clientDate ?? data.date)}, ${escapeHtml(data.clientStartTime)}`) : '') +
+        (data.modalityLabel ? detailRow('Tipo de cita', escapeHtml(data.modalityLabel)) : '')
+      )}
+      ${ctaButton('Ver en el dashboard', data.dashboardUrl)}
+    `),
+  }),
+
   // Al cliente: reserva confirmada
   confirmation: (data: {
     clientName: string;
