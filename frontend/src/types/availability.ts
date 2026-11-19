@@ -42,7 +42,34 @@ export interface BookingSettings {
   timezone:           string;
   language:           string;
   meetingLink?:       string | null;
+  allowClientCancel?:          boolean;
+  multiplePerSlot?:            boolean;
+  maxActiveBookingsPerClient?: number;
+  minDaysBetweenBookings?:     number;
+  emailEnabled?:               boolean;
+  notificationPrefs?:          NotificationPrefs;
 }
+
+// Preferencias de notificaciones (espejo de backend/src/lib/notificationPrefs.ts)
+export interface NotificationPrefs {
+  clientConfirmation: boolean;
+  clientReminder24h:  boolean;
+  clientReminder1h:   boolean;
+  clientCancellation: boolean;
+  clientFeedback:     boolean;
+  profNewBooking:     boolean;
+  profCancellation:   boolean;
+}
+
+export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
+  clientConfirmation: true,
+  clientReminder24h:  true,
+  clientReminder1h:   false,
+  clientCancellation: true,
+  clientFeedback:     true,
+  profNewBooking:     true,
+  profCancellation:   true,
+};
 
 export interface ScheduleBlock {
   id:        string;

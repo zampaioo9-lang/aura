@@ -9,8 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { useFeature } from '../hooks/useFeature';
 import ProGate from '../components/ProGate';
 import {
-  DAY_NAMES, DAY_NAMES_SHORT, TIMEZONES, LANGUAGES,
-  type AvailabilitySlot, type BookingSettings,
+  DAY_NAMES, DAY_NAMES_SHORT, TIMEZONES, LANGUAGES, DEFAULT_NOTIFICATION_PREFS,
+  type AvailabilitySlot, type BookingSettings, type NotificationPrefs,
   type ScheduleBlock, type ServiceAvailabilitySlot, type RecurringScheduleBlock,
 } from '../types/availability';
 import { useServices, type Service, type ServiceBookingCounts } from '../hooks/useServices';
@@ -65,17 +65,22 @@ function Dot({ color }: { color: string }) {
 }
 
 function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
+  const { isDark } = useSC();
+  // En modo claro la pista apagada debe ser un gris visible: el blanco translucido de --sc-inner
+  // se confundia con la tarjeta y con la bolita blanca, y el interruptor apagado no se veia.
+  const offTrack = isDark ? 'var(--sc-inner)' : 'rgba(100,116,139,0.40)';
   return (
     <button
       onClick={onChange}
       style={{
         width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', flexShrink: 0,
-        background: on ? 'var(--sc-accent)' : 'var(--sc-inner)', position: 'relative', transition: 'background .2s',
+        background: on ? 'var(--sc-accent)' : offTrack, position: 'relative', transition: 'background .2s',
       }}
     >
       <span style={{
         position: 'absolute', width: 18, height: 18, background: 'white', borderRadius: '50%',
         top: 3, left: on ? 23 : 3, transition: 'left .2s',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.30)',
       }} />
     </button>
   );
@@ -306,7 +311,7 @@ function ToggleRow({ label, desc, on, onChange, locked }: { label: string; desc?
         {desc && <div style={{ fontSize: 12, color: 'var(--sc-muted)', marginTop: 2 }}>{desc}</div>}
       </div>
       {locked ? (
-        <div style={{ opacity: 0.45, pointerEvents: 'none' }} aria-disabled="true"><Toggle on={on} onChange={() => {}} /></div>
+        <div style={{ opacity: 0.65, pointerEvents: 'none' }} aria-disabled="true"><Toggle on={on} onChange={() => {}} /></div>
       ) : (
         <Toggle on={on} onChange={onChange} />
       )}
@@ -393,7 +398,9 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
   const handleSaveZone = async () => {
     setSavingSettings(true);
     try {
-      await api.put('/booking-settings', settings, { params: { profileId } });
+      // Las preferencias de notificaciones y el canal de correo se guardan solo desde Notificaciones
+      const { notificationPrefs: _np, emailEnabled: _ee, ...zoneSettings } = settings;
+      await api.put('/booking-settings', zoneSettings, { params: { profileId } });
       toast('Configuración guardada');
     } catch { toast('Error al guardar', 'error'); }
     finally { setSavingSettings(false); }
@@ -530,12 +537,14 @@ function TabDisponibilidad({ profileId }: { profileId: string }) {
             onChange={v => setSettings(s => ({ ...s, timezone: v }))}
             options={TIMEZONES.map(tz => ({ value: tz, label: tz.replace('_', ' ') }))}
           />
-          <FormSelect
-            label="Idioma de la agenda"
-            value={settings.language ?? 'es'}
-            onChange={v => setSettings(s => ({ ...s, language: v }))}
-            options={LANGUAGES.map(l => ({ value: l.value, label: l.label }))}
-          />
+          <div style={{ opacity: 0.5, pointerEvents: 'none' }} aria-disabled="true">
+            <FormSelect
+              label="Idioma de la agenda · Próximamente"
+              value="es"
+              onChange={() => {}}
+              options={LANGUAGES.map(l => ({ value: l.value, label: l.label }))}
+            />
+          </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 16 }}>
           <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--sc-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Enlace de videollamada (Meet, Zoom)</label>
@@ -1345,9 +1354,8 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
   const [settings, setSettings] = useState<BookingSettings>({
     profileId, bufferMinutes: 0, advanceBookingDays: 60, minAdvanceHours: 1,
     cancellationHours: 24, autoConfirm: false, timezone: 'America/Mexico_City', language: 'es',
+    allowClientCancel: true, multiplePerSlot: false, maxActiveBookingsPerClient: 0, minDaysBetweenBookings: 0,
   });
-  // Estos interruptores aun no se guardan (se muestran bloqueados como "Próximamente")
-  const toggles = { waitlist: false, multiplePerSlot: false, allowCancel: true };
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -1362,7 +1370,9 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put('/booking-settings', settings, { params: { profileId } });
+      // Las preferencias de notificaciones y el canal de correo se guardan solo desde Notificaciones
+      const { notificationPrefs: _np, emailEnabled: _ee, ...ruleSettings } = settings;
+      await api.put('/booking-settings', ruleSettings, { params: { profileId } });
       toast('Reglas guardadas');
     } catch { toast('Error al guardar', 'error'); }
     finally { setSaving(false); }
@@ -1413,32 +1423,32 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
       <Card>
         <CardHeader dot="#43d9ad" title="Comportamiento del sistema" />
         <ProGate isPro={isPro}>
-          <ToggleRow label="Confirmación automática" desc="Las reservas se confirman sin revisión manual" on={settings.autoConfirm} onChange={() => upd('autoConfirm', !settings.autoConfirm)} locked="pronto" />
+          <ToggleRow label="Confirmación automática" desc="Las reservas que hacen tus pacientes se confirman solas, sin que tengas que aprobarlas" on={settings.autoConfirm} onChange={() => upd('autoConfirm', !settings.autoConfirm)} />
         </ProGate>
         <ProGate isPro={isPro}>
-          <ToggleRow label="Lista de espera" desc="Los clientes pueden unirse a lista de espera si no hay slots" on={toggles.waitlist} onChange={() => {}} locked="pronto" />
+          <ToggleRow label="Lista de espera" desc="Los clientes pueden unirse a lista de espera si no hay slots" on={false} onChange={() => {}} locked="pronto" />
         </ProGate>
         <ProGate isPro={isPro}>
-          <ToggleRow label="Múltiples reservas por slot" desc="Permite solapamiento de citas (requiere recursos separados)" on={toggles.multiplePerSlot} onChange={() => {}} locked="pronto" />
+          <ToggleRow label="Múltiples reservas por horario" desc="Permite que varias personas reserven el mismo horario (por ejemplo sesiones de pareja o grupales)" on={!!settings.multiplePerSlot} onChange={() => upd('multiplePerSlot', !settings.multiplePerSlot)} />
         </ProGate>
         <div style={{ borderBottom: 'none' }}>
-          <ToggleRow label="Permitir cancelaciones" desc="Los clientes pueden cancelar por sí mismos" on={toggles.allowCancel} onChange={() => {}} locked="pronto" />
+          <ToggleRow label="Permitir cancelaciones" desc="Los pacientes pueden cancelar por sí mismos (respetando el plazo de 'Cancelación permitida hasta')" on={settings.allowClientCancel ?? true} onChange={() => upd('allowClientCancel', !(settings.allowClientCancel ?? true))} />
         </div>
       </Card>
 
       {/* Límites por cliente */}
       <ProGate isPro={isPro}>
         <Card>
-          <CardHeader dot="#ff6584" title="Límites por cliente · Próximamente" />
-          <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, opacity: 0.45, pointerEvents: 'none' }} aria-disabled="true">
-            <FormSelect label="Máx. reservas activas por cliente" value="3" onChange={() => {}} options={[
+          <CardHeader dot="#ff6584" title="Límites por cliente" />
+          <div className="sc-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <FormSelect label="Máx. reservas activas por cliente" value={String(settings.maxActiveBookingsPerClient ?? 0)} onChange={v => upd('maxActiveBookingsPerClient', Number(v))} options={[
               { value: '1', label: '1 reserva' }, { value: '2', label: '2 reservas' },
               { value: '3', label: '3 reservas' }, { value: '5', label: '5 reservas' },
               { value: '0', label: 'Sin límite' },
             ]} />
-            <FormSelect label="Intervalo mínimo entre reservas" value="none" onChange={() => {}} options={[
-              { value: 'none', label: 'Sin restricción' }, { value: '1d', label: '1 día' },
-              { value: '3d', label: '3 días' }, { value: '7d', label: '1 semana' },
+            <FormSelect label="Intervalo mínimo entre reservas" value={String(settings.minDaysBetweenBookings ?? 0)} onChange={v => upd('minDaysBetweenBookings', Number(v))} options={[
+              { value: '0', label: 'Sin restricción' }, { value: '1', label: '1 día' },
+              { value: '3', label: '3 días' }, { value: '7', label: '1 semana' },
             ]} />
           </div>
         </Card>
@@ -1454,17 +1464,20 @@ function TabNotificaciones({ profileId, isPro = false }: { profileId: string; is
   const { toast } = useToast();
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_NOTIFICATION_PREFS);
+  const setPref = (k: keyof NotificationPrefs) => setPrefs(p => ({ ...p, [k]: !p[k] }));
 
   useEffect(() => {
     api.get('/booking-settings', { params: { profileId } }).then(r => {
       if (r.data.emailEnabled !== undefined) setEmailEnabled(r.data.emailEnabled);
+      if (r.data.notificationPrefs) setPrefs({ ...DEFAULT_NOTIFICATION_PREFS, ...r.data.notificationPrefs });
     }).catch(() => {});
   }, [profileId]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put('/booking-settings', { emailEnabled }, { params: { profileId } });
+      await api.put('/booking-settings', { emailEnabled, notificationPrefs: prefs }, { params: { profileId } });
       toast('Notificaciones guardadas');
     } catch {
       toast('Error al guardar', 'error');
@@ -1488,7 +1501,7 @@ function TabNotificaciones({ profileId, isPro = false }: { profileId: string; is
         <CardHeader dot="#22c55e" title="Canales de comunicación" />
         <ToggleRow
           label="📧 Email"
-          desc={emailEnabled ? <span style={{ color: '#22c55e', fontWeight: 500 }}>✓ Conectado</span> : <span style={{ color: 'var(--sc-muted)', fontWeight: 500 }}>Desconectado</span>}
+          desc={emailEnabled ? <span style={{ color: '#22c55e', fontWeight: 500 }}>✓ Conectado</span> : <span style={{ color: 'var(--sc-muted)', fontWeight: 500 }}>Desconectado: no se enviará ningún correo de citas</span>}
           on={emailEnabled}
           onChange={() => setEmailEnabled(v => !v)}
         />
@@ -1497,22 +1510,22 @@ function TabNotificaciones({ profileId, isPro = false }: { profileId: string; is
       {/* Recordatorios */}
       <Card>
         <CardHeader dot="var(--sc-accent-text)" title="Recordatorios automáticos al cliente" />
-        <ToggleRow label="Confirmación de reserva" desc="Inmediato tras reservar" on={true} onChange={() => {}} locked="siempre" />
-        <ToggleRow label="Recordatorio previo 24h" desc="24 horas antes de la cita" on={true} onChange={() => {}} locked="siempre" />
+        <ToggleRow label="Confirmación de reserva" desc="Al reservar o al confirmarse la cita" on={prefs.clientConfirmation} onChange={() => setPref('clientConfirmation')} />
+        <ToggleRow label="Recordatorio previo 24h" desc="24 horas antes de la cita (correo y WhatsApp)" on={prefs.clientReminder24h} onChange={() => setPref('clientReminder24h')} />
         <ProGate isPro={isPro}>
-          <ToggleRow label="Recordatorio previo 1h" desc="1 hora antes de la cita" on={false} onChange={() => {}} locked="pronto" />
+          <ToggleRow label="Recordatorio previo 1h" desc="Aproximadamente 1 hora antes de la cita (por correo)" on={prefs.clientReminder1h} onChange={() => setPref('clientReminder1h')} />
         </ProGate>
-        <ToggleRow label="Aviso de cancelación" desc="Al cancelar la cita" on={true} onChange={() => {}} locked="siempre" />
+        <ToggleRow label="Aviso de cancelación" desc="Al cancelar la cita" on={prefs.clientCancellation} onChange={() => setPref('clientCancellation')} />
         <ProGate isPro={isPro}>
-          <ToggleRow label="Solicitud de feedback" desc="2 horas después de la cita" on={false} onChange={() => {}} locked="pronto" />
+          <ToggleRow label="Solicitud de feedback" desc="Al marcar la cita como completada" on={prefs.clientFeedback} onChange={() => setPref('clientFeedback')} />
         </ProGate>
       </Card>
 
       {/* Notificaciones al profesional */}
       <Card>
         <CardHeader dot="#f6c90e" title="Notificaciones al profesional" />
-        <ToggleRow label="Nueva reserva recibida" on={true} onChange={() => {}} locked="siempre" />
-        <ToggleRow label="Cancelación de reserva" on={true} onChange={() => {}} locked="siempre" />
+        <ToggleRow label="Nueva reserva recibida" desc="Cuando un paciente reserva por su cuenta" on={prefs.profNewBooking} onChange={() => setPref('profNewBooking')} />
+        <ToggleRow label="Cancelación de reserva" desc="Cuando se cancela una cita" on={prefs.profCancellation} onChange={() => setPref('profCancellation')} />
         <ProGate isPro={isPro}>
           <ToggleRow label="Reagendamiento" on={false} onChange={() => {}} locked="pronto" />
         </ProGate>
