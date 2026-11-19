@@ -276,6 +276,7 @@ export const emailTemplates = {
     clientDate?: Date | string;   // fecha/hora para el paciente, solo si su zona horaria es distinta
     clientStartTime?: string;
     modalityLabel?: string | null;
+    meetingLink?: string | null;
     dashboardUrl: string;
   }) => ({
     to: data.professionalEmail,
@@ -290,7 +291,8 @@ export const emailTemplates = {
         detailRow('Fecha', formatDateES(data.date)) +
         detailRow('Hora', data.startTime) +
         (data.clientStartTime ? detailRow('Para tu paciente', `${formatDateES(data.clientDate ?? data.date)}, ${escapeHtml(data.clientStartTime)}`) : '') +
-        (data.modalityLabel ? detailRow('Tipo de cita', escapeHtml(data.modalityLabel)) : '')
+        (data.modalityLabel ? detailRow('Tipo de cita', escapeHtml(data.modalityLabel)) : '') +
+        (data.meetingLink ? detailRow('Enlace de la videollamada', `<a href="${escapeHtml(data.meetingLink)}" style="color:#7c3aed;word-break:break-all;">${escapeHtml(data.meetingLink)}</a>`) : '')
       )}
       ${ctaButton('Ver en el dashboard', data.dashboardUrl)}
     `),

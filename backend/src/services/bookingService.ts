@@ -672,6 +672,7 @@ export async function sendProfessionalCopyForProfessionalBooking(bookingId: stri
     clientDate: differs ? notice.date : undefined,
     clientStartTime: differs ? notice.startTime : undefined,
     modalityLabel: notice.modalityLabel,
+    meetingLink: notice.meetingLink,
     dashboardUrl: `${env.FRONTEND_URL}/dashboard`,
   });
   const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);

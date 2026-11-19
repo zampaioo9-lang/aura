@@ -255,6 +255,25 @@ router.put('/:id/cancel', async (req, res, next) => {
   }
 });
 
+// ── DELETE /api/bookings/:id (AUTH - profesional) ─────────────────
+// Elimina el REGISTRO de la cita. No es lo mismo que cancelar: cancelar la deja registrada con estado
+// CANCELLED. Una cita con resena del paciente no se puede eliminar (se perderia la resena).
+router.delete('/:id', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: req.params.id },
+      include: { profile: { select: { userId: true } }, review: { select: { id: true } } },
+    });
+    if (!booking) throw new AppError(404, 'Reserva no encontrada');
+    if (booking.profile.userId !== req.userId) throw new AppError(403, 'No autorizado');
+    if (booking.review) throw new AppError(409, 'Esta cita tiene una reseña de tu paciente y no se puede eliminar.');
+    await prisma.booking.delete({ where: { id: booking.id } });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ── PUT /api/bookings/:id/complete (AUTH) ──────────────────────────
 router.put('/:id/complete', authMiddleware, async (req: AuthRequest, res, next) => {
   try {

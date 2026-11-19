@@ -344,6 +344,17 @@ async function main() {
       const again = await api('POST', `/api/manage-booking/${tk}/cancel`, {});
       assert(again.status === 403, `cancelar otra vez dio ${again.status}`);
     });
+    await check('Citas', 'Cancelar deja la cita registrada; Eliminar la borra (y exige sesion)', async () => {
+      const { id, tk } = await newBooking(day(10), '09:00');
+      await api('POST', `/api/manage-booking/${tk}/cancel`, {});
+      assert((await prisma.booking.findUnique({ where: { id } }))?.status === 'CANCELLED', 'la cita cancelada deberia seguir registrada');
+      assert((await api('DELETE', `/api/bookings/${id}`)).status === 401, 'eliminar sin sesion deberia dar 401');
+      assert(!!(await prisma.booking.findUnique({ where: { id } })), 'sin sesion no deberia borrarse');
+      const r = await api('DELETE', `/api/bookings/${id}`, undefined, token);
+      assert(r.status === 200, `eliminar dio ${r.status}: ${JSON.stringify(r.json)}`);
+      assert((await prisma.booking.findUnique({ where: { id } })) === null, 'la cita no se borro');
+      assert((await api('DELETE', `/api/bookings/${id}`, undefined, token)).status === 404, 'eliminar una cita inexistente deberia dar 404');
+    });
     await check('Notificaciones', 'Aviso de cancelacion apagado para el paciente', async () => {
       const { id, tk } = await newBooking(day(10), '09:00', { notificationPrefs: { clientCancellation: false } });
       await api('POST', `/api/manage-booking/${tk}/cancel`, {});
