@@ -62,6 +62,8 @@ interface Booking {
   startTime: string;
   endTime: string;
   status: string;
+  cancelledBy?: string | null;
+  cancellationReason?: string | null;
   service: { name: string; price: number; currency: string };
   profile: { title: string; slug: string };
 }
@@ -312,6 +314,22 @@ export default function Dashboard() {
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
   };
 
+  // Eliminar borra el registro de la cita. Cancelar (arriba) NO la borra: la deja registrada como cancelada.
+  const deleteBooking = async (id: string) => {
+    const b = bookings.find(x => x.id === id);
+    const active = !!b && (b.status === 'PENDING' || b.status === 'CONFIRMED');
+    const message = active
+      ? 'Esta cita sigue activa. Se eliminará por completo y NO se le avisará a tu paciente (si quieres avisarle, cancélala en lugar de eliminarla). Esta acción no se puede deshacer. ¿Eliminar de todos modos?'
+      : '¿Eliminar esta cita definitivamente? Se borrará su registro y no se puede deshacer.';
+    if (!window.confirm(message)) return;
+    try {
+      await api.delete(`/bookings/${id}`);
+      setBookings(prev => prev.filter(x => x.id !== id));
+    } catch (err: any) {
+      toast(err?.response?.data?.error || 'No se pudo eliminar la cita', 'error');
+    }
+  };
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -334,6 +352,7 @@ export default function Dashboard() {
 
   const pendingBookings   = useMemo(() => bookings.filter(b => b.status === 'PENDING'),   [bookings]);
   const confirmedBookings = useMemo(() => bookings.filter(b => b.status === 'CONFIRMED'), [bookings]);
+  const cancelledBookings = useMemo(() => bookings.filter(b => b.status === 'CANCELLED'), [bookings]);
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen" style={{ background: C.mainBg }}>
@@ -729,6 +748,8 @@ export default function Dashboard() {
                   confirmedBookings={confirmedBookings}
                   totalBookings={bookings.length}
                   updateBookingStatus={updateBookingStatus}
+                  cancelledBookings={cancelledBookings}
+                  deleteBooking={deleteBooking}
                   profiles={profiles}
                   C={C}
                   onGoToAgenda={() => goMobile('agenda')}
@@ -1037,6 +1058,8 @@ export default function Dashboard() {
                   confirmedBookings={confirmedBookings}
                   totalBookings={bookings.length}
                   updateBookingStatus={updateBookingStatus}
+                  cancelledBookings={cancelledBookings}
+                  deleteBooking={deleteBooking}
                   profiles={profiles}
                   C={C}
                   onGoToAgenda={() => goTab('agenda')}
@@ -1635,11 +1658,13 @@ function StatCard({ label, value, sub, color, isDark, shadow, large = false }: {
 }
 
 /* ────────────────── Tab: Mis Citas ────────────────── */
-function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBookingStatus, profiles, C, onGoToAgenda, defaultView = 'calendario' }: {
+function TabCitas({ pendingBookings, confirmedBookings, cancelledBookings, totalBookings, updateBookingStatus, deleteBooking, profiles, C, onGoToAgenda, defaultView = 'calendario' }: {
   pendingBookings: Booking[];
   confirmedBookings: Booking[];
+  cancelledBookings: Booking[];
   totalBookings: number;
   updateBookingStatus: (id: string, status: string) => void;
+  deleteBooking: (id: string) => void;
   profiles: Profile[];
   C: Colors;
   onGoToAgenda: () => void;
@@ -1765,6 +1790,7 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
                     <ProBookingCard key={b.id} booking={b} C={C}>
                       <button onClick={() => updateBookingStatus(b.id, 'CONFIRMED')} style={{ background: `linear-gradient(135deg, ${C.accent}, #2dd4bf)`, color: '#fff' }} className="text-sm px-3 py-1.5 rounded-lg transition-colors">Confirmar</button>
                       <button onClick={() => updateBookingStatus(b.id, 'CANCELLED')} className="text-sm px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors">Cancelar</button>
+                      <button onClick={() => deleteBooking(b.id)} style={{ background: 'transparent', color: '#b91c1c', border: '1px solid rgba(185,28,28,0.35)' }} className="text-sm px-3 py-1.5 rounded-lg transition-colors">Eliminar</button>
                     </ProBookingCard>
                   ))}
                 </div>
@@ -1778,6 +1804,22 @@ function TabCitas({ pendingBookings, confirmedBookings, totalBookings, updateBoo
                     <ProBookingCard key={b.id} booking={b} C={C}>
                       <button onClick={() => updateBookingStatus(b.id, 'COMPLETED')} style={{ background: 'rgba(45,212,191,0.12)', color: '#0d9488', border: '1px solid rgba(45,212,191,0.25)' }} className="text-sm px-3 py-1.5 rounded-lg transition-colors">Completar</button>
                       <button onClick={() => updateBookingStatus(b.id, 'CANCELLED')} className="text-sm px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors">Cancelar</button>
+                      <button onClick={() => deleteBooking(b.id)} style={{ background: 'transparent', color: '#b91c1c', border: '1px solid rgba(185,28,28,0.35)' }} className="text-sm px-3 py-1.5 rounded-lg transition-colors">Eliminar</button>
+                    </ProBookingCard>
+                  ))}
+                </div>
+              </section>
+            )}
+            {cancelledBookings.length > 0 && (
+              <section>
+                <h3 className="text-sm font-semibold text-red-500 mb-3">Canceladas ({cancelledBookings.length})</h3>
+                <div className="space-y-2">
+                  {cancelledBookings.map(b => (
+                    <ProBookingCard key={b.id} booking={b} C={C}>
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full self-center" style={{ background: 'rgba(239,68,68,0.12)', color: '#dc2626' }}>
+                        {b.cancelledBy === 'client' ? 'Cancelada por el paciente' : b.cancelledBy === 'professional' ? 'Cancelada por ti' : 'Cancelada'}
+                      </span>
+                      <button onClick={() => deleteBooking(b.id)} style={{ background: 'transparent', color: '#b91c1c', border: '1px solid rgba(185,28,28,0.35)' }} className="text-sm px-3 py-1.5 rounded-lg transition-colors">Eliminar</button>
                     </ProBookingCard>
                   ))}
                 </div>
