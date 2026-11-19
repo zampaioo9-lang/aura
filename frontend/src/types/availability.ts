@@ -46,6 +46,7 @@ export interface BookingSettings {
   multiplePerSlot?:            boolean;
   maxActiveBookingsPerClient?: number;
   minDaysBetweenBookings?:     number;
+  waitlistEnabled?:            boolean;
   emailEnabled?:               boolean;
   notificationPrefs?:          NotificationPrefs;
 }
@@ -60,6 +61,7 @@ export interface NotificationPrefs {
   profNewBooking:     boolean;
   profCancellation:   boolean;
   profReschedule:     boolean;
+  profWaitlist:       boolean;
 }
 
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
@@ -71,6 +73,7 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   profNewBooking:     true,
   profCancellation:   true,
   profReschedule:     true,
+  profWaitlist:       true,
 };
 
 export interface ScheduleBlock {

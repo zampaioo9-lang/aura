@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, createContext, useContext, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, X, Plus, Power, Sparkles, GripVertical, Pencil, CalendarDays, Layers, Ban, Settings2, Bell, ChevronRight, Trash2 } from 'lucide-react';
+import { ArrowLeft, X, Plus, Power, Sparkles, GripVertical, Pencil, CalendarDays, Layers, Ban, Settings2, Bell, ChevronRight, Trash2, Hourglass } from 'lucide-react';
 import DatePickerField from '../components/DatePickerField';
 import CustomSelect from '../components/CustomSelect';
 import api from '../api/client';
@@ -1354,7 +1354,7 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
   const [settings, setSettings] = useState<BookingSettings>({
     profileId, bufferMinutes: 0, advanceBookingDays: 60, minAdvanceHours: 1,
     cancellationHours: 24, autoConfirm: false, timezone: 'America/Mexico_City', language: 'es',
-    allowClientCancel: true, multiplePerSlot: false, maxActiveBookingsPerClient: 0, minDaysBetweenBookings: 0,
+    allowClientCancel: true, multiplePerSlot: false, maxActiveBookingsPerClient: 0, minDaysBetweenBookings: 0, waitlistEnabled: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1426,7 +1426,7 @@ function TabReglas({ profileId, isPro = false }: { profileId: string; isPro?: bo
           <ToggleRow label="Confirmación automática" desc="Las reservas que hacen tus pacientes se confirman solas, sin que tengas que aprobarlas" on={settings.autoConfirm} onChange={() => upd('autoConfirm', !settings.autoConfirm)} />
         </ProGate>
         <ProGate isPro={isPro}>
-          <ToggleRow label="Lista de espera" desc="Los clientes pueden unirse a lista de espera si no hay slots" on={false} onChange={() => {}} locked="pronto" />
+          <ToggleRow label="Lista de espera" desc="Cuando un día no tiene horarios, el paciente puede apuntarse para que le avises si se libera uno. Verás a quién espera en la pestaña Lista de espera." on={!!settings.waitlistEnabled} onChange={() => upd('waitlistEnabled', !settings.waitlistEnabled)} />
         </ProGate>
         <ProGate isPro={isPro}>
           <ToggleRow label="Múltiples reservas por horario" desc="Permite que varias personas reserven el mismo horario (por ejemplo sesiones de pareja o grupales)" on={!!settings.multiplePerSlot} onChange={() => upd('multiplePerSlot', !settings.multiplePerSlot)} />
@@ -1530,7 +1530,7 @@ function TabNotificaciones({ profileId, isPro = false }: { profileId: string; is
           <ToggleRow label="Reagendamiento" desc="Cuando un paciente cambia su cita a otro horario" on={prefs.profReschedule} onChange={() => setPref('profReschedule')} />
         </ProGate>
         <ProGate isPro={isPro}>
-          <ToggleRow label="Nuevo cliente en lista de espera" on={false} onChange={() => {}} locked="pronto" />
+          <ToggleRow label="Nuevo cliente en lista de espera" desc="Cuando alguien se apunta en tu lista de espera" on={prefs.profWaitlist} onChange={() => setPref('profWaitlist')} />
         </ProGate>
       </Card>
     </>
@@ -1538,9 +1538,92 @@ function TabNotificaciones({ profileId, isPro = false }: { profileId: string; is
 }
 
 // ════════════════════════════════════════════════════════════════════
+// TAB: LISTA DE ESPERA
+// ════════════════════════════════════════════════════════════════════
+interface WaitEntry {
+  id: string; name: string; email: string; phone: string | null; date: string;
+  status: 'WAITING' | 'NOTIFIED' | 'ATTENDED';
+  serviceName: string | null; profileTitle: string; createdAt: string; notifiedAt: string | null;
+}
+
+function TabListaEspera() {
+  const { toast } = useToast();
+  const [entries, setEntries] = useState<WaitEntry[] | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const r = await api.get('/waitlist');
+      setEntries(r.data);
+    } catch {
+      toast('No se pudo cargar la lista de espera', 'error');
+      setEntries([]);
+    }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const setStatus = async (id: string, status: 'ATTENDED' | 'WAITING') => {
+    try { await api.patch(`/waitlist/${id}`, { status }); await load(); }
+    catch { toast('No se pudo actualizar', 'error'); }
+  };
+  const remove = async (id: string) => {
+    if (!window.confirm('¿Quitar a esta persona de la lista de espera?')) return;
+    try { await api.delete(`/waitlist/${id}`); await load(); }
+    catch { toast('No se pudo quitar', 'error'); }
+  };
+
+  const STATUS: Record<WaitEntry['status'], { label: string; color: string; bg: string }> = {
+    WAITING:  { label: 'En espera', color: '#b45309', bg: 'rgba(245,158,11,0.16)' },
+    NOTIFIED: { label: 'Avisada',   color: '#0369a1', bg: 'rgba(14,165,233,0.16)' },
+    ATTENDED: { label: 'Atendida',  color: '#15803d', bg: 'rgba(34,197,94,0.16)' },
+  };
+  const dateLabel = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  return (
+    <>
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 26, letterSpacing: -0.5, color: 'var(--sc-text)' }}>Lista de espera</h2>
+        <p style={{ fontSize: 13, color: 'var(--sc-muted)', marginTop: 2 }}>
+          Personas que quieren que les avises si se libera un horario. Se activa en Reglas de reserva. Cuando una cita se cancela, se les avisa por correo y quedan como "Avisada".
+        </p>
+      </div>
+      {entries === null && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
+          <div style={{ width: 28, height: 28, border: '3px solid var(--sc-accent-30)', borderTopColor: 'var(--sc-accent-text)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        </div>
+      )}
+      {entries !== null && entries.length === 0 && (
+        <Card><p style={{ color: 'var(--sc-muted)', fontSize: 14, margin: 0 }}>Nadie está en tu lista de espera todavía.</p></Card>
+      )}
+      {entries !== null && entries.map(e => (
+        <Card key={e.id} style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--sc-text)' }}>{e.name}</div>
+              <div style={{ fontSize: 13, color: 'var(--sc-muted)', marginTop: 2 }}>
+                Quiere: <strong style={{ color: 'var(--sc-text)' }}>{dateLabel(e.date)}</strong>{e.serviceName ? ` · ${e.serviceName}` : ''}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--sc-muted)', marginTop: 2 }}>
+                <a href={`mailto:${e.email}`} style={{ color: 'var(--sc-accent-text)' }}>{e.email}</a>{e.phone ? ` · ${e.phone}` : ''}
+              </div>
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 999, background: STATUS[e.status].bg, color: STATUS[e.status].color }}>{STATUS[e.status].label}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+            {e.status !== 'ATTENDED'
+              ? <BtnGhost small onClick={() => setStatus(e.id, 'ATTENDED')}>Marcar como atendida</BtnGhost>
+              : <BtnGhost small onClick={() => setStatus(e.id, 'WAITING')}>Volver a espera</BtnGhost>}
+            <BtnGhost small onClick={() => remove(e.id)}>Quitar</BtnGhost>
+          </div>
+        </Card>
+      ))}
+    </>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
 // MAIN PAGE
 // ════════════════════════════════════════════════════════════════════
-type Tab = 'availability' | 'services' | 'blocks' | 'rules' | 'notifications';
+type Tab = 'availability' | 'services' | 'blocks' | 'rules' | 'notifications' | 'waitlist';
 
 const PAGES: { id: Tab; icon: ReactNode; label: string }[] = [
   { id: 'availability',   icon: <CalendarDays size={15} />, label: 'Disponibilidad' },
@@ -1548,6 +1631,7 @@ const PAGES: { id: Tab; icon: ReactNode; label: string }[] = [
   { id: 'blocks',         icon: <Ban          size={15} />, label: 'Bloqueos' },
   { id: 'rules',          icon: <Settings2    size={15} />, label: 'Reglas de reserva' },
   { id: 'notifications',  icon: <Bell         size={15} />, label: 'Notificaciones' },
+  { id: 'waitlist',       icon: <Hourglass    size={15} />, label: 'Lista de espera' },
 ];
 
 interface Profile { id: string; title: string; slug: string }
@@ -1730,6 +1814,7 @@ export function SchedulingPanel({ theme, accent, accentId }: { theme: 'dark' | '
             {tab === 'blocks'        && <TabBloqueos       profileId={selectedProfileId} isPro={effectiveIsPro} />}
             {tab === 'rules'         && <TabReglas         profileId={selectedProfileId} isPro={effectiveIsPro} />}
             {tab === 'notifications' && <TabNotificaciones profileId={selectedProfileId} isPro={effectiveIsPro} />}
+            {tab === 'waitlist' && <TabListaEspera />}
           </>
         ) : (
           <p style={{ color: T.muted, fontSize: 14 }}>No tienes perfiles configurados aún.</p>
@@ -1896,6 +1981,7 @@ export default function SchedulingConfig() {
             {tab === 'blocks'         && <TabBloqueos       profileId={selectedProfileId} isPro={effectiveIsPro} />}
             {tab === 'rules'          && <TabReglas         profileId={selectedProfileId} isPro={effectiveIsPro} />}
             {tab === 'notifications'  && <TabNotificaciones profileId={selectedProfileId} isPro={effectiveIsPro} />}
+            {tab === 'waitlist'       && <TabListaEspera />}
           </>
         )}
       </main>

@@ -353,6 +353,7 @@ export default function Dashboard() {
   const pendingBookings   = useMemo(() => bookings.filter(b => b.status === 'PENDING'),   [bookings]);
   const confirmedBookings = useMemo(() => bookings.filter(b => b.status === 'CONFIRMED'), [bookings]);
   const cancelledBookings = useMemo(() => bookings.filter(b => b.status === 'CANCELLED'), [bookings]);
+  const completedBookings = useMemo(() => bookings.filter(b => b.status === 'COMPLETED'), [bookings]);
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen" style={{ background: C.mainBg }}>
@@ -749,6 +750,7 @@ export default function Dashboard() {
                   totalBookings={bookings.length}
                   updateBookingStatus={updateBookingStatus}
                   cancelledBookings={cancelledBookings}
+                  completedBookings={completedBookings}
                   deleteBooking={deleteBooking}
                   profiles={profiles}
                   C={C}
@@ -1059,6 +1061,7 @@ export default function Dashboard() {
                   totalBookings={bookings.length}
                   updateBookingStatus={updateBookingStatus}
                   cancelledBookings={cancelledBookings}
+                  completedBookings={completedBookings}
                   deleteBooking={deleteBooking}
                   profiles={profiles}
                   C={C}
@@ -1658,10 +1661,11 @@ function StatCard({ label, value, sub, color, isDark, shadow, large = false }: {
 }
 
 /* ────────────────── Tab: Mis Citas ────────────────── */
-function TabCitas({ pendingBookings, confirmedBookings, cancelledBookings, totalBookings, updateBookingStatus, deleteBooking, profiles, C, onGoToAgenda, defaultView = 'calendario' }: {
+function TabCitas({ pendingBookings, confirmedBookings, cancelledBookings, completedBookings, totalBookings, updateBookingStatus, deleteBooking, profiles, C, onGoToAgenda, defaultView = 'calendario' }: {
   pendingBookings: Booking[];
   confirmedBookings: Booking[];
   cancelledBookings: Booking[];
+  completedBookings: Booking[];
   totalBookings: number;
   updateBookingStatus: (id: string, status: string) => void;
   deleteBooking: (id: string) => void;
@@ -1804,6 +1808,19 @@ function TabCitas({ pendingBookings, confirmedBookings, cancelledBookings, total
                     <ProBookingCard key={b.id} booking={b} C={C}>
                       <button onClick={() => updateBookingStatus(b.id, 'COMPLETED')} style={{ background: 'rgba(45,212,191,0.12)', color: '#0d9488', border: '1px solid rgba(45,212,191,0.25)' }} className="text-sm px-3 py-1.5 rounded-lg transition-colors">Completar</button>
                       <button onClick={() => updateBookingStatus(b.id, 'CANCELLED')} className="text-sm px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors">Cancelar</button>
+                      <button onClick={() => deleteBooking(b.id)} style={{ background: 'transparent', color: '#b91c1c', border: '1px solid rgba(185,28,28,0.35)' }} className="text-sm px-3 py-1.5 rounded-lg transition-colors">Eliminar</button>
+                    </ProBookingCard>
+                  ))}
+                </div>
+              </section>
+            )}
+            {completedBookings.length > 0 && (
+              <section>
+                <h3 className="text-sm font-semibold text-sky-500 mb-3">Completadas ({completedBookings.length})</h3>
+                <div className="space-y-2">
+                  {completedBookings.map(b => (
+                    <ProBookingCard key={b.id} booking={b} C={C}>
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full self-center" style={{ background: 'rgba(14,165,233,0.12)', color: '#0284c7' }}>Completada</span>
                       <button onClick={() => deleteBooking(b.id)} style={{ background: 'transparent', color: '#b91c1c', border: '1px solid rgba(185,28,28,0.35)' }} className="text-sm px-3 py-1.5 rounded-lg transition-colors">Eliminar</button>
                     </ProBookingCard>
                   ))}

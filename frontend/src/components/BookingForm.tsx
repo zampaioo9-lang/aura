@@ -40,6 +40,15 @@ export default function BookingForm({ profileId, serviceId, serviceName, primary
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState('');
 
+  // Lista de espera: si el profesional la tiene activada y no hay horarios ese dia, el paciente puede apuntarse.
+  const [waitlistEnabled, setWaitlistEnabled] = useState(false);
+  const [wl, setWl] = useState<{ status: 'idle' | 'sending' | 'done'; error: string }>({ status: 'idle', error: '' });
+  useEffect(() => {
+    api.get('/waitlist/config', { params: { profileId } })
+      .then(r => setWaitlistEnabled(!!r.data.enabled))
+      .catch(() => setWaitlistEnabled(false));
+  }, [profileId]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (error) scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -86,6 +95,23 @@ export default function BookingForm({ profileId, serviceId, serviceName, primary
       .catch(() => { setSlotsError('Error al cargar horarios'); setSlots([]); })
       .finally(() => setSlotsLoading(false));
   }, [form.date, serviceId, profileId]);
+
+  useEffect(() => { setWl({ status: 'idle', error: '' }); }, [form.date]);
+
+  const joinWaitlist = async () => {
+    const email = form.clientEmail.trim();
+    if (form.clientName.trim().length < 2 || !/^\S+@\S+\.\S+$/.test(email)) {
+      setWl({ status: 'idle', error: 'Escribe tu nombre y tu correo arriba para poder avisarte.' });
+      return;
+    }
+    setWl({ status: 'sending', error: '' });
+    try {
+      await api.post('/waitlist', { profileId, serviceId, name: form.clientName.trim(), email, phone: form.clientPhone || undefined, date: form.date });
+      setWl({ status: 'done', error: '' });
+    } catch (err: any) {
+      setWl({ status: 'idle', error: err.response?.data?.error || 'No se pudo apuntarte. Intenta de nuevo.' });
+    }
+  };
 
   const handlePhoneChange = (value: string) => {
     setForm(f => ({ ...f, clientPhone: value }));
@@ -213,6 +239,27 @@ export default function BookingForm({ profileId, serviceId, serviceName, primary
 
               {form.date && !slotsLoading && slotsError && (
                 <p style={{ color: 'rgba(251,191,36,0.75)', fontSize: 13, margin: 0, padding: '8px 0' }}>{slotsError}</p>
+              )}
+
+              {form.date && !slotsLoading && slots.length === 0 && !slotsError.startsWith('Error') && waitlistEnabled && (
+                <div style={{ marginTop: 4, padding: '10px 12px', borderRadius: 10, border: `1px dashed ${borderCol}`, background: 'rgba(255,255,255,0.03)' }}>
+                  {wl.status === 'done' ? (
+                    <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, margin: 0 }}>Listo. Te avisaremos por correo si se libera un horario ese día.</p>
+                  ) : (
+                    <>
+                      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, margin: '0 0 8px' }}>
+                        ¿Te interesa ese día? Escribe tu nombre y correo arriba y te avisamos si se libera un horario.
+                      </p>
+                      <button
+                        type="button" onClick={joinWaitlist} disabled={wl.status === 'sending'}
+                        style={{ padding: '8px 14px', background: 'transparent', border: `1px solid ${primaryColor}`, borderRadius: 10, color: primaryColor, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: wl.status === 'sending' ? 0.6 : 1 }}
+                      >
+                        {wl.status === 'sending' ? 'Apuntando...' : 'Avísame si se libera un horario'}
+                      </button>
+                      {wl.error && <p style={{ color: 'rgba(248,113,113,0.9)', fontSize: 12, margin: '8px 0 0' }}>{wl.error}</p>}
+                    </>
+                  )}
+                </div>
               )}
 
               {form.date && !slotsLoading && slots.length > 0 && (
