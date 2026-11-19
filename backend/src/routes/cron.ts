@@ -4,6 +4,9 @@ import { sendWhatsApp, sendWhatsAppTemplate, templates, templateComponents } fro
 import { sendEmail, emailTemplates } from '../services/emailService';
 import { tryReminderWindow, endingReminderWindow } from '../lib/trialReminders';
 import { getClientBookingNotice } from '../lib/clientBookingNotice';
+import { getNotificationPrefs, resolveNotificationPrefs } from '../lib/notificationPrefs';
+import { bookingStartInstant } from '../lib/bookingRules';
+import { isValidTimeZone, DEFAULT_PROFESSIONAL_TIMEZONE } from '../lib/clientTimezone';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -50,6 +53,7 @@ router.post('/reminders', async (req: Request, res: Response): Promise<void> => 
     for (const booking of bookings) {
       const notifSettings = await prisma.bookingSettings.findUnique({ where: { profileId: booking.profileId } });
       const emailEnabled = notifSettings?.emailEnabled ?? true;
+      const prefs = await getNotificationPrefs(booking.profileId);
 
       // El cliente recibe la hora en su horario local (si su zona horaria es distinta a la del profesional).
       const clientLocal = await getClientBookingNotice(booking, {
@@ -68,7 +72,7 @@ router.post('/reminders', async (req: Request, res: Response): Promise<void> => 
         },
       });
 
-      if (!alreadySentClient) {
+      if (prefs.clientReminder24h && !alreadySentClient) {
         const components = templateComponents.reminder24h({
           clientName: booking.clientName,
           professionalName: booking.profile.user.name,
@@ -238,7 +242,71 @@ router.post('/reminders', async (req: Request, res: Response): Promise<void> => 
       }
     }
 
-    res.json({ ok: true, bookingsChecked: bookings.length, sent, timestamp: new Date().toISOString() });
+    // ── Recordatorio de ~1 hora antes (solo al paciente, por correo) ─────────────
+    // El cron corre cada hora: se avisa a las citas que empiezan entre 30 y 90 minutos despues de
+    // esta ejecucion, asi cada cita cae en una sola ventana y el aviso llega aproximadamente 1 h antes.
+    let sent1h = 0;
+    const soon = await prisma.booking.findMany({
+      where: {
+        status: 'CONFIRMED',
+        date: { gte: new Date(Date.now() - 24 * 3_600_000), lte: new Date(Date.now() + 48 * 3_600_000) },
+      },
+      include: {
+        service: true,
+        profile: { include: { user: { select: { name: true, email: true, phone: true, socialLinks: true } } } },
+      },
+    });
+    for (const b of soon) {
+      try {
+        if (!b.clientEmail) continue;
+        const cfg = await prisma.bookingSettings.findUnique({
+          where: { profileId: b.profileId },
+          select: { timezone: true, emailEnabled: true, notificationPrefs: true },
+        });
+        if (!resolveNotificationPrefs(cfg?.notificationPrefs).clientReminder1h || cfg?.emailEnabled === false) continue;
+        const tz = isValidTimeZone(cfg?.timezone) ? cfg!.timezone : DEFAULT_PROFESSIONAL_TIMEZONE;
+        const minutesLeft = (bookingStartInstant(b.date, b.startTime, tz).getTime() - Date.now()) / 60_000;
+        if (minutesLeft < 30 || minutesLeft >= 90) continue;
+
+        const already = await prisma.notification.findFirst({
+          where: { bookingId: b.id, type: 'REMINDER_1H', recipient: b.clientEmail, status: 'SENT' },
+        });
+        if (already) continue;
+
+        const notice = await getClientBookingNotice(b, {
+          professionalName: b.profile.user.name,
+          professionalPhone: (b.profile.user.socialLinks as Record<string, string> | null)?.whatsapp || b.profile.phone || b.profile.user.phone,
+          serviceModality: b.service.sessionModality,
+        });
+        const tpl = emailTemplates.reminder1h({
+          clientName: b.clientName,
+          clientEmail: b.clientEmail,
+          professionalName: b.profile.user.name,
+          serviceName: b.service.name,
+          date: notice.date,
+          startTime: notice.startTime,
+          details: notice,
+        });
+        const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
+        await prisma.notification.create({
+          data: {
+            bookingId: b.id,
+            type: 'REMINDER_1H',
+            recipient: b.clientEmail,
+            message: tpl.subject,
+            status: emailResult.success ? 'SENT' : 'FAILED',
+            sentAt: emailResult.success ? new Date() : null,
+            messageId: emailResult.id || null,
+            error: emailResult.error || null,
+          },
+        });
+        if (emailResult.success) sent1h++;
+      } catch (e) {
+        console.error('Error en recordatorio de 1 h para la reserva', b.id, e);
+      }
+    }
+
+    res.json({ ok: true, bookingsChecked: bookings.length, sent, sent1h, timestamp: new Date().toISOString() });
   } catch (err: any) {
     console.error('Error en cron de recordatorios:', err);
     res.status(500).json({ error: 'Error interno', message: err.message });

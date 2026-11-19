@@ -240,13 +240,14 @@ export const emailTemplates = {
     date: Date | string;
     startTime: string;
     dashboardUrl: string;
+    autoConfirmed?: boolean;
   }) => ({
     to: data.professionalEmail,
     subject: `Nueva reserva de ${data.clientName} — Aliax`,
     html: baseTemplate('Nueva reserva', `
       ${badge('Nueva reserva', '#9333ea')}
       ${heading(`Hola ${data.professionalName}`)}
-      ${subtext('Tienes una nueva solicitud de cita que requiere tu confirmación.')}
+      ${subtext(data.autoConfirmed ? 'Tienes una nueva cita. Se confirmó automáticamente, según tu configuración.' : 'Tienes una nueva solicitud de cita que requiere tu confirmación.')}
       ${detailTable(
         detailRow('Cliente', data.clientName) +
         detailRow('Email del cliente', data.clientEmail) +
@@ -303,6 +304,33 @@ export const emailTemplates = {
       ${badge('Recordatorio', '#d97706')}
       ${heading(`Hola ${data.clientName}`)}
       ${subtext('Te recordamos que mañana tienes una cita programada.')}
+      ${detailTable(
+        detailRow('Con', data.professionalName) +
+        detailRow('Servicio', data.serviceName) +
+        detailRow('Fecha', formatDateES(data.date)) +
+        detailRow('Hora', data.startTime) +
+        clientBookingExtraRows(data.details)
+      )}
+      ${clientBookingActions(data.details)}
+    `),
+  }),
+
+  // Al cliente: recordatorio ~1 h antes
+  reminder1h: (data: {
+    clientName: string;
+    clientEmail: string;
+    professionalName: string;
+    serviceName: string;
+    date: Date | string;
+    startTime: string;
+    details?: ClientBookingExtras;
+  }) => ({
+    to: data.clientEmail,
+    subject: `Tu cita con ${data.professionalName} es en aproximadamente 1 hora — Aliax`,
+    html: baseTemplate('Tu cita es en 1 hora', `
+      ${badge('En 1 hora', '#d97706')}
+      ${heading(`Hola ${data.clientName}`)}
+      ${subtext('Te recordamos que tu cita empieza en aproximadamente una hora.')}
       ${detailTable(
         detailRow('Con', data.professionalName) +
         detailRow('Servicio', data.serviceName) +

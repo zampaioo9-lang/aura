@@ -417,6 +417,7 @@ enum NotificationType {
   NEW_BOOKING
   CONFIRMATION
   REMINDER_24H
+  REMINDER_1H
   CANCELLATION
 }
 
@@ -456,6 +457,13 @@ model BookingSettings {
   language           String   @default("es")
   // Enlace fijo de videollamada (Meet, Zoom) que se envia al paciente en citas en linea
   meetingLink        String?
+  // Preferencias de notificaciones (ver lib/notificationPrefs.ts). null = valores por defecto
+  notificationPrefs  Json?
+  // Reglas de reserva
+  allowClientCancel          Boolean @default(true)  // el paciente puede cancelar por si mismo
+  multiplePerSlot            Boolean @default(false) // varias reservas en el mismo horario
+  maxActiveBookingsPerClient Int     @default(0)     // 0 = sin limite
+  minDaysBetweenBookings     Int     @default(0)     // 0 = sin restriccion
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 

@@ -4,7 +4,9 @@ import { sendWhatsApp, sendWhatsAppTemplate, templates, templateComponents } fro
 import { sendEmail, emailTemplates } from './emailService';
 import { env } from '../config/env';
 import { isProUser } from '../lib/planUtils';
-import { getBookingLocalTime } from '../lib/clientTimezone';
+import { getBookingLocalTime, zonedWallTimeToInstant, isValidTimeZone, DEFAULT_PROFESSIONAL_TIMEZONE } from '../lib/clientTimezone';
+import { getNotificationPrefs, resolveNotificationPrefs } from '../lib/notificationPrefs';
+import { checkClientBookingLimits } from '../lib/bookingRules';
 import { getClientBookingNotice } from '../lib/clientBookingNotice';
 
 const prisma = new PrismaClient();
@@ -79,7 +81,9 @@ export async function checkAvailability(
   // ── Verificar anticipación mínima ──────────────────────────────
   const settings = await prisma.bookingSettings.findUnique({ where: { profileId } });
   if (settings) {
-    const bookingDateTime = new Date(`${date}T${startTime}:00`);
+    // La hora de la cita esta en la zona horaria del profesional, no en la del servidor.
+    const proTz = isValidTimeZone(settings.timezone) ? settings.timezone : DEFAULT_PROFESSIONAL_TIMEZONE;
+    const bookingDateTime = zonedWallTimeToInstant(date, startTime, proTz);
     const hoursAhead = (bookingDateTime.getTime() - Date.now()) / 3_600_000;
     if (hoursAhead < settings.minAdvanceHours) {
       return { available: false, reason: `Se requiere al menos ${settings.minAdvanceHours}h de anticipación` };
@@ -171,7 +175,8 @@ export async function checkAvailability(
     return startMins < bEnd && endMins > bStart;
   });
 
-  if (hasConflict) {
+  // Con "Múltiples reservas por horario" activado, otra reserva en el mismo horario no es un conflicto.
+  if (hasConflict && !settings?.multiplePerSlot) {
     return { available: false, reason: bufferMins > 0 ? `Se requieren ${bufferMins} min entre reservas` : 'El horario ya esta reservado' };
   }
 
@@ -233,6 +238,8 @@ export async function getAvailableSlots(
 
   const now = Date.now();
   const minAdvanceMs = (settings?.minAdvanceHours ?? 1) * 3_600_000;
+  const maxAdvanceMs = (settings?.advanceBookingDays ?? 60) * 86_400_000;
+  const proTz = settings && isValidTimeZone(settings.timezone) ? settings.timezone : DEFAULT_PROFESSIONAL_TIMEZONE;
 
   const available: string[] = [];
 
@@ -244,8 +251,9 @@ export async function getAvailableSlots(
       const end = start + duration;
 
       // Verificar anticipación mínima
-      const slotDateTime = new Date(`${date}T${minutesToTime(start)}:00`).getTime();
+      const slotDateTime = zonedWallTimeToInstant(date, minutesToTime(start), proTz).getTime();
       if (slotDateTime - now < minAdvanceMs) continue;
+      if (slotDateTime - now > maxAdvanceMs) continue;
 
       // Verificar bloqueos parciales del día
       const blockedByPartial = blocks.some(b => {
@@ -270,7 +278,7 @@ export async function getAvailableSlots(
         return start < bEnd && end > bStart;
       });
 
-      if (!hasConflict) {
+      if (!hasConflict || settings?.multiplePerSlot) {
         available.push(minutesToTime(start));
       }
     }
@@ -290,7 +298,7 @@ export async function createBooking(data: {
   date: string;
   startTime: string;
   matchLeadId?: string;
-}, options: { skipClientRequestEmail?: boolean } = {}) {
+}, options: { skipClientRequestEmail?: boolean; enforceClientLimits?: boolean } = {}) {
   const service = await prisma.service.findUnique({ where: { id: data.serviceId } });
   if (!service || !service.isActive) throw new AppError(404, 'Servicio no encontrado');
   if (service.profileId !== data.profileId) throw new AppError(400, 'El servicio no pertenece a este perfil');
@@ -324,6 +332,34 @@ export async function createBooking(data: {
     service.durationMinutes
   );
   if (!available) throw new AppError(409, reason || 'Horario no disponible');
+
+  // Limites por paciente (maximo de reservas activas e intervalo minimo entre reservas). Aplican a las
+  // reservas que hace el propio paciente; las que crea el profesional desde su panel no se limitan.
+  if (options.enforceClientLimits !== false) {
+    const rules = await prisma.bookingSettings.findUnique({
+      where: { profileId: data.profileId },
+      select: { maxActiveBookingsPerClient: true, minDaysBetweenBookings: true },
+    });
+    if (rules && (rules.maxActiveBookingsPerClient > 0 || rules.minDaysBetweenBookings > 0)) {
+      const todayUtc = new Date(new Date().toISOString().slice(0, 10));
+      const active = await prisma.booking.findMany({
+        where: {
+          profileId: data.profileId,
+          clientEmail: { equals: data.clientEmail.trim(), mode: 'insensitive' },
+          status: { in: ['PENDING', 'CONFIRMED'] },
+          date: { gte: todayUtc },
+        },
+        select: { date: true },
+      });
+      const verdict = checkClientBookingLimits({
+        maxActive: rules.maxActiveBookingsPerClient,
+        minDays: rules.minDaysBetweenBookings,
+        requestedDate: data.date,
+        activeDates: active.map(a => a.date.toISOString().slice(0, 10)),
+      });
+      if (!verdict.ok) throw new AppError(409, verdict.reason);
+    }
+  }
 
   // El matchLeadId viene del flujo de Matching con IA y debe corresponder al mismo
   // perfil que el lead eligió — si no, se ignora el vínculo (la reserva igual se crea).
@@ -381,11 +417,22 @@ export async function createBooking(data: {
     booking = await createBookingRow(null);
   }
 
+  // Preferencias de notificaciones y confirmacion automatica de este perfil.
+  const bookingCfg = await prisma.bookingSettings.findUnique({
+    where: { profileId: data.profileId },
+    select: { autoConfirm: true, notificationPrefs: true, emailEnabled: true },
+  });
+  const prefs = resolveNotificationPrefs(bookingCfg?.notificationPrefs);
+  const emailOn = bookingCfg?.emailEnabled ?? true; // interruptor "Email" de Notificaciones
+  // Si la cita la crea el propio profesional desde su panel, el ya sabe de ella: no se le avisa.
+  const professionalCreated = !!options.skipClientRequestEmail;
+  const autoConfirm = !!bookingCfg?.autoConfirm && !professionalCreated;
+
   // Send WhatsApp to professional — priority: AccountSettings WhatsApp > profile.phone > user.phone
   const userSocialLinks = profile.user.socialLinks as Record<string, string> | null;
   const professionalPhone = userSocialLinks?.whatsapp || profile.phone || profile.user.phone;
   console.log(`[Booking] Created ${booking.id} | professionalPhone: ${professionalPhone || 'NONE'} | profile.phone: ${profile.phone || 'null'} | user.phone: ${profile.user.phone || 'null'}`);
-  if (professionalPhone && isProUser(profile.user)) {
+  if (!professionalCreated && prefs.profNewBooking && professionalPhone && isProUser(profile.user)) {
     // Intentar con plantilla aprobada, si falla usar texto libre
     const components = templateComponents.newBooking({
       professionalName: profile.user.name,
@@ -429,7 +476,7 @@ export async function createBooking(data: {
 
   // Email al profesional
   const professionalEmail = booking.profile.user.email;
-  if (professionalEmail) {
+  if (!professionalCreated && prefs.profNewBooking && emailOn && professionalEmail) {
     const tpl = emailTemplates.newBooking({
       professionalName: booking.profile.user.name,
       professionalEmail,
@@ -441,6 +488,7 @@ export async function createBooking(data: {
       date: data.date,
       startTime: data.startTime,
       dashboardUrl: `${env.FRONTEND_URL}/dashboard`,
+      autoConfirmed: autoConfirm,
     });
     const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
     await saveNotification(booking.id, 'NEW_BOOKING', professionalEmail, tpl.subject, emailResult);
@@ -448,7 +496,7 @@ export async function createBooking(data: {
 
   // Email al cliente: solicitud recibida (no aplica si el profesional creo la cita desde su panel:
   // en ese caso el paciente ya la pidio y recibe directamente la cita confirmada)
-  if (data.clientEmail && !options.skipClientRequestEmail) {
+  if (data.clientEmail && !options.skipClientRequestEmail && !autoConfirm && prefs.clientConfirmation && emailOn) {
     // La hora se muestra en el horario local del paciente (si tiene otra zona horaria).
     const clientLocal = await getBookingLocalTime({
       profileId: booking.profileId,
@@ -467,6 +515,12 @@ export async function createBooking(data: {
     });
     const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
     await saveNotification(booking.id, 'NEW_BOOKING', data.clientEmail, tpl.subject, emailResult);
+  }
+
+  if (autoConfirm) {
+    // "Confirmación automática": la reserva se confirma sola y el paciente recibe su confirmación.
+    await confirmBooking(booking.id, profile.userId);
+    return { ...booking, status: 'CONFIRMED' as const };
   }
 
   return booking;
@@ -497,9 +551,10 @@ export async function confirmBooking(bookingId: string, professionalId: string) 
     professionalPhone: (booking.profile.user.socialLinks as Record<string, string> | null)?.whatsapp || booking.profile.phone || booking.profile.user.phone,
     serviceModality: booking.service.sessionModality,
   });
+  const prefs = await getNotificationPrefs(booking.profileId);
 
   // Send WhatsApp confirmation to client
-  if (booking.clientPhone) {
+  if (prefs.clientConfirmation && booking.clientPhone) {
     const components = templateComponents.confirmation({
       clientName: booking.clientName,
       professionalName: booking.profile.user.name,
@@ -526,7 +581,7 @@ export async function confirmBooking(bookingId: string, professionalId: string) 
   }
 
   // Email de confirmación al cliente
-  if (booking.clientEmail) {
+  if (prefs.clientConfirmation && prefs.emailEnabled && booking.clientEmail) {
     const tpl = emailTemplates.confirmation({
       clientName: booking.clientName,
       clientEmail: booking.clientEmail,
@@ -559,6 +614,7 @@ export async function sendClientConfirmationForProfessionalBooking(bookingId: st
 
   const settings = await prisma.bookingSettings.findUnique({ where: { profileId: booking.profileId }, select: { emailEnabled: true } });
   if (settings && settings.emailEnabled === false) return;
+  if (!(await getNotificationPrefs(booking.profileId)).clientConfirmation) return;
 
   const notice = await getClientBookingNotice(booking, {
     professionalName: booking.profile.user.name,
@@ -622,9 +678,10 @@ export async function cancelBooking(
 
   // El cliente recibe la hora en su horario local (si su zona horaria es distinta a la del profesional).
   const clientLocal = await getBookingLocalTime(booking);
+  const prefs = await getNotificationPrefs(booking.profileId);
 
   // Notify client
-  if (booking.clientPhone) {
+  if (prefs.clientCancellation && booking.clientPhone) {
     const components = templateComponents.cancellation({
       recipientName: booking.clientName,
       professionalName: booking.profile.user.name,
@@ -645,7 +702,7 @@ export async function cancelBooking(
   // Notify professional — priority: AccountSettings WhatsApp > profile.phone > user.phone
   const cancelSocialLinks = booking.profile.user.socialLinks as Record<string, string> | null;
   const professionalPhone = cancelSocialLinks?.whatsapp || booking.profile.phone || booking.profile.user.phone;
-  if (professionalPhone) {
+  if (prefs.profCancellation && professionalPhone) {
     const components = templateComponents.cancellation({
       recipientName: booking.profile.user.name,
       professionalName: booking.clientName,
@@ -664,7 +721,7 @@ export async function cancelBooking(
   }
 
   // Emails de cancelación
-  if (booking.clientEmail) {
+  if (prefs.clientCancellation && prefs.emailEnabled && booking.clientEmail) {
     const tpl = emailTemplates.cancellationClient({
       clientName: booking.clientName,
       clientEmail: booking.clientEmail,
@@ -679,7 +736,7 @@ export async function cancelBooking(
   }
 
   const professionalEmail = booking.profile.user.email;
-  if (professionalEmail && cancelledBy === 'client') {
+  if (prefs.profCancellation && prefs.emailEnabled && professionalEmail && cancelledBy === 'client') {
     const tpl = emailTemplates.cancellationProfessional({
       professionalName: booking.profile.user.name,
       professionalEmail,
@@ -717,7 +774,8 @@ export async function completeBooking(bookingId: string, professionalId: string)
   });
 
   // Solo enviar email de reseña si el profesional tiene plan Pro
-  if (isProUser(booking.profile.user)) {
+  const feedbackPrefs = await getNotificationPrefs(booking.profileId);
+  if (isProUser(booking.profile.user) && feedbackPrefs.clientFeedback && feedbackPrefs.emailEnabled) {
     try {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);

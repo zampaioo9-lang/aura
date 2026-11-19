@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { bookingSchema, cancelBookingSchema } from '../utils/validation';
+import { checkClientCancellation, bookingStartInstant } from '../lib/bookingRules';
+import { isValidTimeZone, DEFAULT_PROFESSIONAL_TIMEZONE } from '../lib/clientTimezone';
 import {
   createBooking,
   confirmBooking,
@@ -227,6 +229,21 @@ router.put('/:id/cancel', async (req, res, next) => {
       if (!existing) throw new AppError(404, 'Reserva no encontrada');
       if (existing.clientEmail !== clientEmail) throw new AppError(403, 'Email no coincide');
 
+      // Reglas del profesional: "Permitir cancelaciones" y "Cancelación permitida hasta"
+      const cfg = await prisma.bookingSettings.findUnique({
+        where: { profileId: existing.profileId },
+        select: { allowClientCancel: true, cancellationHours: true, timezone: true },
+      });
+      if (cfg) {
+        const tz = isValidTimeZone(cfg.timezone) ? cfg.timezone : DEFAULT_PROFESSIONAL_TIMEZONE;
+        const verdict = checkClientCancellation({
+          allowClientCancel: cfg.allowClientCancel,
+          cancellationHours: cfg.cancellationHours,
+          start: bookingStartInstant(existing.date, existing.startTime, tz),
+        });
+        if (!verdict.ok) throw new AppError(403, verdict.reason);
+      }
+
       const booking = await cancelBooking(req.params.id, 'client', reason);
       return res.json(booking);
     }
@@ -281,7 +298,7 @@ router.post('/professional', authMiddleware, async (req: AuthRequest, res, next)
       clientNotes,
       date,
       startTime,
-    }, { skipClientRequestEmail: true });
+    }, { skipClientRequestEmail: true, enforceClientLimits: false });
 
     // Immediately confirm the booking (professional already approved it)
     const confirmed = await prisma.booking.update({
