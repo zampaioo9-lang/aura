@@ -1511,7 +1511,7 @@ function TabNotificaciones({ profileId, isPro = false }: { profileId: string; is
       <Card>
         <CardHeader dot="var(--sc-accent-text)" title="Recordatorios automáticos al cliente" />
         <ToggleRow label="Confirmación de reserva" desc="Al reservar o al confirmarse la cita" on={prefs.clientConfirmation} onChange={() => setPref('clientConfirmation')} />
-        <ToggleRow label="Recordatorio previo 24h" desc="24 horas antes de la cita (correo y WhatsApp)" on={prefs.clientReminder24h} onChange={() => setPref('clientReminder24h')} />
+        <ToggleRow label="Recordatorio previo 24h" desc="24 horas antes de la cita (por correo)" on={prefs.clientReminder24h} onChange={() => setPref('clientReminder24h')} />
         <ProGate isPro={isPro}>
           <ToggleRow label="Recordatorio previo 1h" desc="Aproximadamente 1 hora antes de la cita (por correo)" on={prefs.clientReminder1h} onChange={() => setPref('clientReminder1h')} />
         </ProGate>
@@ -1524,7 +1524,7 @@ function TabNotificaciones({ profileId, isPro = false }: { profileId: string; is
       {/* Notificaciones al profesional */}
       <Card>
         <CardHeader dot="#f6c90e" title="Notificaciones al profesional" />
-        <ToggleRow label="Nueva reserva recibida" desc="Cuando un paciente reserva por su cuenta" on={prefs.profNewBooking} onChange={() => setPref('profNewBooking')} />
+        <ToggleRow label="Nueva reserva recibida" desc="Cuando se agenda una cita, ya sea por un paciente o por ti" on={prefs.profNewBooking} onChange={() => setPref('profNewBooking')} />
         <ToggleRow label="Cancelación de reserva" desc="Cuando se cancela una cita" on={prefs.profCancellation} onChange={() => setPref('profCancellation')} />
         <ProGate isPro={isPro}>
           <ToggleRow label="Reagendamiento" desc="Cuando un paciente cambia su cita a otro horario" on={prefs.profReschedule} onChange={() => setPref('profReschedule')} />
