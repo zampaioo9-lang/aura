@@ -122,6 +122,15 @@ export const upsertBookingSettingsSchema = z.object({
   emailEnabled:       z.boolean().default(true),
   timezone:           z.string().max(60).default('America/Mexico_City'),
   language:           z.string().max(10).default('es'),
+  // Enlace fijo de videollamada. Vacio = sin enlace. Si falta https:// se agrega (Meet suele copiarse sin el).
+  meetingLink: z.string().trim().max(500)
+    .transform(v => (v === '' ? null : /^https?:\/\//i.test(v) ? v : `https://${v}`))
+    .refine(v => {
+      if (v === null) return true;
+      try { new URL(v); return true; } catch { return false; }
+    }, 'El enlace de la videollamada no es válido')
+    .nullable()
+    .optional(),
 });
 
 // ── ScheduleBlock schemas ──────────────────────────────────────────

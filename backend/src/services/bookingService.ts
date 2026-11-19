@@ -5,6 +5,7 @@ import { sendEmail, emailTemplates } from './emailService';
 import { env } from '../config/env';
 import { isProUser } from '../lib/planUtils';
 import { getBookingLocalTime } from '../lib/clientTimezone';
+import { getClientBookingNotice } from '../lib/clientBookingNotice';
 
 const prisma = new PrismaClient();
 
@@ -289,7 +290,7 @@ export async function createBooking(data: {
   date: string;
   startTime: string;
   matchLeadId?: string;
-}) {
+}, options: { skipClientRequestEmail?: boolean } = {}) {
   const service = await prisma.service.findUnique({ where: { id: data.serviceId } });
   if (!service || !service.isActive) throw new AppError(404, 'Servicio no encontrado');
   if (service.profileId !== data.profileId) throw new AppError(400, 'El servicio no pertenece a este perfil');
@@ -445,8 +446,9 @@ export async function createBooking(data: {
     await saveNotification(booking.id, 'NEW_BOOKING', professionalEmail, tpl.subject, emailResult);
   }
 
-  // Email al cliente: solicitud recibida
-  if (data.clientEmail) {
+  // Email al cliente: solicitud recibida (no aplica si el profesional creo la cita desde su panel:
+  // en ese caso el paciente ya la pidio y recibe directamente la cita confirmada)
+  if (data.clientEmail && !options.skipClientRequestEmail) {
     // La hora se muestra en el horario local del paciente (si tiene otra zona horaria).
     const clientLocal = await getBookingLocalTime({
       profileId: booking.profileId,
@@ -475,7 +477,7 @@ export async function confirmBooking(bookingId: string, professionalId: string) 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
-      profile: { include: { user: { select: { name: true, email: true } } } },
+      profile: { include: { user: { select: { name: true, email: true, phone: true, socialLinks: true } } } },
       service: true,
     },
   });
@@ -490,7 +492,11 @@ export async function confirmBooking(bookingId: string, professionalId: string) 
   });
 
   // El cliente recibe la hora en su horario local (si su zona horaria es distinta a la del profesional).
-  const clientLocal = await getBookingLocalTime(booking);
+  const clientLocal = await getClientBookingNotice(booking, {
+    professionalName: booking.profile.user.name,
+    professionalPhone: (booking.profile.user.socialLinks as Record<string, string> | null)?.whatsapp || booking.profile.phone || booking.profile.user.phone,
+    serviceModality: booking.service.sessionModality,
+  });
 
   // Send WhatsApp confirmation to client
   if (booking.clientPhone) {
@@ -528,12 +534,48 @@ export async function confirmBooking(bookingId: string, professionalId: string) 
       serviceName: booking.service.name,
       date: clientLocal.date,
       startTime: clientLocal.startTime,
+      details: clientLocal,
     });
     const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
     await saveNotification(bookingId, 'CONFIRMATION', booking.clientEmail, tpl.subject, emailResult);
   }
 
   return updated;
+}
+
+// ── Aviso al paciente cuando el profesional crea la cita desde su panel ──
+// El paciente ya la pidio por otro medio (por ejemplo WhatsApp), asi que no recibe una "solicitud
+// pendiente": recibe la cita confirmada con su hora local, el tipo de cita, el enlace de la
+// videollamada y botones de WhatsApp para cancelar o reagendar.
+export async function sendClientConfirmationForProfessionalBooking(bookingId: string) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      service: true,
+      profile: { include: { user: { select: { name: true, email: true, phone: true, socialLinks: true } } } },
+    },
+  });
+  if (!booking || !booking.clientEmail) return;
+
+  const settings = await prisma.bookingSettings.findUnique({ where: { profileId: booking.profileId }, select: { emailEnabled: true } });
+  if (settings && settings.emailEnabled === false) return;
+
+  const notice = await getClientBookingNotice(booking, {
+    professionalName: booking.profile.user.name,
+    professionalPhone: (booking.profile.user.socialLinks as Record<string, string> | null)?.whatsapp || booking.profile.phone || booking.profile.user.phone,
+    serviceModality: booking.service.sessionModality,
+  });
+  const tpl = emailTemplates.confirmation({
+    clientName: booking.clientName,
+    clientEmail: booking.clientEmail,
+    professionalName: booking.profile.user.name,
+    serviceName: booking.service.name,
+    date: notice.date,
+    startTime: notice.startTime,
+    details: notice,
+  });
+  const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
+  await saveNotification(bookingId, 'CONFIRMATION', booking.clientEmail, tpl.subject, emailResult);
 }
 
 // ── cancelBooking ──────────────────────────────────────────────────

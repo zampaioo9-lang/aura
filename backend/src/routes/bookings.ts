@@ -9,6 +9,7 @@ import {
   completeBooking,
   markNoShow,
   getAvailableSlots,
+  sendClientConfirmationForProfessionalBooking,
 } from '../services/bookingService';
 import { AppError } from '../middleware/errorHandler';
 import { isProUser } from '../lib/planUtils';
@@ -280,7 +281,7 @@ router.post('/professional', authMiddleware, async (req: AuthRequest, res, next)
       clientNotes,
       date,
       startTime,
-    });
+    }, { skipClientRequestEmail: true });
 
     // Immediately confirm the booking (professional already approved it)
     const confirmed = await prisma.booking.update({
@@ -310,6 +311,13 @@ router.post('/professional', authMiddleware, async (req: AuthRequest, res, next)
           phone: clientPhone || null,
         },
       });
+    }
+
+    // El paciente ya pidio la cita (por ejemplo por WhatsApp): recibe la cita confirmada, no una solicitud pendiente.
+    try {
+      await sendClientConfirmationForProfessionalBooking(booking.id);
+    } catch (e) {
+      console.error('[Booking] No se pudo enviar la confirmacion al paciente:', e instanceof Error ? e.message : e);
     }
 
     res.status(201).json(confirmed);

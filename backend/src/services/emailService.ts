@@ -121,6 +121,42 @@ function ctaButton(text: string, url: string): string {
   </div>`;
 }
 
+// Bloques opcionales para el PACIENTE en la confirmacion y el recordatorio: tipo de cita, enlace de
+// la videollamada y botones de WhatsApp para cancelar o reagendar con el profesional.
+export interface ClientBookingExtras {
+  modalityLabel?: string | null;
+  meetingLink?: string | null;
+  cancelUrl?: string | null;
+  rescheduleUrl?: string | null;
+}
+
+function clientBookingExtraRows(x?: ClientBookingExtras): string {
+  if (!x) return '';
+  return (
+    (x.modalityLabel ? detailRow('Tipo de cita', escapeHtml(x.modalityLabel)) : '') +
+    (x.meetingLink
+      ? detailRow('Enlace de la videollamada', `<a href="${escapeHtml(x.meetingLink)}" style="color:#7c3aed;word-break:break-all;">${escapeHtml(x.meetingLink)}</a>`)
+      : '')
+  );
+}
+
+function clientBookingActions(x?: ClientBookingExtras): string {
+  if (!x) return '';
+  const join = x.meetingLink ? ctaButton('Unirme a la videollamada', escapeHtml(x.meetingLink)) : '';
+  const outline = (text: string, url: string) =>
+    `<a href="${escapeHtml(url)}" style="display:inline-block;margin:0 8px 8px 0;padding:10px 16px;border:1px solid #d4d4d8;color:#3f3f46;text-decoration:none;border-radius:8px;font-size:13px;font-weight:600;">${text}</a>`;
+  const links = [
+    x.cancelUrl ? outline('Quiero cancelar mi cita', x.cancelUrl) : '',
+    x.rescheduleUrl ? outline('Quiero reagendar mi cita', x.rescheduleUrl) : '',
+  ].join('');
+  return (
+    join +
+    (links
+      ? `<div style="margin-top:20px;">${links}<p style="margin:4px 0 0;color:#a1a1aa;font-size:12px;">Se abrirá un chat de WhatsApp con tu profesional.</p></div>`
+      : '')
+  );
+}
+
 function escapeHtml(text: string): string {
   return String(text)
     .replace(/&/g, '&amp;')
@@ -232,6 +268,7 @@ export const emailTemplates = {
     serviceName: string;
     date: Date | string;
     startTime: string;
+    details?: ClientBookingExtras;
   }) => ({
     to: data.clientEmail,
     subject: `Cita confirmada con ${data.professionalName} — Aliax`,
@@ -243,8 +280,10 @@ export const emailTemplates = {
         detailRow('Profesional', data.professionalName) +
         detailRow('Servicio', data.serviceName) +
         detailRow('Fecha', formatDateES(data.date)) +
-        detailRow('Hora', data.startTime)
+        detailRow('Hora', data.startTime) +
+        clientBookingExtraRows(data.details)
       )}
+      ${clientBookingActions(data.details)}
     `),
   }),
 
@@ -256,6 +295,7 @@ export const emailTemplates = {
     serviceName: string;
     date: Date | string;
     startTime: string;
+    details?: ClientBookingExtras;
   }) => ({
     to: data.clientEmail,
     subject: `Recordatorio: mañana tienes cita con ${data.professionalName} — Aliax`,
@@ -267,8 +307,10 @@ export const emailTemplates = {
         detailRow('Con', data.professionalName) +
         detailRow('Servicio', data.serviceName) +
         detailRow('Fecha', formatDateES(data.date)) +
-        detailRow('Hora', data.startTime)
+        detailRow('Hora', data.startTime) +
+        clientBookingExtraRows(data.details)
       )}
+      ${clientBookingActions(data.details)}
     `),
   }),
 

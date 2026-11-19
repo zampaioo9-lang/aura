@@ -51,7 +51,10 @@ router.get('/', authMiddleware, async (req: AuthRequest, res, next) => {
 router.put('/', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     const pid = await getProfileId(req.userId!, req.query.profileId as string | undefined);
-    const data = upsertBookingSettingsSchema.parse(req.body);
+    // Actualizacion parcial: solo se guardan los campos que llegan. Antes, un PUT con un solo campo
+    // (por ejemplo { emailEnabled } desde Notificaciones) rellenaba el resto con valores por defecto
+    // y los guardaba, reseteando reglas de reserva y zona horaria.
+    const data = upsertBookingSettingsSchema.partial().parse(req.body);
 
     const settings = await prisma.bookingSettings.upsert({
       where: { profileId: pid },
