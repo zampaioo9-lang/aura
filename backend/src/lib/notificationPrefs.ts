@@ -16,6 +16,7 @@ export interface NotificationPrefs {
   clientFeedback: boolean;       // Al paciente: solicitud de resena al completar la cita (plan Pro)
   profNewBooking: boolean;       // Al profesional: nueva reserva
   profCancellation: boolean;     // Al profesional: cancelacion de reserva
+  profReschedule: boolean;       // Al profesional: un paciente cambio su cita a otro horario
 }
 
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
@@ -26,6 +27,7 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   clientFeedback: true,
   profNewBooking: true,
   profCancellation: true,
+  profReschedule: true,
 };
 
 export const NOTIFICATION_PREF_KEYS = Object.keys(DEFAULT_NOTIFICATION_PREFS) as (keyof NotificationPrefs)[];

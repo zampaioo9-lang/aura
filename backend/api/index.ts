@@ -42,6 +42,7 @@ try {
   const profileRoutes = require('../src/routes/profiles').default;
   const serviceRoutes = require('../src/routes/services').default;
   const bookingRoutes = require('../src/routes/bookings').default;
+  const manageBookingRoutes = require('../src/routes/manage-booking').default;
   const templateRoutes = require('../src/routes/templates').default;
   const uploadRoutes = require('../src/routes/upload').default;
   const availabilityRoutes = require('../src/routes/availability').default;
@@ -77,6 +78,7 @@ try {
   app.use('/api/profiles', profileRoutes);
   app.use('/api/services', serviceRoutes);
   app.use('/api/bookings', bookingRoutes);
+  app.use('/api/manage-booking', manageBookingRoutes);
   app.use('/api/templates', templateRoutes);
   app.use('/api/upload', uploadRoutes);
   app.use('/api/availability', availabilityRoutes);

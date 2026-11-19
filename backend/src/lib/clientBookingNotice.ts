@@ -4,6 +4,7 @@ import {
   isValidTimeZone,
   localizeBookingTime,
 } from './clientTimezone';
+import { manageBookingUrl } from './manageToken';
 
 const prisma = new PrismaClient();
 
@@ -51,24 +52,15 @@ function longDate(date: Date): string {
   return date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 }
 
-export async function getClientBookingNotice(
-  booking: {
-    profileId: string;
-    professionalId: string;
-    clientEmail: string | null;
-    date: Date | string;
-    startTime: string;
-  },
-  ctx: {
-    professionalName: string;
-    professionalPhone?: string | null;
-    serviceModality?: string | null;
-  },
-): Promise<ClientBookingNotice> {
+/** Zonas horarias (profesional y paciente) y enlace de videollamada de una cita. Nunca lanza. */
+export async function resolveBookingZones(booking: {
+  profileId: string;
+  professionalId: string;
+  clientEmail: string | null;
+}): Promise<{ professionalTz: string; clientTz: string | null; meetingLink: string | null }> {
   let professionalTz = DEFAULT_PROFESSIONAL_TIMEZONE;
   let clientTz: string | null = null;
-  let configuredLink: string | null = null;
-
+  let meetingLink: string | null = null;
   try {
     const [settings, client] = await Promise.all([
       prisma.bookingSettings.findUnique({ where: { profileId: booking.profileId }, select: { timezone: true, meetingLink: true } }),
@@ -81,10 +73,29 @@ export async function getClientBookingNotice(
     ]);
     if (isValidTimeZone(settings?.timezone)) professionalTz = settings!.timezone;
     if (isValidTimeZone(client?.timezone)) clientTz = client!.timezone;
-    configuredLink = settings?.meetingLink?.trim() || null;
+    meetingLink = settings?.meetingLink?.trim() || null;
   } catch (err) {
     console.error('[clientBookingNotice] No se pudieron leer los datos del paciente/agenda (se usan valores por defecto):', err instanceof Error ? err.message : err);
   }
+  return { professionalTz, clientTz, meetingLink };
+}
+
+export async function getClientBookingNotice(
+  booking: {
+    profileId: string;
+    professionalId: string;
+    clientEmail: string | null;
+    date: Date | string;
+    startTime: string;
+    manageToken?: string | null;
+  },
+  ctx: {
+    professionalName: string;
+    professionalPhone?: string | null;
+    serviceModality?: string | null;
+  },
+): Promise<ClientBookingNotice> {
+  const { professionalTz, clientTz, meetingLink: configuredLink } = await resolveBookingZones(booking);
 
   const local = localizeBookingTime(booking.date, booking.startTime, professionalTz, clientTz);
 
@@ -98,7 +109,13 @@ export async function getClientBookingNotice(
     startTime: local.startTime,
     modalityLabel: modalityLabel(ctx.serviceModality),
     meetingLink,
-    cancelUrl: whatsappChatUrl(ctx.professionalPhone, `Hola ${ctx.professionalName}, quiero cancelar mi cita del ${when}.`),
-    rescheduleUrl: whatsappChatUrl(ctx.professionalPhone, `Hola ${ctx.professionalName}, quiero reagendar mi cita del ${when}.`),
+    // Con codigo de la cita, los botones llevan a la pagina donde el paciente cancela o elige otro horario.
+    // Sin codigo (citas muy antiguas) se usa el chat de WhatsApp con el profesional como respaldo.
+    cancelUrl: booking.manageToken
+      ? manageBookingUrl(booking.manageToken, 'cancelar')
+      : whatsappChatUrl(ctx.professionalPhone, `Hola ${ctx.professionalName}, quiero cancelar mi cita del ${when}.`),
+    rescheduleUrl: booking.manageToken
+      ? manageBookingUrl(booking.manageToken, 'reagendar')
+      : whatsappChatUrl(ctx.professionalPhone, `Hola ${ctx.professionalName}, quiero reagendar mi cita del ${when}.`),
   };
 }

@@ -152,7 +152,11 @@ function clientBookingActions(x?: ClientBookingExtras): string {
   return (
     join +
     (links
-      ? `<div style="margin-top:20px;">${links}<p style="margin:4px 0 0;color:#a1a1aa;font-size:12px;">Se abrirá un chat de WhatsApp con tu profesional.</p></div>`
+      ? `<div style="margin-top:20px;">${links}<p style="margin:4px 0 0;color:#a1a1aa;font-size:12px;">${
+          (x.cancelUrl ?? x.rescheduleUrl ?? '').startsWith('https://wa.me/')
+            ? 'Se abrirá un chat de WhatsApp con tu profesional.'
+            : 'Desde ahí podrás cancelar o elegir otro horario, sin crear cuenta.'
+        }</p></div>`
       : '')
   );
 }
@@ -285,6 +289,59 @@ export const emailTemplates = {
         clientBookingExtraRows(data.details)
       )}
       ${clientBookingActions(data.details)}
+    `),
+  }),
+
+  // Al cliente: su cita fue reagendada (por el mismo, desde el enlace de su cita)
+  rescheduledClient: (data: {
+    clientName: string;
+    clientEmail: string;
+    professionalName: string;
+    serviceName: string;
+    date: Date | string;
+    startTime: string;
+    details?: ClientBookingExtras;
+  }) => ({
+    to: data.clientEmail,
+    subject: `Tu cita con ${data.professionalName} fue reagendada — Aliax`,
+    html: baseTemplate('Cita reagendada', `
+      ${badge('Cita reagendada', '#7c3aed')}
+      ${heading(`Hola ${escapeHtml(data.clientName)}`)}
+      ${subtext('Tu cita quedó reagendada para el nuevo horario. Si no fuiste tú, contacta a tu profesional.')}
+      ${detailTable(
+        detailRow('Profesional', escapeHtml(data.professionalName)) +
+        detailRow('Servicio', escapeHtml(data.serviceName)) +
+        detailRow('Nueva fecha', formatDateES(data.date)) +
+        detailRow('Nueva hora', data.startTime) +
+        clientBookingExtraRows(data.details)
+      )}
+      ${clientBookingActions(data.details)}
+    `),
+  }),
+
+  // Al profesional: un paciente cambio su cita a otro horario
+  rescheduledProfessional: (data: {
+    professionalName: string;
+    professionalEmail: string;
+    clientName: string;
+    serviceName: string;
+    oldDate: Date | string;
+    oldStartTime: string;
+    newDate: Date | string;
+    newStartTime: string;
+  }) => ({
+    to: data.professionalEmail,
+    subject: `${data.clientName} reagendó su cita — Aliax`,
+    html: baseTemplate('Cita reagendada', `
+      ${badge('Cita reagendada', '#7c3aed')}
+      ${heading(`Hola ${escapeHtml(data.professionalName)}`)}
+      ${subtext(`${escapeHtml(data.clientName)} cambió su cita a otro horario.`)}
+      ${detailTable(
+        detailRow('Cliente', escapeHtml(data.clientName)) +
+        detailRow('Servicio', escapeHtml(data.serviceName)) +
+        detailRow('Horario anterior', `${formatDateES(data.oldDate)}, ${data.oldStartTime}`) +
+        detailRow('Nuevo horario', `${formatDateES(data.newDate)}, ${data.newStartTime}`)
+      )}
     `),
   }),
 

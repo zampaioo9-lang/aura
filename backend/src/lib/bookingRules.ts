@@ -17,9 +17,12 @@ export function checkClientCancellation(opts: {
   cancellationHours: number;
   start: Date;
   now?: Date;
+  /** Para redactar el mensaje: 'cancelar' (por defecto) o 'reagendar'. Las dos acciones comparten la regla y el plazo. */
+  action?: 'cancelar' | 'reagendar';
 }): RuleVerdict {
+  const verb = opts.action === 'reagendar' ? 'cambiar tu cita' : 'cancelar';
   if (!opts.allowClientCancel) {
-    return { ok: false, reason: 'Este profesional no permite cancelar desde aquí. Contáctalo directamente para cancelar o reagendar tu cita.' };
+    return { ok: false, reason: 'Este profesional no permite cancelar ni reagendar desde aquí. Contáctalo directamente para cambiar tu cita.' };
   }
   if (opts.cancellationHours > 0) {
     const now = opts.now ?? new Date();
@@ -27,7 +30,7 @@ export function checkClientCancellation(opts: {
     if (hoursLeft < opts.cancellationHours) {
       return {
         ok: false,
-        reason: `Solo puedes cancelar hasta ${opts.cancellationHours} ${opts.cancellationHours === 1 ? 'hora' : 'horas'} antes de la cita. Contacta al profesional si necesitas cambiarla.`,
+        reason: `Solo puedes ${verb} hasta ${opts.cancellationHours} ${opts.cancellationHours === 1 ? 'hora' : 'horas'} antes de la cita. Contacta al profesional si necesitas cambiarla.`,
       };
     }
   }

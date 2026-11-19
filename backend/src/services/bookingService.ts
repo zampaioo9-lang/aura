@@ -6,7 +6,8 @@ import { env } from '../config/env';
 import { isProUser } from '../lib/planUtils';
 import { getBookingLocalTime, zonedWallTimeToInstant, isValidTimeZone, DEFAULT_PROFESSIONAL_TIMEZONE } from '../lib/clientTimezone';
 import { getNotificationPrefs, resolveNotificationPrefs } from '../lib/notificationPrefs';
-import { checkClientBookingLimits } from '../lib/bookingRules';
+import { checkClientBookingLimits, checkClientCancellation, bookingStartInstant } from '../lib/bookingRules';
+import { generateManageToken } from '../lib/manageToken';
 import { getClientBookingNotice } from '../lib/clientBookingNotice';
 
 const prisma = new PrismaClient();
@@ -23,7 +24,7 @@ export function minutesToTime(mins: number): string {
 // ── Helper: save notification ──────────────────────────────────────
 async function saveNotification(
   bookingId: string,
-  type: 'NEW_BOOKING' | 'CONFIRMATION' | 'REMINDER_24H' | 'CANCELLATION',
+  type: 'NEW_BOOKING' | 'CONFIRMATION' | 'REMINDER_24H' | 'REMINDER_1H' | 'CANCELLATION' | 'RESCHEDULED',
   recipient: string,
   message: string,
   result: { success: boolean; sid?: string; error?: string }
@@ -70,7 +71,8 @@ export async function checkAvailability(
   serviceId: string,
   date: string,
   startTime: string,
-  durationMinutes: number
+  durationMinutes: number,
+  ignoreBookingId?: string
 ): Promise<{ available: boolean; reason?: string }> {
   const profile = await prisma.profile.findUnique({ where: { id: profileId } });
   if (!profile) return { available: false, reason: 'Perfil no encontrado' };
@@ -166,6 +168,7 @@ export async function checkAvailability(
       profileId,
       date: bookingDate,
       status: { in: ['PENDING', 'CONFIRMED'] },
+      ...(ignoreBookingId ? { id: { not: ignoreBookingId } } : {}),
     },
   });
 
@@ -187,7 +190,8 @@ export async function checkAvailability(
 export async function getAvailableSlots(
   profileId: string,
   serviceId: string,
-  date: string
+  date: string,
+  ignoreBookingId?: string
 ): Promise<string[]> {
   const service = await prisma.service.findUnique({ where: { id: serviceId } });
   if (!service || !service.isActive) throw new AppError(404, 'Servicio no encontrado');
@@ -233,7 +237,7 @@ export async function getAvailableSlots(
   if (windows.length === 0) return [];
 
   const existingBookings = await prisma.booking.findMany({
-    where: { profileId, date: bookingDate, status: { in: ['PENDING', 'CONFIRMED'] } },
+    where: { profileId, date: bookingDate, status: { in: ['PENDING', 'CONFIRMED'] }, ...(ignoreBookingId ? { id: { not: ignoreBookingId } } : {}) },
   });
 
   const now = Date.now();
@@ -392,6 +396,7 @@ export async function createBooking(data: {
         startTime: data.startTime,
         endTime,
         status: 'PENDING',
+        manageToken: generateManageToken(),
         matchLeadId,
       },
       include: {
@@ -748,6 +753,99 @@ export async function cancelBooking(
     });
     const emailResult = await sendEmail(tpl.to, tpl.subject, tpl.html);
     await saveNotification(bookingId, 'CANCELLATION', professionalEmail, tpl.subject, emailResult);
+  }
+
+  return updated;
+}
+
+// ── Reagendar: el paciente cambia su cita a otro horario desde el enlace de su cita ──
+// Reglas: la cita debe estar pendiente o confirmada y no haber pasado; se aplican "Permitir cancelaciones"
+// y el plazo de "Cancelación permitida hasta" (mismas reglas que cancelar); el nuevo horario debe estar libre.
+// Se avisa al paciente (nuevo horario en su hora local) y al profesional (si tiene activado el aviso).
+export async function rescheduleBookingByClient(bookingId: string, input: { date: string; startTime: string }) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      service: true,
+      profile: { include: { user: { select: { name: true, email: true, phone: true, socialLinks: true } } } },
+    },
+  });
+  if (!booking) throw new AppError(404, 'Reserva no encontrada');
+  if (booking.status !== 'PENDING' && booking.status !== 'CONFIRMED') throw new AppError(400, 'Esta cita ya no se puede cambiar');
+
+  const cfg = await prisma.bookingSettings.findUnique({
+    where: { profileId: booking.profileId },
+    select: { allowClientCancel: true, cancellationHours: true, timezone: true },
+  });
+  const tz = cfg && isValidTimeZone(cfg.timezone) ? cfg.timezone : DEFAULT_PROFESSIONAL_TIMEZONE;
+  const currentStart = bookingStartInstant(booking.date, booking.startTime, tz);
+  if (currentStart.getTime() <= Date.now()) throw new AppError(400, 'Esta cita ya pasó y no se puede cambiar');
+  if (cfg) {
+    const verdict = checkClientCancellation({
+      allowClientCancel: cfg.allowClientCancel,
+      cancellationHours: cfg.cancellationHours,
+      start: currentStart,
+      action: 'reagendar',
+    });
+    if (!verdict.ok) throw new AppError(403, verdict.reason);
+  }
+
+  if (booking.date.toISOString().slice(0, 10) === input.date && booking.startTime === input.startTime) {
+    throw new AppError(400, 'Elige un horario distinto al actual');
+  }
+
+  const { available, reason } = await checkAvailability(
+    booking.profileId, booking.serviceId, input.date, input.startTime, booking.service.durationMinutes, booking.id,
+  );
+  if (!available) throw new AppError(409, reason || 'Horario no disponible');
+
+  const endTime = minutesToTime(timeToMinutes(input.startTime) + booking.service.durationMinutes);
+  const updated = await prisma.booking.update({
+    where: { id: booking.id },
+    data: { date: new Date(input.date), startTime: input.startTime, endTime },
+    include: { service: true, profile: { select: { title: true, slug: true } } },
+  });
+
+  // Los recordatorios ya enviados eran de la fecha anterior: se borran para que se vuelvan a enviar para la nueva.
+  await prisma.notification.deleteMany({ where: { bookingId: booking.id, type: { in: ['REMINDER_24H', 'REMINDER_1H'] } } });
+
+  const prefs = await getNotificationPrefs(booking.profileId);
+  const links = booking.profile.user.socialLinks as Record<string, string> | null;
+  const professionalPhone = links?.whatsapp || booking.profile.phone || booking.profile.user.phone;
+  const professionalName = booking.profile.user.name;
+
+  if (prefs.clientConfirmation && prefs.emailEnabled && booking.clientEmail) {
+    const notice = await getClientBookingNotice(
+      { ...booking, date: updated.date, startTime: updated.startTime },
+      { professionalName, professionalPhone, serviceModality: booking.service.sessionModality },
+    );
+    const tpl = emailTemplates.rescheduledClient({
+      clientName: booking.clientName,
+      clientEmail: booking.clientEmail,
+      professionalName,
+      serviceName: booking.service.name,
+      date: notice.date,
+      startTime: notice.startTime,
+      details: notice,
+    });
+    const result = await sendEmail(tpl.to, tpl.subject, tpl.html);
+    await saveNotification(booking.id, 'RESCHEDULED', booking.clientEmail, tpl.subject, result);
+  }
+
+  const professionalEmail = booking.profile.user.email;
+  if (prefs.profReschedule && prefs.emailEnabled && professionalEmail) {
+    const tpl = emailTemplates.rescheduledProfessional({
+      professionalName,
+      professionalEmail,
+      clientName: booking.clientName,
+      serviceName: booking.service.name,
+      oldDate: booking.date,
+      oldStartTime: booking.startTime,
+      newDate: updated.date,
+      newStartTime: updated.startTime,
+    });
+    const result = await sendEmail(tpl.to, tpl.subject, tpl.html);
+    await saveNotification(booking.id, 'RESCHEDULED', professionalEmail, tpl.subject, result);
   }
 
   return updated;

@@ -135,6 +135,7 @@ export const upsertBookingSettingsSchema = z.object({
     clientFeedback:     z.boolean(),
     profNewBooking:     z.boolean(),
     profCancellation:   z.boolean(),
+    profReschedule:     z.boolean(),
   }).partial().optional(),
   // Enlace fijo de videollamada. Vacio = sin enlace. Si falta https:// se agrega (Meet suele copiarse sin el).
   meetingLink: z.string().trim().max(500)

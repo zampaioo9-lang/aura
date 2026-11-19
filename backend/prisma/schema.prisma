@@ -353,6 +353,8 @@ model Booking {
   cancelledBy        String?       // "client" | "professional"
   cancellationReason String?
   matchLeadId        String?       @unique
+  // Codigo secreto para que el paciente gestione su cita (cancelar o reagendar) desde un enlace
+  manageToken        String?       @unique
 
   profile       Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
   service       Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
@@ -419,6 +421,7 @@ enum NotificationType {
   REMINDER_24H
   REMINDER_1H
   CANCELLATION
+  RESCHEDULED
 }
 
 enum NotificationStatus {
